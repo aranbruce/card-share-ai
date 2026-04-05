@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -13,8 +13,39 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [hasPendingCard, setHasPendingCard] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // Check if there's a pending card
+  useEffect(() => {
+    const pendingCard = localStorage.getItem('pendingCard')
+    setHasPendingCard(!!pendingCard)
+  }, [])
+
+  const savePendingCard = async () => {
+    const pendingCardData = localStorage.getItem('pendingCard')
+    if (!pendingCardData) return null
+
+    try {
+      const cardData = JSON.parse(pendingCardData)
+      const response = await fetch('/api/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cardData),
+      })
+
+      if (!response.ok) throw new Error('Failed to save card')
+
+      const { card } = await response.json()
+      localStorage.removeItem('pendingCard')
+      return card.id || card
+    } catch (err) {
+      console.error('Error saving pending card:', err)
+      return null
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,12 +60,23 @@ export default function Login() {
 
       if (error) {
         setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      // Check for pending card and save it
+      const savedCardId = await savePendingCard()
+      
+      if (savedCardId) {
+        // Redirect to the saved card
+        router.push(`/dashboard/cards/${savedCardId}`)
       } else {
-        router.push('/dashboard')
+        // Normal redirect
+        const redirect = searchParams.get('redirect')
+        router.push(redirect || '/dashboard')
       }
     } catch (err) {
       setError('An unexpected error occurred')
-    } finally {
       setLoading(false)
     }
   }
@@ -46,6 +88,14 @@ export default function Login() {
         <p className="text-muted-foreground mb-6">
           Log in to manage your greeting cards
         </p>
+
+        {hasPendingCard && (
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded mb-6">
+            <p className="text-sm text-center">
+              Your card is ready! Sign in to save it.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
@@ -85,13 +135,16 @@ export default function Login() {
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log In'}
+            {loading ? 'Logging in...' : hasPendingCard ? 'Log In & Save Card' : 'Log In'}
           </Button>
         </form>
 
         <p className="text-sm text-center text-muted-foreground mt-6">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/sign-up" className="text-primary hover:underline font-medium">
+          <Link 
+            href={hasPendingCard ? '/auth/sign-up?redirect=/create&action=save' : '/auth/sign-up'} 
+            className="text-primary hover:underline font-medium"
+          >
             Sign up
           </Link>
         </p>

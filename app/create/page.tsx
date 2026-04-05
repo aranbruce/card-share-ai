@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { CardTypeSelector } from '@/components/card-type-selector'
 import { CardDetailsForm } from '@/components/card-details-form'
 import { CardPreview } from '@/components/card-preview'
+import { AuthGateModal } from '@/components/auth-gate-modal'
 
 interface CardData {
   cardType: string
@@ -15,10 +17,23 @@ interface CardData {
   imagePrompt: string
 }
 
+interface PendingCard {
+  cardType: string
+  recipientName: string
+  recipientEmail: string
+  senderName: string
+  copyHeadline: string
+  copyMessage: string
+  copySignoff: string
+  imageUrl: string
+  imagePrompt: string
+}
+
 type Step = 'select-type' | 'details' | 'preview'
 
 export default function CreateCardPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [step, setStep] = useState<Step>('select-type')
   const [selectedType, setSelectedType] = useState('')
   const [senderName, setSenderName] = useState('')
@@ -28,6 +43,17 @@ export default function CreateCardPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [editMode, setEditMode] = useState(false)
+  const [isGuest, setIsGuest] = useState(true)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsGuest(!user)
+    }
+    checkAuth()
+  }, [supabase])
 
   const handleCardTypeSelect = (type: string) => {
     setSelectedType(type)
@@ -156,9 +182,35 @@ export default function CreateCardPage() {
     }
   }
 
+  const storePendingCard = () => {
+    if (!cardData) return
+
+    const pendingCard: PendingCard = {
+      cardType: cardData.cardType,
+      recipientName,
+      recipientEmail,
+      senderName,
+      copyHeadline: cardData.headline,
+      copyMessage: cardData.message,
+      copySignoff: cardData.signoff,
+      imageUrl: cardData.imageUrl,
+      imagePrompt: cardData.imagePrompt,
+    }
+
+    localStorage.setItem('pendingCard', JSON.stringify(pendingCard))
+  }
+
   const handleSaveCard = async () => {
     if (!cardData) return
 
+    // If user is a guest, show the auth modal
+    if (isGuest) {
+      storePendingCard()
+      setShowAuthModal(true)
+      return
+    }
+
+    // User is logged in, proceed with save
     setIsLoading(true)
     try {
       const response = await fetch('/api/cards', {
@@ -186,6 +238,11 @@ export default function CreateCardPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleAuthRedirect = (type: 'login' | 'signup') => {
+    storePendingCard()
+    router.push(`/auth/${type === 'login' ? 'login' : 'sign-up'}?redirect=/create&action=save`)
   }
 
   const handleBackTotype = () => {
@@ -223,6 +280,7 @@ export default function CreateCardPage() {
             recipientName={recipientName}
             editMode={editMode}
             isGeneratingImage={isLoading}
+            isGuest={isGuest}
             onHeadlineChange={(value) =>
               setCardData({ ...cardData, headline: value })
             }
@@ -244,6 +302,13 @@ export default function CreateCardPage() {
             {error}
           </div>
         )}
+
+        <AuthGateModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onLogin={() => handleAuthRedirect('login')}
+          onSignUp={() => handleAuthRedirect('signup')}
+        />
       </div>
     </div>
   )

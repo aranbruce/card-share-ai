@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
@@ -24,6 +23,7 @@ interface CardPreviewProps {
   onMessageChange?: (value: string) => void
   onSignoffChange?: (value: string) => void
   editMode?: boolean
+  isGuest?: boolean
 }
 
 export function CardPreview({
@@ -43,6 +43,7 @@ export function CardPreview({
   onMessageChange,
   onSignoffChange,
   editMode,
+  isGuest,
 }: CardPreviewProps) {
   const [canDownload, setCanDownload] = useState(false)
 
@@ -58,6 +59,18 @@ export function CardPreview({
           Review and customize before sending
         </p>
       </div>
+
+      {/* Guest Banner */}
+      {isGuest && editMode && (
+        <Card className="p-4 bg-primary/5 border-primary/20">
+          <p className="text-sm text-center">
+            <span className="font-medium">Looking good!</span>{' '}
+            <span className="text-muted-foreground">
+              Sign in to save, download, or send your card.
+            </span>
+          </p>
+        </Card>
+      )}
 
       {/* Card Display */}
       <Card className="overflow-hidden">
@@ -150,6 +163,8 @@ export function CardPreview({
                     <Spinner className="mr-2 h-4 w-4" />
                     Saving...
                   </>
+                ) : isGuest ? (
+                  'Save Card'
                 ) : (
                   'Save Card'
                 )}
