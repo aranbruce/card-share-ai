@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as fal from '@fal-ai/serverless-client'
-import { createClient } from '@/lib/supabase/server'
 
 fal.config({
   credentials: process.env.FAL_KEY,
@@ -8,15 +7,6 @@ fal.config({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { imagePrompt } = await request.json()
 
     if (!imagePrompt) {
