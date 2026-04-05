@@ -1,7 +1,6 @@
 import { generateText, Output } from 'ai'
 import { z } from 'zod'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 
 const cardCopySchema = z.object({
   headline: z.string().describe('A catchy, celebratory headline for the card'),
@@ -12,15 +11,6 @@ const cardCopySchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { cardType, recipientName, senderName, customMessage } = await request.json()
 
     if (!cardType || !recipientName || !senderName) {
@@ -51,9 +41,11 @@ Create warm, appropriate copy that matches the card type. The image prompt shoul
 
     return NextResponse.json({ cardCopy: output })
   } catch (error) {
-    console.error('Error generating card copy:', error)
+    console.error('[v0] Error generating card copy:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[v0] Error details:', errorMessage)
     return NextResponse.json(
-      { error: 'Failed to generate card copy' },
+      { error: 'Failed to generate card copy', details: errorMessage },
       { status: 500 },
     )
   }
