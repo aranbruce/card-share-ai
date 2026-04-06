@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Move, Maximize2, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -30,24 +30,23 @@ interface Card3DProps {
 
 const MESSAGES_PER_PAGE = 3
 
-// Inline edit component with consistent text sizing
+// Simple inline edit that maintains exact same text appearance
 function InlineEdit({
   value,
   onChange,
   className,
   multiline = false,
-  placeholder = 'Click to edit...',
+  editable = false,
 }: {
   value: string
   onChange?: (value: string) => void
   className?: string
   multiline?: boolean
-  placeholder?: string
+  editable?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const displayRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     setEditValue(value)
@@ -57,11 +56,14 @@ function InlineEdit({
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus()
       textareaRef.current.select()
+      // Auto-resize textarea to fit content
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
     }
   }, [isEditing])
 
   const handleClick = (e: React.MouseEvent) => {
-    if (onChange) {
+    if (editable && onChange) {
       e.stopPropagation()
       setIsEditing(true)
     }
@@ -75,178 +77,50 @@ function InlineEdit({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !multiline) {
-      e.preventDefault()
-      textareaRef.current?.blur()
-    }
     if (e.key === 'Escape') {
       setEditValue(value)
       setIsEditing(false)
     }
   }
 
-  if (!onChange) {
-    return <span className={className}>{value}</span>
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditValue(e.target.value)
+    // Auto-resize
+    e.target.style.height = 'auto'
+    e.target.style.height = e.target.scrollHeight + 'px'
+  }
+
+  // Render same content whether editing or not
+  if (isEditing) {
+    return (
+      <textarea
+        ref={textareaRef}
+        value={editValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onClick={(e) => e.stopPropagation()}
+        className={`${className} bg-transparent border-none outline-none resize-none w-full p-0 m-0`}
+        rows={multiline ? 4 : 1}
+        style={{
+          lineHeight: 'inherit',
+          fontFamily: 'inherit',
+          fontSize: 'inherit',
+          fontWeight: 'inherit',
+          letterSpacing: 'inherit',
+          color: 'inherit',
+        }}
+      />
+    )
   }
 
   return (
-    <span className="relative inline-block w-full">
-      {/* Always render the display text to maintain layout */}
-      <span
-        ref={displayRef}
-        onClick={handleClick}
-        className={`${className} ${isEditing ? 'invisible' : ''} cursor-pointer transition-all rounded-sm ${
-          !isEditing ? 'hover:ring-1 hover:ring-primary/30 hover:bg-primary/5' : ''
-        }`}
-        title={onChange ? 'Click to edit' : undefined}
-      >
-        {value || <span className="opacity-50">{placeholder}</span>}
-      </span>
-      
-      {/* Textarea overlays the text when editing */}
-      {isEditing && (
-        <textarea
-          ref={textareaRef}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className={`${className} absolute inset-0 w-full h-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/40 rounded-sm resize-none`}
-          rows={multiline ? 4 : 1}
-          style={{ 
-            minHeight: 'auto',
-            lineHeight: 'inherit',
-            fontFamily: 'inherit',
-            fontSize: 'inherit',
-            fontWeight: 'inherit',
-          }}
-        />
-      )}
-    </span>
-  )
-}
-
-// Draggable and resizable message container
-function DraggableMessage({
-  children,
-  editable,
-  initialPosition = { x: 0, y: 0 },
-  initialSize = { width: 100, height: 'auto' },
-}: {
-  children: React.ReactNode
-  editable?: boolean
-  initialPosition?: { x: number; y: number }
-  initialSize?: { width: number; height: number | 'auto' }
-}) {
-  const [position, setPosition] = useState(initialPosition)
-  const [size, setSize] = useState(initialSize)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isResizing, setIsResizing] = useState(false)
-  const [showControls, setShowControls] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
-  const resizeStart = useRef({ x: 0, width: 0 })
-
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
-    if (!editable) return
-    e.stopPropagation()
-    e.preventDefault()
-    setIsDragging(true)
-    dragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      posX: position.x,
-      posY: position.y,
-    }
-  }, [editable, position])
-
-  const handleResizeStart = useCallback((e: React.MouseEvent) => {
-    if (!editable) return
-    e.stopPropagation()
-    e.preventDefault()
-    setIsResizing(true)
-    resizeStart.current = {
-      x: e.clientX,
-      width: typeof size.width === 'number' ? size.width : 100,
-    }
-  }, [editable, size.width])
-
-  useEffect(() => {
-    if (!isDragging && !isResizing) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        const dx = e.clientX - dragStart.current.x
-        const dy = e.clientY - dragStart.current.y
-        setPosition({
-          x: dragStart.current.posX + dx,
-          y: dragStart.current.posY + dy,
-        })
-      }
-      if (isResizing) {
-        const dx = e.clientX - resizeStart.current.x
-        const newWidth = Math.max(50, Math.min(100, resizeStart.current.width + (dx / 3)))
-        setSize(prev => ({ ...prev, width: newWidth }))
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsDragging(false)
-      setIsResizing(false)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging, isResizing])
-
-  if (!editable) {
-    return <>{children}</>
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative group"
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        width: `${size.width}%`,
-        transition: isDragging || isResizing ? 'none' : 'transform 0.1s ease-out',
-      }}
-      onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => !isDragging && !isResizing && setShowControls(false)}
+    <span
+      onClick={handleClick}
+      className={`${className} ${editable ? 'cursor-pointer hover:bg-primary/5 rounded transition-colors' : ''}`}
     >
-      {/* Move handle */}
-      {showControls && (
-        <div
-          onMouseDown={handleDragStart}
-          className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full p-1 cursor-move z-10 opacity-70 hover:opacity-100 transition-opacity shadow-md"
-          title="Drag to move"
-        >
-          <Move className="h-3 w-3" />
-        </div>
-      )}
-
-      {/* Content */}
-      <div className={`${showControls ? 'ring-1 ring-primary/20 rounded-lg' : ''} transition-all`}>
-        {children}
-      </div>
-
-      {/* Resize handle */}
-      {showControls && (
-        <div
-          onMouseDown={handleResizeStart}
-          className="absolute -bottom-3 -right-1 bg-primary text-primary-foreground rounded-full p-1 cursor-se-resize z-10 opacity-70 hover:opacity-100 transition-opacity shadow-md"
-          title="Drag to resize"
-        >
-          <Maximize2 className="h-3 w-3" />
-        </div>
-      )}
-    </div>
+      {value}
+    </span>
   )
 }
 
@@ -280,9 +154,7 @@ export function Card3D({
     const target = e.target as HTMLElement
     if (
       target.tagName === 'TEXTAREA' || 
-      target.closest('[data-editable]') ||
-      target.closest('[data-nav]') ||
-      target.closest('[data-draggable]')
+      target.closest('[data-nav]')
     ) {
       return
     }
@@ -311,32 +183,43 @@ export function Card3D({
             style={{ transformStyle: 'preserve-3d' }}
             onClick={handleCardClick}
           >
-            <div className="flex-1 flex flex-col justify-between">
+            <div className="flex-1 flex flex-col">
               {currentPage === 0 ? (
-                <div className="space-y-4 flex-1 flex flex-col">
-                  <p className="text-sm text-muted-foreground italic">To: {recipientName}</p>
+                <div className="flex-1 flex flex-col">
+                  {/* To line */}
+                  <p className="text-sm text-muted-foreground italic mb-6">To: {recipientName}</p>
                   
-                  <div className="flex-1 py-4" data-editable data-draggable>
-                    <DraggableMessage editable={editable}>
-                      <div className="space-y-3">
-                        <InlineEdit
-                          value={message}
-                          onChange={editable ? onMessageChange : undefined}
-                          multiline
-                          className="text-lg leading-relaxed text-foreground/90 block"
-                          placeholder="Click to add a message..."
-                        />
-                        <InlineEdit
-                          value={signoff}
-                          onChange={editable ? onSignoffChange : undefined}
-                          className="text-base font-semibold text-foreground block"
-                          placeholder="Click to add sign-off..."
-                        />
-                      </div>
-                    </DraggableMessage>
+                  {/* Message content - flex-1 to take available space */}
+                  <div className="flex-1 flex flex-col justify-center">
+                    {/* Greeting */}
+                    <p className="text-lg text-foreground/90 mb-4">
+                      Hey {recipientName},
+                    </p>
+
+                    {/* Main message */}
+                    <div className="mb-4">
+                      <InlineEdit
+                        value={message}
+                        onChange={onMessageChange}
+                        multiline
+                        editable={editable}
+                        className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
+                      />
+                    </div>
+
+                    {/* Signoff */}
+                    <div className="mt-6">
+                      <InlineEdit
+                        value={signoff}
+                        onChange={onSignoffChange}
+                        editable={editable}
+                        className="text-lg font-semibold text-foreground"
+                      />
+                    </div>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mt-auto pt-4">
+                  {/* From line */}
+                  <p className="text-sm text-muted-foreground mt-6">
                     With love, {senderName}
                   </p>
                 </div>
@@ -469,12 +352,12 @@ export function Card3D({
                   )}
                   
                   {/* Headline overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white" data-editable>
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                     <InlineEdit
                       value={headline}
-                      onChange={editable ? onHeadlineChange : undefined}
-                      className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg block"
-                      placeholder="Click to add headline..."
+                      onChange={onHeadlineChange}
+                      editable={editable}
+                      className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg"
                     />
                     <p className="text-sm mt-2 opacity-80">
                       For {recipientName}
