@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -19,18 +19,16 @@ interface Card3DProps {
     contributor_name: string
     message: string
   }>
-  // Editing props
   editable?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
   onSignoffChange?: (value: string) => void
   onAddPage?: () => void
-  showAddPageButton?: boolean
 }
 
 const MESSAGES_PER_PAGE = 3
 
-// Simple inline edit that maintains exact same text appearance
+// Inline edit component with identical styling
 function InlineEdit({
   value,
   onChange,
@@ -56,7 +54,6 @@ function InlineEdit({
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus()
       textareaRef.current.select()
-      // Auto-resize textarea to fit content
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
     }
@@ -85,12 +82,10 @@ function InlineEdit({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditValue(e.target.value)
-    // Auto-resize
     e.target.style.height = 'auto'
     e.target.style.height = e.target.scrollHeight + 'px'
   }
 
-  // Render same content whether editing or not
   if (isEditing) {
     return (
       <textarea
@@ -117,7 +112,7 @@ function InlineEdit({
   return (
     <span
       onClick={handleClick}
-      className={`${className} ${editable ? 'cursor-pointer hover:bg-primary/5 rounded transition-colors' : ''}`}
+      className={`${className} ${editable ? 'cursor-text hover:bg-primary/5 rounded px-1 -mx-1 transition-colors' : ''}`}
     >
       {value}
     </span>
@@ -138,277 +133,205 @@ export function Card3D({
   onMessageChange,
   onSignoffChange,
   onAddPage,
-  showAddPageButton = false,
 }: Card3DProps) {
-  const [isOpen, setIsOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
 
-  // Calculate pages: page 0 is the main message, subsequent pages are for contributions
-  const contributionPages = []
+  // Page 0 = Cover, Page 1 = Main message, Page 2+ = Contributor pages
+  const contributionPages: Array<typeof contributions> = []
   for (let i = 0; i < contributions.length; i += MESSAGES_PER_PAGE) {
     contributionPages.push(contributions.slice(i, i + MESSAGES_PER_PAGE))
   }
-  const totalPages = 1 + contributionPages.length
+  
+  // Total pages: Cover + Main Message + Contribution Pages
+  const totalPages = 2 + contributionPages.length
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement
-    if (
-      target.tagName === 'TEXTAREA' || 
-      target.closest('[data-nav]')
-    ) {
+  const goToPage = (page: number) => {
+    if (page < 0) return
+    
+    // If going beyond last page, trigger add page
+    if (page >= totalPages && editable && onAddPage) {
+      onAddPage()
       return
     }
-    setIsOpen(!isOpen)
-  }
-
-  const goToPage = (page: number, e: React.MouseEvent) => {
-    e.stopPropagation()
+    
     setCurrentPage(Math.max(0, Math.min(page, totalPages - 1)))
   }
 
+  const isLastPage = currentPage === totalPages - 1
+  const canGoRight = editable || currentPage < totalPages - 1
+
   return (
-    <div className="flex flex-col items-center gap-6">
-      {/* 3D Card Container */}
-      <div 
-        className="relative w-full max-w-md cursor-pointer"
-        style={{ perspective: '1500px' }}
-      >
-        <div 
-          className="relative w-full"
-          style={{ transformStyle: 'preserve-3d' }}
-        >
-          {/* Inside of card */}
-          <div 
-            className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 rounded-2xl shadow-xl p-6 min-h-[500px] flex flex-col"
-            style={{ transformStyle: 'preserve-3d' }}
-            onClick={handleCardClick}
-          >
-            <div className="flex-1 flex flex-col">
-              {currentPage === 0 ? (
-                <div className="flex-1 flex flex-col">
-                  {/* To line */}
-                  <p className="text-sm text-muted-foreground italic mb-6">To: {recipientName}</p>
-                  
-                  {/* Message content - flex-1 to take available space */}
-                  <div className="flex-1 flex flex-col justify-center">
-                    {/* Greeting */}
-                    <p className="text-lg text-foreground/90 mb-4">
-                      Hey {recipientName},
-                    </p>
-
-                    {/* Main message */}
-                    <div className="mb-4">
-                      <InlineEdit
-                        value={message}
-                        onChange={onMessageChange}
-                        multiline
-                        editable={editable}
-                        className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
-                      />
-                    </div>
-
-                    {/* Signoff */}
-                    <div className="mt-6">
-                      <InlineEdit
-                        value={signoff}
-                        onChange={onSignoffChange}
-                        editable={editable}
-                        className="text-lg font-semibold text-foreground"
-                      />
+    <div className="flex flex-col items-center gap-4">
+      {/* Card Container */}
+      <div className="relative w-full max-w-md">
+        <div className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 rounded-2xl shadow-xl overflow-hidden min-h-[500px] flex flex-col">
+          
+          {/* Page Content */}
+          <div className="flex-1 flex flex-col">
+            {currentPage === 0 ? (
+              // Cover Page
+              <div className="relative flex-1 flex flex-col">
+                {isGeneratingImage ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Spinner className="h-10 w-10" />
+                      <p className="text-sm text-muted-foreground">Creating your card...</p>
                     </div>
                   </div>
-
-                  {/* From line */}
-                  <p className="text-sm text-muted-foreground mt-6">
-                    With love, {senderName}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Messages from friends & family
-                  </p>
-                  
-                  <div className="space-y-4">
-                    {contributionPages[currentPage - 1]?.map((contrib) => (
-                      <div 
-                        key={contrib.id} 
-                        className="bg-background/50 rounded-lg p-4 border border-border/30"
-                      >
-                        <p className="text-base text-foreground/90 italic leading-relaxed">
-                          &ldquo;{contrib.message}&rdquo;
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2 font-medium">
-                          — {contrib.contributor_name}
-                        </p>
+                ) : (
+                  <>
+                    {imageUrl && (
+                      <div className="relative flex-1 w-full">
+                        <Image
+                          src={imageUrl}
+                          alt="Card cover"
+                          fill
+                          className="object-cover"
+                          crossOrigin="anonymous"
+                          priority
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Page Navigation */}
-              {(totalPages > 1 || showAddPageButton) && (
-                <div 
-                  className="flex items-center justify-center gap-3 pt-4 mt-auto border-t border-border/30"
-                  data-nav
-                >
-                  {totalPages > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => goToPage(currentPage - 1, e)}
-                      disabled={currentPage === 0}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                  )}
-                  
-                  <div className="flex gap-1.5 items-center">
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={(e) => goToPage(i, e)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          i === currentPage 
-                            ? 'bg-primary' 
-                            : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                        }`}
-                      />
-                    ))}
-                    
-                    {/* Add Page Button */}
-                    {showAddPageButton && onAddPage && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onAddPage()
-                        }}
-                        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-                        title="Add a page for contributors"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add Page
-                      </Button>
                     )}
-                  </div>
-                  
-                  {totalPages > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => goToPage(currentPage + 1, e)}
-                      disabled={currentPage === totalPages - 1}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Front cover */}
-          <div 
-            className="absolute inset-0 w-full rounded-2xl shadow-2xl overflow-hidden transition-transform duration-700 ease-in-out"
-            style={{ 
-              transformStyle: 'preserve-3d',
-              transformOrigin: 'left center',
-              transform: isOpen ? 'rotateY(-160deg)' : 'rotateY(0deg)',
-              backfaceVisibility: 'hidden',
-            }}
-            onClick={handleCardClick}
-          >
-            {/* Front of cover */}
-            <div 
-              className="absolute inset-0 bg-gradient-to-br from-rose-100 via-amber-50 to-orange-100 dark:from-stone-700 dark:via-stone-800 dark:to-stone-900"
-              style={{ backfaceVisibility: 'hidden' }}
-            >
-              {isGeneratingImage ? (
-                <div className="w-full h-full flex items-center justify-center min-h-[500px]">
-                  <div className="flex flex-col items-center gap-3">
-                    <Spinner className="h-10 w-10" />
-                    <p className="text-sm text-muted-foreground">Creating your card...</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="relative w-full h-full min-h-[500px] flex flex-col">
-                  {imageUrl && (
-                    <div className="relative flex-1 w-full overflow-hidden">
-                      <Image
-                        src={imageUrl}
-                        alt="Card cover"
-                        fill
-                        className="object-cover"
-                        crossOrigin="anonymous"
-                        priority
+                    
+                    {/* Headline overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <InlineEdit
+                        value={headline}
+                        onChange={onHeadlineChange}
+                        editable={editable}
+                        className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg block"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <p className="text-sm mt-2 opacity-80">
+                        For {recipientName}
+                      </p>
                     </div>
-                  )}
-                  
-                  {/* Headline overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+
+                    {/* Contribution count badge */}
+                    {contributions.length > 0 && (
+                      <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
+                        {contributions.length} {contributions.length === 1 ? 'message' : 'messages'} inside
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : currentPage === 1 ? (
+              // Main Message Page
+              <div className="flex-1 flex flex-col p-6">
+                <p className="text-sm text-muted-foreground italic mb-6">To: {recipientName}</p>
+                
+                <div className="flex-1 flex flex-col justify-center">
+                  <p className="text-lg text-foreground/90 mb-4">
+                    Hey {recipientName},
+                  </p>
+
+                  <div className="mb-4">
                     <InlineEdit
-                      value={headline}
-                      onChange={onHeadlineChange}
+                      value={message}
+                      onChange={onMessageChange}
+                      multiline
                       editable={editable}
-                      className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg"
+                      className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap block"
                     />
-                    <p className="text-sm mt-2 opacity-80">
-                      For {recipientName}
-                    </p>
                   </div>
 
-                  {/* Click hint */}
-                  <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/70 text-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                    {editable ? 'Click text to edit' : 'Click to open'}
+                  <div className="mt-6">
+                    <InlineEdit
+                      value={signoff}
+                      onChange={onSignoffChange}
+                      editable={editable}
+                      className="text-lg font-semibold text-foreground block"
+                    />
                   </div>
-
-                  {/* Contribution count badge */}
-                  {contributions.length > 0 && (
-                    <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                      {contributions.length} {contributions.length === 1 ? 'message' : 'messages'} inside
-                    </div>
-                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Back of cover */}
-            <div 
-              className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 p-6 flex items-center justify-center"
-              style={{ 
-                backfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-              }}
-            >
-              <div className="text-center space-y-2">
-                <p className="text-lg font-serif italic text-muted-foreground">
-                  Made with love
-                </p>
-                <div className="w-16 h-px bg-border mx-auto" />
-                <p className="text-sm text-muted-foreground">
-                  CardAI
+                <p className="text-sm text-muted-foreground mt-6">
+                  With love, {senderName}
                 </p>
               </div>
+            ) : (
+              // Contributor Pages
+              <div className="flex-1 flex flex-col p-6">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                  Messages from friends & family
+                </p>
+                
+                <div className="flex-1 space-y-4">
+                  {contributionPages[currentPage - 2]?.map((contrib) => (
+                    <div 
+                      key={contrib.id} 
+                      className="bg-background/50 rounded-lg p-4 border border-border/30"
+                    >
+                      <p className="text-base text-foreground/90 italic leading-relaxed">
+                        &ldquo;{contrib.message}&rdquo;
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2 font-medium">
+                        — {contrib.contributor_name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Page {currentPage - 1} of {contributionPages.length}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border/30 bg-background/30">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 0}
+              className="h-10 w-10 p-0"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            
+            <div className="flex gap-1.5 items-center">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i)}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    i === currentPage 
+                      ? 'bg-primary' 
+                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                  }`}
+                  aria-label={`Go to page ${i + 1}`}
+                />
+              ))}
             </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={!canGoRight}
+              className={`h-10 w-10 p-0 ${isLastPage && editable ? 'text-primary' : ''}`}
+              title={isLastPage && editable ? 'Add a new page' : 'Next page'}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Open/Close Button */}
-      <Button
-        variant="outline"
-        onClick={() => setIsOpen(!isOpen)}
-        className="mt-2"
-      >
-        {isOpen ? 'Close Card' : 'Open Card'}
-      </Button>
+      {/* Page indicator text */}
+      <p className="text-sm text-muted-foreground">
+        {currentPage === 0 && 'Cover'}
+        {currentPage === 1 && 'Your message'}
+        {currentPage > 1 && `Contributor messages (${currentPage - 1}/${contributionPages.length})`}
+        {editable && isLastPage && (
+          <span className="ml-2 text-primary">
+            — Press right arrow to add a page
+          </span>
+        )}
+      </p>
     </div>
   )
 }

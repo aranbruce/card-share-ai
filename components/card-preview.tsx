@@ -54,8 +54,8 @@ export function CardPreview({
         <h2 className="text-2xl font-bold mb-2">Your Card</h2>
         <p className="text-muted-foreground">
           {editMode 
-            ? 'Click the card to open it. Click any text to edit directly.' 
-            : 'Preview your virtual card'}
+            ? 'Use arrows to flip pages. Click any text to edit it.' 
+            : 'Use arrows to flip through the card'}
         </p>
       </div>
 
@@ -85,9 +85,7 @@ export function CardPreview({
         onHeadlineChange={onHeadlineChange}
         onMessageChange={onMessageChange}
         onSignoffChange={onSignoffChange}
-        showAddPageButton={editMode}
         onAddPage={() => {
-          // This is informational - contributors will add pages by adding messages
           alert('Share the contributor link to let friends and family add their messages. Each page can hold 3 messages!')
         }}
       />
