@@ -14,6 +14,7 @@ import { ShareModal } from '@/components/share-modal'
 interface CardData {
   id: string
   recipient_name: string
+  recipient_email?: string
   sender_name: string
   copy_headline: string
   copy_message: string
@@ -412,7 +413,13 @@ export default function CardDetailPage() {
           recipientEmail={card.recipient_email || ''}
           contributorLinkId={card.contributor_link_id}
           isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
+          onClose={() => {
+            setShowShareModal(false)
+            loadCard() // Refresh card data to get updated email/status
+          }}
+          onEmailUpdate={(email) => {
+            setCard(prev => prev ? { ...prev, recipient_email: email } : null)
+          }}
         />
       </div>
     </div>
