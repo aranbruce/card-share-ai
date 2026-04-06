@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
-import Image from 'next/image'
+import { Card3D } from '@/components/card-3d'
 
 interface Contribution {
   id: string
@@ -17,6 +17,8 @@ interface Contribution {
 
 interface CardData {
   id: string
+  recipient_name: string
+  sender_name: string
   copy_headline: string
   copy_message: string
   copy_signoff: string
@@ -124,39 +126,28 @@ export default function ContributeCardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div>
+    <div className="min-h-screen bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">You&apos;re Invited!</h1>
           <p className="text-muted-foreground">
             Add your message to this special card before it&apos;s sent
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Card Preview */}
-          <Card className="overflow-hidden">
-            {card.image_url && (
-              <div className="aspect-square relative w-full overflow-hidden bg-secondary">
-                <Image
-                  src={card.image_url}
-                  alt="Card"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            )}
-            <div className="p-6 bg-background space-y-4">
-              <h2 className="text-xl font-bold text-balance">
-                {card.copy_headline}
-              </h2>
-              <p className="text-sm leading-relaxed text-balance">
-                {card.copy_message}
-              </p>
-              <p className="text-sm font-semibold">{card.copy_signoff}</p>
-            </div>
-          </Card>
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+          {/* 3D Card Preview */}
+          <div className="flex justify-center">
+            <Card3D
+              imageUrl={card.image_url}
+              headline={card.copy_headline}
+              message={card.copy_message}
+              signoff={card.copy_signoff}
+              senderName={card.sender_name || 'Someone special'}
+              recipientName={card.recipient_name || 'You'}
+              contributions={contributions}
+            />
+          </div>
 
           {/* Contribution Section */}
           <div className="space-y-6">
@@ -173,7 +164,7 @@ export default function ContributeCardPage() {
 
                 {submitted && (
                   <div className="p-3 bg-green-500/10 border border-green-500/20 rounded text-green-600 text-sm">
-                    Message added! Thank you!
+                    Message added! Open the card to see it inside.
                   </div>
                 )}
 
@@ -205,7 +196,7 @@ export default function ContributeCardPage() {
                     id="message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Write your message here..."
+                    placeholder="Write your heartfelt message..."
                     disabled={submitting}
                     required
                     className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-24"
@@ -223,33 +214,20 @@ export default function ContributeCardPage() {
                       Adding Message...
                     </>
                   ) : (
-                    'Add Message'
+                    'Add Message to Card'
                   )}
                 </Button>
               </form>
             </Card>
 
-            {/* Contributions List */}
+            {/* Contributions Count */}
             {contributions.length > 0 && (
-              <Card className="p-6">
-                <h3 className="font-bold mb-4">
-                  Messages ({contributions.length})
-                </h3>
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {contributions.map((contrib) => (
-                    <div
-                      key={contrib.id}
-                      className="p-3 bg-secondary/50 rounded"
-                    >
-                      <p className="text-sm font-semibold mb-1">
-                        {contrib.contributor_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {contrib.message}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+              <Card className="p-4 bg-primary/5 border-primary/20">
+                <p className="text-sm text-center">
+                  <span className="font-semibold">{contributions.length}</span>{' '}
+                  {contributions.length === 1 ? 'message has' : 'messages have'} been added.
+                  <span className="text-muted-foreground"> Open the card to see them!</span>
+                </p>
               </Card>
             )}
           </div>
