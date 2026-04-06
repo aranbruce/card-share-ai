@@ -12,7 +12,6 @@ interface CardDetailsFormProps {
     cardType: string
     senderName: string
     recipientName: string
-    recipientEmail: string
     customMessage?: string
   }) => Promise<void>
   isLoading?: boolean
@@ -27,7 +26,6 @@ export function CardDetailsForm({
 }: CardDetailsFormProps) {
   const [senderName, setSenderName] = useState('')
   const [recipientName, setRecipientName] = useState('')
-  const [recipientEmail, setRecipientEmail] = useState('')
   const [customMessage, setCustomMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -35,7 +33,7 @@ export function CardDetailsForm({
     e.preventDefault()
     setError('')
 
-    if (!senderName || !recipientName || !recipientEmail) {
+    if (!senderName || !recipientName) {
       setError('Please fill in all required fields')
       return
     }
@@ -45,7 +43,6 @@ export function CardDetailsForm({
         cardType,
         senderName,
         recipientName,
-        recipientEmail,
         customMessage: customMessage || undefined,
       })
     } catch (err) {
@@ -90,21 +87,6 @@ export function CardDetailsForm({
             value={recipientName}
             onChange={(e) => setRecipientName(e.target.value)}
             placeholder="Recipient&apos;s name"
-            disabled={isLoading}
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-2">
-            Recipient Email *
-          </label>
-          <Input
-            id="email"
-            type="email"
-            value={recipientEmail}
-            onChange={(e) => setRecipientEmail(e.target.value)}
-            placeholder="recipient@example.com"
             disabled={isLoading}
             required
           />

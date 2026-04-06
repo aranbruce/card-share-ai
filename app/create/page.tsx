@@ -20,7 +20,6 @@ interface CardData {
 interface PendingCard {
   cardType: string
   recipientName: string
-  recipientEmail: string
   senderName: string
   copyHeadline: string
   copyMessage: string
@@ -38,7 +37,6 @@ export default function CreateCardPage() {
   const [selectedType, setSelectedType] = useState('')
   const [senderName, setSenderName] = useState('')
   const [recipientName, setRecipientName] = useState('')
-  const [recipientEmail, setRecipientEmail] = useState('')
   const [cardData, setCardData] = useState<CardData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -64,7 +62,6 @@ export default function CreateCardPage() {
     cardType: string
     senderName: string
     recipientName: string
-    recipientEmail: string
     customMessage?: string
   }) => {
     setIsLoading(true)
@@ -106,7 +103,6 @@ export default function CreateCardPage() {
 
       setSenderName(details.senderName)
       setRecipientName(details.recipientName)
-      setRecipientEmail(details.recipientEmail)
       setCardData({
         cardType: details.cardType,
         headline: cardCopy.headline,
@@ -188,7 +184,6 @@ export default function CreateCardPage() {
     const pendingCard: PendingCard = {
       cardType: cardData.cardType,
       recipientName,
-      recipientEmail,
       senderName,
       copyHeadline: cardData.headline,
       copyMessage: cardData.message,
@@ -219,7 +214,6 @@ export default function CreateCardPage() {
         body: JSON.stringify({
           cardType: cardData.cardType,
           recipientName,
-          recipientEmail,
           senderName,
           copyHeadline: cardData.headline,
           copyMessage: cardData.message,

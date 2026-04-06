@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Move, Maximize2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2, Plus } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -24,6 +24,8 @@ interface Card3DProps {
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
   onSignoffChange?: (value: string) => void
+  onAddPage?: () => void
+  showAddPageButton?: boolean
 }
 
 const MESSAGES_PER_PAGE = 3
@@ -261,6 +263,8 @@ export function Card3D({
   onHeadlineChange,
   onMessageChange,
   onSignoffChange,
+  onAddPage,
+  showAddPageButton = false,
 }: Card3DProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
@@ -361,22 +365,24 @@ export function Card3D({
               )}
 
               {/* Page Navigation */}
-              {totalPages > 1 && (
+              {(totalPages > 1 || showAddPageButton) && (
                 <div 
                   className="flex items-center justify-center gap-3 pt-4 mt-auto border-t border-border/30"
                   data-nav
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => goToPage(currentPage - 1, e)}
-                    disabled={currentPage === 0}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
+                  {totalPages > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => goToPage(currentPage - 1, e)}
+                      disabled={currentPage === 0}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  )}
                   
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1.5 items-center">
                     {Array.from({ length: totalPages }).map((_, i) => (
                       <button
                         key={i}
@@ -388,17 +394,36 @@ export function Card3D({
                         }`}
                       />
                     ))}
+                    
+                    {/* Add Page Button */}
+                    {showAddPageButton && onAddPage && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onAddPage()
+                        }}
+                        className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                        title="Add a page for contributors"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Page
+                      </Button>
+                    )}
                   </div>
                   
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => goToPage(currentPage + 1, e)}
-                    disabled={currentPage === totalPages - 1}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  {totalPages > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => goToPage(currentPage + 1, e)}
+                      disabled={currentPage === totalPages - 1}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               )}
             </div>

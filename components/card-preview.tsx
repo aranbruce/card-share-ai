@@ -85,6 +85,11 @@ export function CardPreview({
         onHeadlineChange={onHeadlineChange}
         onMessageChange={onMessageChange}
         onSignoffChange={onSignoffChange}
+        showAddPageButton={editMode}
+        onAddPage={() => {
+          // This is informational - contributors will add pages by adding messages
+          alert('Share the contributor link to let friends and family add their messages. Each page can hold 3 messages!')
+        }}
       />
 
       {/* Action Buttons */}
