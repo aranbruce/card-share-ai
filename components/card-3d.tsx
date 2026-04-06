@@ -23,9 +23,12 @@ interface Card3DProps {
   onMessageChange?: (value: string) => void
   onAddPage?: () => void
   extraPages?: number
-  onRegenerateCopy?: () => Promise<void>
+  onRegenerateHeadline?: () => Promise<void>
+  onRegenerateMessage?: () => Promise<void>
   onRegenerateImage?: () => Promise<void>
-  isRegenerating?: boolean
+  isRegeneratingHeadline?: boolean
+  isRegeneratingMessage?: boolean
+  isRegeneratingImage?: boolean
 }
 
 const MESSAGES_PER_PAGE = 3
@@ -260,9 +263,12 @@ export function Card3D({
   onMessageChange,
   onAddPage,
   extraPages = 0,
-  onRegenerateCopy,
+  onRegenerateHeadline,
+  onRegenerateMessage,
   onRegenerateImage,
-  isRegenerating = false,
+  isRegeneratingHeadline = false,
+  isRegeneratingMessage = false,
+  isRegeneratingImage = false,
 }: Card3DProps) {
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -334,11 +340,11 @@ export function Card3D({
                               e.stopPropagation()
                               onRegenerateImage()
                             }}
-                            disabled={isRegenerating || isGeneratingImage}
+                            disabled={isRegeneratingImage || isGeneratingImage}
                             className="absolute top-4 right-4 p-2 rounded-full bg-background/80 border border-border shadow-sm hover:bg-primary/10 hover:border-primary/30 transition-all opacity-0 group-hover/image:opacity-100 disabled:opacity-50"
                             title="Regenerate image with AI"
                           >
-                            <Sparkles className={`h-4 w-4 text-primary ${isRegenerating || isGeneratingImage ? 'animate-pulse' : ''}`} />
+                            <Sparkles className={`h-4 w-4 text-primary ${isRegeneratingImage || isGeneratingImage ? 'animate-pulse' : ''}`} />
                           </button>
                         )}
                       </div>
@@ -350,8 +356,8 @@ export function Card3D({
                         value={headline}
                         onChange={onHeadlineChange}
                         editable={editable}
-                        onRegenerate={onRegenerateCopy}
-                        isRegenerating={isRegenerating}
+                        onRegenerate={onRegenerateHeadline}
+                        isRegenerating={isRegeneratingHeadline}
                         className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg block"
                       />
                       <p className="text-sm mt-2 opacity-80">
@@ -377,8 +383,8 @@ export function Card3D({
                       value={message}
                       onChange={onMessageChange}
                       editable={editable}
-                      onRegenerate={onRegenerateCopy}
-                      isRegenerating={isRegenerating}
+                      onRegenerate={onRegenerateMessage}
+                      isRegenerating={isRegeneratingMessage}
                       className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
                     />
                   </DraggableWrapper>

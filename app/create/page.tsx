@@ -38,7 +38,9 @@ export default function CreateCardPage() {
   const [recipientName, setRecipientName] = useState('')
   const [cardData, setCardData] = useState<CardData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
+  const [isRegeneratingMessage, setIsRegeneratingMessage] = useState(false)
+  const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [error, setError] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
@@ -122,41 +124,72 @@ export default function CreateCardPage() {
     }
   }
 
-  const handleRegenerateCopy = async () => {
+  const handleRegenerateHeadline = async () => {
     if (!cardData) return
 
-    setIsRegenerating(true)
+    setIsRegeneratingHeadline(true)
     try {
-      const response = await fetch('/api/generate-card-copy', {
+      const response = await fetch('/api/regenerate-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          field: 'headline',
           cardType: cardData.cardType,
           recipientName,
           senderName,
+          currentValue: cardData.headline,
         }),
       })
 
-      if (!response.ok) throw new Error('Failed to regenerate copy')
+      if (!response.ok) throw new Error('Failed to regenerate headline')
 
-      const { cardCopy } = await response.json()
-      const fullMessage = `${cardCopy.message}\n\n${cardCopy.signoff}`
+      const { text } = await response.json()
       setCardData({
         ...cardData,
-        headline: cardCopy.headline,
-        message: fullMessage,
+        headline: text,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate copy')
+      setError(err instanceof Error ? err.message : 'Failed to regenerate headline')
     } finally {
-      setIsRegenerating(false)
+      setIsRegeneratingHeadline(false)
+    }
+  }
+
+  const handleRegenerateMessage = async () => {
+    if (!cardData) return
+
+    setIsRegeneratingMessage(true)
+    try {
+      const response = await fetch('/api/regenerate-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          field: 'message',
+          cardType: cardData.cardType,
+          recipientName,
+          senderName,
+          currentValue: cardData.message,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to regenerate message')
+
+      const { text } = await response.json()
+      setCardData({
+        ...cardData,
+        message: text,
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to regenerate message')
+    } finally {
+      setIsRegeneratingMessage(false)
     }
   }
 
   const handleRegenerateImage = async () => {
     if (!cardData) return
 
-    setIsRegenerating(true)
+    setIsRegeneratingImage(true)
     try {
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -176,7 +209,7 @@ export default function CreateCardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate image')
     } finally {
-      setIsRegenerating(false)
+      setIsRegeneratingImage(false)
     }
   }
 
@@ -282,9 +315,12 @@ export default function CreateCardPage() {
             onMessageChange={(value) =>
               setCardData({ ...cardData, message: value })
             }
-            onRegenerateCopy={handleRegenerateCopy}
+            onRegenerateHeadline={handleRegenerateHeadline}
+            onRegenerateMessage={handleRegenerateMessage}
             onRegenerateImage={handleRegenerateImage}
-            isRegenerating={isRegenerating}
+            isRegeneratingHeadline={isRegeneratingHeadline}
+            isRegeneratingMessage={isRegeneratingMessage}
+            isRegeneratingImage={isRegeneratingImage}
             onSave={handleSaveCard}
             isSaving={isLoading}
             extraPages={extraPages}

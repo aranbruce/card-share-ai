@@ -12,11 +12,14 @@ interface CardPreviewProps {
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
-  onRegenerateCopy?: () => Promise<void>
+  onRegenerateHeadline?: () => Promise<void>
+  onRegenerateMessage?: () => Promise<void>
   onRegenerateImage?: () => Promise<void>
   onSave?: () => Promise<void>
   isSaving?: boolean
-  isRegenerating?: boolean
+  isRegeneratingHeadline?: boolean
+  isRegeneratingMessage?: boolean
+  isRegeneratingImage?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
   editMode?: boolean
@@ -37,11 +40,14 @@ export function CardPreview({
   senderName,
   recipientName,
   isGeneratingImage,
-  onRegenerateCopy,
+  onRegenerateHeadline,
+  onRegenerateMessage,
   onRegenerateImage,
   onSave,
   isSaving,
-  isRegenerating,
+  isRegeneratingHeadline,
+  isRegeneratingMessage,
+  isRegeneratingImage,
   onHeadlineChange,
   onMessageChange,
   editMode,
@@ -87,9 +93,12 @@ export function CardPreview({
         onMessageChange={onMessageChange}
         extraPages={extraPages}
         onAddPage={onAddPage}
-        onRegenerateCopy={onRegenerateCopy}
+        onRegenerateHeadline={onRegenerateHeadline}
+        onRegenerateMessage={onRegenerateMessage}
         onRegenerateImage={onRegenerateImage}
-        isRegenerating={isRegenerating}
+        isRegeneratingHeadline={isRegeneratingHeadline}
+        isRegeneratingMessage={isRegeneratingMessage}
+        isRegeneratingImage={isRegeneratingImage}
       />
 
       {/* Save Button */}
