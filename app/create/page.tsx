@@ -12,7 +12,6 @@ interface CardData {
   cardType: string
   headline: string
   message: string
-  signoff: string
   imageUrl: string
   imagePrompt: string
 }
@@ -23,7 +22,6 @@ interface PendingCard {
   senderName: string
   copyHeadline: string
   copyMessage: string
-  copySignoff: string
   imageUrl: string
   imagePrompt: string
   extraPages: number
@@ -105,11 +103,12 @@ export default function CreateCardPage() {
 
       setSenderName(details.senderName)
       setRecipientName(details.recipientName)
+      // Combine message and signoff into a single field
+      const fullMessage = `${cardCopy.message}\n\n${cardCopy.signoff}`
       setCardData({
         cardType: details.cardType,
         headline: cardCopy.headline,
-        message: cardCopy.message,
-        signoff: cardCopy.signoff,
+        message: fullMessage,
         imageUrl,
         imagePrompt: cardCopy.imagePrompt,
       })
@@ -140,11 +139,11 @@ export default function CreateCardPage() {
       if (!response.ok) throw new Error('Failed to regenerate copy')
 
       const { cardCopy } = await response.json()
+      const fullMessage = `${cardCopy.message}\n\n${cardCopy.signoff}`
       setCardData({
         ...cardData,
         headline: cardCopy.headline,
-        message: cardCopy.message,
-        signoff: cardCopy.signoff,
+        message: fullMessage,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate copy')
@@ -189,7 +188,6 @@ export default function CreateCardPage() {
       senderName,
       copyHeadline: cardData.headline,
       copyMessage: cardData.message,
-      copySignoff: cardData.signoff,
       imageUrl: cardData.imageUrl,
       imagePrompt: cardData.imagePrompt,
       extraPages,
@@ -220,7 +218,6 @@ export default function CreateCardPage() {
           senderName,
           copyHeadline: cardData.headline,
           copyMessage: cardData.message,
-          copySignoff: cardData.signoff,
           imageUrl: cardData.imageUrl,
           imagePrompt: cardData.imagePrompt,
           extraPages,
@@ -273,7 +270,6 @@ export default function CreateCardPage() {
             imageUrl={cardData.imageUrl}
             headline={cardData.headline}
             message={cardData.message}
-            signoff={cardData.signoff}
             senderName={senderName}
             recipientName={recipientName}
             editMode={editMode}
@@ -284,9 +280,6 @@ export default function CreateCardPage() {
             }
             onMessageChange={(value) =>
               setCardData({ ...cardData, message: value })
-            }
-            onSignoffChange={(value) =>
-              setCardData({ ...cardData, signoff: value })
             }
             onRegenerateCopy={handleRegenerateCopy}
             onRegenerateImage={handleRegenerateImage}

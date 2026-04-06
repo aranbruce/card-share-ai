@@ -10,7 +10,6 @@ interface Card3DProps {
   imageUrl: string
   headline: string
   message: string
-  signoff: string
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
@@ -22,7 +21,6 @@ interface Card3DProps {
   editable?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
-  onSignoffChange?: (value: string) => void
   onAddPage?: () => void
   extraPages?: number
 }
@@ -214,7 +212,6 @@ export function Card3D({
   imageUrl,
   headline,
   message,
-  signoff,
   senderName,
   recipientName,
   isGeneratingImage,
@@ -222,7 +219,6 @@ export function Card3D({
   editable = false,
   onHeadlineChange,
   onMessageChange,
-  onSignoffChange,
   onAddPage,
   extraPages = 0,
 }: Card3DProps) {
@@ -240,16 +236,17 @@ export function Card3D({
 
   const goToPage = (page: number) => {
     if (page < 0) return
-    
-    // If going beyond last page and in edit mode, trigger add page
-    if (page >= totalPages) {
-      if (editable && onAddPage) {
-        onAddPage()
-      }
-      return
+    if (page < totalPages) {
+      setCurrentPage(page)
     }
-    
-    setCurrentPage(page)
+  }
+  
+  const handleAddPage = () => {
+    if (onAddPage) {
+      onAddPage()
+      // Navigate to the new page after adding
+      setCurrentPage(totalPages)
+    }
   }
 
   const isLastPage = currentPage === totalPages - 1
@@ -317,21 +314,12 @@ export function Card3D({
               <div className="flex-1 flex flex-col p-6 overflow-hidden">
                 <div className="flex-1 flex flex-col justify-center">
                   <DraggableWrapper editable={editable}>
-                    <div className="space-y-4">
-                      <InlineEdit
-                        value={message}
-                        onChange={onMessageChange}
-                        editable={editable}
-                        className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
-                      />
-
-                      <InlineEdit
-                        value={signoff}
-                        onChange={onSignoffChange}
-                        editable={editable}
-                        className="text-lg font-semibold text-foreground"
-                      />
-                    </div>
+                    <InlineEdit
+                      value={message}
+                      onChange={onMessageChange}
+                      editable={editable}
+                      className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
+                    />
                   </DraggableWrapper>
                 </div>
               </div>
@@ -383,58 +371,46 @@ export function Card3D({
             )}
           </div>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border/30 bg-background/30">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 0}
-              className="h-10 w-10 p-0"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            
-            <div className="flex gap-1.5 items-center">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    i === currentPage 
-                      ? 'bg-primary' 
-                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                  }`}
-                  aria-label={`Go to page ${i + 1}`}
-                />
-              ))}
-            </div>
-            
-            {isLastPage && editable && onAddPage ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onAddPage()}
-                className="h-10 px-3 text-primary border-primary/30 hover:bg-primary/10"
-                title="Add a new page for contributors"
-              >
-                <ChevronRight className="h-4 w-4 mr-1" />
-                Add Page
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => goToPage(currentPage + 1)}
-                disabled={!canGoRight}
-                className="h-10 w-10 p-0"
-                title="Next page"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
         </div>
+      </div>
+
+      {/* Navigation - Outside the card */}
+      <div className="flex items-center justify-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 0}
+          className="h-10 w-10 p-0"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        
+        <div className="flex gap-2 items-center">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                i === currentPage 
+                  ? 'bg-primary' 
+                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+              }`}
+              aria-label={`Go to page ${i + 1}`}
+            />
+          ))}
+        </div>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => isLastPage && editable ? handleAddPage() : goToPage(currentPage + 1)}
+          disabled={!canGoRight && !editable}
+          className="h-10 w-10 p-0"
+          title={isLastPage && editable ? "Add a new page" : "Next page"}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Page indicator text */}

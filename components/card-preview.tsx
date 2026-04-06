@@ -9,7 +9,6 @@ interface CardPreviewProps {
   imageUrl: string
   headline: string
   message: string
-  signoff: string
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
@@ -19,7 +18,6 @@ interface CardPreviewProps {
   isSaving?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
-  onSignoffChange?: (value: string) => void
   editMode?: boolean
   isGuest?: boolean
   contributions?: Array<{
@@ -35,7 +33,6 @@ export function CardPreview({
   imageUrl,
   headline,
   message,
-  signoff,
   senderName,
   recipientName,
   isGeneratingImage,
@@ -45,7 +42,6 @@ export function CardPreview({
   isSaving,
   onHeadlineChange,
   onMessageChange,
-  onSignoffChange,
   editMode,
   isGuest,
   contributions = [],
@@ -80,7 +76,6 @@ export function CardPreview({
         imageUrl={imageUrl}
         headline={headline}
         message={message}
-        signoff={signoff}
         senderName={senderName}
         recipientName={recipientName}
         isGeneratingImage={isGeneratingImage}
@@ -88,7 +83,6 @@ export function CardPreview({
         editable={editMode}
         onHeadlineChange={onHeadlineChange}
         onMessageChange={onMessageChange}
-        onSignoffChange={onSignoffChange}
         extraPages={extraPages}
         onAddPage={onAddPage}
       />

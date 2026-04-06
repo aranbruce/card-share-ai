@@ -21,7 +21,6 @@ interface CardData {
   sender_name: string
   copy_headline: string
   copy_message: string
-  copy_signoff: string
   image_url: string
   status: string
   extra_pages?: number
@@ -143,7 +142,6 @@ export default function ContributeCardPage() {
               imageUrl={card.image_url}
               headline={card.copy_headline}
               message={card.copy_message}
-              signoff={card.copy_signoff}
               senderName={card.sender_name || 'Someone special'}
               recipientName={card.recipient_name || 'You'}
               contributions={contributions}
