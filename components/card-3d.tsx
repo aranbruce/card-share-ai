@@ -238,17 +238,20 @@ export function Card3D({
   const goToPage = (page: number) => {
     if (page < 0) return
     
-    // If going beyond last page, trigger add page
-    if (page >= totalPages && editable && onAddPage) {
-      onAddPage()
+    // If going beyond last page and in edit mode, trigger add page
+    if (page >= totalPages) {
+      if (editable && onAddPage) {
+        onAddPage()
+      }
       return
     }
     
-    setCurrentPage(Math.max(0, Math.min(page, totalPages - 1)))
+    setCurrentPage(page)
   }
 
   const isLastPage = currentPage === totalPages - 1
-  const canGoRight = editable || currentPage < totalPages - 1
+  // Always allow right navigation when in edit mode (to add pages)
+  const canGoRight = currentPage < totalPages - 1 || (editable && onAddPage !== undefined)
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -386,16 +389,29 @@ export function Card3D({
               ))}
             </div>
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={!canGoRight}
-              className={`h-10 w-10 p-0 ${isLastPage && editable ? 'text-primary' : ''}`}
-              title={isLastPage && editable ? 'Add a new page' : 'Next page'}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
+            {isLastPage && editable && onAddPage ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onAddPage()}
+                className="h-10 px-3 text-primary border-primary/30 hover:bg-primary/10"
+                title="Add a new page for contributors"
+              >
+                <ChevronRight className="h-4 w-4 mr-1" />
+                Add Page
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={!canGoRight}
+                className="h-10 w-10 p-0"
+                title="Next page"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -405,11 +421,6 @@ export function Card3D({
         {currentPage === 0 && 'Cover'}
         {currentPage === 1 && 'Your message'}
         {currentPage > 1 && `Contributor messages (${currentPage - 1}/${contributionPages.length})`}
-        {editable && isLastPage && (
-          <span className="ml-2 text-primary">
-            — Press right arrow to add a page
-          </span>
-        )}
       </p>
     </div>
   )
