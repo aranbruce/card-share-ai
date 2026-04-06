@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2 } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -28,36 +28,20 @@ interface Card3DProps {
 
 const MESSAGES_PER_PAGE = 3
 
-// Inline edit component with identical styling
+// Inline edit component - uses contentEditable for truly identical sizing
 function InlineEdit({
   value,
   onChange,
   className,
-  multiline = false,
   editable = false,
 }: {
   value: string
   onChange?: (value: string) => void
   className?: string
-  multiline?: boolean
   editable?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(value)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    setEditValue(value)
-  }, [value])
-
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus()
-      textareaRef.current.select()
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px'
-    }
-  }, [isEditing])
+  const editRef = useRef<HTMLDivElement>(null)
 
   const handleClick = (e: React.MouseEvent) => {
     if (editable && onChange) {
@@ -66,56 +50,162 @@ function InlineEdit({
     }
   }
 
+  useEffect(() => {
+    if (isEditing && editRef.current) {
+      editRef.current.focus()
+      // Select all text
+      const range = document.createRange()
+      range.selectNodeContents(editRef.current)
+      const sel = window.getSelection()
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+    }
+  }, [isEditing])
+
   const handleBlur = () => {
     setIsEditing(false)
-    if (editValue !== value) {
-      onChange?.(editValue)
+    if (editRef.current) {
+      const newValue = editRef.current.innerText
+      if (newValue !== value) {
+        onChange?.(newValue)
+      }
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setEditValue(value)
+      if (editRef.current) {
+        editRef.current.innerText = value
+      }
       setIsEditing(false)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditValue(e.target.value)
-    e.target.style.height = 'auto'
-    e.target.style.height = e.target.scrollHeight + 'px'
-  }
-
   if (isEditing) {
     return (
-      <textarea
-        ref={textareaRef}
-        value={editValue}
-        onChange={handleChange}
+      <div
+        ref={editRef}
+        contentEditable
+        suppressContentEditableWarning
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         onClick={(e) => e.stopPropagation()}
-        className={`${className} bg-transparent border-none outline-none resize-none w-full p-0 m-0`}
-        rows={multiline ? 4 : 1}
-        style={{
-          lineHeight: 'inherit',
-          fontFamily: 'inherit',
-          fontSize: 'inherit',
-          fontWeight: 'inherit',
-          letterSpacing: 'inherit',
-          color: 'inherit',
-        }}
-      />
+        className={`${className} outline-none ring-1 ring-primary/30 rounded px-1 -mx-1 bg-primary/5`}
+      >
+        {value}
+      </div>
     )
   }
 
   return (
-    <span
+    <div
       onClick={handleClick}
       className={`${className} ${editable ? 'cursor-text hover:bg-primary/5 rounded px-1 -mx-1 transition-colors' : ''}`}
     >
       {value}
-    </span>
+    </div>
+  )
+}
+
+// Draggable wrapper for positioning content
+function DraggableWrapper({
+  children,
+  editable = false,
+}: {
+  children: React.ReactNode
+  editable?: boolean
+}) {
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [size, setSize] = useState({ width: 100 }) // percentage
+  const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
+
+  const handleMouseDown = (e: React.MouseEvent, type: 'drag' | 'resize') => {
+    if (!editable) return
+    e.preventDefault()
+    e.stopPropagation()
+    
+    startPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: position.x,
+      posY: position.y,
+      width: size.width,
+    }
+    
+    if (type === 'drag') setIsDragging(true)
+    if (type === 'resize') setIsResizing(true)
+  }
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const dx = e.clientX - startPos.current.x
+        const dy = e.clientY - startPos.current.y
+        setPosition({
+          x: startPos.current.posX + dx,
+          y: startPos.current.posY + dy,
+        })
+      }
+      if (isResizing && containerRef.current) {
+        const containerWidth = containerRef.current.parentElement?.offsetWidth || 300
+        const dx = e.clientX - startPos.current.x
+        const newWidth = startPos.current.width + (dx / containerWidth) * 100
+        setSize({ width: Math.max(50, Math.min(100, newWidth)) })
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      setIsResizing(false)
+    }
+
+    if (isDragging || isResizing) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging, isResizing])
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative group"
+      style={{
+        transform: editable ? `translate(${position.x}px, ${position.y}px)` : undefined,
+        width: editable ? `${size.width}%` : '100%',
+      }}
+    >
+      {editable && (
+        <>
+          {/* Drag handle */}
+          <div
+            onMouseDown={(e) => handleMouseDown(e, 'drag')}
+            className="absolute -top-3 left-1/2 -translate-x-1/2 bg-background border border-border rounded-full p-1 cursor-move opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+          >
+            <Move className="h-3 w-3 text-muted-foreground" />
+          </div>
+          
+          {/* Resize handle */}
+          <div
+            onMouseDown={(e) => handleMouseDown(e, 'resize')}
+            className="absolute -bottom-2 -right-2 bg-background border border-border rounded-full p-1 cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-10"
+          >
+            <Maximize2 className="h-3 w-3 text-muted-foreground" />
+          </div>
+          
+          {/* Visual border on hover */}
+          <div className="absolute inset-0 border border-dashed border-transparent group-hover:border-primary/20 rounded pointer-events-none -m-2 p-2" />
+        </>
+      )}
+      {children}
+    </div>
   )
 }
 
@@ -218,35 +308,34 @@ export function Card3D({
               </div>
             ) : currentPage === 1 ? (
               // Main Message Page
-              <div className="flex-1 flex flex-col p-6">
-                <p className="text-sm text-muted-foreground italic mb-6">To: {recipientName}</p>
+              <div className="flex-1 flex flex-col p-6 overflow-hidden">
+                <p className="text-sm text-muted-foreground italic mb-4">To: {recipientName}</p>
                 
-                <div className="flex-1 flex flex-col justify-center">
-                  <p className="text-lg text-foreground/90 mb-4">
-                    Hey {recipientName},
-                  </p>
+                <div className="flex-1 flex flex-col">
+                  <DraggableWrapper editable={editable}>
+                    <div className="space-y-4">
+                      <p className="text-lg text-foreground/90">
+                        Hey {recipientName},
+                      </p>
 
-                  <div className="mb-4">
-                    <InlineEdit
-                      value={message}
-                      onChange={onMessageChange}
-                      multiline
-                      editable={editable}
-                      className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap block"
-                    />
-                  </div>
+                      <InlineEdit
+                        value={message}
+                        onChange={onMessageChange}
+                        editable={editable}
+                        className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
+                      />
 
-                  <div className="mt-6">
-                    <InlineEdit
-                      value={signoff}
-                      onChange={onSignoffChange}
-                      editable={editable}
-                      className="text-lg font-semibold text-foreground block"
-                    />
-                  </div>
+                      <InlineEdit
+                        value={signoff}
+                        onChange={onSignoffChange}
+                        editable={editable}
+                        className="text-lg font-semibold text-foreground"
+                      />
+                    </div>
+                  </DraggableWrapper>
                 </div>
 
-                <p className="text-sm text-muted-foreground mt-6">
+                <p className="text-sm text-muted-foreground mt-auto pt-4">
                   With love, {senderName}
                 </p>
               </div>
