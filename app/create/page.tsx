@@ -26,6 +26,7 @@ interface PendingCard {
   copySignoff: string
   imageUrl: string
   imagePrompt: string
+  extraPages: number
 }
 
 type Step = 'select-type' | 'details' | 'preview'
@@ -191,6 +192,7 @@ export default function CreateCardPage() {
       copySignoff: cardData.signoff,
       imageUrl: cardData.imageUrl,
       imagePrompt: cardData.imagePrompt,
+      extraPages,
     }
 
     localStorage.setItem('pendingCard', JSON.stringify(pendingCard))
@@ -221,6 +223,7 @@ export default function CreateCardPage() {
           copySignoff: cardData.signoff,
           imageUrl: cardData.imageUrl,
           imagePrompt: cardData.imagePrompt,
+          extraPages,
         }),
       })
 

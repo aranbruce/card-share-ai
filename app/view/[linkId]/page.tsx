@@ -13,6 +13,7 @@ interface CardData {
   copy_message: string
   copy_signoff: string
   image_url: string
+  extra_pages?: number
 }
 
 interface Contribution {
@@ -92,6 +93,7 @@ export default function PublicCardPage() {
           senderName={card.sender_name || 'Someone special'}
           recipientName={card.recipient_name || 'You'}
           contributions={contributions}
+          extraPages={card.extra_pages || 0}
         />
 
         {contributions.length > 0 && (

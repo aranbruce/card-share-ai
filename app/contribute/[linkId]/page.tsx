@@ -24,6 +24,7 @@ interface CardData {
   copy_signoff: string
   image_url: string
   status: string
+  extra_pages?: number
 }
 
 export default function ContributeCardPage() {
@@ -146,6 +147,7 @@ export default function ContributeCardPage() {
               senderName={card.sender_name || 'Someone special'}
               recipientName={card.recipient_name || 'You'}
               contributions={contributions}
+              extraPages={card.extra_pages || 0}
             />
           </div>
 

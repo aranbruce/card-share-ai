@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       copySignoff,
       imageUrl,
       imagePrompt,
+      extraPages = 0,
     } = await request.json()
 
     // Generate a unique link ID for contributions
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
       image_prompt: imagePrompt,
       status: 'draft',
       contributor_link_id: linkId,
+      extra_pages: extraPages,
     })
 
     if (error) {
