@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
@@ -18,6 +18,97 @@ interface Card3DProps {
     contributor_name: string
     message: string
   }>
+  // Editing props
+  editable?: boolean
+  onHeadlineChange?: (value: string) => void
+  onMessageChange?: (value: string) => void
+  onSignoffChange?: (value: string) => void
+}
+
+function InlineEdit({
+  value,
+  onChange,
+  className,
+  multiline = false,
+  placeholder = 'Click to edit...',
+}: {
+  value: string
+  onChange?: (value: string) => void
+  className?: string
+  multiline?: boolean
+  placeholder?: string
+}) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState(value)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    setEditValue(value)
+  }, [value])
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [isEditing])
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (onChange) {
+      e.stopPropagation()
+      setIsEditing(true)
+    }
+  }
+
+  const handleBlur = () => {
+    setIsEditing(false)
+    if (editValue !== value) {
+      onChange?.(editValue)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !multiline) {
+      e.preventDefault()
+      inputRef.current?.blur()
+    }
+    if (e.key === 'Escape') {
+      setEditValue(value)
+      setIsEditing(false)
+    }
+  }
+
+  if (!onChange) {
+    return <span className={className}>{value}</span>
+  }
+
+  if (isEditing) {
+    return (
+      <textarea
+        ref={inputRef}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`${className} bg-white/90 dark:bg-black/70 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary resize-none w-full`}
+        rows={multiline ? 4 : 1}
+        style={{ minHeight: multiline ? '100px' : 'auto' }}
+      />
+    )
+  }
+
+  return (
+    <span
+      onClick={handleClick}
+      className={`${className} cursor-pointer hover:bg-white/20 dark:hover:bg-black/20 rounded px-1 -mx-1 transition-colors group relative inline-block`}
+      title="Click to edit"
+    >
+      {value || placeholder}
+      <span className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-xs">
+        ✎
+      </span>
+    </span>
+  )
 }
 
 export function Card3D({
@@ -29,8 +120,21 @@ export function Card3D({
   recipientName,
   isGeneratingImage,
   contributions = [],
+  editable = false,
+  onHeadlineChange,
+  onMessageChange,
+  onSignoffChange,
 }: Card3DProps) {
   const [isOpen, setIsOpen] = useState(false)
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't toggle if clicking on an editable element
+    const target = e.target as HTMLElement
+    if (target.tagName === 'TEXTAREA' || target.closest('[data-editable]')) {
+      return
+    }
+    setIsOpen(!isOpen)
+  }
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -50,6 +154,7 @@ export function Card3D({
             style={{ 
               transformStyle: 'preserve-3d',
             }}
+            onClick={handleCardClick}
           >
             {/* Inside left page */}
             <div className="flex-1 flex flex-col justify-between">
@@ -57,13 +162,24 @@ export function Card3D({
                 <p className="text-sm text-muted-foreground italic">To: {recipientName}</p>
                 
                 {/* Main message */}
-                <div className="space-y-3 py-4 border-b border-border/50">
-                  <p className="text-lg leading-relaxed text-foreground/90 text-balance">
-                    {message}
-                  </p>
-                  <p className="text-base font-semibold text-foreground">
-                    {signoff}
-                  </p>
+                <div className="space-y-3 py-4 border-b border-border/50" data-editable>
+                  <div className="text-lg leading-relaxed text-foreground/90">
+                    <InlineEdit
+                      value={message}
+                      onChange={editable ? onMessageChange : undefined}
+                      multiline
+                      className="text-lg leading-relaxed text-foreground/90 text-balance block"
+                      placeholder="Click to add a message..."
+                    />
+                  </div>
+                  <div className="text-base font-semibold text-foreground">
+                    <InlineEdit
+                      value={signoff}
+                      onChange={editable ? onSignoffChange : undefined}
+                      className="text-base font-semibold text-foreground"
+                      placeholder="Click to add sign-off..."
+                    />
+                  </div>
                 </div>
 
                 {/* Contributions */}
@@ -106,7 +222,7 @@ export function Card3D({
               transform: isOpen ? 'rotateY(-160deg)' : 'rotateY(0deg)',
               backfaceVisibility: 'hidden',
             }}
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={handleCardClick}
           >
             {/* Front of cover */}
             <div 
@@ -139,10 +255,15 @@ export function Card3D({
                   )}
                   
                   {/* Headline overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h2 className="text-2xl md:text-3xl font-bold text-balance drop-shadow-lg">
-                      {headline}
-                    </h2>
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white" data-editable>
+                    <div className="text-2xl md:text-3xl font-bold drop-shadow-lg">
+                      <InlineEdit
+                        value={headline}
+                        onChange={editable ? onHeadlineChange : undefined}
+                        className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg text-balance"
+                        placeholder="Click to add headline..."
+                      />
+                    </div>
                     <p className="text-sm mt-2 opacity-80">
                       For {recipientName}
                     </p>
@@ -150,7 +271,7 @@ export function Card3D({
 
                   {/* Click hint */}
                   <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/70 text-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                    Click to open
+                    {editable ? 'Click text to edit, card to open' : 'Click to open'}
                   </div>
                 </div>
               )}
