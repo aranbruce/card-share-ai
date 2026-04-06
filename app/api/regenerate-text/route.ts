@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { field, cardType, recipientName, senderName, currentValue } = await request.json()
+    const { field, cardType, recipientName, senderName, currentValue, userPrompt } = await request.json()
 
     if (!field || !cardType) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -16,13 +16,17 @@ export async function POST(request: NextRequest) {
       
 Current headline is: "${currentValue}"
 
-Generate a NEW different headline. Just respond with the headline text only, no quotes or extra formatting.`
+User's request for the change: "${userPrompt}"
+
+Based on the user's request, generate a new headline. Just respond with the headline text only, no quotes or extra formatting.`
     } else if (field === 'message') {
       prompt = `Generate a heartfelt message for a ${cardType} greeting card to ${recipientName} from ${senderName}.
 
 Current message is: "${currentValue}"
 
-Generate a NEW different message that's warm and personal. Include a sign-off at the end. Just respond with the message text only, no extra formatting.`
+User's request for the change: "${userPrompt}"
+
+Based on the user's request, generate a new message that's warm and personal. Include a sign-off at the end. Just respond with the message text only, no extra formatting.`
     } else {
       return NextResponse.json({ error: 'Invalid field' }, { status: 400 })
     }

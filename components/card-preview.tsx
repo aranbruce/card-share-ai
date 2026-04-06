@@ -12,9 +12,9 @@ interface CardPreviewProps {
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
-  onRegenerateHeadline?: () => Promise<void>
-  onRegenerateMessage?: () => Promise<void>
-  onRegenerateImage?: () => Promise<void>
+  onRegenerateHeadline?: (prompt: string) => Promise<void>
+  onRegenerateMessage?: (prompt: string) => Promise<void>
+  onRegenerateImage?: (prompt: string) => Promise<void>
   onSave?: () => Promise<void>
   isSaving?: boolean
   isRegeneratingHeadline?: boolean

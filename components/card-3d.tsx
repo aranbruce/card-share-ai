@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles, X, Send } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -23,9 +23,9 @@ interface Card3DProps {
   onMessageChange?: (value: string) => void
   onAddPage?: () => void
   extraPages?: number
-  onRegenerateHeadline?: () => Promise<void>
-  onRegenerateMessage?: () => Promise<void>
-  onRegenerateImage?: () => Promise<void>
+  onRegenerateHeadline?: (prompt: string) => Promise<void>
+  onRegenerateMessage?: (prompt: string) => Promise<void>
+  onRegenerateImage?: (prompt: string) => Promise<void>
   isRegeneratingHeadline?: boolean
   isRegeneratingMessage?: boolean
   isRegeneratingImage?: boolean
@@ -46,12 +46,15 @@ function InlineEdit({
   onChange?: (value: string) => void
   className?: string
   editable?: boolean
-  onRegenerate?: () => Promise<void>
+  onRegenerate?: (prompt: string) => Promise<void>
   isRegenerating?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const [showPromptInput, setShowPromptInput] = useState(false)
+  const [prompt, setPrompt] = useState('')
   const editRef = useRef<HTMLDivElement>(null)
+  const promptInputRef = useRef<HTMLInputElement>(null)
 
   const handleClick = (e: React.MouseEvent) => {
     if (editable && onChange) {
@@ -72,9 +75,15 @@ function InlineEdit({
     }
   }, [isEditing])
 
+  useEffect(() => {
+    if (showPromptInput && promptInputRef.current) {
+      promptInputRef.current.focus()
+    }
+  }, [showPromptInput])
+
   const handleBlur = (e: React.FocusEvent) => {
-    // Don't blur if clicking the regenerate button
-    if (e.relatedTarget?.closest('[data-regenerate-button]')) {
+    // Don't blur if clicking the regenerate button or prompt input
+    if (e.relatedTarget?.closest('[data-regenerate-area]')) {
       return
     }
     setIsEditing(false)
@@ -92,24 +101,47 @@ function InlineEdit({
         editRef.current.innerText = value
       }
       setIsEditing(false)
+      setShowPromptInput(false)
     }
   }
 
-  const handleRegenerate = async (e: React.MouseEvent) => {
+  const handleSparkleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    if (onRegenerate) {
-      await onRegenerate()
+    setShowPromptInput(true)
+  }
+
+  const handleRegenerate = async () => {
+    if (onRegenerate && prompt.trim()) {
+      await onRegenerate(prompt.trim())
+      setPrompt('')
+      setShowPromptInput(false)
     }
   }
 
-  const showSparkle = editable && onRegenerate && (isEditing || isHovered)
+  const handlePromptKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleRegenerate()
+    }
+    if (e.key === 'Escape') {
+      setShowPromptInput(false)
+      setPrompt('')
+    }
+  }
+
+  const showSparkle = editable && onRegenerate && (isEditing || isHovered) && !showPromptInput
 
   return (
     <div 
       className="relative group"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false)
+        if (!isEditing && !showPromptInput) {
+          setShowPromptInput(false)
+        }
+      }}
     >
       {isEditing ? (
         <div
@@ -135,14 +167,58 @@ function InlineEdit({
       {/* Sparkle regenerate button */}
       {showSparkle && (
         <button
-          data-regenerate-button
-          onClick={handleRegenerate}
+          data-regenerate-area
+          onClick={handleSparkleClick}
           disabled={isRegenerating}
-          className="absolute -right-8 top-0 p-1.5 rounded-full bg-background border border-border shadow-sm hover:bg-primary/10 hover:border-primary/30 transition-all disabled:opacity-50"
-          title="Regenerate with AI"
+          className="absolute -right-10 top-0 p-2 rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-50"
+          title="Rewrite with AI"
         >
-          <Sparkles className={`h-3.5 w-3.5 text-primary ${isRegenerating ? 'animate-pulse' : ''}`} />
+          <Sparkles className={`h-4 w-4 ${isRegenerating ? 'animate-pulse' : ''}`} />
         </button>
+      )}
+
+      {/* Prompt input popover */}
+      {showPromptInput && (
+        <div 
+          data-regenerate-area
+          className="absolute left-0 right-0 top-full mt-2 z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-background border border-border rounded-lg shadow-lg p-2 flex gap-2 items-center">
+            <input
+              ref={promptInputRef}
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={handlePromptKeyDown}
+              placeholder="Describe the change you want..."
+              className="flex-1 bg-transparent border-none outline-none text-sm px-2 py-1 min-w-0"
+              disabled={isRegenerating}
+            />
+            <button
+              onClick={handleRegenerate}
+              disabled={isRegenerating || !prompt.trim()}
+              className="p-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              title="Generate"
+            >
+              {isRegenerating ? (
+                <Spinner className="h-4 w-4" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setShowPromptInput(false)
+                setPrompt('')
+              }}
+              className="p-1.5 rounded-md hover:bg-muted transition-colors"
+              title="Cancel"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -271,6 +347,15 @@ export function Card3D({
   isRegeneratingImage = false,
 }: Card3DProps) {
   const [currentPage, setCurrentPage] = useState(0)
+  const [showImagePrompt, setShowImagePrompt] = useState(false)
+  const [imagePromptText, setImagePromptText] = useState('')
+  const imagePromptRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (showImagePrompt && imagePromptRef.current) {
+      imagePromptRef.current.focus()
+    }
+  }, [showImagePrompt])
 
   // Page 0 = Cover, Page 1 = Main message, Page 2+ = Contributor/blank pages
   const contributionPages: Array<typeof contributions> = []
@@ -334,18 +419,77 @@ export function Card3D({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         
                         {/* Image regenerate button */}
-                        {editable && onRegenerateImage && (
+                        {editable && onRegenerateImage && !showImagePrompt && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              onRegenerateImage()
+                              setShowImagePrompt(true)
                             }}
                             disabled={isRegeneratingImage || isGeneratingImage}
-                            className="absolute top-4 right-4 p-2 rounded-full bg-background/80 border border-border shadow-sm hover:bg-primary/10 hover:border-primary/30 transition-all opacity-0 group-hover/image:opacity-100 disabled:opacity-50"
+                            className="absolute top-4 right-4 p-2 rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all opacity-0 group-hover/image:opacity-100 disabled:opacity-50"
                             title="Regenerate image with AI"
                           >
-                            <Sparkles className={`h-4 w-4 text-primary ${isRegeneratingImage || isGeneratingImage ? 'animate-pulse' : ''}`} />
+                            <Sparkles className={`h-4 w-4 ${isRegeneratingImage || isGeneratingImage ? 'animate-pulse' : ''}`} />
                           </button>
+                        )}
+                        
+                        {/* Image prompt input */}
+                        {showImagePrompt && (
+                          <div 
+                            className="absolute top-4 left-4 right-4 z-50"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="bg-background border border-border rounded-lg shadow-lg p-2 flex gap-2 items-center">
+                              <input
+                                ref={imagePromptRef}
+                                type="text"
+                                value={imagePromptText}
+                                onChange={(e) => setImagePromptText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' && imagePromptText.trim()) {
+                                    onRegenerateImage(imagePromptText.trim())
+                                    setImagePromptText('')
+                                    setShowImagePrompt(false)
+                                  }
+                                  if (e.key === 'Escape') {
+                                    setShowImagePrompt(false)
+                                    setImagePromptText('')
+                                  }
+                                }}
+                                placeholder="Describe the image you want..."
+                                className="flex-1 bg-transparent border-none outline-none text-sm px-2 py-1 min-w-0"
+                                disabled={isRegeneratingImage}
+                              />
+                              <button
+                                onClick={() => {
+                                  if (imagePromptText.trim()) {
+                                    onRegenerateImage(imagePromptText.trim())
+                                    setImagePromptText('')
+                                    setShowImagePrompt(false)
+                                  }
+                                }}
+                                disabled={isRegeneratingImage || !imagePromptText.trim()}
+                                className="p-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                                title="Generate"
+                              >
+                                {isRegeneratingImage ? (
+                                  <Spinner className="h-4 w-4" />
+                                ) : (
+                                  <Send className="h-4 w-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowImagePrompt(false)
+                                  setImagePromptText('')
+                                }}
+                                className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                                title="Cancel"
+                              >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}

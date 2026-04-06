@@ -124,7 +124,7 @@ export default function CreateCardPage() {
     }
   }
 
-  const handleRegenerateHeadline = async () => {
+  const handleRegenerateHeadline = async (prompt: string) => {
     if (!cardData) return
 
     setIsRegeneratingHeadline(true)
@@ -138,6 +138,7 @@ export default function CreateCardPage() {
           recipientName,
           senderName,
           currentValue: cardData.headline,
+          userPrompt: prompt,
         }),
       })
 
@@ -155,7 +156,7 @@ export default function CreateCardPage() {
     }
   }
 
-  const handleRegenerateMessage = async () => {
+  const handleRegenerateMessage = async (prompt: string) => {
     if (!cardData) return
 
     setIsRegeneratingMessage(true)
@@ -169,6 +170,7 @@ export default function CreateCardPage() {
           recipientName,
           senderName,
           currentValue: cardData.message,
+          userPrompt: prompt,
         }),
       })
 
@@ -186,16 +188,18 @@ export default function CreateCardPage() {
     }
   }
 
-  const handleRegenerateImage = async () => {
+  const handleRegenerateImage = async (prompt: string) => {
     if (!cardData) return
 
     setIsRegeneratingImage(true)
     try {
+      // Use the user's prompt as the new image prompt
+      const newPrompt = prompt || cardData.imagePrompt
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          imagePrompt: cardData.imagePrompt,
+          imagePrompt: newPrompt,
         }),
       })
 
@@ -205,6 +209,7 @@ export default function CreateCardPage() {
       setCardData({
         ...cardData,
         imageUrl,
+        imagePrompt: newPrompt,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate image')
