@@ -43,6 +43,7 @@ export default function CreateCardPage() {
   const [editMode, setEditMode] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [extraPages, setExtraPages] = useState(0)
 
   // Check if user is logged in
   useEffect(() => {
@@ -288,6 +289,8 @@ export default function CreateCardPage() {
             onRegenerateImage={handleRegenerateImage}
             onSave={handleSaveCard}
             isSaving={isLoading}
+            extraPages={extraPages}
+            onAddPage={() => setExtraPages((prev) => prev + 1)}
           />
         )}
 

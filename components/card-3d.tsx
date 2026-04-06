@@ -24,6 +24,7 @@ interface Card3DProps {
   onMessageChange?: (value: string) => void
   onSignoffChange?: (value: string) => void
   onAddPage?: () => void
+  extraPages?: number
 }
 
 const MESSAGES_PER_PAGE = 3
@@ -223,17 +224,19 @@ export function Card3D({
   onMessageChange,
   onSignoffChange,
   onAddPage,
+  extraPages = 0,
 }: Card3DProps) {
   const [currentPage, setCurrentPage] = useState(0)
 
-  // Page 0 = Cover, Page 1 = Main message, Page 2+ = Contributor pages
+  // Page 0 = Cover, Page 1 = Main message, Page 2+ = Contributor/blank pages
   const contributionPages: Array<typeof contributions> = []
   for (let i = 0; i < contributions.length; i += MESSAGES_PER_PAGE) {
     contributionPages.push(contributions.slice(i, i + MESSAGES_PER_PAGE))
   }
   
-  // Total pages: Cover + Main Message + Contribution Pages
-  const totalPages = 2 + contributionPages.length
+  // Total pages: Cover + Main Message + Contribution Pages + Extra Blank Pages
+  const blankPagesNeeded = Math.max(0, extraPages - contributionPages.length)
+  const totalPages = 2 + contributionPages.length + blankPagesNeeded
 
   const goToPage = (page: number) => {
     if (page < 0) return
@@ -332,15 +335,15 @@ export function Card3D({
                   </DraggableWrapper>
                 </div>
               </div>
-            ) : (
-              // Contributor Pages
+            ) : contributionPages[currentPage - 2] ? (
+              // Contributor Pages with messages
               <div className="flex-1 flex flex-col p-6">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                   Messages from friends & family
                 </p>
                 
                 <div className="flex-1 space-y-4">
-                  {contributionPages[currentPage - 2]?.map((contrib) => (
+                  {contributionPages[currentPage - 2].map((contrib) => (
                     <div 
                       key={contrib.id} 
                       className="bg-background/50 rounded-lg p-4 border border-border/30"
@@ -356,7 +359,25 @@ export function Card3D({
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center mt-4">
-                  Page {currentPage - 1} of {contributionPages.length}
+                  Page {currentPage - 1} of {contributionPages.length + blankPagesNeeded}
+                </p>
+              </div>
+            ) : (
+              // Blank pages for future contributors
+              <div className="flex-1 flex flex-col p-6">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                  Messages from friends & family
+                </p>
+                
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
+                    <p className="text-lg mb-2">Space reserved for messages</p>
+                    <p className="text-sm">Share the contributor link to let others add their messages here</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Page {currentPage - 1} of {contributionPages.length + blankPagesNeeded}
                 </p>
               </div>
             )}
@@ -420,7 +441,7 @@ export function Card3D({
       <p className="text-sm text-muted-foreground">
         {currentPage === 0 && 'Cover'}
         {currentPage === 1 && 'Your message'}
-        {currentPage > 1 && `Contributor messages (${currentPage - 1}/${contributionPages.length})`}
+        {currentPage > 1 && `Contributor messages (${currentPage - 1}/${contributionPages.length + blankPagesNeeded})`}
       </p>
     </div>
   )

@@ -27,6 +27,8 @@ interface CardPreviewProps {
     contributor_name: string
     message: string
   }>
+  extraPages?: number
+  onAddPage?: () => void
 }
 
 export function CardPreview({
@@ -47,6 +49,8 @@ export function CardPreview({
   editMode,
   isGuest,
   contributions = [],
+  extraPages = 0,
+  onAddPage,
 }: CardPreviewProps) {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -85,9 +89,8 @@ export function CardPreview({
         onHeadlineChange={onHeadlineChange}
         onMessageChange={onMessageChange}
         onSignoffChange={onSignoffChange}
-        onAddPage={() => {
-          alert('Share the contributor link to let friends and family add their messages. Each page can hold 3 messages!')
-        }}
+        extraPages={extraPages}
+        onAddPage={onAddPage}
       />
 
       {/* Action Buttons */}
