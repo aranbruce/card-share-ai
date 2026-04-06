@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -24,6 +25,8 @@ interface Card3DProps {
   onMessageChange?: (value: string) => void
   onSignoffChange?: (value: string) => void
 }
+
+const MESSAGES_PER_PAGE = 3
 
 function InlineEdit({
   value,
@@ -126,14 +129,31 @@ export function Card3D({
   onSignoffChange,
 }: Card3DProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+
+  // Calculate pages: page 0 is the main message, subsequent pages are for contributions
+  const contributionPages = []
+  for (let i = 0; i < contributions.length; i += MESSAGES_PER_PAGE) {
+    contributionPages.push(contributions.slice(i, i + MESSAGES_PER_PAGE))
+  }
+  const totalPages = 1 + contributionPages.length // Main page + contribution pages
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't toggle if clicking on an editable element
+    // Don't toggle if clicking on an editable element or navigation
     const target = e.target as HTMLElement
-    if (target.tagName === 'TEXTAREA' || target.closest('[data-editable]')) {
+    if (
+      target.tagName === 'TEXTAREA' || 
+      target.closest('[data-editable]') ||
+      target.closest('[data-nav]')
+    ) {
       return
     }
     setIsOpen(!isOpen)
+  }
+
+  const goToPage = (page: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setCurrentPage(Math.max(0, Math.min(page, totalPages - 1)))
   }
 
   return (
@@ -156,60 +176,103 @@ export function Card3D({
             }}
             onClick={handleCardClick}
           >
-            {/* Inside left page */}
+            {/* Page Content */}
             <div className="flex-1 flex flex-col justify-between">
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground italic">To: {recipientName}</p>
-                
-                {/* Main message */}
-                <div className="space-y-3 py-4 border-b border-border/50" data-editable>
-                  <div className="text-lg leading-relaxed text-foreground/90">
-                    <InlineEdit
-                      value={message}
-                      onChange={editable ? onMessageChange : undefined}
-                      multiline
-                      className="text-lg leading-relaxed text-foreground/90 text-balance block"
-                      placeholder="Click to add a message..."
-                    />
-                  </div>
-                  <div className="text-base font-semibold text-foreground">
-                    <InlineEdit
-                      value={signoff}
-                      onChange={editable ? onSignoffChange : undefined}
-                      className="text-base font-semibold text-foreground"
-                      placeholder="Click to add sign-off..."
-                    />
-                  </div>
-                </div>
-
-                {/* Contributions */}
-                {contributions.length > 0 && (
-                  <div className="space-y-3 pt-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Messages from others
-                    </p>
-                    <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
-                      {contributions.map((contrib) => (
-                        <div 
-                          key={contrib.id} 
-                          className="bg-background/50 rounded-lg p-3 border border-border/30"
-                        >
-                          <p className="text-sm text-foreground/80 italic">
-                            &ldquo;{contrib.message}&rdquo;
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            — {contrib.contributor_name}
-                          </p>
-                        </div>
-                      ))}
+              {currentPage === 0 ? (
+                // Main message page
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground italic">To: {recipientName}</p>
+                  
+                  <div className="space-y-3 py-4" data-editable>
+                    <div className="text-lg leading-relaxed text-foreground/90">
+                      <InlineEdit
+                        value={message}
+                        onChange={editable ? onMessageChange : undefined}
+                        multiline
+                        className="text-lg leading-relaxed text-foreground/90 text-balance block"
+                        placeholder="Click to add a message..."
+                      />
+                    </div>
+                    <div className="text-base font-semibold text-foreground">
+                      <InlineEdit
+                        value={signoff}
+                        onChange={editable ? onSignoffChange : undefined}
+                        className="text-base font-semibold text-foreground"
+                        placeholder="Click to add sign-off..."
+                      />
                     </div>
                   </div>
-                )}
-              </div>
 
-              <p className="text-sm text-muted-foreground mt-4">
-                With love, {senderName}
-              </p>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    With love, {senderName}
+                  </p>
+                </div>
+              ) : (
+                // Contribution pages
+                <div className="space-y-4">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Messages from friends & family
+                  </p>
+                  
+                  <div className="space-y-4">
+                    {contributionPages[currentPage - 1]?.map((contrib) => (
+                      <div 
+                        key={contrib.id} 
+                        className="bg-background/50 rounded-lg p-4 border border-border/30"
+                      >
+                        <p className="text-base text-foreground/90 italic leading-relaxed">
+                          &ldquo;{contrib.message}&rdquo;
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2 font-medium">
+                          — {contrib.contributor_name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Page Navigation */}
+              {totalPages > 1 && (
+                <div 
+                  className="flex items-center justify-center gap-3 pt-4 mt-auto border-t border-border/30"
+                  data-nav
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => goToPage(currentPage - 1, e)}
+                    disabled={currentPage === 0}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
+                  <div className="flex gap-1.5">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={(e) => goToPage(i, e)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          i === currentPage 
+                            ? 'bg-primary' 
+                            : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => goToPage(currentPage + 1, e)}
+                    disabled={currentPage === totalPages - 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -273,6 +336,13 @@ export function Card3D({
                   <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/70 text-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
                     {editable ? 'Click text to edit, card to open' : 'Click to open'}
                   </div>
+
+                  {/* Contribution count badge */}
+                  {contributions.length > 0 && (
+                    <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
+                      {contributions.length} {contributions.length === 1 ? 'message' : 'messages'} inside
+                    </div>
+                  )}
                 </div>
               )}
             </div>
