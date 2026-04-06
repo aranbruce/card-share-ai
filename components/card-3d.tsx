@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2 } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -28,6 +28,7 @@ interface Card3DProps {
 
 const MESSAGES_PER_PAGE = 3
 
+// Inline edit component with consistent text sizing
 function InlineEdit({
   value,
   onChange,
@@ -43,16 +44,17 @@ function InlineEdit({
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const displayRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     setEditValue(value)
   }, [value])
 
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus()
+      textareaRef.current.select()
     }
   }, [isEditing])
 
@@ -73,7 +75,7 @@ function InlineEdit({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !multiline) {
       e.preventDefault()
-      inputRef.current?.blur()
+      textareaRef.current?.blur()
     }
     if (e.key === 'Escape') {
       setEditValue(value)
@@ -85,32 +87,164 @@ function InlineEdit({
     return <span className={className}>{value}</span>
   }
 
-  if (isEditing) {
-    return (
-      <textarea
-        ref={inputRef}
-        value={editValue}
-        onChange={(e) => setEditValue(e.target.value)}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        className={`${className} bg-white/90 dark:bg-black/70 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary resize-none w-full`}
-        rows={multiline ? 4 : 1}
-        style={{ minHeight: multiline ? '100px' : 'auto' }}
-      />
-    )
+  return (
+    <span className="relative inline-block w-full">
+      {/* Always render the display text to maintain layout */}
+      <span
+        ref={displayRef}
+        onClick={handleClick}
+        className={`${className} ${isEditing ? 'invisible' : ''} cursor-pointer transition-all rounded-sm ${
+          !isEditing ? 'hover:ring-1 hover:ring-primary/30 hover:bg-primary/5' : ''
+        }`}
+        title={onChange ? 'Click to edit' : undefined}
+      >
+        {value || <span className="opacity-50">{placeholder}</span>}
+      </span>
+      
+      {/* Textarea overlays the text when editing */}
+      {isEditing && (
+        <textarea
+          ref={textareaRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          className={`${className} absolute inset-0 w-full h-full bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/40 rounded-sm resize-none`}
+          rows={multiline ? 4 : 1}
+          style={{ 
+            minHeight: 'auto',
+            lineHeight: 'inherit',
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
+            fontWeight: 'inherit',
+          }}
+        />
+      )}
+    </span>
+  )
+}
+
+// Draggable and resizable message container
+function DraggableMessage({
+  children,
+  editable,
+  initialPosition = { x: 0, y: 0 },
+  initialSize = { width: 100, height: 'auto' },
+}: {
+  children: React.ReactNode
+  editable?: boolean
+  initialPosition?: { x: number; y: number }
+  initialSize?: { width: number; height: number | 'auto' }
+}) {
+  const [position, setPosition] = useState(initialPosition)
+  const [size, setSize] = useState(initialSize)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [showControls, setShowControls] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
+  const resizeStart = useRef({ x: 0, width: 0 })
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    if (!editable) return
+    e.stopPropagation()
+    e.preventDefault()
+    setIsDragging(true)
+    dragStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: position.x,
+      posY: position.y,
+    }
+  }, [editable, position])
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    if (!editable) return
+    e.stopPropagation()
+    e.preventDefault()
+    setIsResizing(true)
+    resizeStart.current = {
+      x: e.clientX,
+      width: typeof size.width === 'number' ? size.width : 100,
+    }
+  }, [editable, size.width])
+
+  useEffect(() => {
+    if (!isDragging && !isResizing) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const dx = e.clientX - dragStart.current.x
+        const dy = e.clientY - dragStart.current.y
+        setPosition({
+          x: dragStart.current.posX + dx,
+          y: dragStart.current.posY + dy,
+        })
+      }
+      if (isResizing) {
+        const dx = e.clientX - resizeStart.current.x
+        const newWidth = Math.max(50, Math.min(100, resizeStart.current.width + (dx / 3)))
+        setSize(prev => ({ ...prev, width: newWidth }))
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+      setIsResizing(false)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging, isResizing])
+
+  if (!editable) {
+    return <>{children}</>
   }
 
   return (
-    <span
-      onClick={handleClick}
-      className={`${className} cursor-pointer hover:bg-white/20 dark:hover:bg-black/20 rounded px-1 -mx-1 transition-colors group relative inline-block`}
-      title="Click to edit"
+    <div
+      ref={containerRef}
+      className="relative group"
+      style={{
+        transform: `translate(${position.x}px, ${position.y}px)`,
+        width: `${size.width}%`,
+        transition: isDragging || isResizing ? 'none' : 'transform 0.1s ease-out',
+      }}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => !isDragging && !isResizing && setShowControls(false)}
     >
-      {value || placeholder}
-      <span className="absolute -right-5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-xs">
-        ✎
-      </span>
-    </span>
+      {/* Move handle */}
+      {showControls && (
+        <div
+          onMouseDown={handleDragStart}
+          className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full p-1 cursor-move z-10 opacity-70 hover:opacity-100 transition-opacity shadow-md"
+          title="Drag to move"
+        >
+          <Move className="h-3 w-3" />
+        </div>
+      )}
+
+      {/* Content */}
+      <div className={`${showControls ? 'ring-1 ring-primary/20 rounded-lg' : ''} transition-all`}>
+        {children}
+      </div>
+
+      {/* Resize handle */}
+      {showControls && (
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute -bottom-3 -right-1 bg-primary text-primary-foreground rounded-full p-1 cursor-se-resize z-10 opacity-70 hover:opacity-100 transition-opacity shadow-md"
+          title="Drag to resize"
+        >
+          <Maximize2 className="h-3 w-3" />
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -136,15 +270,15 @@ export function Card3D({
   for (let i = 0; i < contributions.length; i += MESSAGES_PER_PAGE) {
     contributionPages.push(contributions.slice(i, i + MESSAGES_PER_PAGE))
   }
-  const totalPages = 1 + contributionPages.length // Main page + contribution pages
+  const totalPages = 1 + contributionPages.length
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't toggle if clicking on an editable element or navigation
     const target = e.target as HTMLElement
     if (
       target.tagName === 'TEXTAREA' || 
       target.closest('[data-editable]') ||
-      target.closest('[data-nav]')
+      target.closest('[data-nav]') ||
+      target.closest('[data-draggable]')
     ) {
       return
     }
@@ -163,52 +297,46 @@ export function Card3D({
         className="relative w-full max-w-md cursor-pointer"
         style={{ perspective: '1500px' }}
       >
-        {/* Card wrapper for 3D space */}
         <div 
           className="relative w-full"
           style={{ transformStyle: 'preserve-3d' }}
         >
-          {/* Inside of card (visible when open) */}
+          {/* Inside of card */}
           <div 
             className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 rounded-2xl shadow-xl p-6 min-h-[500px] flex flex-col"
-            style={{ 
-              transformStyle: 'preserve-3d',
-            }}
+            style={{ transformStyle: 'preserve-3d' }}
             onClick={handleCardClick}
           >
-            {/* Page Content */}
             <div className="flex-1 flex flex-col justify-between">
               {currentPage === 0 ? (
-                // Main message page
-                <div className="space-y-4">
+                <div className="space-y-4 flex-1 flex flex-col">
                   <p className="text-sm text-muted-foreground italic">To: {recipientName}</p>
                   
-                  <div className="space-y-3 py-4" data-editable>
-                    <div className="text-lg leading-relaxed text-foreground/90">
-                      <InlineEdit
-                        value={message}
-                        onChange={editable ? onMessageChange : undefined}
-                        multiline
-                        className="text-lg leading-relaxed text-foreground/90 text-balance block"
-                        placeholder="Click to add a message..."
-                      />
-                    </div>
-                    <div className="text-base font-semibold text-foreground">
-                      <InlineEdit
-                        value={signoff}
-                        onChange={editable ? onSignoffChange : undefined}
-                        className="text-base font-semibold text-foreground"
-                        placeholder="Click to add sign-off..."
-                      />
-                    </div>
+                  <div className="flex-1 py-4" data-editable data-draggable>
+                    <DraggableMessage editable={editable}>
+                      <div className="space-y-3">
+                        <InlineEdit
+                          value={message}
+                          onChange={editable ? onMessageChange : undefined}
+                          multiline
+                          className="text-lg leading-relaxed text-foreground/90 block"
+                          placeholder="Click to add a message..."
+                        />
+                        <InlineEdit
+                          value={signoff}
+                          onChange={editable ? onSignoffChange : undefined}
+                          className="text-base font-semibold text-foreground block"
+                          placeholder="Click to add sign-off..."
+                        />
+                      </div>
+                    </DraggableMessage>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mt-4">
+                  <p className="text-sm text-muted-foreground mt-auto pt-4">
                     With love, {senderName}
                   </p>
                 </div>
               ) : (
-                // Contribution pages
                 <div className="space-y-4">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Messages from friends & family
@@ -276,7 +404,7 @@ export function Card3D({
             </div>
           </div>
 
-          {/* Front cover (folds open) */}
+          {/* Front cover */}
           <div 
             className="absolute inset-0 w-full rounded-2xl shadow-2xl overflow-hidden transition-transform duration-700 ease-in-out"
             style={{ 
@@ -301,7 +429,6 @@ export function Card3D({
                 </div>
               ) : (
                 <div className="relative w-full h-full min-h-[500px] flex flex-col">
-                  {/* Card image */}
                   {imageUrl && (
                     <div className="relative flex-1 w-full overflow-hidden">
                       <Image
@@ -312,21 +439,18 @@ export function Card3D({
                         crossOrigin="anonymous"
                         priority
                       />
-                      {/* Gradient overlay for text */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     </div>
                   )}
                   
                   {/* Headline overlay */}
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white" data-editable>
-                    <div className="text-2xl md:text-3xl font-bold drop-shadow-lg">
-                      <InlineEdit
-                        value={headline}
-                        onChange={editable ? onHeadlineChange : undefined}
-                        className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg text-balance"
-                        placeholder="Click to add headline..."
-                      />
-                    </div>
+                    <InlineEdit
+                      value={headline}
+                      onChange={editable ? onHeadlineChange : undefined}
+                      className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg block"
+                      placeholder="Click to add headline..."
+                    />
                     <p className="text-sm mt-2 opacity-80">
                       For {recipientName}
                     </p>
@@ -334,7 +458,7 @@ export function Card3D({
 
                   {/* Click hint */}
                   <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/70 text-foreground px-3 py-1.5 rounded-full text-xs font-medium shadow-lg">
-                    {editable ? 'Click text to edit, card to open' : 'Click to open'}
+                    {editable ? 'Click text to edit' : 'Click to open'}
                   </div>
 
                   {/* Contribution count badge */}
@@ -347,7 +471,7 @@ export function Card3D({
               )}
             </div>
 
-            {/* Back of cover (inside left when opened) */}
+            {/* Back of cover */}
             <div 
               className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 p-6 flex items-center justify-center"
               style={{ 
