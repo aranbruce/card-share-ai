@@ -118,14 +118,6 @@ export function CardPreview({
           )}
         </Button>
       )}
-
-      {/* Info Section */}
-      <Card className="p-4 bg-secondary/50">
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span><span className="font-medium">To:</span> {recipientName}</span>
-          <span><span className="font-medium">From:</span> {senderName}</span>
-        </div>
-      </Card>
     </div>
   )
 }
