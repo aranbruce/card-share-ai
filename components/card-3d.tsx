@@ -309,15 +309,9 @@ export function Card3D({
             ) : currentPage === 1 ? (
               // Main Message Page
               <div className="flex-1 flex flex-col p-6 overflow-hidden">
-                <p className="text-sm text-muted-foreground italic mb-4">To: {recipientName}</p>
-                
-                <div className="flex-1 flex flex-col">
+                <div className="flex-1 flex flex-col justify-center">
                   <DraggableWrapper editable={editable}>
                     <div className="space-y-4">
-                      <p className="text-lg text-foreground/90">
-                        Hey {recipientName},
-                      </p>
-
                       <InlineEdit
                         value={message}
                         onChange={onMessageChange}
@@ -334,10 +328,6 @@ export function Card3D({
                     </div>
                   </DraggableWrapper>
                 </div>
-
-                <p className="text-sm text-muted-foreground mt-auto pt-4">
-                  With love, {senderName}
-                </p>
               </div>
             ) : (
               // Contributor Pages
