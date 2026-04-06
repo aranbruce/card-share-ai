@@ -53,8 +53,10 @@ function InlineEdit({
   const [isHovered, setIsHovered] = useState(false)
   const [showPromptInput, setShowPromptInput] = useState(false)
   const [prompt, setPrompt] = useState('')
+  const [promptPosition, setPromptPosition] = useState({ top: 0, left: 0, width: 0 })
   const editRef = useRef<HTMLDivElement>(null)
   const promptInputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const handleClick = (e: React.MouseEvent) => {
     if (editable && onChange) {
