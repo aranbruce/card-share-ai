@@ -346,9 +346,6 @@ export function Card3D({
                   ))}
                 </div>
 
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                  Page {currentPage - 1} of {contributionPages.length + blankPagesNeeded}
-                </p>
               </div>
             ) : (
               // Blank pages for future contributors
@@ -363,10 +360,6 @@ export function Card3D({
                     <p className="text-sm">Share the contributor link to let others add their messages here</p>
                   </div>
                 </div>
-
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                  Page {currentPage - 1} of {contributionPages.length + blankPagesNeeded}
-                </p>
               </div>
             )}
           </div>
@@ -412,13 +405,6 @@ export function Card3D({
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
-
-      {/* Page indicator text */}
-      <p className="text-sm text-muted-foreground">
-        {currentPage === 0 && 'Cover'}
-        {currentPage === 1 && 'Your message'}
-        {currentPage > 1 && `Contributor messages (${currentPage - 1}/${contributionPages.length + blankPagesNeeded})`}
-      </p>
     </div>
   )
 }
