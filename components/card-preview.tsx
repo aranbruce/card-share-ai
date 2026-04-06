@@ -16,6 +16,7 @@ interface CardPreviewProps {
   onRegenerateImage?: () => Promise<void>
   onSave?: () => Promise<void>
   isSaving?: boolean
+  isRegenerating?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
   editMode?: boolean
@@ -40,6 +41,7 @@ export function CardPreview({
   onRegenerateImage,
   onSave,
   isSaving,
+  isRegenerating,
   onHeadlineChange,
   onMessageChange,
   editMode,
@@ -85,50 +87,27 @@ export function CardPreview({
         onMessageChange={onMessageChange}
         extraPages={extraPages}
         onAddPage={onAddPage}
+        onRegenerateCopy={onRegenerateCopy}
+        onRegenerateImage={onRegenerateImage}
+        isRegenerating={isRegenerating}
       />
 
-      {/* Action Buttons */}
-      {editMode && (
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            {onRegenerateCopy && (
-              <Button
-                variant="outline"
-                onClick={onRegenerateCopy}
-                className="flex-1"
-                disabled={isSaving}
-              >
-                Regenerate Text
-              </Button>
-            )}
-            {onRegenerateImage && (
-              <Button
-                variant="outline"
-                onClick={onRegenerateImage}
-                className="flex-1"
-                disabled={isSaving || isGeneratingImage}
-              >
-                Regenerate Image
-              </Button>
-            )}
-          </div>
-          {onSave && (
-            <Button
-              className="w-full"
-              onClick={onSave}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <Spinner className="mr-2 h-4 w-4" />
-                  Saving...
-                </>
-              ) : (
-                'Save Card'
-              )}
-            </Button>
+      {/* Save Button */}
+      {editMode && onSave && (
+        <Button
+          className="w-full"
+          onClick={onSave}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" />
+              Saving...
+            </>
+          ) : (
+            'Save Card'
           )}
-        </div>
+        </Button>
       )}
 
       {/* Info Section */}

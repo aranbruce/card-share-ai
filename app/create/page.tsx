@@ -38,6 +38,7 @@ export default function CreateCardPage() {
   const [recipientName, setRecipientName] = useState('')
   const [cardData, setCardData] = useState<CardData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
   const [error, setError] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
@@ -124,7 +125,7 @@ export default function CreateCardPage() {
   const handleRegenerateCopy = async () => {
     if (!cardData) return
 
-    setIsLoading(true)
+    setIsRegenerating(true)
     try {
       const response = await fetch('/api/generate-card-copy', {
         method: 'POST',
@@ -148,14 +149,14 @@ export default function CreateCardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate copy')
     } finally {
-      setIsLoading(false)
+      setIsRegenerating(false)
     }
   }
 
   const handleRegenerateImage = async () => {
     if (!cardData) return
 
-    setIsLoading(true)
+    setIsRegenerating(true)
     try {
       const response = await fetch('/api/generate-image', {
         method: 'POST',
@@ -175,7 +176,7 @@ export default function CreateCardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to regenerate image')
     } finally {
-      setIsLoading(false)
+      setIsRegenerating(false)
     }
   }
 
@@ -283,6 +284,7 @@ export default function CreateCardPage() {
             }
             onRegenerateCopy={handleRegenerateCopy}
             onRegenerateImage={handleRegenerateImage}
+            isRegenerating={isRegenerating}
             onSave={handleSaveCard}
             isSaving={isLoading}
             extraPages={extraPages}

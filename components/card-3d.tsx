@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Move, Maximize2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -23,6 +23,9 @@ interface Card3DProps {
   onMessageChange?: (value: string) => void
   onAddPage?: () => void
   extraPages?: number
+  onRegenerateCopy?: () => Promise<void>
+  onRegenerateImage?: () => Promise<void>
+  isRegenerating?: boolean
 }
 
 const MESSAGES_PER_PAGE = 3
@@ -33,13 +36,18 @@ function InlineEdit({
   onChange,
   className,
   editable = false,
+  onRegenerate,
+  isRegenerating = false,
 }: {
   value: string
   onChange?: (value: string) => void
   className?: string
   editable?: boolean
+  onRegenerate?: () => Promise<void>
+  isRegenerating?: boolean
 }) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const editRef = useRef<HTMLDivElement>(null)
 
   const handleClick = (e: React.MouseEvent) => {
@@ -61,7 +69,11 @@ function InlineEdit({
     }
   }, [isEditing])
 
-  const handleBlur = () => {
+  const handleBlur = (e: React.FocusEvent) => {
+    // Don't blur if clicking the regenerate button
+    if (e.relatedTarget?.closest('[data-regenerate-button]')) {
+      return
+    }
     setIsEditing(false)
     if (editRef.current) {
       const newValue = editRef.current.innerText
@@ -80,28 +92,55 @@ function InlineEdit({
     }
   }
 
-  if (isEditing) {
-    return (
-      <div
-        ref={editRef}
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        onClick={(e) => e.stopPropagation()}
-        className={`${className} outline-none ring-1 ring-primary/30 rounded px-1 -mx-1 bg-primary/5`}
-      >
-        {value}
-      </div>
-    )
+  const handleRegenerate = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (onRegenerate) {
+      await onRegenerate()
+    }
   }
 
+  const showSparkle = editable && onRegenerate && (isEditing || isHovered)
+
   return (
-    <div
-      onClick={handleClick}
-      className={`${className} ${editable ? 'cursor-text hover:bg-primary/5 rounded px-1 -mx-1 transition-colors' : ''}`}
+    <div 
+      className="relative group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {value}
+      {isEditing ? (
+        <div
+          ref={editRef}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          className={`${className} outline-none ring-1 ring-primary/30 rounded px-1 -mx-1 bg-primary/5`}
+        >
+          {value}
+        </div>
+      ) : (
+        <div
+          onClick={handleClick}
+          className={`${className} ${editable ? 'cursor-text hover:bg-primary/5 rounded px-1 -mx-1 transition-colors' : ''}`}
+        >
+          {value}
+        </div>
+      )}
+      
+      {/* Sparkle regenerate button */}
+      {showSparkle && (
+        <button
+          data-regenerate-button
+          onClick={handleRegenerate}
+          disabled={isRegenerating}
+          className="absolute -right-8 top-0 p-1.5 rounded-full bg-background border border-border shadow-sm hover:bg-primary/10 hover:border-primary/30 transition-all disabled:opacity-50"
+          title="Regenerate with AI"
+        >
+          <Sparkles className={`h-3.5 w-3.5 text-primary ${isRegenerating ? 'animate-pulse' : ''}`} />
+        </button>
+      )}
     </div>
   )
 }
@@ -221,6 +260,9 @@ export function Card3D({
   onMessageChange,
   onAddPage,
   extraPages = 0,
+  onRegenerateCopy,
+  onRegenerateImage,
+  isRegenerating = false,
 }: Card3DProps) {
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -274,7 +316,7 @@ export function Card3D({
                 ) : (
                   <>
                     {imageUrl && (
-                      <div className="relative flex-1 w-full">
+                      <div className="relative flex-1 w-full group/image">
                         <Image
                           src={imageUrl}
                           alt="Card cover"
@@ -284,6 +326,21 @@ export function Card3D({
                           priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        
+                        {/* Image regenerate button */}
+                        {editable && onRegenerateImage && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onRegenerateImage()
+                            }}
+                            disabled={isRegenerating || isGeneratingImage}
+                            className="absolute top-4 right-4 p-2 rounded-full bg-background/80 border border-border shadow-sm hover:bg-primary/10 hover:border-primary/30 transition-all opacity-0 group-hover/image:opacity-100 disabled:opacity-50"
+                            title="Regenerate image with AI"
+                          >
+                            <Sparkles className={`h-4 w-4 text-primary ${isRegenerating || isGeneratingImage ? 'animate-pulse' : ''}`} />
+                          </button>
+                        )}
                       </div>
                     )}
                     
@@ -293,6 +350,8 @@ export function Card3D({
                         value={headline}
                         onChange={onHeadlineChange}
                         editable={editable}
+                        onRegenerate={onRegenerateCopy}
+                        isRegenerating={isRegenerating}
                         className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg block"
                       />
                       <p className="text-sm mt-2 opacity-80">
@@ -318,6 +377,8 @@ export function Card3D({
                       value={message}
                       onChange={onMessageChange}
                       editable={editable}
+                      onRegenerate={onRegenerateCopy}
+                      isRegenerating={isRegenerating}
                       className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
                     />
                   </DraggableWrapper>
