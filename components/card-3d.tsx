@@ -268,7 +268,7 @@ function DraggableWrapper({
   const containerRef = useRef<HTMLDivElement>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const DRAG_THRESHOLD = 5
-  const CANVAS_PADDING = 40
+  const CANVAS_PADDING = 12
 
   const handleMouseDown = (e: React.MouseEvent, type: 'drag' | 'resize') => {
     if (!editable) return
@@ -731,8 +731,8 @@ export function Card3D({
               key={i}
               onClick={() => setCurrentPage(i)}
               className={`w-2.5 h-2.5 rounded-full transition-colors ${i === currentPage
-                  ? 'bg-primary'
-                  : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                ? 'bg-primary'
+                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                 }`}
               aria-label={`Go to page ${i + 1}`}
             />
