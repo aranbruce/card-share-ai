@@ -268,6 +268,7 @@ function DraggableWrapper({
   const containerRef = useRef<HTMLDivElement>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const DRAG_THRESHOLD = 5
+  const CANVAS_PADDING = 4
 
   const handleMouseDown = (e: React.MouseEvent, type: 'drag' | 'resize') => {
     if (!editable) return
@@ -322,13 +323,13 @@ function DraggableWrapper({
             const parentRect = parent.getBoundingClientRect()
             const selfRect = containerRef.current.getBoundingClientRect()
 
-            // Absolute bounds: how far the element can move from its natural position
-            const maxX = parentRect.width - selfRect.width
-            const maxY = parentRect.height - selfRect.height
+            // Absolute bounds with padding so element can't reach the edge
+            const maxX = parentRect.width - selfRect.width - CANVAS_PADDING
+            const maxY = parentRect.height - selfRect.height - CANVAS_PADDING
 
             setPosition({
-              x: Math.max(0, Math.min(maxX, startPos.current.posX + dx)),
-              y: Math.max(0, Math.min(maxY, startPos.current.posY + dy)),
+              x: Math.max(CANVAS_PADDING, Math.min(maxX, startPos.current.posX + dx)),
+              y: Math.max(CANVAS_PADDING, Math.min(maxY, startPos.current.posY + dy)),
             })
           } else {
             setPosition({
