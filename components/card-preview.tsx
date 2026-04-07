@@ -1,7 +1,6 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { Card3D } from '@/components/card-3d'
 
@@ -69,23 +68,11 @@ export function CardPreview({
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Your Card</h2>
         <p className="text-muted-foreground">
-          {editMode 
-            ? 'Use arrows to flip pages. Click any text to edit it.' 
+          {editMode
+            ? <>Use arrows to flip pages. Click any text to edit it.{isGuest && <>{' '}<span className="text-muted-foreground/70">Sign in to save, download, or send your card.</span></>}</>
             : 'Use arrows to flip through the card'}
         </p>
       </div>
-
-      {/* Guest Banner */}
-      {isGuest && editMode && (
-        <Card className="p-4 bg-primary/5 border-primary/20">
-          <p className="text-sm text-center">
-            <span className="font-medium">Looking good!</span>{' '}
-            <span className="text-muted-foreground">
-              Sign in to save, download, or send your card.
-            </span>
-          </p>
-        </Card>
-      )}
 
       {/* 3D Card Display with Inline Editing */}
       <Card3D
