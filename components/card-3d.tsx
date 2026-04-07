@@ -340,10 +340,14 @@ function DraggableWrapper({
         }
       }
       if (isResizing && containerRef.current) {
-        const containerWidth = containerRef.current.parentElement?.offsetWidth || 300
+        const parent = containerRef.current.closest('[data-card-canvas]') as HTMLElement
+        const canvasWidth = parent ? parent.clientWidth - CANVAS_PADDING * 2 : (containerRef.current.parentElement?.offsetWidth || 300)
+        const currentLeft = position.x ?? 0
+        const maxWidthPx = canvasWidth - currentLeft - CANVAS_PADDING
         const dx = e.clientX - startPos.current.x
-        const newWidth = startPos.current.width + (dx / containerWidth) * 100
-        setSize({ width: Math.max(50, Math.min(100, newWidth)) })
+        const newWidthPx = (startPos.current.width / 100) * canvasWidth + dx
+        const clampedWidthPx = Math.max(canvasWidth * 0.3, Math.min(maxWidthPx, newWidthPx))
+        setSize({ width: (clampedWidthPx / canvasWidth) * 100 })
       }
     }
 

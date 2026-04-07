@@ -74,49 +74,51 @@ export function CardPreview({
         </p>
       </div>
 
-      {/* 3D Card Display with Inline Editing */}
-      <Card3D
-        imageUrl={imageUrl}
-        headline={headline}
-        message={message}
-        senderName={senderName}
-        recipientName={recipientName}
-        isGeneratingImage={isGeneratingImage}
-        contributions={contributions}
-        editable={editMode}
-        onHeadlineChange={onHeadlineChange}
-        onMessageChange={onMessageChange}
-        extraPages={extraPages}
-        onAddPage={onAddPage}
-        onRegenerateHeadline={onRegenerateHeadline}
-        onRegenerateMessage={onRegenerateMessage}
-        onRegenerateImage={onRegenerateImage}
-        isRegeneratingHeadline={isRegeneratingHeadline}
-        isRegeneratingMessage={isRegeneratingMessage}
-        isRegeneratingImage={isRegeneratingImage}
-        messageFontSize={messageFontSize}
-        onMessageFontSizeChange={onMessageFontSizeChange}
-        messagePageIndex={messagePageIndex}
-        onMessagePageIndexChange={onMessagePageIndexChange}
-      />
+      {/* 3D Card Display with Inline Editing + Save Button constrained to card width */}
+      <div className="w-full max-w-md mx-auto space-y-4">
+        <Card3D
+          imageUrl={imageUrl}
+          headline={headline}
+          message={message}
+          senderName={senderName}
+          recipientName={recipientName}
+          isGeneratingImage={isGeneratingImage}
+          contributions={contributions}
+          editable={editMode}
+          onHeadlineChange={onHeadlineChange}
+          onMessageChange={onMessageChange}
+          extraPages={extraPages}
+          onAddPage={onAddPage}
+          onRegenerateHeadline={onRegenerateHeadline}
+          onRegenerateMessage={onRegenerateMessage}
+          onRegenerateImage={onRegenerateImage}
+          isRegeneratingHeadline={isRegeneratingHeadline}
+          isRegeneratingMessage={isRegeneratingMessage}
+          isRegeneratingImage={isRegeneratingImage}
+          messageFontSize={messageFontSize}
+          onMessageFontSizeChange={onMessageFontSizeChange}
+          messagePageIndex={messagePageIndex}
+          onMessagePageIndexChange={onMessagePageIndexChange}
+        />
 
-      {/* Save Button */}
-      {editMode && onSave && (
-        <Button
-          className="w-full"
-          onClick={onSave}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <>
-              <Spinner className="mr-2 h-4 w-4" />
-              Saving...
-            </>
-          ) : (
-            'Save Card'
-          )}
-        </Button>
-      )}
+        {/* Save Button - same width as card */}
+        {editMode && onSave && (
+          <Button
+            className="w-full"
+            onClick={onSave}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Saving...
+              </>
+            ) : (
+              'Save Card'
+            )}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
