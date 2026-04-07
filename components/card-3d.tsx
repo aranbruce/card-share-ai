@@ -540,7 +540,7 @@ export function Card3D({
               </div>
             ) : currentPage === 1 ? (
               // Main Message Page
-              <div className="flex-1 flex flex-col p-6 pr-14">
+              <div className="flex-1 flex flex-col p-6">
                 <div className="flex-1 flex flex-col justify-center">
                   <DraggableWrapper editable={editable}>
                     <InlineEdit
