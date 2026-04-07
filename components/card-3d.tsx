@@ -264,8 +264,10 @@ function DraggableWrapper({
   const [size, setSize] = useState({ width: 100 }) // percentage
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
+  const [dragStarted, setDragStarted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
+  const DRAG_THRESHOLD = 5
 
   const handleMouseDown = (e: React.MouseEvent, type: 'drag' | 'resize') => {
     if (!editable) return
@@ -289,6 +291,12 @@ function DraggableWrapper({
       if (isDragging) {
         const dx = e.clientX - startPos.current.x
         const dy = e.clientY - startPos.current.y
+
+        // Only start moving after threshold to avoid jumping on click
+        if (!dragStarted) {
+          if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return
+          setDragStarted(true)
+        }
 
         // Clamp within the card canvas
         if (containerRef.current) {
@@ -327,6 +335,7 @@ function DraggableWrapper({
     const handleMouseUp = () => {
       setIsDragging(false)
       setIsResizing(false)
+      setDragStarted(false)
     }
 
     if (isDragging || isResizing) {
@@ -338,7 +347,7 @@ function DraggableWrapper({
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging, isResizing])
+  }, [isDragging, isResizing, dragStarted])
 
   return (
     <div
