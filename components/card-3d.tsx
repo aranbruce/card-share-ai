@@ -560,58 +560,60 @@ export function Card3D({
               // Main Message Page
               <div className="flex-1 flex flex-col p-6">
                 <div className="flex-1 flex flex-col justify-center">
-                  <DraggableWrapper editable={editable}>
-                    <InlineEdit
-                      value={message}
-                      onChange={onMessageChange}
-                      editable={editable}
-                      onRegenerate={onRegenerateMessage}
-                      isRegenerating={isRegeneratingMessage}
-                      className="leading-relaxed text-foreground/90 whitespace-pre-wrap"
-                      style={{ fontSize: `${messageFontSize}px` }}
-                    />
-                  </DraggableWrapper>
-                </div>
-                
-                {/* Message controls - font size slider and page select */}
-                {editable && (
-                  <div className="flex items-center gap-6 pt-4 border-t border-border/30">
-                    {/* Font size slider */}
-                    <div className="flex items-center gap-3 flex-1">
-                      <label className="text-xs text-muted-foreground whitespace-nowrap">Text size</label>
-                      <input
-                        type="range"
-                        min={12}
-                        max={28}
-                        value={messageFontSize}
-                        onChange={(e) => onMessageFontSizeChange?.(Number(e.target.value))}
-                        className="flex-1 h-1.5 bg-border rounded-full appearance-none cursor-pointer accent-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-sm"
+                  <div className="space-y-3">
+                    <DraggableWrapper editable={editable}>
+                      <InlineEdit
+                        value={message}
+                        onChange={onMessageChange}
+                        editable={editable}
+                        onRegenerate={onRegenerateMessage}
+                        isRegenerating={isRegeneratingMessage}
+                        className="leading-relaxed text-foreground/90 whitespace-pre-wrap"
+                        style={{ fontSize: `${messageFontSize}px` }}
                       />
-                    </div>
+                    </DraggableWrapper>
                     
-                    {/* Page select dropdown */}
-                    {totalPages > 2 && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs text-muted-foreground whitespace-nowrap">Move to</label>
-                        <select
-                          value={validMessagePage}
-                          onChange={(e) => {
-                            const newPage = Number(e.target.value)
-                            onMessagePageIndexChange?.(newPage)
-                            setCurrentPage(newPage)
-                          }}
-                          className="text-xs bg-background border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
-                        >
-                          {Array.from({ length: totalPages - 1 }, (_, i) => i + 1).map((page) => (
-                            <option key={page} value={page}>
-                              Page {page}
-                            </option>
-                          ))}
-                        </select>
+                    {/* Message controls - positioned directly below text */}
+                    {editable && (
+                      <div className="flex items-center gap-4 pt-2">
+                        {/* Font size slider */}
+                        <div className="flex items-center gap-2 flex-1">
+                          <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">Size</label>
+                          <input
+                            type="range"
+                            min={12}
+                            max={28}
+                            value={messageFontSize}
+                            onChange={(e) => onMessageFontSizeChange?.(Number(e.target.value))}
+                            className="flex-1 h-1 bg-border/50 rounded-full appearance-none cursor-pointer accent-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full"
+                          />
+                        </div>
+                        
+                        {/* Page select dropdown */}
+                        {totalPages > 2 && (
+                          <div className="flex items-center gap-2">
+                            <label className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">Page</label>
+                            <select
+                              value={validMessagePage}
+                              onChange={(e) => {
+                                const newPage = Number(e.target.value)
+                                onMessagePageIndexChange?.(newPage)
+                                setCurrentPage(newPage)
+                              }}
+                              className="text-xs bg-transparent border-none text-muted-foreground cursor-pointer focus:outline-none"
+                            >
+                              {Array.from({ length: totalPages - 1 }, (_, i) => i + 1).map((page) => (
+                                <option key={page} value={page}>
+                                  {page}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             ) : currentPage > 0 && contributionPages[currentPage - (currentPage > validMessagePage ? 1 : 2)] ? (
               // Contributor Pages with messages
