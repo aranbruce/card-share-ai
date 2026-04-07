@@ -416,7 +416,7 @@ export function Card3D({
           <div className="flex-1 flex flex-col">
             {currentPage === 0 ? (
               // Cover Page
-              <div className="relative flex-1 flex flex-col rounded-t-2xl overflow-hidden">
+              <div className="relative flex-1 flex flex-col">
                 {isGeneratingImage ? (
                   <div className="flex-1 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
@@ -427,7 +427,7 @@ export function Card3D({
                 ) : (
                   <>
                     {imageUrl && (
-                      <div className="relative flex-1 w-full group/image">
+                      <div className="relative flex-1 w-full group/image rounded-t-2xl overflow-hidden">
                         <Image
                           src={imageUrl}
                           alt="Card cover"
