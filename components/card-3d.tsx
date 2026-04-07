@@ -260,7 +260,7 @@ function DraggableWrapper({
   children: React.ReactNode
   editable?: boolean
 }) {
-  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [position, setPosition] = useState<{ x: number | null, y: number | null }>({ x: null, y: null })
   const [size, setSize] = useState({ width: 100 }) // percentage
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
@@ -273,15 +273,32 @@ function DraggableWrapper({
     if (!editable) return
     e.preventDefault()
     e.stopPropagation()
-    
+
+    // On first drag, capture the element's position relative to the canvas
+    let currentPosX = position.x
+    let currentPosY = position.y
+    if ((currentPosX === null || currentPosY === null) && containerRef.current) {
+      const parent = containerRef.current.closest('[data-card-canvas]') as HTMLElement
+      if (parent) {
+        const parentRect = parent.getBoundingClientRect()
+        const selfRect = containerRef.current.getBoundingClientRect()
+        currentPosX = selfRect.left - parentRect.left
+        currentPosY = selfRect.top - parentRect.top
+        setPosition({ x: currentPosX, y: currentPosY })
+      } else {
+        currentPosX = 0
+        currentPosY = 0
+      }
+    }
+
     startPos.current = {
       x: e.clientX,
       y: e.clientY,
-      posX: position.x,
-      posY: position.y,
+      posX: currentPosX ?? 0,
+      posY: currentPosY ?? 0,
       width: size.width,
     }
-    
+
     if (type === 'drag') setIsDragging(true)
     if (type === 'resize') setIsResizing(true)
   }
@@ -304,17 +321,14 @@ function DraggableWrapper({
           if (parent) {
             const parentRect = parent.getBoundingClientRect()
             const selfRect = containerRef.current.getBoundingClientRect()
-            const selfW = selfRect.width
-            const selfH = selfRect.height
 
-            const minX = -startPos.current.posX
-            const maxX = parentRect.width - selfW - startPos.current.posX
-            const minY = -startPos.current.posY
-            const maxY = parentRect.height - selfH - startPos.current.posY
+            // Absolute bounds: how far the element can move from its natural position
+            const maxX = parentRect.width - selfRect.width
+            const maxY = parentRect.height - selfRect.height
 
             setPosition({
-              x: Math.max(minX, Math.min(maxX, startPos.current.posX + dx)),
-              y: Math.max(minY, Math.min(maxY, startPos.current.posY + dy)),
+              x: Math.max(0, Math.min(maxX, startPos.current.posX + dx)),
+              y: Math.max(0, Math.min(maxY, startPos.current.posY + dy)),
             })
           } else {
             setPosition({
@@ -353,10 +367,18 @@ function DraggableWrapper({
     <div
       ref={containerRef}
       className="relative group"
-      style={{
-        transform: editable ? `translate(${position.x}px, ${position.y}px)` : undefined,
-        width: editable ? `${size.width}%` : '100%',
-      }}
+      style={
+        editable && position.x !== null && position.y !== null
+          ? {
+              position: 'absolute',
+              left: position.x,
+              top: position.y,
+              width: `${size.width}%`,
+            }
+          : {
+              width: editable ? `${size.width}%` : '100%',
+            }
+      }
     >
       {editable && (
         <>
@@ -589,7 +611,7 @@ export function Card3D({
               </div>
             ) : isMessagePage ? (
               // Main Message Page
-              <div className="flex-1 flex flex-col p-6" data-card-canvas>
+              <div className="flex-1 flex flex-col p-6 relative" data-card-canvas>
                 <div className="flex-1 flex flex-col justify-center">
                   <DraggableWrapper editable={editable}>
                     <div className="space-y-3">
