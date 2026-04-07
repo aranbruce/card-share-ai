@@ -46,6 +46,8 @@ export default function CreateCardPage() {
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [extraPages, setExtraPages] = useState(0)
+  const [messageFontSize, setMessageFontSize] = useState(18)
+  const [messagePageIndex, setMessagePageIndex] = useState(1)
 
   // Check if user is logged in
   useEffect(() => {
@@ -330,6 +332,10 @@ export default function CreateCardPage() {
             isSaving={isLoading}
             extraPages={extraPages}
             onAddPage={() => setExtraPages((prev) => prev + 1)}
+            messageFontSize={messageFontSize}
+            onMessageFontSizeChange={setMessageFontSize}
+            messagePageIndex={messagePageIndex}
+            onMessagePageIndexChange={setMessagePageIndex}
           />
         )}
 

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles, X, Send } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles, X, Send, Minus, Plus, ArrowRightLeft } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -29,6 +29,10 @@ interface Card3DProps {
   isRegeneratingHeadline?: boolean
   isRegeneratingMessage?: boolean
   isRegeneratingImage?: boolean
+  messageFontSize?: number
+  onMessageFontSizeChange?: (size: number) => void
+  messagePageIndex?: number
+  onMessagePageIndexChange?: (page: number) => void
 }
 
 const MESSAGES_PER_PAGE = 3
@@ -38,6 +42,7 @@ function InlineEdit({
   value,
   onChange,
   className,
+  style,
   editable = false,
   onRegenerate,
   isRegenerating = false,
@@ -45,6 +50,7 @@ function InlineEdit({
   value: string
   onChange?: (value: string) => void
   className?: string
+  style?: React.CSSProperties
   editable?: boolean
   onRegenerate?: (prompt: string) => Promise<void>
   isRegenerating?: boolean
@@ -167,6 +173,7 @@ function InlineEdit({
           onKeyDown={handleKeyDown}
           onClick={(e) => e.stopPropagation()}
           className={`${className} outline-none ring-1 ring-primary/30 rounded px-1 -mx-1 bg-primary/5`}
+          style={style}
         >
           {value}
         </div>
@@ -174,6 +181,7 @@ function InlineEdit({
         <div
           onClick={handleClick}
           className={`${className} ${editable ? 'cursor-text hover:bg-primary/5 rounded px-1 -mx-1 transition-colors' : ''}`}
+          style={style}
         >
           {value}
         </div>
@@ -365,6 +373,10 @@ export function Card3D({
   isRegeneratingHeadline = false,
   isRegeneratingMessage = false,
   isRegeneratingImage = false,
+  messageFontSize = 18,
+  onMessageFontSizeChange,
+  messagePageIndex = 1,
+  onMessagePageIndexChange,
 }: Card3DProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [showImagePrompt, setShowImagePrompt] = useState(false)
@@ -377,7 +389,7 @@ export function Card3D({
     }
   }, [showImagePrompt])
 
-  // Page 0 = Cover, Page 1 = Main message, Page 2+ = Contributor/blank pages
+  // Page 0 = Cover, then message page + contributor/blank pages
   const contributionPages: Array<typeof contributions> = []
   for (let i = 0; i < contributions.length; i += MESSAGES_PER_PAGE) {
     contributionPages.push(contributions.slice(i, i + MESSAGES_PER_PAGE))
@@ -386,6 +398,12 @@ export function Card3D({
   // Total pages: Cover + Main Message + Contribution Pages + Extra Blank Pages
   const blankPagesNeeded = Math.max(0, extraPages - contributionPages.length)
   const totalPages = 2 + contributionPages.length + blankPagesNeeded
+  
+  // Ensure message page is within valid range (1 to totalPages-1)
+  const validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
+  
+  // Check if current page should show the message
+  const isMessagePage = currentPage === validMessagePage
 
   const goToPage = (page: number) => {
     if (page < 0) return
@@ -538,7 +556,7 @@ export function Card3D({
                   </>
                 )}
               </div>
-            ) : currentPage === 1 ? (
+            ) : isMessagePage ? (
               // Main Message Page
               <div className="flex-1 flex flex-col p-6">
                 <div className="flex-1 flex flex-col justify-center">
@@ -549,12 +567,68 @@ export function Card3D({
                       editable={editable}
                       onRegenerate={onRegenerateMessage}
                       isRegenerating={isRegeneratingMessage}
-                      className="text-lg leading-relaxed text-foreground/90 whitespace-pre-wrap"
+                      className="leading-relaxed text-foreground/90 whitespace-pre-wrap"
+                      style={{ fontSize: `${messageFontSize}px` }}
                     />
                   </DraggableWrapper>
                 </div>
+                
+                {/* Message controls - font size and move to page */}
+                {editable && (
+                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
+                    {/* Font size controls */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Size:</span>
+                      <button
+                        onClick={() => onMessageFontSizeChange?.(Math.max(12, messageFontSize - 2))}
+                        className="p-1 rounded hover:bg-muted transition-colors"
+                        title="Decrease font size"
+                      >
+                        <Minus className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                      <span className="text-xs text-muted-foreground w-6 text-center">{messageFontSize}</span>
+                      <button
+                        onClick={() => onMessageFontSizeChange?.(Math.min(32, messageFontSize + 2))}
+                        className="p-1 rounded hover:bg-muted transition-colors"
+                        title="Increase font size"
+                      >
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
+                    </div>
+                    
+                    {/* Move to page controls */}
+                    {totalPages > 2 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Page:</span>
+                        <button
+                          onClick={() => {
+                            const newPage = validMessagePage > 1 ? validMessagePage - 1 : totalPages - 1
+                            onMessagePageIndexChange?.(newPage)
+                            setCurrentPage(newPage)
+                          }}
+                          className="p-1 rounded hover:bg-muted transition-colors"
+                          title="Move message to previous page"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                        <span className="text-xs text-muted-foreground w-6 text-center">{validMessagePage}</span>
+                        <button
+                          onClick={() => {
+                            const newPage = validMessagePage < totalPages - 1 ? validMessagePage + 1 : 1
+                            onMessagePageIndexChange?.(newPage)
+                            setCurrentPage(newPage)
+                          }}
+                          className="p-1 rounded hover:bg-muted transition-colors"
+                          title="Move message to next page"
+                        >
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            ) : contributionPages[currentPage - 2] ? (
+            ) : currentPage > 0 && contributionPages[currentPage - (currentPage > validMessagePage ? 1 : 2)] ? (
               // Contributor Pages with messages
               <div className="flex-1 flex flex-col p-6">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">

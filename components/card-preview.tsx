@@ -31,6 +31,10 @@ interface CardPreviewProps {
   }>
   extraPages?: number
   onAddPage?: () => void
+  messageFontSize?: number
+  onMessageFontSizeChange?: (size: number) => void
+  messagePageIndex?: number
+  onMessagePageIndexChange?: (page: number) => void
 }
 
 export function CardPreview({
@@ -55,6 +59,10 @@ export function CardPreview({
   contributions = [],
   extraPages = 0,
   onAddPage,
+  messageFontSize = 18,
+  onMessageFontSizeChange,
+  messagePageIndex = 1,
+  onMessagePageIndexChange,
 }: CardPreviewProps) {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -99,6 +107,10 @@ export function CardPreview({
         isRegeneratingHeadline={isRegeneratingHeadline}
         isRegeneratingMessage={isRegeneratingMessage}
         isRegeneratingImage={isRegeneratingImage}
+        messageFontSize={messageFontSize}
+        onMessageFontSizeChange={onMessageFontSizeChange}
+        messagePageIndex={messagePageIndex}
+        onMessagePageIndexChange={onMessagePageIndexChange}
       />
 
       {/* Save Button */}
