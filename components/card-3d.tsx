@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles, X, Send, Minus, Plus, ArrowRightLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Move, Maximize2, Sparkles, X, Send } from 'lucide-react'
 
 interface Card3DProps {
   imageUrl: string
@@ -445,7 +445,7 @@ export function Card3D({
                 ) : (
                   <>
                     {imageUrl && (
-                      <div className="relative flex-1 w-full group/image rounded-t-2xl overflow-hidden">
+                      <div className="relative flex-1 w-full group/image rounded-2xl overflow-hidden">
                         <Image
                           src={imageUrl}
                           alt="Card cover"
@@ -573,56 +573,41 @@ export function Card3D({
                   </DraggableWrapper>
                 </div>
                 
-                {/* Message controls - font size and move to page */}
+                {/* Message controls - font size slider and page select */}
                 {editable && (
-                  <div className="flex items-center justify-between pt-4 border-t border-border/30">
-                    {/* Font size controls */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Size:</span>
-                      <button
-                        onClick={() => onMessageFontSizeChange?.(Math.max(12, messageFontSize - 2))}
-                        className="p-1 rounded hover:bg-muted transition-colors"
-                        title="Decrease font size"
-                      >
-                        <Minus className="h-3.5 w-3.5 text-muted-foreground" />
-                      </button>
-                      <span className="text-xs text-muted-foreground w-6 text-center">{messageFontSize}</span>
-                      <button
-                        onClick={() => onMessageFontSizeChange?.(Math.min(32, messageFontSize + 2))}
-                        className="p-1 rounded hover:bg-muted transition-colors"
-                        title="Increase font size"
-                      >
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                      </button>
+                  <div className="flex items-center gap-6 pt-4 border-t border-border/30">
+                    {/* Font size slider */}
+                    <div className="flex items-center gap-3 flex-1">
+                      <label className="text-xs text-muted-foreground whitespace-nowrap">Text size</label>
+                      <input
+                        type="range"
+                        min={12}
+                        max={28}
+                        value={messageFontSize}
+                        onChange={(e) => onMessageFontSizeChange?.(Number(e.target.value))}
+                        className="flex-1 h-1.5 bg-border rounded-full appearance-none cursor-pointer accent-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-sm"
+                      />
                     </div>
                     
-                    {/* Move to page controls */}
+                    {/* Page select dropdown */}
                     {totalPages > 2 && (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Page:</span>
-                        <button
-                          onClick={() => {
-                            const newPage = validMessagePage > 1 ? validMessagePage - 1 : totalPages - 1
+                        <label className="text-xs text-muted-foreground whitespace-nowrap">Move to</label>
+                        <select
+                          value={validMessagePage}
+                          onChange={(e) => {
+                            const newPage = Number(e.target.value)
                             onMessagePageIndexChange?.(newPage)
                             setCurrentPage(newPage)
                           }}
-                          className="p-1 rounded hover:bg-muted transition-colors"
-                          title="Move message to previous page"
+                          className="text-xs bg-background border border-border rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary"
                         >
-                          <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
-                        </button>
-                        <span className="text-xs text-muted-foreground w-6 text-center">{validMessagePage}</span>
-                        <button
-                          onClick={() => {
-                            const newPage = validMessagePage < totalPages - 1 ? validMessagePage + 1 : 1
-                            onMessagePageIndexChange?.(newPage)
-                            setCurrentPage(newPage)
-                          }}
-                          className="p-1 rounded hover:bg-muted transition-colors"
-                          title="Move message to next page"
-                        >
-                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                        </button>
+                          {Array.from({ length: totalPages - 1 }, (_, i) => i + 1).map((page) => (
+                            <option key={page} value={page}>
+                              Page {page}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     )}
                   </div>
