@@ -172,7 +172,7 @@ function InlineEdit({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           onClick={(e) => e.stopPropagation()}
-          className={`${className} outline-none ring-1 ring-primary/30 rounded px-1 -mx-1 bg-primary/5`}
+          className={`${className} outline-none`}
           style={style}
         >
           {value}
@@ -289,10 +289,32 @@ function DraggableWrapper({
       if (isDragging) {
         const dx = e.clientX - startPos.current.x
         const dy = e.clientY - startPos.current.y
-        setPosition({
-          x: startPos.current.posX + dx,
-          y: startPos.current.posY + dy,
-        })
+
+        // Clamp within the card canvas
+        if (containerRef.current) {
+          const parent = containerRef.current.closest('[data-card-canvas]') as HTMLElement
+          if (parent) {
+            const parentRect = parent.getBoundingClientRect()
+            const selfRect = containerRef.current.getBoundingClientRect()
+            const selfW = selfRect.width
+            const selfH = selfRect.height
+
+            const minX = -startPos.current.posX
+            const maxX = parentRect.width - selfW - startPos.current.posX
+            const minY = -startPos.current.posY
+            const maxY = parentRect.height - selfH - startPos.current.posY
+
+            setPosition({
+              x: Math.max(minX, Math.min(maxX, startPos.current.posX + dx)),
+              y: Math.max(minY, Math.min(maxY, startPos.current.posY + dy)),
+            })
+          } else {
+            setPosition({
+              x: startPos.current.posX + dx,
+              y: startPos.current.posY + dy,
+            })
+          }
+        }
       }
       if (isResizing && containerRef.current) {
         const containerWidth = containerRef.current.parentElement?.offsetWidth || 300
@@ -558,7 +580,7 @@ export function Card3D({
               </div>
             ) : isMessagePage ? (
               // Main Message Page
-              <div className="flex-1 flex flex-col p-6">
+              <div className="flex-1 flex flex-col p-6" data-card-canvas>
                 <div className="flex-1 flex flex-col justify-center">
                   <DraggableWrapper editable={editable}>
                     <div className="space-y-3">
