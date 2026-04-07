@@ -78,8 +78,20 @@ function InlineEdit({
   }, [isEditing])
 
   useEffect(() => {
-    if (showPromptInput && promptInputRef.current) {
-      promptInputRef.current.focus()
+    if (showPromptInput) {
+      // Calculate position for fixed prompt input
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setPromptPosition({
+          top: rect.bottom + 8,
+          left: rect.left,
+          width: rect.width,
+        })
+      }
+      // Focus input after position is set
+      setTimeout(() => {
+        promptInputRef.current?.focus()
+      }, 0)
     }
   }, [showPromptInput])
 
@@ -136,6 +148,7 @@ function InlineEdit({
 
   return (
     <div 
+      ref={containerRef}
       className="relative group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
@@ -166,27 +179,32 @@ function InlineEdit({
         </div>
       )}
       
-      {/* Sparkle regenerate button */}
+      {/* Sparkle regenerate button - always visible when editable and hovered */}
       {showSparkle && (
         <button
           data-regenerate-area
           onClick={handleSparkleClick}
           disabled={isRegenerating}
-          className="absolute -right-10 top-0 p-2 rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-all disabled:opacity-50"
+          className="absolute -right-12 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 hover:scale-110 transition-all disabled:opacity-50 ring-2 ring-background"
           title="Rewrite with AI"
         >
           <Sparkles className={`h-4 w-4 ${isRegenerating ? 'animate-pulse' : ''}`} />
         </button>
       )}
 
-      {/* Prompt input popover */}
+      {/* Prompt input popover - uses fixed positioning to escape overflow:hidden */}
       {showPromptInput && (
         <div 
           data-regenerate-area
-          className="absolute left-0 right-0 top-full mt-2 z-50"
+          className="fixed z-[100]"
+          style={{
+            top: promptPosition.top,
+            left: promptPosition.left,
+            width: Math.max(promptPosition.width, 300),
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="bg-background border border-border rounded-lg shadow-lg p-2 flex gap-2 items-center">
+          <div className="bg-background border border-border rounded-lg shadow-xl p-2 flex gap-2 items-center">
             <input
               ref={promptInputRef}
               type="text"
@@ -390,15 +408,15 @@ export function Card3D({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* Card Container */}
+      {/* Card Container - no overflow hidden to allow sparkle buttons to escape */}
       <div className="relative w-full max-w-md">
-        <div className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 rounded-2xl shadow-xl overflow-hidden min-h-[500px] flex flex-col">
+        <div className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 rounded-2xl shadow-xl min-h-[500px] flex flex-col">
           
           {/* Page Content */}
           <div className="flex-1 flex flex-col">
             {currentPage === 0 ? (
               // Cover Page
-              <div className="relative flex-1 flex flex-col">
+              <div className="relative flex-1 flex flex-col rounded-t-2xl overflow-hidden">
                 {isGeneratingImage ? (
                   <div className="flex-1 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3">
@@ -522,7 +540,7 @@ export function Card3D({
               </div>
             ) : currentPage === 1 ? (
               // Main Message Page
-              <div className="flex-1 flex flex-col p-6 overflow-hidden">
+              <div className="flex-1 flex flex-col p-6 pr-14">
                 <div className="flex-1 flex flex-col justify-center">
                   <DraggableWrapper editable={editable}>
                     <InlineEdit
