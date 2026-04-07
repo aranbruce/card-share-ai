@@ -153,7 +153,7 @@ function InlineEdit({
   const showSparkle = editable && onRegenerate && (isEditing || isHovered) && !showPromptInput
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative group"
       onMouseEnter={() => setIsHovered(true)}
@@ -186,7 +186,7 @@ function InlineEdit({
           {value}
         </div>
       )}
-      
+
       {/* Sparkle regenerate button - always visible when editable and hovered */}
       {showSparkle && (
         <button
@@ -202,7 +202,7 @@ function InlineEdit({
 
       {/* Prompt input popover - uses fixed positioning to escape overflow:hidden */}
       {showPromptInput && (
-        <div 
+        <div
           data-regenerate-area
           className="fixed z-[100]"
           style={{
@@ -268,7 +268,7 @@ function DraggableWrapper({
   const containerRef = useRef<HTMLDivElement>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const DRAG_THRESHOLD = 5
-  const CANVAS_PADDING = 4
+  const CANVAS_PADDING = 40
 
   const handleMouseDown = (e: React.MouseEvent, type: 'drag' | 'resize') => {
     if (!editable) return
@@ -371,14 +371,14 @@ function DraggableWrapper({
       style={
         editable && position.x !== null && position.y !== null
           ? {
-              position: 'absolute',
-              left: position.x,
-              top: position.y,
-              width: `${size.width}%`,
-            }
+            position: 'absolute',
+            left: position.x,
+            top: position.y,
+            width: `${size.width}%`,
+          }
           : {
-              width: editable ? `${size.width}%` : '100%',
-            }
+            width: editable ? `${size.width}%` : '100%',
+          }
       }
     >
       {editable && (
@@ -390,7 +390,7 @@ function DraggableWrapper({
           >
             <Move className="h-3 w-3 text-muted-foreground" />
           </div>
-          
+
           {/* Resize handle */}
           <div
             onMouseDown={(e) => handleMouseDown(e, 'resize')}
@@ -398,7 +398,7 @@ function DraggableWrapper({
           >
             <Maximize2 className="h-3 w-3 text-muted-foreground" />
           </div>
-          
+
           {/* Visual border on hover */}
           <div className="absolute inset-0 border border-dashed border-transparent group-hover:border-primary/20 rounded pointer-events-none -m-2 p-2" />
         </>
@@ -448,14 +448,14 @@ export function Card3D({
   for (let i = 0; i < contributions.length; i += MESSAGES_PER_PAGE) {
     contributionPages.push(contributions.slice(i, i + MESSAGES_PER_PAGE))
   }
-  
+
   // Total pages: Cover + Main Message + Contribution Pages + Extra Blank Pages
   const blankPagesNeeded = Math.max(0, extraPages - contributionPages.length)
   const totalPages = 2 + contributionPages.length + blankPagesNeeded
-  
+
   // Ensure message page is within valid range (1 to totalPages-1)
   const validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
-  
+
   // Check if current page should show the message
   const isMessagePage = currentPage === validMessagePage
 
@@ -465,7 +465,7 @@ export function Card3D({
       setCurrentPage(page)
     }
   }
-  
+
   const handleAddPage = () => {
     if (onAddPage) {
       onAddPage()
@@ -483,7 +483,7 @@ export function Card3D({
       {/* Card Container - no overflow hidden to allow sparkle buttons to escape */}
       <div className="relative w-full max-w-md">
         <div className="w-full bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900 rounded-2xl shadow-xl min-h-[500px] flex flex-col">
-          
+
           {/* Page Content */}
           <div className="flex-1 flex flex-col">
             {currentPage === 0 ? (
@@ -509,7 +509,7 @@ export function Card3D({
                           priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                        
+
                         {/* Image regenerate button */}
                         {editable && onRegenerateImage && !showImagePrompt && (
                           <button
@@ -524,10 +524,10 @@ export function Card3D({
                             <Sparkles className={`h-4 w-4 ${isRegeneratingImage || isGeneratingImage ? 'animate-pulse' : ''}`} />
                           </button>
                         )}
-                        
+
                         {/* Image prompt input */}
                         {showImagePrompt && (
-                          <div 
+                          <div
                             className="absolute top-4 left-4 right-4 z-50"
                             onClick={(e) => e.stopPropagation()}
                           >
@@ -585,7 +585,7 @@ export function Card3D({
                         )}
                       </div>
                     )}
-                    
+
                     {/* Headline overlay */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                       <InlineEdit
@@ -625,7 +625,7 @@ export function Card3D({
                         className="leading-relaxed text-foreground/90 whitespace-pre-wrap"
                         style={{ fontSize: `${messageFontSize}px` }}
                       />
-                      
+
                       {/* Message controls - positioned directly below text, moves with message */}
                       {editable && (
                         <div className="flex items-center gap-4 pt-2" onClick={(e) => e.stopPropagation()}>
@@ -641,7 +641,7 @@ export function Card3D({
                               className="flex-1 h-1 bg-border/50 rounded-full appearance-none cursor-pointer accent-primary [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:rounded-full"
                             />
                           </div>
-                          
+
                           {/* Page select dropdown */}
                           {totalPages > 2 && (
                             <div className="flex items-center gap-2">
@@ -675,11 +675,11 @@ export function Card3D({
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                   Messages from friends & family
                 </p>
-                
+
                 <div className="flex-1 space-y-4">
                   {contributionPages[currentPage - 2].map((contrib) => (
-                    <div 
-                      key={contrib.id} 
+                    <div
+                      key={contrib.id}
                       className="bg-background/50 rounded-lg p-4 border border-border/30"
                     >
                       <p className="text-base text-foreground/90 italic leading-relaxed">
@@ -699,7 +699,7 @@ export function Card3D({
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
                   Messages from friends & family
                 </p>
-                
+
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center text-muted-foreground">
                     <p className="text-lg mb-2">Space reserved for messages</p>
@@ -724,22 +724,21 @@ export function Card3D({
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        
+
         <div className="flex gap-2 items-center">
           {Array.from({ length: totalPages }).map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentPage(i)}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                i === currentPage 
-                  ? 'bg-primary' 
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${i === currentPage
+                  ? 'bg-primary'
                   : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-              }`}
+                }`}
               aria-label={`Go to page ${i + 1}`}
             />
           ))}
         </div>
-        
+
         <Button
           variant="ghost"
           size="sm"
