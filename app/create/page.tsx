@@ -256,9 +256,11 @@ export default function CreateCardPage() {
         body: JSON.stringify({
           cardType: cardData.cardType,
           recipientName,
+          recipientEmail: '', // Optional field
           senderName,
           copyHeadline: cardData.headline,
           copyMessage: cardData.message,
+          copySignoff: `Love, ${senderName}`, // Default signoff
           imageUrl: cardData.imageUrl,
           imagePrompt: cardData.imagePrompt,
           extraPages,
