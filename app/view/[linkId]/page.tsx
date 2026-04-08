@@ -33,14 +33,23 @@ export default function PublicCardPage() {
   useEffect(() => {
     const loadCard = async () => {
       try {
-        const response = await fetch(`/api/contribute/${linkId}`)
-        if (!response.ok) throw new Error('Card not found')
+        console.log('[v0] Loading card with ID:', linkId)
+        const response = await fetch(`/api/cards/view/${linkId}`)
+        console.log('[v0] Response status:', response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.log('[v0] Error response:', errorData)
+          throw new Error(errorData.error || 'Card not found')
+        }
 
         const { card: cardData, contributions: contribs } =
           await response.json()
+        console.log('[v0] Card loaded:', { cardData, contributionsCount: contribs.length })
         setCard(cardData)
         setContributions(contribs)
       } catch (err) {
+        console.error('[v0] Error loading card:', err)
         setError(
           err instanceof Error
             ? err.message
