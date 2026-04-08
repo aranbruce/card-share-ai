@@ -4,10 +4,13 @@ import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[v0] POST /api/cards - Starting card creation')
     const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
+    console.log('[v0] User check:', user ? `User ID: ${user.id}` : 'No user found')
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -25,6 +28,8 @@ export async function POST(request: NextRequest) {
       extraPages = 0,
     } = await request.json()
 
+    console.log('[v0] Card data:', { cardType, recipientName, senderName, hasImage: !!imageUrl })
+
     // Generate a unique link ID for contributions
     const linkId = uuidv4()
 
@@ -41,10 +46,12 @@ export async function POST(request: NextRequest) {
       status: 'draft',
       contributor_link_id: linkId,
       extra_pages: extraPages,
-    })
+    }).select()
+
+    console.log('[v0] Insert result:', { data, error })
 
     if (error) {
-      console.error('Supabase error:', error)
+      console.error('[v0] Supabase error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
@@ -52,7 +59,7 @@ export async function POST(request: NextRequest) {
       card: data?.[0] || { id: data?.id, contributor_link_id: linkId },
     })
   } catch (error) {
-    console.error('Error creating card:', error)
+    console.error('[v0] Error creating card:', error)
     return NextResponse.json(
       { error: 'Failed to create card' },
       { status: 500 },
