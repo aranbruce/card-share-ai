@@ -260,7 +260,6 @@ export default function CreateCardPage() {
           senderName,
           copyHeadline: cardData.headline,
           copyMessage: cardData.message,
-          copySignoff: `Love, ${senderName}`, // Default signoff
           imageUrl: cardData.imageUrl,
           imagePrompt: cardData.imagePrompt,
           extraPages,
