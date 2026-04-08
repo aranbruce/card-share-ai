@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
-import Image from 'next/image'
 import Link from 'next/link'
 import { ShareModal } from '@/components/share-modal'
+import { Card3D } from '@/components/card-3d'
+import { ArrowLeft, Share2, Send, Copy, CheckCircle2 } from 'lucide-react'
 
 interface CardData {
   id: string
@@ -166,142 +167,78 @@ export default function CardDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Header */}
-      <header className="border-b bg-background/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Card Details</h1>
-          <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
+      <header className="border-b bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
+          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded text-destructive mb-6">
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive mb-6 max-w-3xl">
             {error}
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Card Preview */}
-          <div className="md:col-span-2">
-            <Card className="overflow-hidden">
-              {card.image_url && (
-                <div className="relative w-full aspect-square bg-secondary">
-                  <Image
-                    src={card.image_url}
-                    alt="Card"
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+        <div className="grid lg:grid-cols-[1fr,400px] gap-8 items-start">
+          {/* Card Preview - Using Card3D component */}
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    Card for {card.recipient_name}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    From {card.sender_name}
+                  </p>
                 </div>
-              )}
-              <div className="p-6 space-y-4">
-                {editMode ? (
-                  <>
-                    <textarea
-                      value={editData.copy_headline || ''}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          copy_headline: e.target.value,
-                        })
-                      }
-                      className="w-full text-xl font-bold px-2 py-1 border border-input rounded bg-secondary/50"
-                    />
-                    <textarea
-                      value={editData.copy_message || ''}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          copy_message: e.target.value,
-                        })
-                      }
-                      className="w-full text-sm leading-relaxed px-2 py-1 border border-input rounded bg-secondary/50 min-h-24"
-                    />
-                    <textarea
-                      value={editData.copy_signoff || ''}
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          copy_signoff: e.target.value,
-                        })
-                      }
-                      className="w-full text-sm font-semibold px-2 py-1 border border-input rounded bg-secondary/50"
-                    />
-                    <div className="flex gap-2 pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setEditMode(false)
-                          setEditData(card)
-                        }}
-                        disabled={isSaving}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveChanges}
-                        disabled={isSaving}
-                      >
-                        {isSaving ? (
-                          <>
-                            <Spinner className="mr-2 h-4 w-4" />
-                            Saving...
-                          </>
-                        ) : (
-                          'Save Changes'
-                        )}
-                      </Button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h3 className="text-xl font-bold">{card.copy_headline}</h3>
-                    <p className="text-sm leading-relaxed">
-                      {card.copy_message}
-                    </p>
-                    <p className="text-sm font-semibold">{card.copy_signoff}</p>
-                    {card.status === 'draft' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditMode(true)}
-                      >
-                        Edit Copy
-                      </Button>
-                    )}
-                  </>
-                )}
+                <div className="flex items-center gap-2">
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    card.status === 'draft' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                    card.status === 'collecting' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                    'bg-green-500/10 text-green-600 dark:text-green-400'
+                  }`}>
+                    {card.status === 'draft' && 'Draft'}
+                    {card.status === 'collecting' && 'Collecting Messages'}
+                    {card.status === 'sent' && 'Sent'}
+                  </div>
+                </div>
               </div>
-            </Card>
+
+              <div className="w-full max-w-md mx-auto">
+                <Card3D
+                  imageUrl={card.image_url}
+                  headline={card.copy_headline}
+                  message={card.copy_message}
+                  senderName={card.sender_name}
+                  recipientName={card.recipient_name}
+                  contributions={contributions}
+                  editable={false}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Sidebar - Controls & Info */}
-          <div className="space-y-4">
-            {/* Status & Actions */}
+          {/* Sidebar - Actions & Info */}
+          <div className="space-y-4 lg:sticky lg:top-24">
+            {/* Primary Actions */}
             <Card className="p-6">
-              <h3 className="font-bold mb-4">Card Status</h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-secondary/50 rounded">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Current Status
-                  </p>
-                  <p className="font-semibold capitalize">
-                    {card.status}
-                  </p>
-                </div>
-
+              <h3 className="font-semibold mb-4">Actions</h3>
+              <div className="space-y-2">
                 {card.status === 'draft' && (
                   <>
                     <Button
                       className="w-full"
                       onClick={() => setShowShareModal(true)}
                     >
+                      <Share2 className="mr-2 h-4 w-4" />
                       Share Card
                     </Button>
                     <Button
@@ -309,7 +246,7 @@ export default function CardDetailPage() {
                       className="w-full"
                       onClick={() => handleStatusChange('collecting')}
                     >
-                      Start Collecting
+                      Start Collecting Messages
                     </Button>
                   </>
                 )}
@@ -318,93 +255,87 @@ export default function CardDetailPage() {
                   <>
                     <Button
                       className="w-full"
-                      onClick={() => setShowShareModal(true)}
+                      onClick={() => handleStatusChange('sent')}
                     >
-                      Share Card
+                      <Send className="mr-2 h-4 w-4" />
+                      Send to Recipient
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => handleStatusChange('sent')}
+                      onClick={() => setShowShareModal(true)}
                     >
-                      Mark as Sent
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share Options
                     </Button>
                   </>
                 )}
 
                 {card.status === 'sent' && (
                   <Button
+                    variant="outline"
                     className="w-full"
                     onClick={() => setShowShareModal(true)}
                   >
-                    View Share Links
+                    <Share2 className="mr-2 h-4 w-4" />
+                    View Card Link
                   </Button>
                 )}
-              </div>
-            </Card>
-
-            {/* Recipient Info */}
-            <Card className="p-6">
-              <h3 className="font-bold mb-4">Card Info</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">To</p>
-                  <p className="font-semibold">{card.recipient_name}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">From</p>
-                  <p className="font-semibold">{card.sender_name}</p>
-                </div>
               </div>
             </Card>
 
             {/* Contributor Link */}
             {card.status !== 'sent' && (
               <Card className="p-6">
-                <h3 className="font-bold mb-4">Share for Contributions</h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Share this link with others to add messages
+                <h3 className="font-semibold mb-2">Invite Contributors</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Share this link to collect messages from others
                 </p>
                 <div className="flex gap-2">
                   <Input
                     value={`${window.location.origin}/contribute/${card.contributor_link_id}`}
                     readOnly
-                    className="text-xs"
+                    className="text-xs font-mono"
                   />
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="outline"
                     onClick={copyContributorLink}
+                    className="shrink-0"
                   >
-                    {copyLinkCopied ? '✓' : 'Copy'}
+                    {copyLinkCopied ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </Card>
             )}
 
-            {/* Contributions Count */}
+            {/* Contributions List */}
             {contributions.length > 0 && (
               <Card className="p-6">
-                <h3 className="font-bold mb-4">
-                  Messages ({contributions.length})
-                </h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto text-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Messages</h3>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+                    {contributions.length}
+                  </span>
+                </div>
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
                   {contributions.map((contrib) => (
                     <div
                       key={contrib.id}
-                      className="p-2 bg-secondary/50 rounded"
+                      className="p-3 bg-muted/50 rounded-lg border border-border/50"
                     >
-                      <p className="font-semibold text-xs mb-1">
+                      <p className="font-medium text-sm mb-1.5">
                         {contrib.contributor_name}
                       </p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
                         {contrib.message}
                       </p>
                     </div>
                   ))}
                 </div>
               </Card>
-          )}
+            )}
+          </div>
         </div>
 
         <ShareModal
