@@ -30,7 +30,7 @@ export function CardTypeSelector({ onSelect }: { onSelect: (type: string) => voi
           <button
             key={cardType.id}
             onClick={() => onSelect(cardType.id)}
-            className="group relative overflow-hidden rounded-lg border-2 border-transparent bg-secondary/50 p-6 transition-all hover:border-primary hover:bg-secondary"
+            className="group relative overflow-hidden rounded-lg border-2 border-transparent bg-secondary/50 p-6 transition-all hover:border-primary hover:bg-secondary cursor-pointer"
           >
             <div className="text-4xl mb-3">{cardType.icon}</div>
             <h3 className="font-semibold">{cardType.label}</h3>
