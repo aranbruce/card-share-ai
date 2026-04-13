@@ -64,7 +64,7 @@ export async function POST(
 
     const editToken = uuidv4()
 
-    let text_color: string
+    let text_color: string | null
     if (textColorRaw === undefined) {
       text_color = randomPresetTextColor()
     } else {
@@ -75,7 +75,7 @@ export async function POST(
           { status: 400 },
         )
       }
-      text_color = tc !== null ? tc : randomPresetTextColor()
+      text_color = tc
     }
 
     const { data: contribution, error: insertError } = await supabase

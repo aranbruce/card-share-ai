@@ -196,7 +196,9 @@ export default function ContributeCardPage() {
             width_percent: layout.widthPercent,
             page_index: layout.pageIndex,
             font_size: layout.fontSize,
-            text_color: layout.textColor ?? null,
+            ...(layout.textColor !== undefined && {
+              text_color: layout.textColor,
+            }),
           },
           token,
         )
