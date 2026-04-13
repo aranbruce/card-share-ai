@@ -43,9 +43,8 @@ export default function ForgotPassword() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md p-8 sm:p-10">
-          <div className="mb-8 text-center">
+      <>
+        <div className="mb-8 text-center">
             <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
               Check Your Email
             </h1>
@@ -61,20 +60,19 @@ export default function ForgotPassword() {
           <Link href="/auth/login">
             <Button
               variant="outline"
-              className="h-12 w-full rounded-full border-border/50 text-base shadow-sm hover:bg-secondary/50"
+              size="lg"
+              className="mt-4 w-full border-border/50 hover:bg-secondary/50"
             >
               Back to Login
             </Button>
           </Link>
-        </div>
-      </div>
+    </>
     )
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md p-8 sm:p-10">
-        <div className="mb-8 text-center">
+    <>
+      <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
             Reset Password
           </h1>
@@ -103,13 +101,14 @@ export default function ForgotPassword() {
               placeholder="you@example.com"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
           <Button
             type="submit"
-            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            size="lg"
+            className="mt-4 w-full"
             disabled={loading}
           >
             {loading ? 'Sending reset link...' : 'Send Reset Link'}
@@ -125,7 +124,6 @@ export default function ForgotPassword() {
             Log in
           </Link>
         </p>
-      </div>
-    </div>
+    </>
   )
 }

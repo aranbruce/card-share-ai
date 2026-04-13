@@ -32,7 +32,7 @@ export function CardTypeSelector({
           <button
             key={cardType.id}
             onClick={() => onSelect(cardType.id)}
-            className="group relative cursor-pointer overflow-hidden rounded-3xl border border-border/40 bg-secondary/20 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-border/60 hover:bg-secondary/40 hover:shadow-sm"
+            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-secondary/20 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-border/60 hover:bg-secondary/40 hover:shadow-sm"
           >
             <div className="mb-5 text-5xl transition-transform duration-300 group-hover:scale-110">
               {cardType.icon}
@@ -49,7 +49,8 @@ export function CardTypeSelector({
         <Link href="/dashboard">
           <Button
             variant="outline"
-            className="h-12 rounded-full border-border/50 px-8 hover:bg-secondary/50"
+            size="lg"
+            className="border-border/50 hover:bg-secondary/50"
           >
             Back to Dashboard
           </Button>

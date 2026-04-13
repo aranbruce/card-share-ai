@@ -53,9 +53,8 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md p-8 sm:p-10">
-        <div className="mb-8 text-center">
+    <>
+      <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
             Set New Password
           </h1>
@@ -86,7 +85,7 @@ export default function ResetPassword() {
               placeholder="••••••••"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
@@ -105,19 +104,19 @@ export default function ResetPassword() {
               placeholder="••••••••"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
           <Button
             type="submit"
-            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            size="lg"
+            className="mt-4 w-full"
             disabled={loading}
           >
             {loading ? 'Resetting password...' : 'Reset Password'}
           </Button>
         </form>
-      </div>
-    </div>
+    </>
   )
 }

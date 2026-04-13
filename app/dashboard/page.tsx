@@ -150,9 +150,7 @@ export default function DashboardPage() {
               first beautiful, AI-generated card today.
             </p>
             <Link href="/create">
-              <Button size="lg" className="h-12 rounded-full px-8 shadow-sm">
-                Create Your First Card
-              </Button>
+              <Button size="lg">Create Your First Card</Button>
             </Link>
           </div>
         ) : (
@@ -164,10 +162,10 @@ export default function DashboardPage() {
               >
                 <Link
                   href={`/dashboard/cards/${card.id}`}
-                  className="absolute inset-0 z-0 rounded-3xl"
+                  className="absolute inset-0 z-0 rounded-2xl"
                   aria-label={`View card for ${card.recipient_name}`}
                 />
-                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden rounded-3xl border-border/60 bg-background py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
+                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden rounded-2xl border-border/60 bg-background py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
                   <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-secondary">
                     {card.image_url && (
                       <Image

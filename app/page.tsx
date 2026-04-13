@@ -62,9 +62,7 @@ export default function HomePage() {
             Ready to create another amazing card?
           </p>
           <Link href="/create">
-            <Button size="lg" className="h-12 rounded-full px-8 text-base">
-              Create New Card
-            </Button>
+            <Button size="lg">Create New Card</Button>
           </Link>
         </div>
       </div>
@@ -90,8 +88,8 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <div className="mx-auto max-w-6xl px-4 py-24 text-center md:px-8 md:py-32">
-        <div className="mb-8 inline-block rounded-full border border-border/50 bg-secondary px-4 py-1.5 text-sm font-medium text-secondary-foreground shadow-sm">
-          No Sign Up Required to Start
+        <div className="group relative mb-8 inline-flex items-center justify-center rounded-full border border-border/40 bg-secondary/50 px-4 py-1.5 text-sm font-medium text-secondary-foreground shadow-sm backdrop-blur-sm transition-colors hover:border-primary/20 hover:bg-secondary/80">
+          <span className="relative">No Sign Up Required to Start</span>
         </div>
         <h2 className="mb-6 text-5xl font-extrabold tracking-tight text-balance md:text-7xl">
           Create Beautiful Greeting Cards with AI
@@ -104,18 +102,18 @@ export default function HomePage() {
 
         <div className="mb-20 flex flex-col justify-center gap-4 sm:flex-row">
           <Link href="/create">
-            <Button
-              size="lg"
-              className="h-12 w-full rounded-full px-8 text-base sm:w-auto"
-            >
-              Create a Card — Free
+            <Button className="w-full gap-2 pr-2.5 sm:w-auto" size="lg">
+              Create a Card
+              <span className="rounded-full border border-primary-foreground/10 bg-primary-foreground/15 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary-foreground uppercase">
+                Free
+              </span>
             </Button>
           </Link>
           <Link href="/auth/login">
             <Button
-              size="lg"
               variant="outline"
-              className="h-12 w-full rounded-full border-border/50 px-8 text-base hover:bg-secondary/50 sm:w-auto"
+              className="w-full border-border/50 hover:bg-secondary/50 sm:w-auto"
+              size="lg"
             >
               I Have an Account
             </Button>
@@ -246,12 +244,7 @@ export default function HomePage() {
             save
           </p>
           <Link href="/create">
-            <Button
-              size="lg"
-              className="h-12 rounded-full px-8 text-base shadow-sm"
-            >
-              Start Creating Now
-            </Button>
+            <Button size="lg">Start Creating Now</Button>
           </Link>
         </div>
       </div>
@@ -260,7 +253,7 @@ export default function HomePage() {
       <footer className="border-t border-border/40 py-12">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-8">
           <div className="flex items-center gap-2 text-foreground opacity-80">
-            <div className="rounded-md bg-primary p-1 text-primary-foreground">
+            <div className="rounded-full bg-primary p-1 text-primary-foreground">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="16"

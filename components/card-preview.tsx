@@ -107,7 +107,7 @@ export function CardPreview({
       </div>
 
       {/* 3D Card Display with Inline Editing + Save Button constrained to card width */}
-      <div className="relative mx-auto w-full max-w-lg space-y-8 rounded-[2.5rem] border border-border/30 bg-secondary/20 p-8 md:p-12">
+      <div className="relative mx-auto w-full max-w-lg space-y-8 rounded-3xl border border-border/30 bg-secondary/20 p-8 md:p-12">
         <Card3D
           imageUrl={imageUrl}
           headline={headline}
@@ -137,7 +137,8 @@ export function CardPreview({
         {/* Save Button - same width as card */}
         {editMode && onSave && (
           <Button
-            className="mt-4 h-14 w-full rounded-full text-lg font-medium shadow-sm"
+            size="lg"
+            className="mt-4 w-full"
             onClick={onSave}
             disabled={isSaving}
           >

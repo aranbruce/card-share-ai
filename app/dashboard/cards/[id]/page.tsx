@@ -114,13 +114,13 @@ function CardDetailInner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-20">
+    <div className="min-h-screen bg-linear-to-b from-background to-muted/20 pb-20">
       <header className="flex items-center justify-center py-6">
         <Logo />
       </header>
       <main className="mx-auto max-w-6xl px-4 py-2 md:px-8 lg:py-4">
         {error && (
-          <div className="mb-8 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-destructive">
+          <div className="mb-8 rounded-4xl border border-destructive/20 bg-destructive/10 p-4 text-destructive">
             {error}
           </div>
         )}
@@ -196,9 +196,9 @@ function CardDetailInner() {
 
           <div className="flex flex-col items-center justify-center gap-4 border-t border-border/50 pt-8 sm:flex-row">
             <Button
-              size="lg"
               variant="outline"
-              className="h-14 w-full rounded-2xl bg-background px-8 text-base font-semibold shadow-sm hover:bg-secondary/50 sm:w-auto"
+              size="lg"
+              className="w-full bg-background hover:bg-secondary/50 sm:w-auto"
               onClick={copyContributorLink}
             >
               {copyLinkCopied ? (
@@ -211,7 +211,7 @@ function CardDetailInner() {
 
             <Button
               size="lg"
-              className="h-14 w-full rounded-2xl px-8 text-base font-semibold shadow-md transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+              className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
               onClick={() => setShowShareModal(true)}
             >
               <Send className="mr-2 h-5 w-5" />

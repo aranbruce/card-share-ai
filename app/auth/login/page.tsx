@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Link from 'next/link'
 
 function LoginForm() {
@@ -98,9 +99,8 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md p-8 sm:p-10">
-        <div className="mb-8 text-center">
+    <>
+      <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
             Welcome Back
           </h1>
@@ -116,11 +116,12 @@ function LoginForm() {
         )}
 
         {hasPendingCard && (
-          <div className="mb-6 rounded border border-primary/20 bg-primary/10 p-3">
-            <p className="text-center text-sm">
-              Your card is ready! Sign in to save it.
-            </p>
-          </div>
+          <Alert className="mb-6">
+            <AlertTitle>Your card is ready!</AlertTitle>
+            <AlertDescription>
+              Sign in to save it.
+            </AlertDescription>
+          </Alert>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -142,7 +143,7 @@ function LoginForm() {
               placeholder="you@example.com"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
@@ -166,13 +167,14 @@ function LoginForm() {
               placeholder="••••••••"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
           <Button
             type="submit"
-            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            size="lg"
+            className="mt-4 w-full"
             disabled={loading}
           >
             {loading
@@ -196,8 +198,7 @@ function LoginForm() {
             Sign up
           </Link>
         </p>
-      </div>
-    </div>
+    </>
   )
 }
 
@@ -205,11 +206,7 @@ export default function Login() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background p-4">
-          <div className="w-full max-w-md p-8">
-            <p className="text-center text-muted-foreground">Loading…</p>
-          </div>
-        </div>
+        <p className="text-center text-muted-foreground">Loading…</p>
       }
     >
       <LoginForm />

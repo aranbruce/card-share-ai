@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import Link from 'next/link'
 import { friendlyAuthError } from '@/lib/auth-errors'
 
@@ -93,9 +94,8 @@ export default function SignUp() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md p-8 sm:p-10">
-        <div className="mb-8 text-center">
+    <>
+      <div className="mb-8 text-center">
           <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
             Create Account
           </h1>
@@ -105,11 +105,12 @@ export default function SignUp() {
         </div>
 
         {hasPendingCard && (
-          <div className="mb-6 rounded border border-primary/20 bg-primary/10 p-3">
-            <p className="text-center text-sm">
-              Your card is ready! Create an account to save it.
-            </p>
-          </div>
+          <Alert className="mb-6">
+            <AlertTitle>Your card is ready!</AlertTitle>
+            <AlertDescription>
+              Create an account to save it.
+            </AlertDescription>
+          </Alert>
         )}
 
         <form onSubmit={handleSignUp} className="space-y-4">
@@ -131,7 +132,7 @@ export default function SignUp() {
               placeholder="you@example.com"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
@@ -150,13 +151,14 @@ export default function SignUp() {
               placeholder="••••••••"
               required
               disabled={loading}
-              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
+              variant="auth"
             />
           </div>
 
           <Button
             type="submit"
-            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            size="lg"
+            className="mt-4 w-full"
             disabled={loading}
           >
             {loading
@@ -180,7 +182,6 @@ export default function SignUp() {
             Log in
           </Link>
         </p>
-      </div>
-    </div>
+    </>
   )
 }

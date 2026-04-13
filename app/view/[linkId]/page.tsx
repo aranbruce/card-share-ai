@@ -89,8 +89,8 @@ export default function PublicCardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center border-b border-border/40 bg-background/80 backdrop-blur-md">
+    <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
         <Logo />
       </header>
       <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">

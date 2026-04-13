@@ -195,6 +195,8 @@ type InlineEditProps = {
   regeneratePlacement?: 'floating' | 'toolbar'
   /** Sweep style: bright on dark cover vs subtle on light message paper */
   regenerateShimmerTone?: 'cover' | 'paper'
+  /** Start in edit mode and focus the field (e.g. right after click-to-place compose). */
+  autoFocus?: boolean
 }
 
 // Inline edit component - uses contentEditable for truly identical sizing
@@ -215,10 +217,11 @@ const InlineEdit = forwardRef<
     onFocusChange,
     regeneratePlacement = 'floating',
     regenerateShimmerTone = 'cover',
+    autoFocus = false,
   },
   ref,
 ) {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(() => autoFocus)
   const [showPromptInput, setShowPromptInput] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [promptPosition, setPromptPosition] = useState({
@@ -265,10 +268,13 @@ const InlineEdit = forwardRef<
   }, [isEditing])
 
   useEffect(() => {
-    if (isEditing) return
-    queueMicrotask(() => {
-      setEditSurfaceEmpty(!value.trim())
-    })
+    const syncEmptyFromValue = () => setEditSurfaceEmpty(!value.trim())
+    if (isEditing) {
+      // External updates (e.g. AI regenerate) can change `value` while focused; placeholder must follow.
+      syncEmptyFromValue()
+      return
+    }
+    queueMicrotask(syncEmptyFromValue)
   }, [value, isEditing])
 
   useEffect(() => {
@@ -454,7 +460,7 @@ const InlineEdit = forwardRef<
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-2 shadow-xl">
+          <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-xl">
             <input
               ref={promptInputRef}
               type="text"
@@ -468,7 +474,7 @@ const InlineEdit = forwardRef<
             <button
               onClick={handleRegenerate}
               disabled={isRegenerating || !prompt.trim()}
-              className="rounded-md bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-full bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               title="Generate"
             >
               {isRegenerating ? (
@@ -482,7 +488,7 @@ const InlineEdit = forwardRef<
                 setShowPromptInput(false)
                 setPrompt('')
               }}
-              className="rounded-md p-1.5 transition-colors hover:bg-muted"
+              className="rounded-full p-1.5 transition-colors hover:bg-muted"
               title="Cancel"
             >
               <X className="h-4 w-4 text-muted-foreground" />
@@ -811,6 +817,7 @@ function ComposeDraftEditor({
           ) : null}
           <InlineEdit
             ref={messageInlineRef}
+            autoFocus
             value={composeDraft.message}
             onChange={(v) => onComposeDraftChange({ message: v })}
             editable
@@ -1409,7 +1416,7 @@ export function Card3D({
                             className="absolute top-4 right-4 left-4 z-50"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-2 shadow-lg">
+                            <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-lg">
                               <input
                                 ref={imagePromptRef}
                                 type="text"
@@ -1450,7 +1457,7 @@ export function Card3D({
                                 disabled={
                                   isRegeneratingImage || !imagePromptText.trim()
                                 }
-                                className="rounded-md bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                                className="rounded-full bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                                 title="Generate"
                               >
                                 {isRegeneratingImage ? (
@@ -1464,7 +1471,7 @@ export function Card3D({
                                   setShowImagePrompt(false)
                                   setImagePromptText('')
                                 }}
-                                className="rounded-md p-1.5 transition-colors hover:bg-muted"
+                                className="rounded-full p-1.5 transition-colors hover:bg-muted"
                                 title="Cancel"
                               >
                                 <X className="h-4 w-4 text-muted-foreground" />

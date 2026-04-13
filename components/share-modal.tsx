@@ -185,7 +185,7 @@ export function ShareModal({
               <Input
                 value={viewLink}
                 readOnly
-                className="bg-muted/50 text-sm font-medium text-muted-foreground focus-visible:ring-0"
+                className="bg-muted/50 font-medium text-muted-foreground focus-visible:ring-0"
               />
               <Button
                 size="icon"
@@ -216,7 +216,7 @@ export function ShareModal({
             </h4>
 
             {emailSent ? (
-              <div className="space-y-3 rounded-lg border border-primary/10 bg-primary/5 p-4">
+              <div className="space-y-3 rounded-2xl border border-primary/10 bg-primary/5 p-4">
                 <div className="flex items-center gap-2 font-medium text-primary">
                   <CheckIcon className="size-5" />
                   <p>Ready to send!</p>
@@ -229,7 +229,7 @@ export function ShareModal({
                   <Input
                     value={viewLink}
                     readOnly
-                    className="bg-background text-sm"
+                    className="bg-background"
                   />
                   <Button
                     size="icon"

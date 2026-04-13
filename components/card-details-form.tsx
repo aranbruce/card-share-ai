@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
 
 interface CardDetailsFormProps {
   cardType: string
@@ -77,7 +78,7 @@ export function CardDetailsForm({
             placeholder="Your name"
             disabled={isLoading}
             required
-            className="h-12 border-border/50 bg-background/50 focus-visible:ring-1"
+            variant="soft"
           />
         </div>
 
@@ -92,7 +93,7 @@ export function CardDetailsForm({
             placeholder="Recipient's name"
             disabled={isLoading}
             required
-            className="h-12 border-border/50 bg-background/50 focus-visible:ring-1"
+            variant="soft"
           />
         </div>
 
@@ -100,31 +101,21 @@ export function CardDetailsForm({
           <label htmlFor="message" className="mb-2 block text-sm font-medium">
             Additional Context (Optional)
           </label>
-          <textarea
+          <Textarea
             id="message"
             value={customMessage}
             onChange={(e) => setCustomMessage(e.target.value)}
             placeholder="Any special details to personalize the card? (e.g., promotion, new job)"
             disabled={isLoading}
-            className="min-h-[120px] w-full resize-y rounded-lg border border-border/50 bg-background/50 px-4 py-3 text-sm placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:outline-none"
+            variant="card"
           />
         </div>
 
         <div className="flex gap-3 pt-6">
-          {onBack && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onBack}
-              disabled={isLoading}
-              className="h-12 rounded-full border-border/50 px-6 hover:bg-secondary/50"
-            >
-              Back
-            </Button>
-          )}
           <Button
             type="submit"
-            className="h-12 flex-1 rounded-full shadow-sm"
+            size="lg"
+            className="order-2 flex-1"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -136,6 +127,18 @@ export function CardDetailsForm({
               'Generate Card'
             )}
           </Button>
+          {onBack && (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={onBack}
+              disabled={isLoading}
+              className="order-1 border-border/50 px-6 hover:bg-secondary/50"
+            >
+              Back
+            </Button>
+          )}
         </div>
       </form>
     </Card>
