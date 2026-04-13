@@ -41,9 +41,9 @@ Create warm, appropriate copy that matches the card type. The image prompt shoul
 
     return NextResponse.json({ cardCopy: output })
   } catch (error) {
-    console.error('[v0] Error generating card copy:', error)
+    console.error('Error generating card copy:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[v0] Error details:', errorMessage)
+    console.error('Error details:', errorMessage)
     return NextResponse.json(
       { error: 'Failed to generate card copy', details: errorMessage },
       { status: 500 },

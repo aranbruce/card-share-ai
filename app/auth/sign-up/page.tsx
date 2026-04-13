@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
+import { friendlyAuthError } from '@/lib/auth-errors'
 
 export default function SignUp() {
   const [email, setEmail] = useState('')
@@ -15,7 +16,6 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [hasPendingCard, setHasPendingCard] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
   const supabase = createClient()
 
   // Check if there's a pending card
@@ -62,7 +62,7 @@ export default function SignUp() {
       })
 
       if (error) {
-        setError(error.message)
+        setError(friendlyAuthError(error.message, error.status))
         setLoading(false)
         return
       }
@@ -90,12 +90,14 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
-      <Card className="w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold mb-2">Create Account</h1>
-        <p className="text-muted-foreground mb-6">
-          Sign up to start creating virtual greeting cards
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md p-8 sm:p-10">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Create Account</h1>
+          <p className="text-muted-foreground">
+            Sign up to start creating virtual greeting cards
+          </p>
+        </div>
 
         {hasPendingCard && (
           <div className="p-3 bg-primary/10 border border-primary/20 rounded mb-6">
@@ -124,6 +126,7 @@ export default function SignUp() {
               placeholder="you@example.com"
               required
               disabled={loading}
+              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
             />
           </div>
 
@@ -139,15 +142,16 @@ export default function SignUp() {
               placeholder="••••••••"
               required
               disabled={loading}
+              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-12 rounded-full text-base shadow-sm mt-4" disabled={loading}>
             {loading ? 'Creating account...' : hasPendingCard ? 'Sign Up & Save Card' : 'Sign Up'}
           </Button>
         </form>
 
-        <p className="text-sm text-center text-muted-foreground mt-6">
+        <p className="text-sm text-center text-muted-foreground mt-8">
           Already have an account?{' '}
           <Link 
             href={hasPendingCard ? '/auth/login?redirect=/create&action=save' : '/auth/login'} 
@@ -156,7 +160,7 @@ export default function SignUp() {
             Log in
           </Link>
         </p>
-      </Card>
+      </div>
     </div>
   )
 }

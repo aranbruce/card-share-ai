@@ -14,14 +14,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate image using fal.ai with flux model
-    const result = await fal.subscribe('fal-ai/flux-pro/v1.1', {
+    type FluxResult = { images?: Array<{ url?: string }> }
+    const result = (await fal.subscribe('fal-ai/flux-pro/v1.1', {
       input: {
         prompt: imagePrompt,
         image_size: 'square_hd',
         num_inference_steps: 25,
         num_images: 1,
       },
-    })
+    })) as FluxResult
 
     const imageUrl = result.images?.[0]?.url
 

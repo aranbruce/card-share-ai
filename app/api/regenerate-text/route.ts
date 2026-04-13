@@ -27,6 +27,14 @@ Current message is: "${currentValue}"
 User's request for the change: "${userPrompt}"
 
 Based on the user's request, generate a new message that's warm and personal. Include a sign-off at the end. Just respond with the message text only, no extra formatting.`
+    } else if (field === 'contribution_message') {
+      prompt = `This is a short personal note from someone signing a ${cardType} greeting card. The card is for ${recipientName}; the main card is from ${senderName}. The person writing this note is a friend or family member adding their own message.
+
+Current note text: "${currentValue}"
+
+User's request for the change: "${userPrompt}"
+
+Rewrite the note to be warm and personal. Keep it concise. Respond with the note text only, no quotes or extra formatting.`
     } else {
       return NextResponse.json({ error: 'Invalid field' }, { status: 400 })
     }
@@ -43,7 +51,7 @@ Based on the user's request, generate a new message that's warm and personal. In
 
     return NextResponse.json({ text: text.trim() })
   } catch (error) {
-    console.error('[v0] Error regenerating text:', error)
+    console.error('Error regenerating text:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
       { error: 'Failed to regenerate text', details: errorMessage },

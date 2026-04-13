@@ -52,12 +52,14 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
-      <Card className="w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold mb-2">Set New Password</h1>
-        <p className="text-muted-foreground mb-6">
-          Choose a new password for your account
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md p-8 sm:p-10">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Set New Password</h1>
+          <p className="text-muted-foreground">
+            Choose a new password for your account
+          </p>
+        </div>
 
         <form onSubmit={handleResetPassword} className="space-y-4">
           {error && (
@@ -78,6 +80,7 @@ export default function ResetPassword() {
               placeholder="••••••••"
               required
               disabled={loading}
+              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
             />
           </div>
 
@@ -93,14 +96,15 @@ export default function ResetPassword() {
               placeholder="••••••••"
               required
               disabled={loading}
+              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-12 rounded-full text-base shadow-sm mt-4" disabled={loading}>
             {loading ? 'Resetting password...' : 'Reset Password'}
           </Button>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }

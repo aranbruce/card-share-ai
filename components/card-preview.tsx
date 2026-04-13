@@ -22,11 +22,13 @@ interface CardPreviewProps {
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
   editMode?: boolean
+  /** Cover + headline only; inner message page is not edited here. */
+  coverOnly?: boolean
   isGuest?: boolean
   contributions?: Array<{
     id: string
-    contributor_name: string
     message: string
+    is_creator?: boolean | null
   }>
   extraPages?: number
   onAddPage?: () => void
@@ -54,6 +56,7 @@ export function CardPreview({
   onHeadlineChange,
   onMessageChange,
   editMode,
+  coverOnly = false,
   isGuest,
   contributions = [],
   extraPages = 0,
@@ -64,18 +67,20 @@ export function CardPreview({
   onMessagePageIndexChange,
 }: CardPreviewProps) {
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-10 max-w-3xl mx-auto">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Your Card</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-3xl font-extrabold mb-3 tracking-tight">Your Card</h2>
+        <p className="text-muted-foreground text-lg">
           {editMode
-            ? <>Use arrows to flip pages. Click any text to edit it.{isGuest && <>{' '}<span className="text-muted-foreground/70">Sign in to save, download, or send your card.</span></>}</>
+            ? coverOnly
+              ? <>Preview your cover, then save. After saving, you&apos;ll go to the next step to add your personal message.{isGuest && <>{' '}<span className="text-muted-foreground/70">Sign in to save your card.</span></>}</>
+              : <>Use arrows to flip pages. Click any text to edit it.{isGuest && <>{' '}<span className="text-muted-foreground/70">Sign in to save, download, or send your card.</span></>}</>
             : 'Use arrows to flip through the card'}
         </p>
       </div>
 
       {/* 3D Card Display with Inline Editing + Save Button constrained to card width */}
-      <div className="w-full max-w-md mx-auto space-y-4">
+      <div className="w-full max-w-lg mx-auto space-y-8 p-8 md:p-12 bg-secondary/20 border border-border/30 rounded-[2.5rem] relative">
         <Card3D
           imageUrl={imageUrl}
           headline={headline}
@@ -84,16 +89,17 @@ export function CardPreview({
           recipientName={recipientName}
           isGeneratingImage={isGeneratingImage}
           contributions={contributions}
-          editable={editMode}
+          editable={Boolean(editMode)}
+          coverOnly={coverOnly}
           onHeadlineChange={onHeadlineChange}
-          onMessageChange={onMessageChange}
+          onMessageChange={coverOnly ? undefined : onMessageChange}
           extraPages={extraPages}
-          onAddPage={onAddPage}
+          onAddPage={coverOnly ? undefined : onAddPage}
           onRegenerateHeadline={onRegenerateHeadline}
-          onRegenerateMessage={onRegenerateMessage}
+          onRegenerateMessage={coverOnly ? undefined : onRegenerateMessage}
           onRegenerateImage={onRegenerateImage}
           isRegeneratingHeadline={isRegeneratingHeadline}
-          isRegeneratingMessage={isRegeneratingMessage}
+          isRegeneratingMessage={coverOnly ? false : isRegeneratingMessage}
           isRegeneratingImage={isRegeneratingImage}
           messageFontSize={messageFontSize}
           onMessageFontSizeChange={onMessageFontSizeChange}
@@ -104,7 +110,7 @@ export function CardPreview({
         {/* Save Button - same width as card */}
         {editMode && onSave && (
           <Button
-            className="w-full"
+            className="w-full h-14 rounded-full text-lg shadow-sm font-medium mt-4"
             onClick={onSave}
             disabled={isSaving}
           >

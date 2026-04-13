@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS cards (
   copy_signoff TEXT NOT NULL,
   image_url TEXT NOT NULL,
   image_prompt TEXT,
-  status TEXT DEFAULT 'draft',
   contributor_link_id TEXT UNIQUE,
   contributor_link_expires_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,
@@ -34,8 +33,8 @@ CREATE INDEX IF NOT EXISTS idx_cards_contributor_link_id ON cards(contributor_li
 CREATE TABLE IF NOT EXISTS card_contributions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-  contributor_name TEXT NOT NULL,
   message TEXT NOT NULL,
+  is_creator BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -52,3 +51,7 @@ CREATE POLICY "Card owners can delete contributions" ON card_contributions FOR D
 );
 
 CREATE INDEX IF NOT EXISTS idx_contributions_card_id ON card_contributions(card_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_card_contributions_one_creator_per_card
+  ON card_contributions (card_id)
+  WHERE is_creator = true;

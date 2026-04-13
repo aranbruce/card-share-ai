@@ -1,19 +1,34 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { useState } from 'react'
-import { Spinner } from '@/components/ui/spinner'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  CheckIcon,
+  CopyIcon,
+  LinkIcon,
+  MailIcon,
+  SendIcon,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ShareModalProps {
-  cardId: string
-  recipientName: string
-  recipientEmail: string
-  contributorLinkId: string
-  isOpen: boolean
-  onClose: () => void
-  onEmailUpdate?: (email: string) => void
+  cardId: string;
+  recipientName: string;
+  recipientEmail: string;
+  contributorLinkId: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onEmailUpdate?: (email: string) => void;
+  /** Called after the card is first marked shared (sent_at set server-side). */
+  onSentAtRecorded?: (sentAt: string) => void;
 }
 
 export function ShareModal({
@@ -24,201 +39,222 @@ export function ShareModal({
   isOpen,
   onClose,
   onEmailUpdate,
+  onSentAtRecorded,
 }: ShareModalProps) {
-  const [copied, setCopied] = useState('')
-  const [sending, setSending] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-  const [recipientEmail, setRecipientEmail] = useState(initialEmail || '')
-  const [emailError, setEmailError] = useState('')
-  const [savingEmail, setSavingEmail] = useState(false)
+  const [copied, setCopied] = useState("");
+  const [sending, setSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState(initialEmail || "");
+  const [emailError, setEmailError] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
 
-  if (!isOpen) return null
+  const contributorLink = `${typeof window !== "undefined" ? window.location.origin : ""}/contribute/${contributorLinkId}`;
+  const viewLink = `${typeof window !== "undefined" ? window.location.origin : ""}/view/${contributorLinkId}`;
 
-  const contributorLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/contribute/${contributorLinkId}`
-  const viewLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/view/${contributorLinkId}`
+  const recordSharedAt = async () => {
+    const sentAt = new Date().toISOString();
+    try {
+      const res = await fetch(`/api/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sent_at: sentAt }),
+      });
+      if (res.ok) {
+        onSentAtRecorded?.(sentAt);
+      }
+    } catch (err) {
+      console.error("Failed to record sent_at", err);
+    }
+  };
 
-  const copyToClipboard = (text: string, name: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(name)
-    setTimeout(() => setCopied(''), 2000)
-  }
+  const copyToClipboard = async (text: string, name: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(name);
+
+    if (name === "view" || name === "email") {
+      await recordSharedAt();
+    }
+
+    setTimeout(() => setCopied(""), 2000);
+  };
 
   const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-  }
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   const handleSaveEmail = async () => {
     if (!recipientEmail.trim()) {
-      setEmailError('Please enter an email address')
-      return
+      setEmailError("Please enter an email address");
+      return;
     }
     if (!validateEmail(recipientEmail)) {
-      setEmailError('Please enter a valid email address')
-      return
+      setEmailError("Please enter a valid email address");
+      return;
     }
 
-    setEmailError('')
-    setSavingEmail(true)
+    setEmailError("");
+    setSavingEmail(true);
 
     try {
       const response = await fetch(`/api/cards/${cardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recipient_email: recipientEmail }),
-      })
+      });
 
-      if (!response.ok) throw new Error('Failed to save email')
-      
-      onEmailUpdate?.(recipientEmail)
+      if (!response.ok) throw new Error("Failed to save email");
+
+      onEmailUpdate?.(recipientEmail);
     } catch (error) {
-      setEmailError('Failed to save email')
+      setEmailError("Failed to save email");
     } finally {
-      setSavingEmail(false)
+      setSavingEmail(false);
     }
-  }
+  };
 
   const handleSendEmail = async () => {
     if (!recipientEmail.trim()) {
-      setEmailError('Please enter an email address')
-      return
+      setEmailError("Please enter an email address");
+      return;
     }
     if (!validateEmail(recipientEmail)) {
-      setEmailError('Please enter a valid email address')
-      return
+      setEmailError("Please enter a valid email address");
+      return;
     }
 
-    setEmailError('')
-    setSending(true)
+    setEmailError("");
+    setSending(true);
 
     try {
       // First save the email to the card
+      const sentAt = new Date().toISOString();
       await fetch(`/api/cards/${cardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           recipient_email: recipientEmail,
-          status: 'sent'
+          sent_at: sentAt,
         }),
-      })
+      });
 
-      onEmailUpdate?.(recipientEmail)
-      
+      onEmailUpdate?.(recipientEmail);
+      onSentAtRecorded?.(sentAt);
+
       // TODO: Integrate with email service like Resend
       // For now, we'll show a success message with the link to copy
-      setEmailSent(true)
+      setEmailSent(true);
     } catch (error) {
-      setEmailError('Failed to send card')
+      setEmailError("Failed to send card");
     } finally {
-      setSending(false)
+      setSending(false);
     }
-  }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-md p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-        <div>
-          <h2 className="text-2xl font-bold mb-2">Share Card</h2>
-          <p className="text-sm text-muted-foreground">
-            Send to {recipientName} or invite others to add messages
-          </p>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+        <div className="p-6 pb-0">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Send Card</DialogTitle>
+            <DialogDescription>
+              Deliver the finished card directly to {recipientName}.
+            </DialogDescription>
+          </DialogHeader>
         </div>
 
-        <div className="space-y-4">
-          {/* Contributor Link */}
-          <div>
-            <label className="text-sm font-medium block mb-2">
-              Invite Others to Sign
-            </label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Share with friends and family to add their messages
-            </p>
-            <div className="flex gap-2">
-              <Input
-                value={contributorLink}
-                readOnly
-                className="text-xs"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => copyToClipboard(contributorLink, 'contributor')}
-              >
-                {copied === 'contributor' ? 'Copied!' : 'Copy'}
-              </Button>
-            </div>
-          </div>
-
+        <div className="p-6 space-y-6">
           {/* Recipient View Link */}
-          <div>
-            <label className="text-sm font-medium block mb-2">
-              Card View Link
-            </label>
-            <p className="text-xs text-muted-foreground mb-2">
-              Direct link for {recipientName} to view the card
-            </p>
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <LinkIcon className="size-4" />
+              Direct Link
+            </h4>
             <div className="flex gap-2">
               <Input
                 value={viewLink}
                 readOnly
-                className="text-xs"
+                className="text-sm font-medium text-muted-foreground bg-muted/50 focus-visible:ring-0"
               />
               <Button
-                size="sm"
-                variant="outline"
-                onClick={() => copyToClipboard(viewLink, 'view')}
+                size="icon"
+                variant="secondary"
+                className="shrink-0"
+                onClick={() => copyToClipboard(viewLink, "view")}
               >
-                {copied === 'view' ? 'Copied!' : 'Copy'}
+                {copied === "view" ? (
+                  <CheckIcon className="size-4" />
+                ) : (
+                  <CopyIcon className="size-4" />
+                )}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Copy and share this link anywhere. They will see the finished
+              card.
+            </p>
           </div>
 
+          <div className="h-px bg-border/50" />
+
           {/* Email Section */}
-          <div className="border-t pt-4">
-            <label className="text-sm font-medium block mb-2">
-              Send Card via Email
-            </label>
-            <p className="text-xs text-muted-foreground mb-3">
-              Enter {recipientName}&apos;s email address to send the card directly
-            </p>
-            
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+              <MailIcon className="size-4" />
+              Send via Email
+            </h4>
+
             {emailSent ? (
-              <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg text-center">
-                <p className="font-medium text-primary mb-2">Card Ready to Send!</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Email integration coming soon. For now, copy the link and send it manually:
+              <div className="p-4 bg-primary/5 border border-primary/10 rounded-lg space-y-3">
+                <div className="flex items-center gap-2 text-primary font-medium">
+                  <CheckIcon className="size-5" />
+                  <p>Ready to send!</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Email integration coming soon. For now, copy the link below
+                  and send it manually.
                 </p>
                 <div className="flex gap-2">
                   <Input
                     value={viewLink}
                     readOnly
-                    className="text-xs"
+                    className="text-sm bg-background"
                   />
                   <Button
-                    size="sm"
-                    onClick={() => copyToClipboard(viewLink, 'email')}
+                    size="icon"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={() => copyToClipboard(viewLink, "email")}
                   >
-                    {copied === 'email' ? 'Copied!' : 'Copy'}
+                    {copied === "email" ? (
+                      <CheckIcon className="size-4" />
+                    ) : (
+                      <CopyIcon className="size-4" />
+                    )}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div>
+              <div className="space-y-4">
+                <div className="space-y-2">
                   <Input
                     type="email"
                     placeholder="recipient@example.com"
                     value={recipientEmail}
                     onChange={(e) => {
-                      setRecipientEmail(e.target.value)
-                      setEmailError('')
+                      setRecipientEmail(e.target.value);
+                      setEmailError("");
                     }}
-                    className={emailError ? 'border-destructive' : ''}
+                    className={
+                      emailError
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
+                    }
                   />
                   {emailError && (
-                    <p className="text-xs text-destructive mt-1">{emailError}</p>
+                    <p className="text-xs text-destructive">{emailError}</p>
                   )}
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -228,11 +264,11 @@ export function ShareModal({
                   >
                     {savingEmail ? (
                       <>
-                        <Spinner className="mr-2 h-4 w-4" />
+                        <Spinner className="mr-2 size-4" />
                         Saving...
                       </>
                     ) : (
-                      'Save Email'
+                      "Save email only"
                     )}
                   </Button>
                   <Button
@@ -242,27 +278,25 @@ export function ShareModal({
                   >
                     {sending ? (
                       <>
-                        <Spinner className="mr-2 h-4 w-4" />
+                        <Spinner className="mr-2 size-4" />
                         Sending...
                       </>
                     ) : (
-                      'Send Card'
+                      <>
+                        <SendIcon className="mr-2 size-4" />
+                        Send email
+                      </>
                     )}
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  We'll email a beautiful invitation to view the card.
+                </p>
               </div>
             )}
           </div>
         </div>
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={onClose}
-        >
-          {emailSent ? 'Close' : 'Done'}
-        </Button>
-      </Card>
-    </div>
-  )
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -2,7 +2,6 @@
 CREATE TABLE IF NOT EXISTS card_contributions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-  contributor_name TEXT NOT NULL,
   message TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );

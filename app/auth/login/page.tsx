@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 
-export default function Login() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [hasPendingCard, setHasPendingCard] = useState(false)
   const router = useRouter()
@@ -23,6 +24,22 @@ export default function Login() {
     const pendingCard = localStorage.getItem('pendingCard')
     setHasPendingCard(!!pendingCard)
   }, [])
+
+  useEffect(() => {
+    const urlError = searchParams.get('error')
+    const urlMessage = searchParams.get('message')
+    if (urlError) {
+      setSuccessMessage('')
+      setError(
+        urlError === 'auth_callback_failed'
+          ? 'Sign-in link expired or could not be completed. Request a new reset email or try again.'
+          : urlError,
+      )
+    } else if (urlMessage) {
+      setError('')
+      setSuccessMessage(urlMessage)
+    }
+  }, [searchParams])
 
   const savePendingCard = async () => {
     const pendingCardData = localStorage.getItem('pendingCard')
@@ -82,12 +99,20 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
-      <Card className="w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
-        <p className="text-muted-foreground mb-6">
-          Log in to manage your greeting cards
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md p-8 sm:p-10">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Welcome Back</h1>
+          <p className="text-muted-foreground">
+            Log in to manage your greeting cards
+          </p>
+        </div>
+
+        {successMessage && (
+          <div className="p-3 bg-primary/10 border border-primary/20 rounded mb-6 text-sm text-foreground">
+            {successMessage}
+          </div>
+        )}
 
         {hasPendingCard && (
           <div className="p-3 bg-primary/10 border border-primary/20 rounded mb-6">
@@ -116,6 +141,7 @@ export default function Login() {
               placeholder="you@example.com"
               required
               disabled={loading}
+              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
             />
           </div>
 
@@ -139,15 +165,16 @@ export default function Login() {
               placeholder="••••••••"
               required
               disabled={loading}
+              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-12 rounded-full text-base shadow-sm mt-4" disabled={loading}>
             {loading ? 'Logging in...' : hasPendingCard ? 'Log In & Save Card' : 'Log In'}
           </Button>
         </form>
 
-        <p className="text-sm text-center text-muted-foreground mt-6">
+        <p className="text-sm text-center text-muted-foreground mt-8">
           Don&apos;t have an account?{' '}
           <Link 
             href={hasPendingCard ? '/auth/sign-up?redirect=/create&action=save' : '/auth/sign-up'} 
@@ -156,7 +183,23 @@ export default function Login() {
             Sign up
           </Link>
         </p>
-      </Card>
+      </div>
     </div>
+  )
+}
+
+export default function Login() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <div className="w-full max-w-md p-8">
+            <p className="text-muted-foreground text-center">Loading…</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   )
 }

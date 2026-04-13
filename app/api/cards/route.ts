@@ -4,13 +4,10 @@ import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[v0] POST /api/cards - Starting card creation')
     const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
-
-    console.log('[v0] User check:', user ? `User ID: ${user.id}` : 'No user found')
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -22,44 +19,50 @@ export async function POST(request: NextRequest) {
       recipientEmail,
       senderName,
       copyHeadline,
-      copyMessage,
       imageUrl,
       imagePrompt,
       extraPages = 0,
     } = await request.json()
 
-    console.log('[v0] Card data:', { cardType, recipientName, senderName, hasImage: !!imageUrl })
-
     // Generate a unique link ID for contributions
     const linkId = uuidv4()
 
-    const { data, error } = await supabase.from('cards').insert({
-      user_id: user.id,
-      card_type: cardType,
-      recipient_name: recipientName,
-      recipient_email: recipientEmail || '',
-      sender_name: senderName,
-      copy_headline: copyHeadline,
-      copy_message: copyMessage,
-      image_url: imageUrl,
-      image_prompt: imagePrompt,
-      status: 'draft',
-      contributor_link_id: linkId,
-      extra_pages: extraPages,
-    }).select()
+    // Inner message is added post-create (owner studio / same flow as contributors).
+    const msg = ''
+    const { data, error } = await supabase
+      .from('cards')
+      .insert({
+        user_id: user.id,
+        card_type: cardType,
+        recipient_name: recipientName,
+        recipient_email: recipientEmail || '',
+        sender_name: senderName,
+        copy_headline: copyHeadline,
+        copy_message: msg,
+        image_url: imageUrl,
+        image_prompt: imagePrompt,
+        contributor_link_id: linkId,
+        extra_pages:
+          typeof extraPages === 'number' && Number.isFinite(extraPages)
+            ? extraPages
+            : 0,
+      })
+      .select()
+      .single()
 
-    console.log('[v0] Insert result:', { data, error })
-
-    if (error) {
-      console.error('[v0] Supabase error:', error)
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error || !data) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: error?.message ?? 'Failed to create card' },
+        { status: 400 },
+      )
     }
 
     return NextResponse.json({
-      card: data?.[0] || { id: data?.id, contributor_link_id: linkId },
+      card: data,
     })
   } catch (error) {
-    console.error('[v0] Error creating card:', error)
+    console.error('Error creating card:', error)
     return NextResponse.json(
       { error: 'Failed to create card' },
       { status: 500 },

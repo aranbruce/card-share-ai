@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+function quotePostgrestValue(value: string): string {
+  const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+  return `"${escaped}"`
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -8,17 +13,14 @@ export async function GET(
   try {
     const { id } = await params
     const supabase = await createClient()
+    const safeId = quotePostgrestValue(id)
 
-    console.log('[v0] GET /api/cards/view - Card ID:', id)
-
-    // Get card by ID (public access for sent cards)
+    // Share modal links use contributor_link_id; callers may also pass the card row id
     const { data: cardData, error: cardError } = await supabase
       .from('cards')
-      .select('id, status, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages')
-      .eq('id', id)
-      .single()
-
-    console.log('[v0] Card query result:', { cardData, cardError })
+      .select('id, sent_at, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages')
+      .or(`id.eq.${safeId},contributor_link_id.eq.${safeId}`)
+      .maybeSingle()
 
     if (cardError || !cardData) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 })
@@ -27,13 +29,13 @@ export async function GET(
     // Get contributions for this card
     const { data: contributions, error: contribError } = await supabase
       .from('card_contributions')
-      .select('id, contributor_name, message, created_at')
+      .select('*')
       .eq('card_id', cardData.id)
       .order('created_at', { ascending: true })
 
     if (contribError) {
-      console.error('[v0] Contributions error:', contribError)
-      return NextResponse.json({ error: contribError.message }, { status: 400 })
+      console.error('[GET /api/cards/view/[id]] contributions:', contribError)
+      return NextResponse.json({ card: cardData, contributions: [] })
     }
 
     return NextResponse.json({
@@ -41,7 +43,7 @@ export async function GET(
       contributions: contributions || [],
     })
   } catch (error) {
-    console.error('[v0] Error fetching card:', error)
+    console.error('Error fetching card:', error)
     return NextResponse.json(
       { error: 'Failed to fetch card' },
       { status: 500 }
