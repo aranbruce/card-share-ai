@@ -6,9 +6,8 @@ import './globals.css'
 const geistSans = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Card AI',
+  description: 'Create beautiful greeting cards with AI',
   icons: {
     icon: [
       {
