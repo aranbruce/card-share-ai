@@ -61,7 +61,8 @@ export default function ForgotPassword() {
             <Button
               variant="outline"
               size="lg"
-              className="mt-4 w-full border-border/50 hover:bg-secondary/50"
+              fullWidth
+              className="mt-4 border-border/50 hover:bg-secondary/50"
             >
               Back to Login
             </Button>
@@ -108,7 +109,8 @@ export default function ForgotPassword() {
           <Button
             type="submit"
             size="lg"
-            className="mt-4 w-full"
+            fullWidth
+            className="mt-4"
             disabled={loading}
           >
             {loading ? 'Sending reset link...' : 'Send Reset Link'}

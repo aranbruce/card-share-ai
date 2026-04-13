@@ -2,6 +2,8 @@ import { timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 import { CONTRIBUTION_PUBLIC_COLUMNS } from '@/lib/contribution-public-columns'
+import { normalizeContributionTextColor } from '@/lib/contribution-text-color'
+import { randomPresetTextColor } from '@/lib/message-text-color-presets'
 import { createClient } from '@/lib/supabase/server'
 
 function tokensMatch(stored: string, provided: string): boolean {
@@ -28,6 +30,7 @@ export async function POST(
     const widthPercent = body.widthPercent as unknown
     const pageIndex = body.pageIndex as unknown
     const fontSize = body.fontSize as unknown
+    const textColorRaw = body.textColor as unknown
 
     const msg = typeof message === 'string' ? message.trim() : ''
     if (!msg) {
@@ -61,6 +64,20 @@ export async function POST(
 
     const editToken = uuidv4()
 
+    let text_color: string
+    if (textColorRaw === undefined) {
+      text_color = randomPresetTextColor()
+    } else {
+      const tc = normalizeContributionTextColor(textColorRaw)
+      if (tc === undefined) {
+        return NextResponse.json(
+          { error: 'Invalid text color (use #RRGGBB or null)' },
+          { status: 400 },
+        )
+      }
+      text_color = tc !== null ? tc : randomPresetTextColor()
+    }
+
     const { data: contribution, error: insertError } = await supabase
       .from('card_contributions')
       .insert({
@@ -73,6 +90,7 @@ export async function POST(
         width_percent: typeof widthPercent === 'number' ? widthPercent : null,
         page_index: typeof pageIndex === 'number' ? pageIndex : null,
         font_size: typeof fontSize === 'number' ? fontSize : null,
+        text_color,
       })
       .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
@@ -113,6 +131,10 @@ export async function PATCH(
     const widthPercent = body.width_percent as number | undefined
     const pageIndex = body.page_index as number | undefined
     const fontSize = body.font_size as number | undefined
+    const hasTextColor = Object.prototype.hasOwnProperty.call(
+      body,
+      'text_color',
+    )
 
     if (
       !contributionId ||
@@ -123,7 +145,8 @@ export async function PATCH(
         positionY === undefined &&
         widthPercent === undefined &&
         pageIndex === undefined &&
-        fontSize === undefined)
+        fontSize === undefined &&
+        !hasTextColor)
     ) {
       return NextResponse.json(
         {
@@ -194,6 +217,7 @@ export async function PATCH(
       width_percent?: number
       page_index?: number
       font_size?: number
+      text_color?: string | null
     } = {}
     if (typeof message === 'string') {
       const msg = message.trim()
@@ -210,6 +234,18 @@ export async function PATCH(
     if (typeof widthPercent === 'number') updates.width_percent = widthPercent
     if (typeof pageIndex === 'number') updates.page_index = pageIndex
     if (typeof fontSize === 'number') updates.font_size = fontSize
+    if (hasTextColor) {
+      const tc = normalizeContributionTextColor(
+        (body as { text_color?: unknown }).text_color,
+      )
+      if (tc === undefined) {
+        return NextResponse.json(
+          { error: 'Invalid text_color (use #RRGGBB or null)' },
+          { status: 400 },
+        )
+      }
+      updates.text_color = tc
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(

@@ -102,7 +102,11 @@ export default function HomePage() {
 
         <div className="mb-20 flex flex-col justify-center gap-4 sm:flex-row">
           <Link href="/create">
-            <Button className="w-full gap-2 pr-2.5 sm:w-auto" size="lg">
+            <Button
+              fullWidth
+              className="gap-2 pr-2.5 sm:w-auto"
+              size="lg"
+            >
               Create a Card
               <span className="rounded-full border border-primary-foreground/10 bg-primary-foreground/15 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary-foreground uppercase">
                 Free
@@ -112,7 +116,8 @@ export default function HomePage() {
           <Link href="/auth/login">
             <Button
               variant="outline"
-              className="w-full border-border/50 hover:bg-secondary/50 sm:w-auto"
+              fullWidth
+              className="border-border/50 hover:bg-secondary/50 sm:w-auto"
               size="lg"
             >
               I Have an Account

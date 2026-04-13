@@ -30,6 +30,13 @@ interface PendingCard {
 
 type Step = 'select-type' | 'details' | 'preview'
 
+function formatInnerCardCopy(message: string, signoff: string) {
+  const m = message.trim()
+  const s = signoff.trim()
+  if (m && s) return `${m}\n\n${s}`
+  return m || s
+}
+
 export default function CreateCardPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -105,12 +112,17 @@ export default function CreateCardPage() {
 
       const { imageUrl } = await imageResponse.json()
 
+      const innerMessage = formatInnerCardCopy(
+        cardCopy.message,
+        cardCopy.signoff,
+      )
+
       setSenderName(details.senderName)
       setRecipientName(details.recipientName)
       setCardData({
         cardType: details.cardType,
         headline: cardCopy.headline,
-        message: '',
+        message: innerMessage,
         imageUrl,
         imagePrompt: cardCopy.imagePrompt,
       })
@@ -197,7 +209,7 @@ export default function CreateCardPage() {
       recipientName,
       senderName,
       copyHeadline: cardData.headline,
-      copyMessage: '',
+      copyMessage: cardData.message,
       imageUrl: cardData.imageUrl,
       imagePrompt: cardData.imagePrompt,
       extraPages: 0,
@@ -228,7 +240,7 @@ export default function CreateCardPage() {
           recipientEmail: '', // Optional field
           senderName,
           copyHeadline: cardData.headline,
-          copyMessage: '',
+          copyMessage: cardData.message,
           imageUrl: cardData.imageUrl,
           imagePrompt: cardData.imagePrompt,
           extraPages: 0,

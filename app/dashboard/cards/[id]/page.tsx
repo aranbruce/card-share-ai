@@ -142,7 +142,7 @@ function CardDetailInner() {
               type="button"
               variant="ghost"
               size="icon"
-              className="shrink-0 self-end rounded-full text-muted-foreground hover:bg-primary/10 hover:text-foreground sm:self-start"
+              className="shrink-0 self-end text-muted-foreground hover:bg-primary/10 hover:text-foreground sm:self-start"
               onClick={dismissWelcome}
               aria-label="Dismiss"
             >
@@ -198,7 +198,8 @@ function CardDetailInner() {
             <Button
               variant="outline"
               size="lg"
-              className="w-full bg-background hover:bg-secondary/50 sm:w-auto"
+              fullWidth
+              className="hover:bg-secondary/50 sm:w-auto"
               onClick={copyContributorLink}
             >
               {copyLinkCopied ? (
@@ -211,7 +212,8 @@ function CardDetailInner() {
 
             <Button
               size="lg"
-              className="w-full transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+              fullWidth
+              className="transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
               onClick={() => setShowShareModal(true)}
             >
               <Send className="mr-2 h-5 w-5" />

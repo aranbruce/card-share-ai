@@ -52,7 +52,7 @@ export function CardDetailsForm({
   }
 
   return (
-    <Card className="mx-auto w-full max-w-lg rounded-2xl border-border/40 p-8 shadow-sm">
+    <Card className="mx-auto w-full max-w-lg border-border/40 p-8">
       <div className="mb-8 text-center">
         <h2 className="mb-2 text-2xl font-bold tracking-tight">Card Details</h2>
         <p className="text-muted-foreground">
@@ -134,7 +134,7 @@ export function CardDetailsForm({
               size="lg"
               onClick={onBack}
               disabled={isLoading}
-              className="order-1 border-border/50 px-6 hover:bg-secondary/50"
+              className="order-1 border-border/50 hover:bg-secondary/50"
             >
               Back
             </Button>

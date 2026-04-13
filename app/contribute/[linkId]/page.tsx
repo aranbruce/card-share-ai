@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Card3D } from '@/components/card-3d'
 import { forCardDisplay } from '@/lib/card-body'
 import type { CardComposeDraft } from '@/lib/card-compose-draft'
+import { randomPresetTextColor } from '@/lib/message-text-color-presets'
 import { Logo } from '@/components/logo'
 
 interface Contribution {
@@ -18,6 +19,7 @@ interface Contribution {
   width_percent?: number | null
   page_index?: number | null
   font_size?: number | null
+  text_color?: string | null
   is_creator?: boolean | null
 }
 
@@ -115,6 +117,7 @@ export default function ContributeCardPage() {
         width_percent?: number
         page_index?: number
         font_size?: number
+        text_color?: string | null
       },
       editToken: string,
     ) => {
@@ -160,6 +163,7 @@ export default function ContributeCardPage() {
         widthPercent: number
         pageIndex: number
         fontSize?: number
+        textColor?: string | null
       },
     ) => {
       setContributions((prev) =>
@@ -172,6 +176,10 @@ export default function ContributeCardPage() {
                 width_percent: layout.widthPercent,
                 page_index: layout.pageIndex,
                 font_size: layout.fontSize ?? c.font_size,
+                text_color:
+                  layout.textColor === undefined
+                    ? c.text_color
+                    : layout.textColor,
               }
             : c,
         ),
@@ -188,6 +196,7 @@ export default function ContributeCardPage() {
             width_percent: layout.widthPercent,
             page_index: layout.pageIndex,
             font_size: layout.fontSize,
+            text_color: layout.textColor ?? null,
           },
           token,
         )
@@ -296,6 +305,7 @@ export default function ContributeCardPage() {
           widthPercent: 75,
           pageIndex: draft.pageIndex,
           fontSize: draft.fontSize,
+          textColor: draft.textColor,
         }),
       })
 
@@ -444,6 +454,7 @@ export default function ContributeCardPage() {
                       x: pt.x,
                       y: pt.y,
                       pageIndex: pt.pageIndex,
+                      textColor: randomPresetTextColor(),
                     })
                   }
                 : undefined

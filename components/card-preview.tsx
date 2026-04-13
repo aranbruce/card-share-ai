@@ -31,7 +31,7 @@ interface CardPreviewProps {
     is_creator?: boolean | null
   }>
   extraPages?: number
-  onAddPage?: () => void
+  onAddPage?: () => void | Promise<void>
   messageFontSize?: number
   onMessageFontSizeChange?: (size: number) => void
   messagePageIndex?: number
@@ -76,8 +76,8 @@ export function CardPreview({
           {editMode ? (
             coverOnly ? (
               <>
-                Preview your cover, then save. After saving, you&apos;ll go to
-                the next step to add your personal message.
+                Preview your cover, then save. After saving, you&apos;ll open the
+                studio to edit your message and layout.
                 {isGuest && (
                   <>
                     {' '}
@@ -138,7 +138,8 @@ export function CardPreview({
         {editMode && onSave && (
           <Button
             size="lg"
-            className="mt-4 w-full"
+            fullWidth
+            className="mt-4"
             onClick={onSave}
             disabled={isSaving}
           >

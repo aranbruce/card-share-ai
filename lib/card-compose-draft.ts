@@ -5,4 +5,6 @@ export type CardComposeDraft = {
   y: number
   pageIndex: number
   fontSize?: number
+  /** Hex `#RRGGBB`; omit for theme default */
+  textColor?: string | null
 }

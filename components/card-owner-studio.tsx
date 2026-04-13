@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card3D } from '@/components/card-3d'
 import type { CardComposeDraft } from '@/lib/card-compose-draft'
+import { randomPresetTextColor } from '@/lib/message-text-color-presets'
 import { Spinner } from '@/components/ui/spinner'
 
 export type OwnerCard = {
@@ -28,6 +29,7 @@ export type OwnerContribution = {
   width_percent?: number | null
   page_index?: number | null
   font_size?: number | null
+  text_color?: string | null
   is_creator?: boolean | null
 }
 
@@ -134,6 +136,7 @@ export function CardOwnerStudio({
         width_percent?: number
         page_index?: number
         font_size?: number
+        text_color?: string | null
       },
     ) => {
       const res = await fetch(`/api/cards/${cardId}/contributions`, {
@@ -178,6 +181,7 @@ export function CardOwnerStudio({
         widthPercent: number
         pageIndex: number
         fontSize?: number
+        textColor?: string | null
       },
     ) => {
       setContributions((prev) =>
@@ -190,6 +194,10 @@ export function CardOwnerStudio({
                 width_percent: layout.widthPercent,
                 page_index: layout.pageIndex,
                 font_size: layout.fontSize ?? c.font_size,
+                text_color:
+                  layout.textColor === undefined
+                    ? c.text_color
+                    : layout.textColor,
               }
             : c,
         ),
@@ -204,6 +212,7 @@ export function CardOwnerStudio({
           width_percent: layout.widthPercent,
           page_index: layout.pageIndex,
           font_size: layout.fontSize,
+          text_color: layout.textColor ?? null,
         })
       }, 200)
     },
@@ -368,13 +377,18 @@ export function CardOwnerStudio({
     [card, patchCardFields],
   )
 
+  const addExtraPageInFlightRef = useRef(false)
+
   const handleAddPage = useCallback(async () => {
+    if (addExtraPageInFlightRef.current) return
+    addExtraPageInFlightRef.current = true
     const next = (card?.extra_pages ?? 0) + 1
     try {
       await patchCardFields({ extra_pages: next })
-      setCard((c) => (c ? { ...c, extra_pages: next } : c))
     } catch (e) {
       console.error(e)
+    } finally {
+      addExtraPageInFlightRef.current = false
     }
   }, [card?.extra_pages, patchCardFields])
 
@@ -418,6 +432,9 @@ export function CardOwnerStudio({
             width_percent: 75,
             page_index: draft.pageIndex,
             font_size: draft.fontSize,
+            ...(draft.textColor !== undefined
+              ? { text_color: draft.textColor }
+              : {}),
           }),
         })
         const payload = await res.json().catch(() => ({}))
@@ -449,6 +466,7 @@ export function CardOwnerStudio({
             widthPercent: 75,
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
+            textColor: draft.textColor,
           }),
         })
         const payload = await res.json().catch(() => ({}))
@@ -545,6 +563,7 @@ export function CardOwnerStudio({
                   x: pt.x,
                   y: pt.y,
                   pageIndex: pt.pageIndex,
+                  textColor: randomPresetTextColor(),
                 })
               }
             : undefined

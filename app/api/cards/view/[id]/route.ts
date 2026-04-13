@@ -19,11 +19,14 @@ export async function GET(
     const supabase = await createClient()
 
     // Share modal links use contributor_link_id; callers may also pass the card row id
-    let { data: cardData, error: cardError } = await supabase
+    const cardResult = await supabase
       .from('cards')
       .select(CARD_VIEW_SELECT)
       .eq('id', id)
       .maybeSingle()
+
+    let cardData = cardResult.data
+    const cardError = cardResult.error
 
     if (cardError) {
       console.error('[GET /api/cards/view/[id]] card by id:', cardError)

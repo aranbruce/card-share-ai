@@ -1,0 +1,337 @@
+'use client'
+
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from 'react'
+import { Maximize2, Move } from 'lucide-react'
+
+/** Used to center the compose block on click before first layout (field + controls). */
+export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
+
+/** Matches padding used in `DraggableWrapper` clamping (inside the positioning box). */
+export const CANVAS_EDGE_PADDING = 12
+
+/** Containing block for `position: absolute` on the draggable — same box `left`/`top` use. */
+function getDraggableBoundsParent(
+  el: HTMLElement | null,
+): HTMLElement | null {
+  if (!el) return null
+  const fromOffset = el.offsetParent as HTMLElement | null
+  if (fromOffset) return fromOffset
+  return el.closest('[data-card-canvas]') as HTMLElement | null
+}
+
+// Draggable wrapper for positioning content
+export function DraggableWrapper({
+  children,
+  editable = false,
+  isActive = true,
+  initialOffset,
+  initialWidthPercent,
+  onLayoutCommit,
+  footer,
+}: {
+  children: ReactNode
+  editable?: boolean
+  isActive?: boolean
+  /** Pixel `left`/`top` inside the positioning containing block (same as click-to-place overlay when it aligns). */
+  initialOffset?: { x: number; y: number }
+  /** Default 100; placed notes often use ~75 */
+  initialWidthPercent?: number
+  onLayoutCommit?: (layout: {
+    x: number
+    y: number
+    widthPercent: number
+  }) => void
+  /** Renders below the note; positioned to span the card canvas width while moving with the draggable. */
+  footer?: ReactNode
+}) {
+  const [position, setPosition] = useState<{
+    x: number | null
+    y: number | null
+  }>(() => ({
+    x: initialOffset?.x ?? null,
+    y: initialOffset?.y ?? null,
+  }))
+  const [size, setSize] = useState({
+    width: initialWidthPercent ?? (initialOffset ? 75 : 100),
+  })
+  const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [dragStarted, setDragStarted] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
+  const DRAG_THRESHOLD = 5
+  const CANVAS_PADDING = CANVAS_EDGE_PADDING
+
+  const [footerPlacement, setFooterPlacement] = useState<{
+    left: number
+    width: number
+  } | null>(null)
+
+  const hasFooter = footer != null && footer !== false
+
+  useLayoutEffect(() => {
+    if (!hasFooter) {
+      queueMicrotask(() => {
+        setFooterPlacement(null)
+      })
+      return
+    }
+    const el = containerRef.current
+    if (!el) return
+
+    const update = () => {
+      const bounds = getDraggableBoundsParent(el)
+      if (!bounds) {
+        setFooterPlacement(null)
+        return
+      }
+      const boundsRect = bounds.getBoundingClientRect()
+      const cr = el.getBoundingClientRect()
+      const leftInBounds = cr.left - boundsRect.left
+      setFooterPlacement({
+        left: CANVAS_PADDING - leftInBounds,
+        width: Math.max(0, bounds.clientWidth - 2 * CANVAS_PADDING),
+      })
+    }
+
+    queueMicrotask(update)
+    const bounds = getDraggableBoundsParent(el)
+    const ro = new ResizeObserver(() => {
+      queueMicrotask(update)
+    })
+    ro.observe(el)
+    if (bounds) ro.observe(bounds)
+    return () => ro.disconnect()
+  }, [hasFooter, position.x, position.y, size.width, CANVAS_PADDING])
+
+  const handleMouseDown = (
+    e: ReactMouseEvent,
+    type: 'drag' | 'resize',
+  ) => {
+    if (!editable) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    let currentPosX = position.x
+    let currentPosY = position.y
+    if (
+      (currentPosX === null || currentPosY === null) &&
+      containerRef.current
+    ) {
+      const bounds = getDraggableBoundsParent(containerRef.current)
+      if (bounds) {
+        const boundsRect = bounds.getBoundingClientRect()
+        const selfRect = containerRef.current.getBoundingClientRect()
+        currentPosX = selfRect.left - boundsRect.left
+        currentPosY = selfRect.top - boundsRect.top
+        setPosition({ x: currentPosX, y: currentPosY })
+      } else {
+        currentPosX = 0
+        currentPosY = 0
+      }
+    }
+
+    startPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      posX: currentPosX ?? 0,
+      posY: currentPosY ?? 0,
+      width: size.width,
+    }
+
+    if (type === 'drag') setIsDragging(true)
+    if (type === 'resize') setIsResizing(true)
+  }
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        const dx = e.clientX - startPos.current.x
+        const dy = e.clientY - startPos.current.y
+
+        if (!dragStarted) {
+          if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD)
+            return
+          setDragStarted(true)
+        }
+
+        if (containerRef.current) {
+          const bounds = getDraggableBoundsParent(containerRef.current)
+          if (bounds) {
+            const boundsRect = bounds.getBoundingClientRect()
+            const selfRect = containerRef.current.getBoundingClientRect()
+
+            const maxX = boundsRect.width - selfRect.width - CANVAS_PADDING
+            const maxY = boundsRect.height - selfRect.height - CANVAS_PADDING
+
+            setPosition({
+              x: Math.max(
+                CANVAS_PADDING,
+                Math.min(maxX, startPos.current.posX + dx),
+              ),
+              y: Math.max(
+                CANVAS_PADDING,
+                Math.min(maxY, startPos.current.posY + dy),
+              ),
+            })
+          } else {
+            setPosition({
+              x: startPos.current.posX + dx,
+              y: startPos.current.posY + dy,
+            })
+          }
+        }
+      }
+      if (isResizing && containerRef.current) {
+        const bounds = getDraggableBoundsParent(containerRef.current)
+        const canvasWidth = bounds
+          ? bounds.clientWidth - CANVAS_PADDING * 2
+          : containerRef.current.parentElement?.offsetWidth || 300
+        const currentLeft = position.x ?? 0
+        const maxWidthPx = canvasWidth - currentLeft - CANVAS_PADDING
+        const dx = e.clientX - startPos.current.x
+        const newWidthPx = (startPos.current.width / 100) * canvasWidth + dx
+        const clampedWidthPx = Math.max(
+          canvasWidth * 0.3,
+          Math.min(maxWidthPx, newWidthPx),
+        )
+        setSize({ width: (clampedWidthPx / canvasWidth) * 100 })
+      }
+    }
+
+    const handleMouseUp = () => {
+      if (
+        onLayoutCommit &&
+        position.x !== null &&
+        position.y !== null &&
+        (isDragging || isResizing)
+      ) {
+        onLayoutCommit({
+          x: position.x,
+          y: position.y,
+          widthPercent: size.width,
+        })
+      }
+      setIsDragging(false)
+      setIsResizing(false)
+      setDragStarted(false)
+    }
+
+    if (isDragging || isResizing) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [
+    isDragging,
+    isResizing,
+    dragStarted,
+    onLayoutCommit,
+    position.x,
+    position.y,
+    size.width,
+    CANVAS_PADDING,
+  ])
+
+  // Depend on coordinates, not `initialOffset` identity — parents often pass
+  // `{ x, y }` inline so the object is new every render; font/color updates
+  // must not re-run this and snap the note back to the last prop snapshot.
+  const initialX = initialOffset?.x
+  const initialY = initialOffset?.y
+  useEffect(() => {
+    if (typeof initialX !== 'number' || typeof initialY !== 'number') return
+    queueMicrotask(() => {
+      setPosition({ x: initialX, y: initialY })
+    })
+  }, [initialX, initialY])
+
+  useEffect(() => {
+    if (typeof initialWidthPercent !== 'number') return
+    queueMicrotask(() => {
+      setSize({ width: initialWidthPercent })
+    })
+  }, [initialWidthPercent])
+
+  const isPositioned = position.x !== null && position.y !== null
+
+  return (
+    <div
+      ref={containerRef}
+      className="group relative"
+      style={
+        isPositioned
+          ? {
+              position: 'absolute',
+              left: position.x ?? 0,
+              top: position.y ?? 0,
+              width: `${size.width}%`,
+            }
+          : {
+              width: editable ? `${size.width}%` : '100%',
+            }
+      }
+    >
+      {editable && isActive && (
+        <>
+          <div
+            role="button"
+            tabIndex={-1}
+            data-note-chrome
+            aria-label="Move note"
+            onMouseDown={(e) => handleMouseDown(e, 'drag')}
+            className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Move className="h-3 w-3 text-muted-foreground" />
+          </div>
+
+          <div
+            role="button"
+            tabIndex={-1}
+            data-note-chrome
+            aria-label="Resize note"
+            onMouseDown={(e) => handleMouseDown(e, 'resize')}
+            className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Maximize2 className="h-3 w-3 text-muted-foreground" />
+          </div>
+
+          <div className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/30 p-2 transition-colors group-hover:border-primary/50" />
+        </>
+      )}
+      {children}
+      {footer && footerPlacement ? (
+        <div
+          className="pointer-events-auto z-20"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: footerPlacement.left,
+            width: footerPlacement.width,
+            marginTop: 12,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {footer}
+        </div>
+      ) : footer ? (
+        <div
+          className="pointer-events-auto z-20 mt-3 w-full max-w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {footer}
+        </div>
+      ) : null}
+    </div>
+  )
+}

@@ -174,7 +174,8 @@ function LoginForm() {
           <Button
             type="submit"
             size="lg"
-            className="mt-4 w-full"
+            fullWidth
+            className="mt-4"
             disabled={loading}
           >
             {loading
