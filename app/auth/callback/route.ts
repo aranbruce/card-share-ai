@@ -1,17 +1,17 @@
-import { createSupabaseRouteHandlerClient } from '@/lib/supabase/route-handler'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-  const type = requestUrl.searchParams.get('type')
-  const nextParam = requestUrl.searchParams.get('next')
+  const code = requestUrl.searchParams.get("code")
+  const type = requestUrl.searchParams.get("type")
+  const nextParam = requestUrl.searchParams.get("next")
   const next =
-    nextParam ?? (type === 'recovery' ? '/auth/reset-password' : '/dashboard')
+    nextParam ?? (type === "recovery" ? "/auth/reset-password" : "/dashboard")
 
-  const errorParam = requestUrl.searchParams.get('error')
-  const errorDescription = requestUrl.searchParams.get('error_description')
+  const errorParam = requestUrl.searchParams.get("error")
+  const errorDescription = requestUrl.searchParams.get("error_description")
   if (errorParam) {
     return NextResponse.redirect(
       new URL(
@@ -38,6 +38,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(
-    new URL('/auth/login?error=auth_callback_failed', requestUrl.origin),
+    new URL("/auth/login?error=auth_callback_failed", requestUrl.origin),
   )
 }

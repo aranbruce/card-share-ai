@@ -1,35 +1,35 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
-import type { Card3DProps } from './types'
+import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
+import type { Card3DProps } from "./types"
 import {
   RegenerateShimmerOverlay,
   InlineEdit,
   ToolbarRegenerateButton,
   type InlineEditRegenerateHandle,
-} from './inline-edit'
+} from "./inline-edit"
 import {
   MessageFormattingToolbar,
   snapMessageFontSize,
-} from './message-formatting-toolbar'
-import { RegeneratePromptBar } from './regenerate-prompt-bar'
+} from "./message-formatting-toolbar"
+import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 import {
   DraggableWrapper,
   CANVAS_EDGE_PADDING,
   COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX,
-} from './draggable-wrapper'
+} from "./draggable-wrapper"
 import {
   ComposeDraftEditor,
   ComposeCanvasEmptyHint,
-} from './compose-draft-editor'
+} from "./compose-draft-editor"
 import {
   computeNaturalPageSpread,
   capSpreadToCommitted,
   type CommittedSpreadSnapshot,
-} from './card-page-spread'
-import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from 'lucide-react'
+} from "./card-page-spread"
+import Image from "next/image"
+import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
   useState,
   useRef,
@@ -39,9 +39,9 @@ import {
   startTransition,
   useCallback,
   type MouseEvent,
-} from 'react'
+} from "react"
 
-const MESSAGES_SECTION_LABEL = 'Messages'
+const MESSAGES_SECTION_LABEL = "Messages"
 
 export function Card3D({
   imageUrl,
@@ -92,7 +92,7 @@ export function Card3D({
   void senderName
   const [currentPage, setCurrentPage] = useState(coverOnly ? 0 : initialPage)
   const [showImagePrompt, setShowImagePrompt] = useState(false)
-  const [imagePromptText, setImagePromptText] = useState('')
+  const [imagePromptText, setImagePromptText] = useState("")
   const imagePromptRef = useRef<HTMLInputElement>(null)
   const [editingContributionId, setEditingContributionId] = useState<
     string | null
@@ -101,7 +101,7 @@ export function Card3D({
   const [regeneratePromptScopeKey, setRegeneratePromptScopeKey] = useState<
     string | null
   >(null)
-  const [regeneratePromptDraft, setRegeneratePromptDraft] = useState('')
+  const [regeneratePromptDraft, setRegeneratePromptDraft] = useState("")
   const lastContributeSubmitNavNonce = useRef(0)
   const mainMessageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
   const contributionInlineRegenRefs = useRef(
@@ -201,7 +201,7 @@ export function Card3D({
   const effectiveContributionPage = (
     contrib: (typeof contributions)[number],
   ) =>
-    typeof contrib.page_index === 'number' && contrib.page_index >= 0
+    typeof contrib.page_index === "number" && contrib.page_index >= 0
       ? contrib.page_index
       : validMessagePage + 1
 
@@ -210,7 +210,7 @@ export function Card3D({
   const showMainSpreadInnerBody =
     !hideEmptyCenterMessageBody ||
     message.trim().length > 0 ||
-    typeof onMessageChange === 'function'
+    typeof onMessageChange === "function"
 
   useEffect(() => {
     if (coverOnly) return
@@ -222,7 +222,7 @@ export function Card3D({
     if (!last) return
 
     const pageIdx =
-      typeof last.page_index === 'number' && last.page_index >= 0
+      typeof last.page_index === "number" && last.page_index >= 0
         ? last.page_index
         : validMessagePage + 1
     const maxPage = Math.max(0, totalPages - 1)
@@ -320,10 +320,10 @@ export function Card3D({
 
   const handleComposeDraftPatch = useCallback(
     (
-      patch: Parameters<NonNullable<Card3DProps['onComposeDraftChange']>>[0],
+      patch: Parameters<NonNullable<Card3DProps["onComposeDraftChange"]>>[0],
     ) => {
       onComposeDraftChange?.(patch)
-      if (typeof patch.pageIndex === 'number') {
+      if (typeof patch.pageIndex === "number") {
         setCurrentPage(patch.pageIndex)
       }
     },
@@ -342,7 +342,7 @@ export function Card3D({
     const c = contributions.find((x) => x.id === editingContributionId)
     if (!c) return null
     const page =
-      typeof c.page_index === 'number' && c.page_index >= 0
+      typeof c.page_index === "number" && c.page_index >= 0
         ? c.page_index
         : validMessagePage + 1
     if (page !== currentPage) return null
@@ -367,13 +367,13 @@ export function Card3D({
             editable
             isActive={editingContributionId === contrib.id}
             initialOffset={
-              typeof contrib.position_x === 'number' &&
-              typeof contrib.position_y === 'number'
+              typeof contrib.position_x === "number" &&
+              typeof contrib.position_y === "number"
                 ? { x: contrib.position_x, y: contrib.position_y }
                 : undefined
             }
             initialWidthPercent={
-              typeof contrib.width_percent === 'number'
+              typeof contrib.width_percent === "number"
                 ? contrib.width_percent
                 : undefined
             }
@@ -399,9 +399,7 @@ export function Card3D({
                       className="w-full max-w-none"
                       value={regeneratePromptDraft}
                       onValueChange={setRegeneratePromptDraft}
-                      isRegenerating={
-                        contributionRegeneratingId === contrib.id
-                      }
+                      isRegenerating={contributionRegeneratingId === contrib.id}
                       onSubmit={() =>
                         void contributionInlineRegenRefs.current
                           .get(contrib.id)
@@ -422,19 +420,19 @@ export function Card3D({
                       onFontSizeChange={(newSize) =>
                         onContributionLayoutChange(contrib.id, {
                           x:
-                            typeof contrib.position_x === 'number'
+                            typeof contrib.position_x === "number"
                               ? contrib.position_x
                               : 24,
                           y:
-                            typeof contrib.position_y === 'number'
+                            typeof contrib.position_y === "number"
                               ? contrib.position_y
                               : 24,
                           widthPercent:
-                            typeof contrib.width_percent === 'number'
+                            typeof contrib.width_percent === "number"
                               ? contrib.width_percent
                               : 75,
                           pageIndex:
-                            typeof contrib.page_index === 'number'
+                            typeof contrib.page_index === "number"
                               ? contrib.page_index
                               : pageIdx,
                           fontSize: newSize,
@@ -445,19 +443,19 @@ export function Card3D({
                       onTextColorChange={(hex) =>
                         onContributionLayoutChange(contrib.id, {
                           x:
-                            typeof contrib.position_x === 'number'
+                            typeof contrib.position_x === "number"
                               ? contrib.position_x
                               : 24,
                           y:
-                            typeof contrib.position_y === 'number'
+                            typeof contrib.position_y === "number"
                               ? contrib.position_y
                               : 24,
                           widthPercent:
-                            typeof contrib.width_percent === 'number'
+                            typeof contrib.width_percent === "number"
                               ? contrib.width_percent
                               : 75,
                           pageIndex:
-                            typeof contrib.page_index === 'number'
+                            typeof contrib.page_index === "number"
                               ? contrib.page_index
                               : pageIdx,
                           fontSize: contrib.font_size ?? messageFontSize,
@@ -466,7 +464,7 @@ export function Card3D({
                       }
                       showPage={totalPages > 1}
                       pageValue={
-                        typeof contrib.page_index === 'number'
+                        typeof contrib.page_index === "number"
                           ? contrib.page_index
                           : pageIdx
                       }
@@ -474,15 +472,15 @@ export function Card3D({
                         setCurrentPage(newPage)
                         onContributionLayoutChange(contrib.id, {
                           x:
-                            typeof contrib.position_x === 'number'
+                            typeof contrib.position_x === "number"
                               ? contrib.position_x
                               : 24,
                           y:
-                            typeof contrib.position_y === 'number'
+                            typeof contrib.position_y === "number"
                               ? contrib.position_y
                               : 24,
                           widthPercent:
-                            typeof contrib.width_percent === 'number'
+                            typeof contrib.width_percent === "number"
                               ? contrib.width_percent
                               : 75,
                           pageIndex: newPage,
@@ -532,7 +530,7 @@ export function Card3D({
                 }
                 if (
                   related instanceof Element &&
-                  related.closest('[data-regenerate-area]')
+                  related.closest("[data-regenerate-area]")
                 ) {
                   return
                 }
@@ -558,12 +556,12 @@ export function Card3D({
                 }
                 isRegenerating={contributionRegeneratingId === contrib.id}
                 regeneratePlacement={
-                  onContributionRegenerateMessage ? 'toolbar' : 'floating'
+                  onContributionRegenerateMessage ? "toolbar" : "floating"
                 }
                 regenerateShimmerTone="paper"
                 onRegeneratePromptOpenChange={(open) => {
                   setRegeneratePromptScopeKey(open ? contrib.id : null)
-                  if (!open) setRegeneratePromptDraft('')
+                  if (!open) setRegeneratePromptDraft("")
                 }}
                 toolbarRegeneratePrompt={
                   onContributionRegenerateMessage
@@ -576,9 +574,7 @@ export function Card3D({
                 className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
                 style={{
                   fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
-                  ...(contrib.text_color
-                    ? { color: contrib.text_color }
-                    : {}),
+                  ...(contrib.text_color ? { color: contrib.text_color } : {}),
                 }}
                 placeholder="Type your message…"
               />
@@ -591,13 +587,13 @@ export function Card3D({
         <DraggableWrapper
           key={contrib.id}
           initialOffset={
-            typeof contrib.position_x === 'number' &&
-            typeof contrib.position_y === 'number'
+            typeof contrib.position_x === "number" &&
+            typeof contrib.position_y === "number"
               ? { x: contrib.position_x, y: contrib.position_y }
               : undefined
           }
           initialWidthPercent={
-            typeof contrib.width_percent === 'number'
+            typeof contrib.width_percent === "number"
               ? contrib.width_percent
               : undefined
           }
@@ -621,7 +617,7 @@ export function Card3D({
       <div className="relative w-full max-w-md">
         {contributeOverlay ? (
           <div className="pointer-events-none absolute inset-0 z-30 flex flex-col">
-            {typeof contributeOverlay === 'function'
+            {typeof contributeOverlay === "function"
               ? contributeOverlay({ currentPage })
               : contributeOverlay}
           </div>
@@ -657,7 +653,7 @@ export function Card3D({
                   <>
                     {imageUrl && (
                       <div
-                        className={`group/image relative w-full flex-1 overflow-hidden rounded-2xl transition-all ${isRegeneratingImage ? 'opacity-90' : ''}`}
+                        className={`group/image relative w-full flex-1 overflow-hidden rounded-2xl transition-all ${isRegeneratingImage ? "opacity-90" : ""}`}
                       >
                         <Image
                           src={imageUrl}
@@ -708,18 +704,18 @@ export function Card3D({
                                 }
                                 onKeyDown={(e) => {
                                   if (
-                                    e.key === 'Enter' &&
+                                    e.key === "Enter" &&
                                     imagePromptText.trim()
                                   ) {
                                     void onRegenerateImage?.(
                                       imagePromptText.trim(),
                                     )
-                                    setImagePromptText('')
+                                    setImagePromptText("")
                                     setShowImagePrompt(false)
                                   }
-                                  if (e.key === 'Escape') {
+                                  if (e.key === "Escape") {
                                     setShowImagePrompt(false)
-                                    setImagePromptText('')
+                                    setImagePromptText("")
                                   }
                                 }}
                                 placeholder="Describe the image you want..."
@@ -732,7 +728,7 @@ export function Card3D({
                                     void onRegenerateImage?.(
                                       imagePromptText.trim(),
                                     )
-                                    setImagePromptText('')
+                                    setImagePromptText("")
                                     setShowImagePrompt(false)
                                   }
                                 }}
@@ -751,7 +747,7 @@ export function Card3D({
                               <button
                                 onClick={() => {
                                   setShowImagePrompt(false)
-                                  setImagePromptText('')
+                                  setImagePromptText("")
                                 }}
                                 className="rounded-full p-1.5 transition-colors hover:bg-muted"
                                 title="Cancel"
@@ -808,8 +804,8 @@ export function Card3D({
                       <ComposeCanvasEmptyHint
                         variant={
                           isMessagePage && showMainSpreadInnerBody
-                            ? 'anchored'
-                            : 'centered'
+                            ? "anchored"
+                            : "centered"
                         }
                       />
                     )}
@@ -825,7 +821,7 @@ export function Card3D({
                             composeDraft &&
                             composeDraft.pageIndex === currentPage
                           ) ? (
-                            regeneratePromptScopeKey === '__main__' &&
+                            regeneratePromptScopeKey === "__main__" &&
                             onRegenerateMessage ? (
                               <div data-regenerate-area>
                                 <RegeneratePromptBar
@@ -887,14 +883,14 @@ export function Card3D({
                             onRegenerate={onRegenerateMessage}
                             isRegenerating={isRegeneratingMessage}
                             regeneratePlacement={
-                              onRegenerateMessage ? 'toolbar' : 'floating'
+                              onRegenerateMessage ? "toolbar" : "floating"
                             }
                             regenerateShimmerTone="paper"
                             onRegeneratePromptOpenChange={(open) => {
                               setRegeneratePromptScopeKey(
-                                open ? '__main__' : null,
+                                open ? "__main__" : null,
                               )
-                              if (!open) setRegeneratePromptDraft('')
+                              if (!open) setRegeneratePromptDraft("")
                             }}
                             toolbarRegeneratePrompt={
                               onRegenerateMessage
@@ -983,8 +979,8 @@ export function Card3D({
                 onClick={() => setCurrentPage(i)}
                 className={`h-2.5 w-2.5 rounded-full transition-colors ${
                   i === currentPage
-                    ? 'bg-primary'
-                    : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                 }`}
                 aria-label={`Go to page ${i + 1}`}
               />
@@ -1000,7 +996,7 @@ export function Card3D({
                 : goToPage(currentPage + 1)
             }
             disabled={!canGoRight && !editable}
-            title={isLastPage && editable ? 'Add a new page' : 'Next page'}
+            title={isLastPage && editable ? "Add a new page" : "Next page"}
           >
             <ChevronRight className="h-5 w-5" />
           </Button>
@@ -1026,7 +1022,7 @@ export function Card3D({
                   Saving…
                 </>
               ) : (
-                'Save message'
+                "Save message"
               )}
             </Button>
             {onComposeCancel && (

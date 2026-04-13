@@ -1,4 +1,4 @@
-import type { Card3DProps } from './types'
+import type { Card3DProps } from "./types"
 
 export type CommittedSpreadSnapshot = {
   totalPages: number
@@ -15,20 +15,20 @@ export type NaturalPageSpread = {
 export function computeNaturalPageSpread(
   coverOnly: boolean,
   messagePageIndex: number,
-  contributions: Card3DProps['contributions'],
+  contributions: Card3DProps["contributions"],
   extraPages: number,
   composePageBump: number,
 ): NaturalPageSpread {
   const rows = contributions ?? []
   const messagePageLowerBound = Math.max(1, messagePageIndex)
   const maxExplicitContributionPage = rows.reduce((max, c) => {
-    if (typeof c.page_index === 'number' && c.page_index >= 0) {
+    if (typeof c.page_index === "number" && c.page_index >= 0) {
       return Math.max(max, c.page_index)
     }
     return max
   }, 0)
   const hasLegacyUnindexedContribution = rows.some(
-    (c) => !(typeof c.page_index === 'number' && c.page_index >= 0),
+    (c) => !(typeof c.page_index === "number" && c.page_index >= 0),
   )
 
   let lastContentPage = Math.max(

@@ -1,16 +1,16 @@
-'use client'
+"use client"
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import Link from 'next/link'
-import { ShareModal } from '@/components/share-modal'
-import { CardOwnerStudio } from '@/components/card-owner-studio'
-import { ArrowLeft, Send, Copy, CheckCircle2, X, Sparkles } from 'lucide-react'
-import { Logo } from '@/components/logo'
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Spinner } from "@/components/ui/spinner"
+import Link from "next/link"
+import { ShareModal } from "@/components/share-modal"
+import { CardOwnerStudio } from "@/components/card-owner-studio"
+import { ArrowLeft, Send, Copy, CheckCircle2, X, Sparkles } from "lucide-react"
+import { Logo } from "@/components/logo"
 
 interface CardData {
   id: string
@@ -34,12 +34,12 @@ function CardDetailInner() {
   const supabase = useMemo(() => createClient(), [])
   const [card, setCard] = useState<CardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
   const [copyLinkCopied, setCopyLinkCopied] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [welcomeBannerDismissed, setWelcomeBannerDismissed] = useState(false)
 
-  const welcomeParam = searchParams.get('welcome') === '1'
+  const welcomeParam = searchParams.get("welcome") === "1"
   const needsOwnerMessage = !card?.copy_message?.trim()
   const welcomeActive = welcomeParam && !welcomeBannerDismissed
   const showWelcomeBanner = welcomeActive && needsOwnerMessage
@@ -55,12 +55,12 @@ function CardDetailInner() {
   const loadCard = useCallback(async () => {
     try {
       const response = await fetch(`/api/cards/${cardId}`)
-      if (!response.ok) throw new Error('Card not found')
+      if (!response.ok) throw new Error("Card not found")
 
       const { card: cardData } = await response.json()
       setCard(cardData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load card')
+      setError(err instanceof Error ? err.message : "Failed to load card")
     } finally {
       setLoading(false)
     }
@@ -73,7 +73,7 @@ function CardDetailInner() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
+        router.push("/auth/login")
         return
       }
 
@@ -169,7 +169,7 @@ function CardDetailInner() {
               </div>
               <p className="flex items-center justify-center gap-2 text-base text-muted-foreground">
                 <span>
-                  From{' '}
+                  From{" "}
                   <span className="font-medium text-foreground">
                     {card.sender_name}
                   </span>
@@ -183,7 +183,7 @@ function CardDetailInner() {
 
             <div className="relative flex justify-center">
               <CardOwnerStudio
-                key={`${cardId}-${card.recipient_email || ''}`}
+                key={`${cardId}-${card.recipient_email || ""}`}
                 cardId={cardId}
                 initialCardPage={initialCardPage}
                 prioritizeFirstOwnerMessage={prioritizeFirstOwnerMessage}
@@ -207,7 +207,7 @@ function CardDetailInner() {
               ) : (
                 <Copy className="mr-2 h-5 w-5" />
               )}
-              {copyLinkCopied ? 'Link Copied!' : 'Copy Share Link'}
+              {copyLinkCopied ? "Link Copied!" : "Copy Share Link"}
             </Button>
 
             <Button
@@ -225,7 +225,7 @@ function CardDetailInner() {
         <ShareModal
           cardId={cardId}
           recipientName={card.recipient_name}
-          recipientEmail={card.recipient_email || ''}
+          recipientEmail={card.recipient_email || ""}
           contributorLinkId={card.contributor_link_id}
           isOpen={showShareModal}
           onClose={() => {

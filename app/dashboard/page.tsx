@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import Link from 'next/link'
-import { Spinner } from '@/components/ui/spinner'
-import Image from 'next/image'
-import { Inbox } from 'lucide-react'
-import { Logo } from '@/components/logo'
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import Link from "next/link"
+import { Spinner } from "@/components/ui/spinner"
+import Image from "next/image"
+import { Inbox } from "lucide-react"
+import { Logo } from "@/components/logo"
 
 interface CardItem {
   id: string
@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const supabase = createClient()
   const [cards, setCards] = useState<CardItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -34,7 +34,7 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
+        router.push("/auth/login")
         return
       }
 
@@ -46,13 +46,13 @@ export default function DashboardPage() {
 
   const loadCards = async () => {
     try {
-      const response = await fetch('/api/cards')
-      if (!response.ok) throw new Error('Failed to load cards')
+      const response = await fetch("/api/cards")
+      if (!response.ok) throw new Error("Failed to load cards")
 
       const { cards: cardData } = await response.json()
       setCards(cardData || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cards')
+      setError(err instanceof Error ? err.message : "Failed to load cards")
     } finally {
       setLoading(false)
     }
@@ -60,22 +60,22 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/')
+    router.push("/")
   }
 
   const handleDeleteCard = async (cardId: string) => {
-    if (!confirm('Are you sure you want to delete this card?')) return
+    if (!confirm("Are you sure you want to delete this card?")) return
 
     try {
       const response = await fetch(`/api/cards/${cardId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       })
 
-      if (!response.ok) throw new Error('Failed to delete card')
+      if (!response.ok) throw new Error("Failed to delete card")
 
       setCards(cards.filter((c) => c.id !== cardId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete card')
+      setError(err instanceof Error ? err.message : "Failed to delete card")
     }
   }
 
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                     {/* Floating badge */}
                     <div className="absolute top-4 left-4 z-20">
                       <div className="inline-flex items-center rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-sm backdrop-blur-md">
-                        {card.card_type.replace('_', ' ')}
+                        {card.card_type.replace("_", " ")}
                       </div>
                     </div>
                   </div>

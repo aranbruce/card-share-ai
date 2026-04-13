@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 export function Logo({ className }: { className?: string }) {
   return (
@@ -7,7 +7,7 @@ export function Logo({ className }: { className?: string }) {
       href="/"
       aria-label="Home"
       className={cn(
-        'flex shrink-0 items-center gap-2 text-foreground transition-opacity hover:opacity-80',
+        "flex shrink-0 items-center gap-2 text-foreground transition-opacity hover:opacity-80",
         className,
       )}
     >
@@ -47,7 +47,10 @@ export function Logo({ className }: { className?: string }) {
             d="M533.084 137L566.955 43.0615H587.992L621.863 137H603.869L596.063 114.772H558.884L551.078 137H533.084ZM563.912 100.086H591.035L577.54 60.3938L563.912 100.086Z"
             fill="currentColor"
           />
-          <path d="M626.437 137V43.0615H643.637V137H626.437Z" fill="currentColor" />
+          <path
+            d="M626.437 137V43.0615H643.637V137H626.437Z"
+            fill="currentColor"
+          />
         </svg>
       </div>
     </Link>

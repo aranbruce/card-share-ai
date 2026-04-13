@@ -1,6 +1,6 @@
-import { createSupabaseRouteHandlerClient } from '@/lib/supabase/route-handler'
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 /**
  * Password-reset emails should use redirect_to → this URL (path only, no query).
@@ -9,8 +9,8 @@ import type { NextRequest } from 'next/server'
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
 
-  const errorParam = requestUrl.searchParams.get('error')
-  const errorDescription = requestUrl.searchParams.get('error_description')
+  const errorParam = requestUrl.searchParams.get("error")
+  const errorDescription = requestUrl.searchParams.get("error_description")
   if (errorParam) {
     return NextResponse.redirect(
       new URL(
@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const code = requestUrl.searchParams.get('code')
+  const code = requestUrl.searchParams.get("code")
   if (code) {
-    const redirectUrl = new URL('/auth/reset-password', requestUrl.origin)
+    const redirectUrl = new URL("/auth/reset-password", requestUrl.origin)
     const response = NextResponse.redirect(redirectUrl)
     const supabase = createSupabaseRouteHandlerClient(request, response)
     const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -38,6 +38,6 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(
-    new URL('/auth/login?error=auth_callback_failed', requestUrl.origin),
+    new URL("/auth/login?error=auth_callback_failed", requestUrl.origin),
   )
 }

@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { cn } from '@/lib/utils'
-import { Layers, Palette, Type } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { cn } from "@/lib/utils"
+import { Layers, Palette, Type } from "lucide-react"
+import type { ReactNode } from "react"
 
 /** Discrete text sizes for inner messages (card canvas / compose). */
 const MESSAGE_FONT_SIZE_PRESETS = [12, 14, 16, 20, 24] as const
@@ -11,11 +11,11 @@ const MESSAGE_FONT_SIZE_LABEL: Record<
   (typeof MESSAGE_FONT_SIZE_PRESETS)[number],
   string
 > = {
-  12: 'Extra small',
-  14: 'Small',
-  16: 'Normal',
-  20: 'Large',
-  24: 'Extra large',
+  12: "Extra small",
+  14: "Small",
+  16: "Normal",
+  20: "Large",
+  24: "Extra large",
 }
 
 export function snapMessageFontSize(px: number) {
@@ -33,10 +33,10 @@ export function snapMessageFontSize(px: number) {
 }
 
 /** Shown when `text_color` is unset (theme handles actual foreground). */
-export const DEFAULT_MESSAGE_TEXT_COLOR_HEX = '#292524'
+export const DEFAULT_MESSAGE_TEXT_COLOR_HEX = "#292524"
 
 const messageFormatSelectClassName =
-  'max-w-[9rem] cursor-pointer rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40'
+  "max-w-[9rem] cursor-pointer rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
 
 export function MessageFormattingToolbar({
   fontSize,
@@ -68,7 +68,7 @@ export function MessageFormattingToolbar({
       role="toolbar"
       aria-label="Text size, color, page, and refine"
       className={cn(
-        'inline-flex max-w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-border/60 bg-background/95 px-2.5 py-1.5 shadow-md backdrop-blur-sm',
+        "inline-flex max-w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-border/60 bg-background/95 px-2.5 py-1.5 shadow-md backdrop-blur-sm",
         className,
       )}
     >
@@ -100,7 +100,7 @@ export function MessageFormattingToolbar({
             <label className="sr-only">Text color</label>
             <input
               type="color"
-              className="h-7 w-7 min-w-0 cursor-pointer appearance-none rounded border border-border/60 bg-background p-0.5 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [&::-moz-color-swatch]:border-none [&::-moz-color-swatch]:rounded-[3px] [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[3px]"
+              className="h-7 w-7 min-w-0 cursor-pointer appearance-none rounded border border-border/60 bg-background p-0.5 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [&::-moz-color-swatch]:rounded-[3px] [&::-moz-color-swatch]:border-none [&::-webkit-color-swatch]:rounded-[3px] [&::-webkit-color-swatch]:border-none [&::-webkit-color-swatch-wrapper]:p-0"
               value={colorInputValue}
               onMouseDown={(e) => e.stopPropagation()}
               onChange={(e) => onTextColorChange(e.target.value)}
@@ -116,7 +116,7 @@ export function MessageFormattingToolbar({
             />
             <label className="sr-only">Page</label>
             <select
-              className={cn(messageFormatSelectClassName, 'max-w-[8rem]')}
+              className={cn(messageFormatSelectClassName, "max-w-[8rem]")}
               value={pageValue}
               onMouseDown={(e) => e.stopPropagation()}
               onChange={(e) => {

@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import {
   Dialog,
@@ -6,8 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 interface AuthGateModalProps {
   isOpen: boolean

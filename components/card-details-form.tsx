@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import { Textarea } from '@/components/ui/textarea'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+import { Spinner } from "@/components/ui/spinner"
+import { Textarea } from "@/components/ui/textarea"
 
 interface CardDetailsFormProps {
   cardType: string
@@ -25,17 +25,17 @@ export function CardDetailsForm({
   isLoading,
   onBack,
 }: CardDetailsFormProps) {
-  const [senderName, setSenderName] = useState('')
-  const [recipientName, setRecipientName] = useState('')
-  const [customMessage, setCustomMessage] = useState('')
-  const [error, setError] = useState('')
+  const [senderName, setSenderName] = useState("")
+  const [recipientName, setRecipientName] = useState("")
+  const [customMessage, setCustomMessage] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
 
     if (!senderName || !recipientName) {
-      setError('Please fill in all required fields')
+      setError("Please fill in all required fields")
       return
     }
 
@@ -47,7 +47,7 @@ export function CardDetailsForm({
         customMessage: customMessage || undefined,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : "An error occurred")
     }
   }
 
@@ -124,7 +124,7 @@ export function CardDetailsForm({
                 Generating Card...
               </>
             ) : (
-              'Generate Card'
+              "Generate Card"
             )}
           </Button>
           {onBack && (

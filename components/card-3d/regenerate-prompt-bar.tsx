@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { Spinner } from '@/components/ui/spinner'
-import { ArrowUp, X } from 'lucide-react'
-import type { KeyboardEvent } from 'react'
+import { Spinner } from "@/components/ui/spinner"
+import { ArrowUp, X } from "lucide-react"
+import type { KeyboardEvent } from "react"
 
 export function RegeneratePromptBar({
   value,
@@ -20,11 +20,11 @@ export function RegeneratePromptBar({
   className?: string
 }) {
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       void onSubmit()
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       onCancel()
     }
   }

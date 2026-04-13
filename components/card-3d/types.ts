@@ -1,5 +1,5 @@
-import type { CardComposeDraft } from '@/lib/card-compose-draft'
-import type { ReactNode } from 'react'
+import type { CardComposeDraft } from "@/lib/card-compose-draft"
+import type { ReactNode } from "react"
 
 export interface Card3DProps {
   imageUrl: string

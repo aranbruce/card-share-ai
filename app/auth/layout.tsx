@@ -1,4 +1,4 @@
-import { Logo } from '@/components/logo'
+import { Logo } from "@/components/logo"
 
 export default function AuthLayout({
   children,
@@ -10,9 +10,7 @@ export default function AuthLayout({
       <div className="mb-8">
         <Logo />
       </div>
-      <div className="w-full max-w-md p-8 sm:p-10">
-        {children}
-      </div>
+      <div className="w-full max-w-md p-8 sm:p-10">{children}</div>
     </div>
   )
 }

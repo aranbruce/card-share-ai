@@ -1,30 +1,30 @@
-'use client'
+"use client"
 
-import type { Card3DProps } from './types'
-import { useRef, useState } from 'react'
-import { DraggableWrapper } from './draggable-wrapper'
+import type { Card3DProps } from "./types"
+import { useRef, useState } from "react"
+import { DraggableWrapper } from "./draggable-wrapper"
 import {
   InlineEdit,
   ToolbarRegenerateButton,
   type InlineEditRegenerateHandle,
-} from './inline-edit'
+} from "./inline-edit"
 import {
   MessageFormattingToolbar,
   snapMessageFontSize,
-} from './message-formatting-toolbar'
-import { RegeneratePromptBar } from './regenerate-prompt-bar'
+} from "./message-formatting-toolbar"
+import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 
 export function ComposeCanvasEmptyHint({
   variant,
 }: {
-  variant: 'anchored' | 'centered'
+  variant: "anchored" | "centered"
 }) {
   return (
     <div
       className={
-        variant === 'centered'
-          ? 'pointer-events-none absolute inset-0 z-1 flex items-center justify-center px-8'
-          : 'pointer-events-none absolute right-0 bottom-5 left-0 z-1 flex justify-center px-6'
+        variant === "centered"
+          ? "pointer-events-none absolute inset-0 z-1 flex items-center justify-center px-8"
+          : "pointer-events-none absolute right-0 bottom-5 left-0 z-1 flex justify-center px-6"
       }
       aria-hidden
     >
@@ -45,11 +45,11 @@ export function ComposeDraftEditor({
   totalPages,
   onSelectInnerPage,
 }: {
-  composeDraft: NonNullable<Card3DProps['composeDraft']>
+  composeDraft: NonNullable<Card3DProps["composeDraft"]>
   messageFontSize: number
   composeError: string | null
-  onComposeDraftChange: NonNullable<Card3DProps['onComposeDraftChange']>
-  onComposeDraftRegenerateMessage?: Card3DProps['onComposeDraftRegenerateMessage']
+  onComposeDraftChange: NonNullable<Card3DProps["onComposeDraftChange"]>
+  onComposeDraftRegenerateMessage?: Card3DProps["onComposeDraftRegenerateMessage"]
   composeDraftRegenerating: boolean
   totalPages: number
   onSelectInnerPage: (pageIndex: number) => void
@@ -58,7 +58,7 @@ export function ComposeDraftEditor({
   const [composeRegeneratePromptOpen, setComposeRegeneratePromptOpen] =
     useState(false)
   const [composeRegeneratePromptText, setComposeRegeneratePromptText] =
-    useState('')
+    useState("")
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
 
   return (
@@ -82,8 +82,7 @@ export function ComposeDraftEditor({
         initialWidthPercent={75}
         footer={
           isFocused ? (
-            composeRegeneratePromptOpen &&
-            onComposeDraftRegenerateMessage ? (
+            composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
               <div data-compose-format-toolbar data-regenerate-area>
                 <RegeneratePromptBar
                   className="w-full max-w-none"
@@ -151,12 +150,12 @@ export function ComposeDraftEditor({
             }
             isRegenerating={composeDraftRegenerating}
             regeneratePlacement={
-              onComposeDraftRegenerateMessage ? 'toolbar' : 'floating'
+              onComposeDraftRegenerateMessage ? "toolbar" : "floating"
             }
             regenerateShimmerTone="paper"
             onRegeneratePromptOpenChange={(open) => {
               setComposeRegeneratePromptOpen(open)
-              if (!open) setComposeRegeneratePromptText('')
+              if (!open) setComposeRegeneratePromptText("")
             }}
             toolbarRegeneratePrompt={
               onComposeDraftRegenerateMessage

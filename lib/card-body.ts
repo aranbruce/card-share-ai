@@ -31,13 +31,13 @@ export function forCardDisplay(
 
   if (creator) {
     return {
-      bodyMessage: '',
+      bodyMessage: "",
       displayContributions: contributions,
     }
   }
 
   return {
-    bodyMessage: fallbackCopyMessage || '',
+    bodyMessage: fallbackCopyMessage || "",
     displayContributions: contributions,
   }
 }

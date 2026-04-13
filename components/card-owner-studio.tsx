@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Card3D } from '@/components/card-3d'
-import type { CardComposeDraft } from '@/lib/card-compose-draft'
-import { randomPresetTextColor } from '@/lib/message-text-color-presets'
-import { Spinner } from '@/components/ui/spinner'
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Card3D } from "@/components/card-3d"
+import type { CardComposeDraft } from "@/lib/card-compose-draft"
+import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import { Spinner } from "@/components/ui/spinner"
 
 export type OwnerCard = {
   id: string
@@ -56,9 +56,9 @@ export function CardOwnerStudio({
   const [card, setCard] = useState<OwnerCard | null>(null)
   const [contributions, setContributions] = useState<OwnerContribution[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
-  const [composeError, setComposeError] = useState('')
+  const [composeError, setComposeError] = useState("")
   const [submitNonce, setSubmitNonce] = useState(0)
   const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(
     null,
@@ -87,16 +87,16 @@ export function CardOwnerStudio({
 
   const load = useCallback(async () => {
     setLoading(true)
-    setError('')
+    setError("")
     try {
       const res = await fetch(`/api/cards/${encodeURIComponent(cardId)}`, {
-        credentials: 'same-origin',
-        cache: 'no-store',
+        credentials: "same-origin",
+        cache: "no-store",
       })
       if (res.status === 401) {
-        throw new Error('You need to be signed in to open this card.')
+        throw new Error("You need to be signed in to open this card.")
       }
-      if (!res.ok) throw new Error('Card not found')
+      if (!res.ok) throw new Error("Card not found")
       const { card: c, contributions: list } = (await res.json()) as {
         card: OwnerCard
         contributions?: OwnerContribution[]
@@ -104,7 +104,7 @@ export function CardOwnerStudio({
       setCard(c)
       setContributions(list ?? [])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load')
+      setError(e instanceof Error ? e.message : "Failed to load")
     } finally {
       setLoading(false)
     }
@@ -140,15 +140,15 @@ export function CardOwnerStudio({
       },
     ) => {
       const res = await fetch(`/api/cards/${cardId}/contributions`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contributionId, ...updates }),
       })
       if (!res.ok) {
         const p = await res.json().catch(() => ({}))
         console.error(
-          'Owner contribution save failed',
-          typeof p.error === 'string' ? p.error : p,
+          "Owner contribution save failed",
+          typeof p.error === "string" ? p.error : p,
         )
       }
     },
@@ -223,24 +223,24 @@ export function CardOwnerStudio({
     async (contributionId: string, prompt: string) => {
       if (!card || !creatorRow || contributionId !== creatorRow.id) return
       const current =
-        contributions.find((c) => c.id === contributionId)?.message ?? ''
+        contributions.find((c) => c.id === contributionId)?.message ?? ""
       setRegeneratingContributionId(contributionId)
       try {
-        const response = await fetch('/api/regenerate-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/regenerate-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            field: 'contribution_message',
-            cardType: card.card_type || 'custom',
+            field: "contribution_message",
+            cardType: card.card_type || "custom",
             recipientName: card.recipient_name,
             senderName: card.sender_name,
             currentValue: current,
             userPrompt: prompt,
           }),
         })
-        if (!response.ok) throw new Error('Failed to refine message')
+        if (!response.ok) throw new Error("Failed to refine message")
         const { text } = (await response.json()) as { text?: string }
-        const next = String(text ?? '').trim()
+        const next = String(text ?? "").trim()
         setContributions((prev) =>
           prev.map((c) =>
             c.id === contributionId ? { ...c, message: next } : c,
@@ -261,21 +261,21 @@ export function CardOwnerStudio({
       if (!card) return
       setComposeDraftRegenerating(true)
       try {
-        const response = await fetch('/api/regenerate-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/regenerate-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            field: 'contribution_message',
-            cardType: card.card_type || 'custom',
+            field: "contribution_message",
+            cardType: card.card_type || "custom",
             recipientName: card.recipient_name,
             senderName: card.sender_name,
-            currentValue: composeDraftRef.current?.message ?? '',
+            currentValue: composeDraftRef.current?.message ?? "",
             userPrompt: prompt,
           }),
         })
-        if (!response.ok) throw new Error('Failed to refine message')
+        if (!response.ok) throw new Error("Failed to refine message")
         const { text } = (await response.json()) as { text?: string }
-        const next = String(text ?? '').trim()
+        const next = String(text ?? "").trim()
         setComposeDraft((d) => (d ? { ...d, message: next } : d))
       } catch (e) {
         console.error(e)
@@ -289,13 +289,13 @@ export function CardOwnerStudio({
   const patchCardFields = useCallback(
     async (updates: Record<string, unknown>) => {
       const res = await fetch(`/api/cards/${cardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       })
       if (!res.ok) {
         const p = await res.json().catch(() => ({}))
-        throw new Error(typeof p.error === 'string' ? p.error : 'Save failed')
+        throw new Error(typeof p.error === "string" ? p.error : "Save failed")
       }
       const { card: next } = await res.json()
       setCard(next)
@@ -320,21 +320,21 @@ export function CardOwnerStudio({
       if (!card) return
       setIsRegeneratingHeadline(true)
       try {
-        const response = await fetch('/api/regenerate-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/regenerate-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            field: 'headline',
-            cardType: card.card_type || 'custom',
+            field: "headline",
+            cardType: card.card_type || "custom",
             recipientName: card.recipient_name,
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
           }),
         })
-        if (!response.ok) throw new Error('Failed')
+        if (!response.ok) throw new Error("Failed")
         const { text } = (await response.json()) as { text?: string }
-        const next = String(text ?? '').trim()
+        const next = String(text ?? "").trim()
         setCard((c) => (c ? { ...c, copy_headline: next } : c))
         await patchCardFields({ copy_headline: next })
       } catch (e) {
@@ -351,13 +351,13 @@ export function CardOwnerStudio({
       if (!card) return
       setIsRegeneratingImage(true)
       try {
-        const newPrompt = prompt || card.image_prompt || ''
-        const response = await fetch('/api/generate-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const newPrompt = prompt || card.image_prompt || ""
+        const response = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imagePrompt: newPrompt }),
         })
-        if (!response.ok) throw new Error('Failed')
+        if (!response.ok) throw new Error("Failed")
         const { imageUrl } = (await response.json()) as { imageUrl?: string }
         if (imageUrl) {
           setCard((c) =>
@@ -394,7 +394,7 @@ export function CardOwnerStudio({
 
   const cancelCompose = useCallback(() => {
     setComposeDraft(null)
-    setComposeError('')
+    setComposeError("")
   }, [])
 
   const isolateGuests = prioritizeFirstOwnerMessage && !creatorMessageSaved
@@ -409,10 +409,10 @@ export function CardOwnerStudio({
     if (!draft) return
 
     setSubmitting(true)
-    setComposeError('')
+    setComposeError("")
     const msg = draft.message.trim()
     if (!msg) {
-      setComposeError('Please enter a message')
+      setComposeError("Please enter a message")
       setSubmitting(false)
       return
     }
@@ -422,8 +422,8 @@ export function CardOwnerStudio({
     try {
       if (creatorRow) {
         const res = await fetch(`/api/cards/${cardId}/contributions`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contributionId: creatorRow.id,
             message: msg,
@@ -440,9 +440,9 @@ export function CardOwnerStudio({
         const payload = await res.json().catch(() => ({}))
         if (!res.ok) {
           throw new Error(
-            typeof payload.error === 'string'
+            typeof payload.error === "string"
               ? payload.error
-              : 'Failed to save message',
+              : "Failed to save message",
           )
         }
         const { contribution: updated } = payload as {
@@ -457,8 +457,8 @@ export function CardOwnerStudio({
         }
       } else {
         const res = await fetch(`/api/cards/${cardId}/contributions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: msg,
             positionX: draft.x,
@@ -472,9 +472,9 @@ export function CardOwnerStudio({
         const payload = await res.json().catch(() => ({}))
         if (!res.ok) {
           throw new Error(
-            typeof payload.error === 'string'
+            typeof payload.error === "string"
               ? payload.error
-              : 'Failed to add message',
+              : "Failed to add message",
           )
         }
         const { contribution } = payload as {
@@ -491,7 +491,7 @@ export function CardOwnerStudio({
         onOwnerComposeSaved?.()
       }
     } catch (e) {
-      setComposeError(e instanceof Error ? e.message : 'Failed to add message')
+      setComposeError(e instanceof Error ? e.message : "Failed to add message")
     } finally {
       setSubmitting(false)
     }
@@ -525,13 +525,13 @@ export function CardOwnerStudio({
   return (
     <div className="w-full space-y-6">
       <Card3D
-        key={`${cardId}-${initialCardPage}-${prioritizeFirstOwnerMessage ? 'p' : 'n'}`}
+        key={`${cardId}-${initialCardPage}-${prioritizeFirstOwnerMessage ? "p" : "n"}`}
         imageUrl={card.image_url}
         headline={card.copy_headline}
         message=""
         hideEmptyCenterMessageBody
-        senderName={card.sender_name || 'Someone special'}
-        recipientName={card.recipient_name || 'You'}
+        senderName={card.sender_name || "Someone special"}
+        recipientName={card.recipient_name || "You"}
         contributions={contributionsForCard}
         editable
         onHeadlineChange={handleHeadlineChange}
@@ -559,7 +559,7 @@ export function CardOwnerStudio({
           showCompose
             ? (pt) => {
                 setComposeDraft({
-                  message: '',
+                  message: "",
                   x: pt.x,
                   y: pt.y,
                   pageIndex: pt.pageIndex,

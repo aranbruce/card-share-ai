@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import {
   useEffect,
@@ -7,8 +7,8 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
-} from 'react'
-import { Maximize2, Move } from 'lucide-react'
+} from "react"
+import { Maximize2, Move } from "lucide-react"
 
 /** Used to center the compose block on click before first layout (field + controls). */
 export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
@@ -17,13 +17,11 @@ export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
 export const CANVAS_EDGE_PADDING = 12
 
 /** Containing block for `position: absolute` on the draggable — same box `left`/`top` use. */
-function getDraggableBoundsParent(
-  el: HTMLElement | null,
-): HTMLElement | null {
+function getDraggableBoundsParent(el: HTMLElement | null): HTMLElement | null {
   if (!el) return null
   const fromOffset = el.offsetParent as HTMLElement | null
   if (fromOffset) return fromOffset
-  return el.closest('[data-card-canvas]') as HTMLElement | null
+  return el.closest("[data-card-canvas]") as HTMLElement | null
 }
 
 // Draggable wrapper for positioning content
@@ -111,10 +109,7 @@ export function DraggableWrapper({
     return () => ro.disconnect()
   }, [hasFooter, position.x, position.y, size.width, CANVAS_PADDING])
 
-  const handleMouseDown = (
-    e: ReactMouseEvent,
-    type: 'drag' | 'resize',
-  ) => {
+  const handleMouseDown = (e: ReactMouseEvent, type: "drag" | "resize") => {
     if (!editable) return
     e.preventDefault()
     e.stopPropagation()
@@ -146,8 +141,8 @@ export function DraggableWrapper({
       width: size.width,
     }
 
-    if (type === 'drag') setIsDragging(true)
-    if (type === 'resize') setIsResizing(true)
+    if (type === "drag") setIsDragging(true)
+    if (type === "resize") setIsResizing(true)
   }
 
   useEffect(() => {
@@ -225,13 +220,13 @@ export function DraggableWrapper({
     }
 
     if (isDragging || isResizing) {
-      window.addEventListener('mousemove', handleMouseMove)
-      window.addEventListener('mouseup', handleMouseUp)
+      window.addEventListener("mousemove", handleMouseMove)
+      window.addEventListener("mouseup", handleMouseUp)
     }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
     }
   }, [
     isDragging,
@@ -250,14 +245,14 @@ export function DraggableWrapper({
   const initialX = initialOffset?.x
   const initialY = initialOffset?.y
   useEffect(() => {
-    if (typeof initialX !== 'number' || typeof initialY !== 'number') return
+    if (typeof initialX !== "number" || typeof initialY !== "number") return
     queueMicrotask(() => {
       setPosition({ x: initialX, y: initialY })
     })
   }, [initialX, initialY])
 
   useEffect(() => {
-    if (typeof initialWidthPercent !== 'number') return
+    if (typeof initialWidthPercent !== "number") return
     queueMicrotask(() => {
       setSize({ width: initialWidthPercent })
     })
@@ -272,13 +267,13 @@ export function DraggableWrapper({
       style={
         isPositioned
           ? {
-              position: 'absolute',
+              position: "absolute",
               left: position.x ?? 0,
               top: position.y ?? 0,
               width: `${size.width}%`,
             }
           : {
-              width: editable ? `${size.width}%` : '100%',
+              width: editable ? `${size.width}%` : "100%",
             }
       }
     >
@@ -289,7 +284,7 @@ export function DraggableWrapper({
             tabIndex={-1}
             data-note-chrome
             aria-label="Move note"
-            onMouseDown={(e) => handleMouseDown(e, 'drag')}
+            onMouseDown={(e) => handleMouseDown(e, "drag")}
             className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Move className="h-3 w-3 text-muted-foreground" />
@@ -300,7 +295,7 @@ export function DraggableWrapper({
             tabIndex={-1}
             data-note-chrome
             aria-label="Resize note"
-            onMouseDown={(e) => handleMouseDown(e, 'resize')}
+            onMouseDown={(e) => handleMouseDown(e, "resize")}
             className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Maximize2 className="h-3 w-3 text-muted-foreground" />
@@ -314,8 +309,8 @@ export function DraggableWrapper({
         <div
           className="pointer-events-auto z-20"
           style={{
-            position: 'absolute',
-            top: '100%',
+            position: "absolute",
+            top: "100%",
             left: footerPlacement.left,
             width: footerPlacement.width,
             marginTop: 12,

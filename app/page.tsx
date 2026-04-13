@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import { Logo } from '@/components/logo'
+import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Logo } from "@/components/logo"
 
 export default function HomePage() {
   const router = useRouter()
@@ -44,7 +44,7 @@ export default function HomePage() {
                 variant="outline"
                 onClick={async () => {
                   await supabase.auth.signOut()
-                  router.push('/')
+                  router.push("/")
                 }}
               >
                 Logout
@@ -102,11 +102,7 @@ export default function HomePage() {
 
         <div className="mb-20 flex flex-col justify-center gap-4 sm:flex-row">
           <Link href="/create">
-            <Button
-              fullWidth
-              className="gap-2 pr-2.5 sm:w-auto"
-              size="lg"
-            >
+            <Button fullWidth className="gap-2 pr-2.5 sm:w-auto" size="lg">
               Create a Card
               <span className="rounded-full border border-primary-foreground/10 bg-primary-foreground/15 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary-foreground uppercase">
                 Free

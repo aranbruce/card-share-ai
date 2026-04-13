@@ -1,8 +1,13 @@
-'use client'
+"use client"
 
-import { Spinner } from '@/components/ui/spinner'
-import { cn } from '@/lib/utils'
-import type { CSSProperties, FocusEvent, KeyboardEvent, MouseEvent } from 'react'
+import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
+import type {
+  CSSProperties,
+  FocusEvent,
+  KeyboardEvent,
+  MouseEvent,
+} from "react"
 import {
   useCallback,
   useEffect,
@@ -11,31 +16,31 @@ import {
   forwardRef,
   useRef,
   useState,
-} from 'react'
-import { ArrowUp, Sparkles, X } from 'lucide-react'
-import { CANVAS_EDGE_PADDING } from './draggable-wrapper'
+} from "react"
+import { ArrowUp, Sparkles, X } from "lucide-react"
+import { CANVAS_EDGE_PADDING } from "./draggable-wrapper"
 
 export function RegenerateShimmerOverlay({
   tone,
   className,
 }: {
-  tone: 'cover' | 'paper'
+  tone: "cover" | "paper"
   className?: string
 }) {
   return (
     <div
       className={cn(
-        'pointer-events-none absolute inset-0 z-30 overflow-hidden',
+        "pointer-events-none absolute inset-0 z-30 overflow-hidden",
         className,
       )}
       aria-hidden
     >
       <div
         className={cn(
-          'absolute inset-0',
-          tone === 'cover'
-            ? 'ai-refine-shimmer-sweep-cover'
-            : 'ai-refine-shimmer-sweep-paper',
+          "absolute inset-0",
+          tone === "cover"
+            ? "ai-refine-shimmer-sweep-cover"
+            : "ai-refine-shimmer-sweep-paper",
         )}
       />
     </div>
@@ -65,7 +70,7 @@ export type InlineEditProps = {
    * `floating`: sparkle on the text edge (cover headline).
    * `toolbar`: hide sparkle; call `ref.openRegeneratePrompt()` from Size/Page toolbar.
    */
-  regeneratePlacement?: 'floating' | 'toolbar'
+  regeneratePlacement?: "floating" | "toolbar"
   /** Fires when the “Describe the change” prompt opens or closes (toolbar placement). */
   onRegeneratePromptOpenChange?: (open: boolean) => void
   /**
@@ -74,7 +79,7 @@ export type InlineEditProps = {
    */
   toolbarRegeneratePrompt?: { value: string; onChange: (v: string) => void }
   /** Sweep style: bright on dark cover vs subtle on light message paper */
-  regenerateShimmerTone?: 'cover' | 'paper'
+  regenerateShimmerTone?: "cover" | "paper"
   /** Start in edit mode and focus the field (e.g. right after click-to-place compose). */
   autoFocus?: boolean
 }
@@ -93,10 +98,10 @@ export const InlineEdit = forwardRef<
     onRegenerate,
     isRegenerating = false,
     placeholder,
-    placeholderClassName = 'text-muted-foreground/45',
+    placeholderClassName = "text-muted-foreground/45",
     onFocusChange,
-    regeneratePlacement = 'floating',
-    regenerateShimmerTone = 'cover',
+    regeneratePlacement = "floating",
+    regenerateShimmerTone = "cover",
     autoFocus = false,
     onRegeneratePromptOpenChange,
     toolbarRegeneratePrompt,
@@ -105,9 +110,9 @@ export const InlineEdit = forwardRef<
 ) {
   const [isEditing, setIsEditing] = useState(() => autoFocus)
   const [showPromptInput, setShowPromptInput] = useState(false)
-  const [internalPrompt, setInternalPrompt] = useState('')
+  const [internalPrompt, setInternalPrompt] = useState("")
   const toolbarExternal =
-    regeneratePlacement === 'toolbar' && toolbarRegeneratePrompt != null
+    regeneratePlacement === "toolbar" && toolbarRegeneratePrompt != null
   const promptText = toolbarExternal
     ? toolbarRegeneratePrompt.value
     : internalPrompt
@@ -154,7 +159,7 @@ export const InlineEdit = forwardRef<
     sel?.removeAllRanges()
     sel?.addRange(range)
     queueMicrotask(() => {
-      setEditSurfaceEmpty(!(editRef.current?.innerText || '').trim())
+      setEditSurfaceEmpty(!(editRef.current?.innerText || "").trim())
     })
   }, [isEditing])
 
@@ -176,9 +181,9 @@ export const InlineEdit = forwardRef<
 
     const updatePosition = () => {
       if (!containerRef.current) return
-      if (regeneratePlacement === 'toolbar') {
+      if (regeneratePlacement === "toolbar") {
         const canvas = containerRef.current.closest(
-          '[data-card-canvas]',
+          "[data-card-canvas]",
         ) as HTMLElement | null
         if (canvas) {
           const cr = canvas.getBoundingClientRect()
@@ -204,21 +209,21 @@ export const InlineEdit = forwardRef<
       promptInputRef.current?.focus()
     }, 0)
 
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener("resize", updatePosition)
+    window.addEventListener("scroll", updatePosition, true)
 
     return () => {
       clearTimeout(focusT)
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener("resize", updatePosition)
+      window.removeEventListener("scroll", updatePosition, true)
     }
   }, [showPromptInput, regeneratePlacement, toolbarExternal])
 
   const handleBlur = (e: FocusEvent) => {
-    if (e.relatedTarget?.closest('[data-regenerate-area]')) {
+    if (e.relatedTarget?.closest("[data-regenerate-area]")) {
       return
     }
-    if (e.relatedTarget?.closest('[data-note-chrome]')) {
+    if (e.relatedTarget?.closest("[data-note-chrome]")) {
       return
     }
     setIsEditing(false)
@@ -233,32 +238,32 @@ export const InlineEdit = forwardRef<
 
   const syncEditEmptyFromDom = () => {
     if (!editRef.current) return
-    setEditSurfaceEmpty(!(editRef.current.innerText || '').trim())
+    setEditSurfaceEmpty(!(editRef.current.innerText || "").trim())
   }
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       if (editRef.current) {
         editRef.current.innerText = value
         setEditSurfaceEmpty(!value.trim())
       }
       setIsEditing(false)
       setShowPromptInput(false)
-      setPromptText('')
+      setPromptText("")
     }
   }
 
   const handleSparkleClick = (e: MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    setPromptText('')
+    setPromptText("")
     setShowPromptInput(true)
   }
 
   const closeRegeneratePrompt = useCallback(() => {
     setShowPromptInput(false)
-    setInternalPrompt('')
-    toolbarRegeneratePrompt?.onChange('')
+    setInternalPrompt("")
+    toolbarRegeneratePrompt?.onChange("")
   }, [toolbarRegeneratePrompt])
 
   const runRegenerate = useCallback(
@@ -276,8 +281,8 @@ export const InlineEdit = forwardRef<
     () => ({
       openRegeneratePrompt: () => {
         if (!editable || !onRegenerate) return
-        setInternalPrompt('')
-        toolbarRegeneratePrompt?.onChange('')
+        setInternalPrompt("")
+        toolbarRegeneratePrompt?.onChange("")
         setShowPromptInput(true)
       },
       closeRegeneratePrompt,
@@ -297,11 +302,11 @@ export const InlineEdit = forwardRef<
   }
 
   const handlePromptKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       void handleRegenerate()
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       closeRegeneratePrompt()
     }
   }
@@ -310,7 +315,7 @@ export const InlineEdit = forwardRef<
     editable &&
     onRegenerate &&
     !showPromptInput &&
-    regeneratePlacement === 'floating'
+    regeneratePlacement === "floating"
 
   /** Match typing metrics without applying message `color` to the hint overlay. */
   const placeholderMetricsStyle: CSSProperties | undefined = (() => {
@@ -345,8 +350,8 @@ export const InlineEdit = forwardRef<
         {isEditing && showActivePlaceholder ? (
           <span
             className={cn(
-              'pointer-events-none absolute inset-0 z-0 block w-full select-none',
-              editable && onChange && 'px-1',
+              "pointer-events-none absolute inset-0 z-0 block w-full select-none",
+              editable && onChange && "px-1",
               // Same box model & typography as `editRef` so the hint does not shift vs idle state.
               className,
               placeholderClassName,
@@ -360,15 +365,15 @@ export const InlineEdit = forwardRef<
         <div
           ref={editRef}
           className={cn(
-            'relative z-10 w-full min-w-0',
+            "relative z-10 w-full min-w-0",
             className,
-            editable && onChange && 'rounded px-1',
+            editable && onChange && "rounded px-1",
             editable &&
               onChange &&
               !isEditing &&
-              'cursor-text transition-colors hover:bg-primary/5',
-            isRegenerating && 'opacity-90',
-            isEditing && 'outline-none',
+              "cursor-text transition-colors hover:bg-primary/5",
+            isRegenerating && "opacity-90",
+            isEditing && "outline-none",
           )}
           style={style}
           contentEditable={Boolean(editable && onChange && isEditing)}
