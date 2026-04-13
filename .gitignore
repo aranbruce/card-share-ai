@@ -10,6 +10,9 @@ next.user-config.*
 # Environment variables
 .env*.local
 
+# Supabase CLI local/cache (project ref, versions, etc.)
+supabase/.temp/
+
 # Common ignores
 node_modules
 .next/
