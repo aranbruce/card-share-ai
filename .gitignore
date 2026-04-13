@@ -13,6 +13,9 @@ next.user-config.*
 # Supabase CLI local/cache (project ref, versions, etc.)
 supabase/.temp/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Common ignores
 node_modules
 .next/
