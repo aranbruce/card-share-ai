@@ -68,7 +68,15 @@ export function CardOwnerStudio({
   >(null)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const headlineSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+  const ownerMessageSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+  const ownerLayoutSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
 
   useEffect(() => {
@@ -152,8 +160,9 @@ export function CardOwnerStudio({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = setTimeout(() => {
+      if (ownerMessageSaveTimerRef.current)
+        clearTimeout(ownerMessageSaveTimerRef.current)
+      ownerMessageSaveTimerRef.current = setTimeout(() => {
         void saveOwnerContributionPatch(contributionId, { message: value })
       }, 600)
     },
@@ -186,8 +195,9 @@ export function CardOwnerStudio({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = setTimeout(() => {
+      if (ownerLayoutSaveTimerRef.current)
+        clearTimeout(ownerLayoutSaveTimerRef.current)
+      ownerLayoutSaveTimerRef.current = setTimeout(() => {
         void saveOwnerContributionPatch(contributionId, {
           position_x: layout.x,
           position_y: layout.y,
@@ -287,8 +297,9 @@ export function CardOwnerStudio({
   const handleHeadlineChange = useCallback(
     (value: string) => {
       setCard((c) => (c ? { ...c, copy_headline: value } : c))
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = setTimeout(() => {
+      if (headlineSaveTimerRef.current)
+        clearTimeout(headlineSaveTimerRef.current)
+      headlineSaveTimerRef.current = setTimeout(() => {
         void patchCardFields({ copy_headline: value }).catch(console.error)
       }, 600)
     },

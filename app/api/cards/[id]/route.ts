@@ -17,6 +17,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Use * so older DBs without newer columns still return the card; an explicit column
+    // list 400s when the schema lags migrations.
     const { data, error } = await supabase
       .from('cards')
       .select('*')
@@ -28,8 +30,7 @@ export async function GET(
       return NextResponse.json({ error: 'Card not found' }, { status: 404 })
     }
 
-    // Use * so older DBs without newer columns (e.g. is_creator) still return the card;
-    // an explicit column list 400s when the schema lags migrations.
+    // Public columns only (omits edit_token). Requires migrations that add listed columns.
     const { data: contributions, error: contribErr } = await supabase
       .from('card_contributions')
       .select(CONTRIBUTION_PUBLIC_COLUMNS)
