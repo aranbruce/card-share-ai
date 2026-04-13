@@ -6,15 +6,21 @@ const cardCopySchema = z.object({
   headline: z.string().describe('A catchy, celebratory headline for the card'),
   message: z.string().describe('The main message body of the card'),
   signoff: z.string().describe('A warm closing/signature line'),
-  imagePrompt: z.string().describe('A detailed prompt for generating the card image'),
+  imagePrompt: z
+    .string()
+    .describe('A detailed prompt for generating the card image'),
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const { cardType, recipientName, senderName, customMessage } = await request.json()
+    const { cardType, recipientName, senderName, customMessage } =
+      await request.json()
 
     if (!cardType || !recipientName || !senderName) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 },
+      )
     }
 
     const systemPrompt = `You are a creative greeting card writer. Generate heartfelt, personalized greeting card copy for a ${cardType} card.
@@ -41,9 +47,10 @@ Create warm, appropriate copy that matches the card type. The image prompt shoul
 
     return NextResponse.json({ cardCopy: output })
   } catch (error) {
-    console.error('[v0] Error generating card copy:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[v0] Error details:', errorMessage)
+    console.error('Error generating card copy:', error)
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error details:', errorMessage)
     return NextResponse.json(
       { error: 'Failed to generate card copy', details: errorMessage },
       { status: 500 },

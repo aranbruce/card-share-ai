@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS cards (
   copy_signoff TEXT NOT NULL,
   image_url TEXT NOT NULL,
   image_prompt TEXT,
-  status TEXT DEFAULT 'draft', -- draft, collecting, sent
   contributor_link_id TEXT UNIQUE,
   contributor_link_expires_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,

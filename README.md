@@ -41,11 +41,13 @@ FAL_KEY=your_fal_api_key
 ### Installation
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Set up the database:
+
    ```bash
    # Execute the migration in Supabase
    # scripts/001_init_database.sql

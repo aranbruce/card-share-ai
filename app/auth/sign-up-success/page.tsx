@@ -4,18 +4,19 @@ import Link from 'next/link'
 
 export default function SignUpSuccess() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md p-8 text-center">
         <div className="mb-4 text-4xl">✓</div>
-        <h1 className="text-2xl font-bold mb-2">Check Your Email</h1>
-        <p className="text-muted-foreground mb-6">
-          We&apos;ve sent you a confirmation link. Please verify your email to complete your account setup.
+        <h1 className="mb-2 text-2xl font-bold">Check Your Email</h1>
+        <p className="mb-6 text-muted-foreground">
+          We&apos;ve sent you a confirmation link. Please verify your email to
+          complete your account setup.
         </p>
 
-        <div className="bg-secondary/50 border border-secondary rounded p-4 mb-6 text-sm">
+        <div className="mb-6 rounded border border-secondary bg-secondary/50 p-4 text-sm">
           <p>
             Didn&apos;t receive the email? Check your spam folder or{' '}
-            <button className="text-primary hover:underline font-medium">
+            <button className="font-medium text-primary hover:underline">
               try again
             </button>
             .

@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -44,30 +43,39 @@ export default function ResetPassword() {
       }
 
       // Password updated successfully, redirect to login
-      router.push('/auth/login?message=Password reset successful. Please log in.')
-    } catch (err) {
+      router.push(
+        '/auth/login?message=Password reset successful. Please log in.',
+      )
+    } catch {
       setError('An unexpected error occurred')
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary p-4">
-      <Card className="w-full max-w-md p-8">
-        <h1 className="text-2xl font-bold mb-2">Set New Password</h1>
-        <p className="text-muted-foreground mb-6">
-          Choose a new password for your account
-        </p>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md p-8 sm:p-10">
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
+            Set New Password
+          </h1>
+          <p className="text-muted-foreground">
+            Choose a new password for your account
+          </p>
+        </div>
 
         <form onSubmit={handleResetPassword} className="space-y-4">
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
+            <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="password"
+              className="mb-1 block text-sm font-medium"
+            >
               New Password
             </label>
             <Input
@@ -78,11 +86,15 @@ export default function ResetPassword() {
               placeholder="••••••••"
               required
               disabled={loading}
+              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
             />
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="confirmPassword"
+              className="mb-1 block text-sm font-medium"
+            >
               Confirm Password
             </label>
             <Input
@@ -93,14 +105,19 @@ export default function ResetPassword() {
               placeholder="••••••••"
               required
               disabled={loading}
+              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            disabled={loading}
+          >
             {loading ? 'Resetting password...' : 'Reset Password'}
           </Button>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }

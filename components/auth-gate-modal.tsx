@@ -32,13 +32,14 @@ export function AuthGateModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-4 bg-secondary/50 rounded-lg my-2">
+        <div className="my-2 rounded-lg bg-secondary/50 p-4">
           <p className="text-sm text-muted-foreground">
-            Your card is safe! We&apos;ll save it automatically after you sign in.
+            Your card is safe! We&apos;ll save it automatically after you sign
+            in.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 mt-2">
+        <div className="mt-2 flex flex-col gap-3">
           <Button onClick={onSignUp} className="w-full">
             Create Account
           </Button>
@@ -47,7 +48,7 @@ export function AuthGateModal({
           </Button>
         </div>
 
-        <p className="text-xs text-center text-muted-foreground mt-2">
+        <p className="mt-2 text-center text-xs text-muted-foreground">
           Free account • No credit card required
         </p>
       </DialogContent>

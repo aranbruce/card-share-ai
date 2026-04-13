@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 import { Spinner } from '@/components/ui/spinner'
 import Image from 'next/image'
+import { Inbox } from 'lucide-react'
+import { Logo } from '@/components/logo'
 
 interface CardItem {
   id: string
@@ -15,7 +17,6 @@ interface CardItem {
   sender_name: string
   card_type: string
   image_url: string
-  status: string
   created_at: string
 }
 
@@ -25,7 +26,6 @@ export default function DashboardPage() {
   const [cards, setCards] = useState<CardItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [user, setUser] = useState(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,7 +38,6 @@ export default function DashboardPage() {
         return
       }
 
-      setUser(user)
       loadCards()
     }
 
@@ -82,104 +81,147 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
-        <Spinner className="h-8 w-8" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+        <Spinner className="h-8 w-8 text-primary" />
+        <p className="animate-pulse text-sm font-medium text-muted-foreground">
+          Loading your cards...
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">My Cards</h1>
-          <div className="flex gap-3">
-            <Link href="/create">
-              <Button>Create Card</Button>
-            </Link>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
+      <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border/40 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 md:px-8">
+          <Logo />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full font-medium text-muted-foreground hover:text-foreground"
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
         </div>
       </header>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-8 md:px-8 lg:py-12">
+        <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              My Cards
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Manage and view your generated greeting cards.
+            </p>
+          </div>
+
+          {cards.length > 0 && (
+            <Link href="/create" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="w-full rounded-full px-6 font-semibold shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+              >
+                Create New Card
+              </Button>
+            </Link>
+          )}
+        </div>
+
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded text-destructive mb-6">
+          <div className="mb-6 rounded border border-destructive/20 bg-destructive/10 p-4 text-destructive">
             {error}
           </div>
         )}
 
         {cards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="text-6xl mb-4">📭</div>
-            <h2 className="text-2xl font-bold mb-2">No cards yet</h2>
-            <p className="text-muted-foreground mb-6 text-center">
-              Create your first greeting card to get started
+          <div className="flex flex-col items-center justify-center px-4 py-24 text-center">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/50">
+              <Inbox className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="mb-3 text-2xl font-semibold tracking-tight">
+              No cards yet
+            </h2>
+            <p className="mx-auto mb-8 max-w-sm leading-relaxed text-muted-foreground">
+              You haven&apos;t created any greeting cards. Start creating your
+              first beautiful, AI-generated card today.
             </p>
             <Link href="/create">
-              <Button size="lg">Create Your First Card</Button>
+              <Button size="lg" className="h-12 rounded-full px-8 shadow-sm">
+                Create Your First Card
+              </Button>
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => (
-              <Link key={card.id} href={`/dashboard/cards/${card.id}`}>
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full flex flex-col cursor-pointer">
-                  {card.image_url && (
-                    <div className="relative w-full aspect-square bg-secondary overflow-hidden">
+              <div
+                key={card.id}
+                className="group relative flex h-full flex-col"
+              >
+                <Link
+                  href={`/dashboard/cards/${card.id}`}
+                  className="absolute inset-0 z-0 rounded-3xl"
+                  aria-label={`View card for ${card.recipient_name}`}
+                />
+                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden rounded-3xl border-border/60 bg-background py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
+                  <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-secondary">
+                    {card.image_url && (
                       <Image
                         src={card.image_url}
                         alt={`${card.recipient_name}'s card`}
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                       />
-                    </div>
-                  )}
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        For: <span className="font-semibold text-foreground">{card.recipient_name}</span>
-                      </p>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        From: <span className="font-semibold text-foreground">{card.sender_name}</span>
-                      </p>
-                      <div className="inline-block px-2 py-1 bg-secondary rounded text-xs font-medium capitalize mb-3">
+                    )}
+
+                    {/* Floating badge */}
+                    <div className="absolute top-4 left-4 z-20">
+                      <div className="inline-flex items-center rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-sm backdrop-blur-md">
                         {card.card_type.replace('_', ' ')}
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                  </div>
+
+                  <div className="flex flex-1 flex-col justify-between p-6">
+                    <div className="mb-8">
+                      <h3 className="mb-1.5 text-xl font-bold tracking-tight text-foreground">
+                        For {card.recipient_name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        From {card.sender_name}
+                      </p>
+                    </div>
+
+                    <div className="pointer-events-auto flex gap-3">
                       <Button
-                        size="sm"
-                        variant={card.status === 'draft' ? 'default' : 'outline'}
-                        className="flex-1"
-                        onClick={(e) => {
-                          e.preventDefault()
-                        }}
+                        className="h-10 flex-1 rounded-full font-semibold shadow-sm"
+                        type="button"
+                        onClick={() =>
+                          router.push(`/dashboard/cards/${card.id}`)
+                        }
                       >
-                        {card.status === 'draft' ? 'Edit' : card.status === 'collecting' ? 'Managing' : 'View'}
+                        Open
                       </Button>
                       <Button
-                        size="sm"
                         variant="outline"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleDeleteCard(card.id)
-                        }}
+                        type="button"
+                        className="h-10 rounded-full border-border/80 px-6 font-semibold shadow-sm transition-colors hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => handleDeleteCard(card.id)}
                       >
                         Delete
                       </Button>
                     </div>
                   </div>
                 </Card>
-              </Link>
+              </div>
             ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

@@ -51,21 +51,23 @@ export function CardDetailsForm({
   }
 
   return (
-    <Card className="w-full max-w-lg p-6">
-      <h2 className="text-2xl font-bold mb-2">Card Details</h2>
-      <p className="text-muted-foreground mb-6">
-        Tell us who this card is for and from
-      </p>
+    <Card className="mx-auto w-full max-w-lg rounded-2xl border-border/40 p-8 shadow-sm">
+      <div className="mb-8 text-center">
+        <h2 className="mb-2 text-2xl font-bold tracking-tight">Card Details</h2>
+        <p className="text-muted-foreground">
+          Tell us who this card is for and from
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
+          <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         <div>
-          <label htmlFor="sender" className="block text-sm font-medium mb-2">
+          <label htmlFor="sender" className="mb-2 block text-sm font-medium">
             From (Your Name) *
           </label>
           <Input
@@ -75,25 +77,27 @@ export function CardDetailsForm({
             placeholder="Your name"
             disabled={isLoading}
             required
+            className="h-12 border-border/50 bg-background/50 focus-visible:ring-1"
           />
         </div>
 
         <div>
-          <label htmlFor="recipient" className="block text-sm font-medium mb-2">
+          <label htmlFor="recipient" className="mb-2 block text-sm font-medium">
             To (Recipient Name) *
           </label>
           <Input
             id="recipient"
             value={recipientName}
             onChange={(e) => setRecipientName(e.target.value)}
-            placeholder="Recipient&apos;s name"
+            placeholder="Recipient's name"
             disabled={isLoading}
             required
+            className="h-12 border-border/50 bg-background/50 focus-visible:ring-1"
           />
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-sm font-medium mb-2">
+          <label htmlFor="message" className="mb-2 block text-sm font-medium">
             Additional Context (Optional)
           </label>
           <textarea
@@ -102,22 +106,27 @@ export function CardDetailsForm({
             onChange={(e) => setCustomMessage(e.target.value)}
             placeholder="Any special details to personalize the card? (e.g., promotion, new job)"
             disabled={isLoading}
-            className="w-full px-3 py-2 border border-input rounded-md bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-24"
+            className="min-h-[120px] w-full resize-y rounded-lg border border-border/50 bg-background/50 px-4 py-3 text-sm placeholder:text-muted-foreground focus:ring-1 focus:ring-primary focus:outline-none"
           />
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-3 pt-6">
           {onBack && (
             <Button
               type="button"
               variant="outline"
               onClick={onBack}
               disabled={isLoading}
+              className="h-12 rounded-full border-border/50 px-6 hover:bg-secondary/50"
             >
               Back
             </Button>
           )}
-          <Button type="submit" className="flex-1" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="h-12 flex-1 rounded-full shadow-sm"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />

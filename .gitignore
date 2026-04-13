@@ -10,7 +10,14 @@ next.user-config.*
 # Environment variables
 .env*.local
 
+# Supabase CLI local/cache (project ref, versions, etc.)
+supabase/.temp/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Common ignores
 node_modules
 .next/
 .DS_Store
+.vercel

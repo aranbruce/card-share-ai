@@ -7,6 +7,7 @@ import { CardTypeSelector } from '@/components/card-type-selector'
 import { CardDetailsForm } from '@/components/card-details-form'
 import { CardPreview } from '@/components/card-preview'
 import { AuthGateModal } from '@/components/auth-gate-modal'
+import { Logo } from '@/components/logo'
 
 interface CardData {
   cardType: string
@@ -39,20 +40,18 @@ export default function CreateCardPage() {
   const [cardData, setCardData] = useState<CardData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
-  const [isRegeneratingMessage, setIsRegeneratingMessage] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [error, setError] = useState('')
   const [editMode, setEditMode] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [extraPages, setExtraPages] = useState(0)
-  const [messageFontSize, setMessageFontSize] = useState(18)
-  const [messagePageIndex, setMessagePageIndex] = useState(1)
 
   // Check if user is logged in
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       setIsGuest(!user)
     }
     checkAuth()
@@ -108,12 +107,10 @@ export default function CreateCardPage() {
 
       setSenderName(details.senderName)
       setRecipientName(details.recipientName)
-      // Combine message and signoff into a single field
-      const fullMessage = `${cardCopy.message}\n\n${cardCopy.signoff}`
       setCardData({
         cardType: details.cardType,
         headline: cardCopy.headline,
-        message: fullMessage,
+        message: '',
         imageUrl,
         imagePrompt: cardCopy.imagePrompt,
       })
@@ -152,41 +149,11 @@ export default function CreateCardPage() {
         headline: text,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate headline')
+      setError(
+        err instanceof Error ? err.message : 'Failed to regenerate headline',
+      )
     } finally {
       setIsRegeneratingHeadline(false)
-    }
-  }
-
-  const handleRegenerateMessage = async (prompt: string) => {
-    if (!cardData) return
-
-    setIsRegeneratingMessage(true)
-    try {
-      const response = await fetch('/api/regenerate-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          field: 'message',
-          cardType: cardData.cardType,
-          recipientName,
-          senderName,
-          currentValue: cardData.message,
-          userPrompt: prompt,
-        }),
-      })
-
-      if (!response.ok) throw new Error('Failed to regenerate message')
-
-      const { text } = await response.json()
-      setCardData({
-        ...cardData,
-        message: text,
-      })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate message')
-    } finally {
-      setIsRegeneratingMessage(false)
     }
   }
 
@@ -214,7 +181,9 @@ export default function CreateCardPage() {
         imagePrompt: newPrompt,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate image')
+      setError(
+        err instanceof Error ? err.message : 'Failed to regenerate image',
+      )
     } finally {
       setIsRegeneratingImage(false)
     }
@@ -228,10 +197,10 @@ export default function CreateCardPage() {
       recipientName,
       senderName,
       copyHeadline: cardData.headline,
-      copyMessage: cardData.message,
+      copyMessage: '',
       imageUrl: cardData.imageUrl,
       imagePrompt: cardData.imagePrompt,
-      extraPages,
+      extraPages: 0,
     }
 
     localStorage.setItem('pendingCard', JSON.stringify(pendingCard))
@@ -256,19 +225,34 @@ export default function CreateCardPage() {
         body: JSON.stringify({
           cardType: cardData.cardType,
           recipientName,
+          recipientEmail: '', // Optional field
           senderName,
           copyHeadline: cardData.headline,
-          copyMessage: cardData.message,
+          copyMessage: '',
           imageUrl: cardData.imageUrl,
           imagePrompt: cardData.imagePrompt,
-          extraPages,
+          extraPages: 0,
         }),
       })
 
       if (!response.ok) throw new Error('Failed to save card')
 
-      const { card } = await response.json()
-      router.push(`/dashboard/cards/${card.id || card}`)
+      const body = (await response.json()) as {
+        card?: { id?: string }
+        error?: string
+      }
+      const id =
+        body.card &&
+        typeof body.card === 'object' &&
+        typeof body.card.id === 'string'
+          ? body.card.id
+          : undefined
+      if (!id) {
+        throw new Error(
+          body.error ?? 'Save succeeded but no card id was returned',
+        )
+      }
+      router.push(`/dashboard/cards/${id}?welcome=1`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save card')
     } finally {
@@ -278,7 +262,9 @@ export default function CreateCardPage() {
 
   const handleAuthRedirect = (type: 'login' | 'signup') => {
     storePendingCard()
-    router.push(`/auth/${type === 'login' ? 'login' : 'sign-up'}?redirect=/create&action=save`)
+    router.push(
+      `/auth/${type === 'login' ? 'login' : 'sign-up'}?redirect=/create&action=save`,
+    )
   }
 
   const handleBackTotype = () => {
@@ -286,13 +272,12 @@ export default function CreateCardPage() {
     setSelectedType('')
   }
 
-  const handleBackToDetails = () => {
-    setStep('details')
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <header className="mb-8 flex items-center justify-center py-6">
+        <Logo />
+      </header>
+      <div className="mx-auto max-w-4xl">
         {step === 'select-type' && (
           <CardTypeSelector onSelect={handleCardTypeSelect} />
         )}
@@ -310,37 +295,27 @@ export default function CreateCardPage() {
           <CardPreview
             imageUrl={cardData.imageUrl}
             headline={cardData.headline}
-            message={cardData.message}
+            message=""
             senderName={senderName}
             recipientName={recipientName}
             editMode={editMode}
             isGeneratingImage={isLoading}
             isGuest={isGuest}
+            coverOnly
             onHeadlineChange={(value) =>
               setCardData({ ...cardData, headline: value })
             }
-            onMessageChange={(value) =>
-              setCardData({ ...cardData, message: value })
-            }
             onRegenerateHeadline={handleRegenerateHeadline}
-            onRegenerateMessage={handleRegenerateMessage}
             onRegenerateImage={handleRegenerateImage}
             isRegeneratingHeadline={isRegeneratingHeadline}
-            isRegeneratingMessage={isRegeneratingMessage}
             isRegeneratingImage={isRegeneratingImage}
             onSave={handleSaveCard}
             isSaving={isLoading}
-            extraPages={extraPages}
-            onAddPage={() => setExtraPages((prev) => prev + 1)}
-            messageFontSize={messageFontSize}
-            onMessageFontSizeChange={setMessageFontSize}
-            messagePageIndex={messagePageIndex}
-            onMessagePageIndexChange={setMessagePageIndex}
           />
         )}
 
         {error && (
-          <div className="fixed bottom-4 right-4 bg-destructive/10 border border-destructive/20 rounded p-4 max-w-sm text-destructive text-sm">
+          <div className="fixed right-4 bottom-4 max-w-sm rounded border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}

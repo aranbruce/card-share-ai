@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
       recipientEmail,
       senderName,
       copyHeadline,
-      copyMessage,
       imageUrl,
       imagePrompt,
       extraPages = 0,
@@ -28,28 +27,39 @@ export async function POST(request: NextRequest) {
     // Generate a unique link ID for contributions
     const linkId = uuidv4()
 
-    const { data, error } = await supabase.from('cards').insert({
-      user_id: user.id,
-      card_type: cardType,
-      recipient_name: recipientName,
-      recipient_email: recipientEmail,
-      sender_name: senderName,
-      copy_headline: copyHeadline,
-      copy_message: copyMessage,
-      image_url: imageUrl,
-      image_prompt: imagePrompt,
-      status: 'draft',
-      contributor_link_id: linkId,
-      extra_pages: extraPages,
-    })
+    // Inner message is added post-create (owner studio / same flow as contributors).
+    const msg = ''
+    const { data, error } = await supabase
+      .from('cards')
+      .insert({
+        user_id: user.id,
+        card_type: cardType,
+        recipient_name: recipientName,
+        recipient_email: recipientEmail || '',
+        sender_name: senderName,
+        copy_headline: copyHeadline,
+        copy_message: msg,
+        image_url: imageUrl,
+        image_prompt: imagePrompt,
+        contributor_link_id: linkId,
+        extra_pages:
+          typeof extraPages === 'number' && Number.isFinite(extraPages)
+            ? extraPages
+            : 0,
+      })
+      .select()
+      .single()
 
-    if (error) {
+    if (error || !data) {
       console.error('Supabase error:', error)
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json(
+        { error: error?.message ?? 'Failed to create card' },
+        { status: 400 },
+      )
     }
 
     return NextResponse.json({
-      card: data?.[0] || { id: data?.id, contributor_link_id: linkId },
+      card: data,
     })
   } catch (error) {
     console.error('Error creating card:', error)
@@ -60,7 +70,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient()
     const {
