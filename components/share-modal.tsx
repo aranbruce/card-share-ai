@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Spinner } from '@/components/ui/spinner'
 import { CheckIcon, CopyIcon, LinkIcon, MailIcon, SendIcon } from 'lucide-react'
 import {
@@ -36,6 +36,7 @@ export function ShareModal({
   onSentAtRecorded,
 }: ShareModalProps) {
   const [copied, setCopied] = useState('')
+  const [clipboardError, setClipboardError] = useState('')
   const [sending, setSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [recipientEmail, setRecipientEmail] = useState(initialEmail || '')
@@ -43,6 +44,13 @@ export function ShareModal({
   const [savingEmail, setSavingEmail] = useState(false)
 
   const viewLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/view/${contributorLinkId}`
+
+  useEffect(() => {
+    if (!isOpen) {
+      setClipboardError('')
+      setCopied('')
+    }
+  }, [isOpen])
 
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()
@@ -61,14 +69,19 @@ export function ShareModal({
   }
 
   const copyToClipboard = async (text: string, name: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(name)
-
-    if (name === 'view' || name === 'email') {
-      await recordSharedAt()
+    try {
+      await navigator.clipboard.writeText(text)
+      setClipboardError('')
+      setCopied(name)
+      if (name === 'view' || name === 'email') {
+        await recordSharedAt()
+      }
+      setTimeout(() => setCopied(''), 2000)
+    } catch {
+      setClipboardError(
+        'Could not copy. Check clipboard permissions, or select the link and copy manually.',
+      )
     }
-
-    setTimeout(() => setCopied(''), 2000)
   }
 
   const validateEmail = (email: string) => {
@@ -154,6 +167,12 @@ export function ShareModal({
             </DialogDescription>
           </DialogHeader>
         </div>
+
+        {clipboardError ? (
+          <p role="alert" className="px-6 pb-2 text-sm text-destructive">
+            {clipboardError}
+          </p>
+        ) : null}
 
         <div className="space-y-6 p-6">
           {/* Recipient View Link */}

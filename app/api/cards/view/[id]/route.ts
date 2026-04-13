@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validate as isValidUuid } from 'uuid'
+import { CONTRIBUTION_PUBLIC_COLUMNS } from '@/lib/contribution-public-columns'
 import { createClient } from '@/lib/supabase/server'
 
 const CARD_VIEW_SELECT =
@@ -49,7 +50,7 @@ export async function GET(
     // Get contributions for this card
     const { data: contributions, error: contribError } = await supabase
       .from('card_contributions')
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .eq('card_id', cardData.id)
       .order('created_at', { ascending: true })
 

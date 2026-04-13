@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { CONTRIBUTION_PUBLIC_COLUMNS } from '@/lib/contribution-public-columns'
 import { createClient } from '@/lib/supabase/server'
 
 type OwnsCardResult =
@@ -92,7 +93,7 @@ export async function POST(
         page_index: typeof pageIndex === 'number' ? pageIndex : null,
         font_size: typeof fontSize === 'number' ? fontSize : null,
       })
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
 
     if (insertError || !contribution) {
@@ -226,7 +227,7 @@ export async function PATCH(
       .from('card_contributions')
       .update(updates)
       .eq('id', contributionId)
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
 
     if (updateErr || !updated) {

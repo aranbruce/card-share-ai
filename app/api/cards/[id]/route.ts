@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { CONTRIBUTION_PUBLIC_COLUMNS } from '@/lib/contribution-public-columns'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
@@ -31,7 +32,7 @@ export async function GET(
     // an explicit column list 400s when the schema lags migrations.
     const { data: contributions, error: contribErr } = await supabase
       .from('card_contributions')
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .eq('card_id', id)
       .order('created_at', { ascending: true })
 

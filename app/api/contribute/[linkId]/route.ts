@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
+import { CONTRIBUTION_PUBLIC_COLUMNS } from '@/lib/contribution-public-columns'
 import { createClient } from '@/lib/supabase/server'
 
 function tokensMatch(stored: string, provided: string): boolean {
@@ -73,7 +74,7 @@ export async function POST(
         page_index: typeof pageIndex === 'number' ? pageIndex : null,
         font_size: typeof fontSize === 'number' ? fontSize : null,
       })
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
 
     if (insertError || !contribution) {
@@ -224,7 +225,7 @@ export async function PATCH(
       .from('card_contributions')
       .update(updates)
       .eq('id', contributionId)
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
 
     if (updateErr || !updated) {
@@ -269,7 +270,7 @@ export async function GET(
     // Get contributions for this card
     const { data: contributions, error: contribError } = await supabase
       .from('card_contributions')
-      .select('*')
+      .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .eq('card_id', cardData.id)
       .order('created_at', { ascending: true })
 
