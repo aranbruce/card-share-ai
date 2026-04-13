@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import { Textarea } from '@/components/ui/textarea'
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card } from "@/components/ui/card"
+import { Spinner } from "@/components/ui/spinner"
+import { Textarea } from "@/components/ui/textarea"
 
 interface CardDetailsFormProps {
   cardType: string
@@ -25,17 +25,17 @@ export function CardDetailsForm({
   isLoading,
   onBack,
 }: CardDetailsFormProps) {
-  const [senderName, setSenderName] = useState('')
-  const [recipientName, setRecipientName] = useState('')
-  const [customMessage, setCustomMessage] = useState('')
-  const [error, setError] = useState('')
+  const [senderName, setSenderName] = useState("")
+  const [recipientName, setRecipientName] = useState("")
+  const [customMessage, setCustomMessage] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError("")
 
     if (!senderName || !recipientName) {
-      setError('Please fill in all required fields')
+      setError("Please fill in all required fields")
       return
     }
 
@@ -47,12 +47,12 @@ export function CardDetailsForm({
         customMessage: customMessage || undefined,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : "An error occurred")
     }
   }
 
   return (
-    <Card className="mx-auto w-full max-w-lg rounded-2xl border-border/40 p-8 shadow-sm">
+    <Card className="mx-auto w-full max-w-lg border-border/40 p-8">
       <div className="mb-8 text-center">
         <h2 className="mb-2 text-2xl font-bold tracking-tight">Card Details</h2>
         <p className="text-muted-foreground">
@@ -124,7 +124,7 @@ export function CardDetailsForm({
                 Generating Card...
               </>
             ) : (
-              'Generate Card'
+              "Generate Card"
             )}
           </Button>
           {onBack && (
@@ -134,7 +134,7 @@ export function CardDetailsForm({
               size="lg"
               onClick={onBack}
               disabled={isLoading}
-              className="order-1 border-border/50 px-6 hover:bg-secondary/50"
+              className="order-1 border-border/50 hover:bg-secondary/50"
             >
               Back
             </Button>

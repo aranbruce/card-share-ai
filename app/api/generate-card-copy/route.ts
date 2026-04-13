@@ -1,45 +1,70 @@
-import { generateText, Output } from 'ai'
-import { z } from 'zod'
-import { NextRequest, NextResponse } from 'next/server'
+import { generateText, Output } from "ai"
+import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server"
 
 const cardCopySchema = z.object({
-  headline: z.string().describe('A catchy, celebratory headline for the card'),
-  message: z.string().describe('The main message body of the card'),
-  signoff: z.string().describe('A warm closing/signature line'),
+  headline: z.string().describe("A catchy, celebratory headline for the card"),
+  message: z.string().describe("The main message body of the card"),
+  signoff: z.string().describe("A warm closing/signature line"),
   imagePrompt: z
     .string()
-    .describe('A detailed prompt for generating the card image'),
+    .describe("A detailed prompt for generating the card image"),
 })
 
 export async function POST(request: NextRequest) {
   try {
-    const { cardType, recipientName, senderName, customMessage } =
-      await request.json()
+    const {
+      cardType,
+      recipientName,
+      senderName,
+      customMessage,
+      existingHeadline,
+      existingMessage,
+      existingSignoff,
+    } = await request.json()
 
     if (!cardType || !recipientName || !senderName) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 },
       )
     }
 
-    const systemPrompt = `You are a creative greeting card writer. Generate heartfelt, personalized greeting card copy for a ${cardType} card.
+    const hasExisting =
+      (typeof existingHeadline === "string" && existingHeadline.trim()) ||
+      (typeof existingMessage === "string" && existingMessage.trim()) ||
+      (typeof existingSignoff === "string" && existingSignoff.trim())
+
+    const existingBlock = hasExisting
+      ? `
+You already have draft copy — refine and improve it (keep the same tone and intent unless context asks otherwise).
+Current headline: ${typeof existingHeadline === "string" ? existingHeadline : ""}
+Current message body: ${typeof existingMessage === "string" ? existingMessage : ""}
+Current sign-off: ${typeof existingSignoff === "string" ? existingSignoff : ""}`
+      : ""
+
+    const systemPrompt = `You are a creative greeting card writer. ${hasExisting ? "Refine" : "Generate heartfelt, personalized"} greeting card copy for a ${cardType} card.
     
 The card is from: ${senderName}
 To: ${recipientName}
-${customMessage ? `Additional context: ${customMessage}` : ''}
+${customMessage ? `Additional context: ${customMessage}` : ""}
+${existingBlock}
 
 Create warm, appropriate copy that matches the card type. The image prompt should be descriptive for AI image generation.`
 
+    const userLead = hasExisting
+      ? `Please refine this greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.`
+      : `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.`
+
     const { output } = await generateText({
-      model: 'openai/gpt-4o',
+      model: "openai/gpt-4o",
       output: Output.object({
         schema: cardCopySchema,
       }),
       messages: [
         {
-          role: 'user',
-          content: `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}. ${customMessage ? `Additional context: ${customMessage}` : ''}`,
+          role: "user",
+          content: `${userLead} ${customMessage ? `Additional context: ${customMessage}` : ""}`,
         },
       ],
       system: systemPrompt,
@@ -47,12 +72,12 @@ Create warm, appropriate copy that matches the card type. The image prompt shoul
 
     return NextResponse.json({ cardCopy: output })
   } catch (error) {
-    console.error('Error generating card copy:', error)
+    console.error("Error generating card copy:", error)
     const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error'
-    console.error('Error details:', errorMessage)
+      error instanceof Error ? error.message : "Unknown error"
+    console.error("Error details:", errorMessage)
     return NextResponse.json(
-      { error: 'Failed to generate card copy', details: errorMessage },
+      { error: "Failed to generate card copy", details: errorMessage },
       { status: 500 },
     )
   }

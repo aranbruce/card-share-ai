@@ -1,14 +1,14 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 const CARD_TYPES = [
-  { id: 'birthday', label: 'Birthday', icon: '🎂' },
-  { id: 'thank_you', label: 'Thank You', icon: '🙏' },
-  { id: 'congratulations', label: 'Congratulations', icon: '🎉' },
-  { id: 'holiday', label: 'Holiday', icon: '🎄' },
-  { id: 'custom', label: 'Custom', icon: '✨' },
+  { id: "birthday", label: "Birthday", icon: "🎂" },
+  { id: "thank_you", label: "Thank You", icon: "🙏" },
+  { id: "congratulations", label: "Congratulations", icon: "🎉" },
+  { id: "holiday", label: "Holiday", icon: "🎄" },
+  { id: "custom", label: "Custom", icon: "✨" },
 ]
 
 export function CardTypeSelector({

@@ -9,6 +9,8 @@ export type ContributionRow = {
   width_percent?: number | null
   page_index?: number | null
   font_size?: number | null
+  /** Hex `#RRGGBB`; null uses theme text color */
+  text_color?: string | null
 }
 
 /**
@@ -29,13 +31,13 @@ export function forCardDisplay(
 
   if (creator) {
     return {
-      bodyMessage: '',
+      bodyMessage: "",
       displayContributions: contributions,
     }
   }
 
   return {
-    bodyMessage: fallbackCopyMessage || '',
+    bodyMessage: fallbackCopyMessage || "",
     displayContributions: contributions,
   }
 }

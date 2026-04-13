@@ -1,15 +1,15 @@
-import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from "next/server"
+import { updateSession } from "@/lib/supabase/middleware"
 
 export async function proxy(request: NextRequest) {
   // PKCE recovery links often land here as /auth/reset-password?code=…
   // The code must be exchanged on /auth/callback or there is no session for updateUser.
   const url = request.nextUrl
-  if (url.pathname === '/auth/reset-password') {
-    const code = url.searchParams.get('code')
+  if (url.pathname === "/auth/reset-password") {
+    const code = url.searchParams.get("code")
     if (code) {
-      const redirect = new URL('/auth/recovery-callback', request.url)
-      redirect.searchParams.set('code', code)
+      const redirect = new URL("/auth/recovery-callback", request.url)
+      redirect.searchParams.set("code", code)
       return NextResponse.redirect(redirect)
     }
   }
@@ -25,6 +25,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 }

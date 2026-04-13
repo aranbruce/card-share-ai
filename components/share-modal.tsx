@@ -1,17 +1,17 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useEffect, useState } from 'react'
-import { Spinner } from '@/components/ui/spinner'
-import { CheckIcon, CopyIcon, LinkIcon, MailIcon, SendIcon } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react"
+import { Spinner } from "@/components/ui/spinner"
+import { CheckIcon, CopyIcon, LinkIcon, MailIcon, SendIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog"
 
 interface ShareModalProps {
   cardId: string
@@ -35,20 +35,20 @@ export function ShareModal({
   onEmailUpdate,
   onSentAtRecorded,
 }: ShareModalProps) {
-  const [copied, setCopied] = useState('')
-  const [clipboardError, setClipboardError] = useState('')
+  const [copied, setCopied] = useState("")
+  const [clipboardError, setClipboardError] = useState("")
   const [sending, setSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
-  const [recipientEmail, setRecipientEmail] = useState(initialEmail || '')
-  const [emailError, setEmailError] = useState('')
+  const [recipientEmail, setRecipientEmail] = useState(initialEmail || "")
+  const [emailError, setEmailError] = useState("")
   const [savingEmail, setSavingEmail] = useState(false)
 
-  const viewLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/view/${contributorLinkId}`
+  const viewLink = `${typeof window !== "undefined" ? window.location.origin : ""}/view/${contributorLinkId}`
 
   useEffect(() => {
     if (!isOpen) {
-      setClipboardError('')
-      setCopied('')
+      setClipboardError("")
+      setCopied("")
     }
   }, [isOpen])
 
@@ -56,30 +56,30 @@ export function ShareModal({
     const sentAt = new Date().toISOString()
     try {
       const res = await fetch(`/api/cards/${cardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sent_at: sentAt }),
       })
       if (res.ok) {
         onSentAtRecorded?.(sentAt)
       }
     } catch (err) {
-      console.error('Failed to record sent_at', err)
+      console.error("Failed to record sent_at", err)
     }
   }
 
   const copyToClipboard = async (text: string, name: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      setClipboardError('')
+      setClipboardError("")
       setCopied(name)
-      if (name === 'view' || name === 'email') {
+      if (name === "view" || name === "email") {
         await recordSharedAt()
       }
-      setTimeout(() => setCopied(''), 2000)
+      setTimeout(() => setCopied(""), 2000)
     } catch {
       setClipboardError(
-        'Could not copy. Check clipboard permissions, or select the link and copy manually.',
+        "Could not copy. Check clipboard permissions, or select the link and copy manually.",
       )
     }
   }
@@ -90,29 +90,29 @@ export function ShareModal({
 
   const handleSaveEmail = async () => {
     if (!recipientEmail.trim()) {
-      setEmailError('Please enter an email address')
+      setEmailError("Please enter an email address")
       return
     }
     if (!validateEmail(recipientEmail)) {
-      setEmailError('Please enter a valid email address')
+      setEmailError("Please enter a valid email address")
       return
     }
 
-    setEmailError('')
+    setEmailError("")
     setSavingEmail(true)
 
     try {
       const response = await fetch(`/api/cards/${cardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recipient_email: recipientEmail }),
       })
 
-      if (!response.ok) throw new Error('Failed to save email')
+      if (!response.ok) throw new Error("Failed to save email")
 
       onEmailUpdate?.(recipientEmail)
     } catch {
-      setEmailError('Failed to save email')
+      setEmailError("Failed to save email")
     } finally {
       setSavingEmail(false)
     }
@@ -120,23 +120,23 @@ export function ShareModal({
 
   const handleSendEmail = async () => {
     if (!recipientEmail.trim()) {
-      setEmailError('Please enter an email address')
+      setEmailError("Please enter an email address")
       return
     }
     if (!validateEmail(recipientEmail)) {
-      setEmailError('Please enter a valid email address')
+      setEmailError("Please enter a valid email address")
       return
     }
 
-    setEmailError('')
+    setEmailError("")
     setSending(true)
 
     try {
       // First save the email to the card
       const sentAt = new Date().toISOString()
       await fetch(`/api/cards/${cardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           recipient_email: recipientEmail,
           sent_at: sentAt,
@@ -150,7 +150,7 @@ export function ShareModal({
       // For now, we'll show a success message with the link to copy
       setEmailSent(true)
     } catch {
-      setEmailError('Failed to send card')
+      setEmailError("Failed to send card")
     } finally {
       setSending(false)
     }
@@ -191,9 +191,9 @@ export function ShareModal({
                 size="icon"
                 variant="secondary"
                 className="shrink-0"
-                onClick={() => copyToClipboard(viewLink, 'view')}
+                onClick={() => copyToClipboard(viewLink, "view")}
               >
-                {copied === 'view' ? (
+                {copied === "view" ? (
                   <CheckIcon className="size-4" />
                 ) : (
                   <CopyIcon className="size-4" />
@@ -226,18 +226,14 @@ export function ShareModal({
                   and send it manually.
                 </p>
                 <div className="flex gap-2">
-                  <Input
-                    value={viewLink}
-                    readOnly
-                    className="bg-background"
-                  />
+                  <Input value={viewLink} readOnly className="bg-background" />
                   <Button
                     size="icon"
                     variant="outline"
                     className="shrink-0"
-                    onClick={() => copyToClipboard(viewLink, 'email')}
+                    onClick={() => copyToClipboard(viewLink, "email")}
                   >
-                    {copied === 'email' ? (
+                    {copied === "email" ? (
                       <CheckIcon className="size-4" />
                     ) : (
                       <CopyIcon className="size-4" />
@@ -254,12 +250,12 @@ export function ShareModal({
                     value={recipientEmail}
                     onChange={(e) => {
                       setRecipientEmail(e.target.value)
-                      setEmailError('')
+                      setEmailError("")
                     }}
                     className={
                       emailError
-                        ? 'border-destructive focus-visible:ring-destructive'
-                        : ''
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
                     }
                   />
                   {emailError && (
@@ -280,7 +276,7 @@ export function ShareModal({
                         Saving...
                       </>
                     ) : (
-                      'Save email only'
+                      "Save email only"
                     )}
                   </Button>
                   <Button

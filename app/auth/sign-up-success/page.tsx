@@ -1,6 +1,6 @@
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import Link from 'next/link'
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import Link from "next/link"
 
 export default function SignUpSuccess() {
   return (
@@ -15,7 +15,7 @@ export default function SignUpSuccess() {
 
         <div className="mb-6 rounded border border-secondary bg-secondary/50 p-4 text-sm">
           <p>
-            Didn&apos;t receive the email? Check your spam folder or{' '}
+            Didn&apos;t receive the email? Check your spam folder or{" "}
             <button className="font-medium text-primary hover:underline">
               try again
             </button>

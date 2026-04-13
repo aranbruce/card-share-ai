@@ -1,15 +1,15 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import Link from 'next/link'
-import { Spinner } from '@/components/ui/spinner'
-import Image from 'next/image'
-import { Inbox } from 'lucide-react'
-import { Logo } from '@/components/logo'
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import Link from "next/link"
+import { Spinner } from "@/components/ui/spinner"
+import Image from "next/image"
+import { Inbox } from "lucide-react"
+import { Logo } from "@/components/logo"
 
 interface CardItem {
   id: string
@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const supabase = createClient()
   const [cards, setCards] = useState<CardItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -34,7 +34,7 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/auth/login')
+        router.push("/auth/login")
         return
       }
 
@@ -46,13 +46,13 @@ export default function DashboardPage() {
 
   const loadCards = async () => {
     try {
-      const response = await fetch('/api/cards')
-      if (!response.ok) throw new Error('Failed to load cards')
+      const response = await fetch("/api/cards")
+      if (!response.ok) throw new Error("Failed to load cards")
 
       const { cards: cardData } = await response.json()
       setCards(cardData || [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load cards')
+      setError(err instanceof Error ? err.message : "Failed to load cards")
     } finally {
       setLoading(false)
     }
@@ -60,22 +60,22 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/')
+    router.push("/")
   }
 
   const handleDeleteCard = async (cardId: string) => {
-    if (!confirm('Are you sure you want to delete this card?')) return
+    if (!confirm("Are you sure you want to delete this card?")) return
 
     try {
       const response = await fetch(`/api/cards/${cardId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       })
 
-      if (!response.ok) throw new Error('Failed to delete card')
+      if (!response.ok) throw new Error("Failed to delete card")
 
       setCards(cards.filter((c) => c.id !== cardId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete card')
+      setError(err instanceof Error ? err.message : "Failed to delete card")
     }
   }
 
@@ -99,7 +99,7 @@ export default function DashboardPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="rounded-full font-medium text-muted-foreground hover:text-foreground"
+            className="font-medium text-muted-foreground hover:text-foreground"
             onClick={handleLogout}
           >
             Logout
@@ -123,7 +123,8 @@ export default function DashboardPage() {
             <Link href="/create" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="w-full rounded-full px-6 font-semibold shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+                fullWidth
+                className="font-semibold shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
               >
                 Create New Card
               </Button>
@@ -165,7 +166,7 @@ export default function DashboardPage() {
                   className="absolute inset-0 z-0 rounded-2xl"
                   aria-label={`View card for ${card.recipient_name}`}
                 />
-                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden rounded-2xl border-border/60 bg-background py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
+                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden border-border/60 bg-background py-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
                   <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-secondary">
                     {card.image_url && (
                       <Image
@@ -179,7 +180,7 @@ export default function DashboardPage() {
                     {/* Floating badge */}
                     <div className="absolute top-4 left-4 z-20">
                       <div className="inline-flex items-center rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-sm backdrop-blur-md">
-                        {card.card_type.replace('_', ' ')}
+                        {card.card_type.replace("_", " ")}
                       </div>
                     </div>
                   </div>
@@ -196,8 +197,9 @@ export default function DashboardPage() {
 
                     <div className="pointer-events-auto flex gap-3">
                       <Button
-                        className="h-10 flex-1 rounded-full font-semibold shadow-sm"
+                        className="flex-1 font-semibold shadow-sm"
                         type="button"
+                        size="lg"
                         onClick={() =>
                           router.push(`/dashboard/cards/${card.id}`)
                         }
@@ -205,9 +207,9 @@ export default function DashboardPage() {
                         Open
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="destructive"
                         type="button"
-                        className="h-10 rounded-full border-border/80 px-6 font-semibold shadow-sm transition-colors hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        size="lg"
                         onClick={() => handleDeleteCard(card.id)}
                       >
                         Delete

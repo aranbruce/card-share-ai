@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { useEffect, useState, useMemo } from 'react'
-import { useParams } from 'next/navigation'
-import { Card } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import { Card3D } from '@/components/card-3d'
-import { forCardDisplay } from '@/lib/card-body'
-import { Logo } from '@/components/logo'
+import { useEffect, useState, useMemo } from "react"
+import { useParams } from "next/navigation"
+import { Card } from "@/components/ui/card"
+import { Spinner } from "@/components/ui/spinner"
+import { Card3D } from "@/components/card-3d"
+import { forCardDisplay } from "@/lib/card-body"
+import { Logo } from "@/components/logo"
 
 interface CardData {
   recipient_name: string
@@ -30,7 +30,7 @@ export default function PublicCardPage() {
   const [card, setCard] = useState<CardData | null>(null)
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const loadCard = async () => {
@@ -39,7 +39,7 @@ export default function PublicCardPage() {
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || 'Card not found')
+          throw new Error(errorData.error || "Card not found")
         }
 
         const { card: cardData, contributions: contribs } =
@@ -47,8 +47,8 @@ export default function PublicCardPage() {
         setCard(cardData)
         setContributions(contribs)
       } catch (err) {
-        console.error('Error loading card:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load card')
+        console.error("Error loading card:", err)
+        setError(err instanceof Error ? err.message : "Failed to load card")
       } finally {
         setLoading(false)
       }
@@ -58,7 +58,7 @@ export default function PublicCardPage() {
   }, [linkId])
 
   const { bodyMessage, displayContributions } = useMemo(
-    () => forCardDisplay(contributions, card?.copy_message ?? ''),
+    () => forCardDisplay(contributions, card?.copy_message ?? ""),
     [contributions, card?.copy_message],
   )
 
@@ -81,7 +81,7 @@ export default function PublicCardPage() {
         <Card className="w-full max-w-md p-8 text-center">
           <h1 className="mb-2 text-2xl font-bold">Card Not Found</h1>
           <p className="text-muted-foreground">
-            {error || 'The card could not be loaded'}
+            {error || "The card could not be loaded"}
           </p>
         </Card>
       </div>
@@ -109,8 +109,8 @@ export default function PublicCardPage() {
             imageUrl={card.image_url}
             headline={card.copy_headline}
             message={bodyMessage}
-            senderName={card.sender_name || 'Someone special'}
-            recipientName={card.recipient_name || 'You'}
+            senderName={card.sender_name || "Someone special"}
+            recipientName={card.recipient_name || "You"}
             contributions={displayContributions}
             extraPages={card.extra_pages || 0}
             hideEmptyCenterMessageBody={true}
@@ -119,8 +119,8 @@ export default function PublicCardPage() {
           {guestMessageCount > 0 && (
             <div className="mt-8 text-center">
               <p className="text-sm text-muted-foreground">
-                This card contains {guestMessageCount} special{' '}
-                {guestMessageCount === 1 ? 'message' : 'messages'} from loved
+                This card contains {guestMessageCount} special{" "}
+                {guestMessageCount === 1 ? "message" : "messages"} from loved
                 ones
               </p>
             </div>

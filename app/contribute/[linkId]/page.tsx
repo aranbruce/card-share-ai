@@ -1,13 +1,14 @@
-'use client'
+"use client"
 
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
-import { useParams } from 'next/navigation'
-import { Card } from '@/components/ui/card'
-import { Spinner } from '@/components/ui/spinner'
-import { Card3D } from '@/components/card-3d'
-import { forCardDisplay } from '@/lib/card-body'
-import type { CardComposeDraft } from '@/lib/card-compose-draft'
-import { Logo } from '@/components/logo'
+import { useEffect, useState, useCallback, useRef, useMemo } from "react"
+import { useParams } from "next/navigation"
+import { Card } from "@/components/ui/card"
+import { Spinner } from "@/components/ui/spinner"
+import { Card3D } from "@/components/card-3d"
+import { forCardDisplay } from "@/lib/card-body"
+import type { CardComposeDraft } from "@/lib/card-compose-draft"
+import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import { Logo } from "@/components/logo"
 
 interface Contribution {
   id: string
@@ -18,6 +19,7 @@ interface Contribution {
   width_percent?: number | null
   page_index?: number | null
   font_size?: number | null
+  text_color?: string | null
   is_creator?: boolean | null
 }
 
@@ -41,7 +43,7 @@ export default function ContributeCardPage() {
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState("")
   const [submitted, setSubmitted] = useState(false)
   const [submitNonce, setSubmitNonce] = useState(0)
   const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(
@@ -68,10 +70,10 @@ export default function ContributeCardPage() {
       const raw = sessionStorage.getItem(`contribute_tokens_${linkId}`)
       if (raw) {
         const parsed = JSON.parse(raw) as unknown
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
           const next: Record<string, string> = {}
           for (const [k, v] of Object.entries(parsed)) {
-            if (typeof k === 'string' && typeof v === 'string' && v.trim()) {
+            if (typeof k === "string" && typeof v === "string" && v.trim()) {
               next[k] = v
             }
           }
@@ -89,14 +91,14 @@ export default function ContributeCardPage() {
     const loadCard = async () => {
       try {
         const response = await fetch(`/api/contribute/${linkId}`)
-        if (!response.ok) throw new Error('Card not found')
+        if (!response.ok) throw new Error("Card not found")
 
         const { card: cardData, contributions: contribs } =
           await response.json()
         setCard(cardData)
         setContributions(contribs)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load card')
+        setError(err instanceof Error ? err.message : "Failed to load card")
       } finally {
         setLoading(false)
       }
@@ -110,24 +112,25 @@ export default function ContributeCardPage() {
       contributionId: string,
       updates: {
         message?: string
-        position_x?: number
-        position_y?: number
-        width_percent?: number
-        page_index?: number
-        font_size?: number
+        positionX?: number
+        positionY?: number
+        widthPercent?: number
+        pageIndex?: number
+        fontSize?: number
+        textColor?: string | null
       },
       editToken: string,
     ) => {
       const response = await fetch(`/api/contribute/${linkId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contributionId, editToken, ...updates }),
       })
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}))
         console.error(
-          'Failed to save contribution',
-          typeof payload.error === 'string' ? payload.error : payload,
+          "Failed to save contribution",
+          typeof payload.error === "string" ? payload.error : payload,
         )
       }
     },
@@ -160,6 +163,7 @@ export default function ContributeCardPage() {
         widthPercent: number
         pageIndex: number
         fontSize?: number
+        textColor?: string | null
       },
     ) => {
       setContributions((prev) =>
@@ -172,6 +176,10 @@ export default function ContributeCardPage() {
                 width_percent: layout.widthPercent,
                 page_index: layout.pageIndex,
                 font_size: layout.fontSize ?? c.font_size,
+                text_color:
+                  layout.textColor === undefined
+                    ? c.text_color
+                    : layout.textColor,
               }
             : c,
         ),
@@ -183,11 +191,14 @@ export default function ContributeCardPage() {
         void saveContributionPatch(
           contributionId,
           {
-            position_x: layout.x,
-            position_y: layout.y,
-            width_percent: layout.widthPercent,
-            page_index: layout.pageIndex,
-            font_size: layout.fontSize,
+            positionX: layout.x,
+            positionY: layout.y,
+            widthPercent: layout.widthPercent,
+            pageIndex: layout.pageIndex,
+            fontSize: layout.fontSize,
+            ...(layout.textColor !== undefined && {
+              textColor: layout.textColor,
+            }),
           },
           token,
         )
@@ -202,24 +213,24 @@ export default function ContributeCardPage() {
       const token = contributionEditTokens[contributionId]
       if (!token) return
       const current =
-        contributions.find((c) => c.id === contributionId)?.message ?? ''
+        contributions.find((c) => c.id === contributionId)?.message ?? ""
       setRegeneratingContributionId(contributionId)
       try {
-        const response = await fetch('/api/regenerate-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/regenerate-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            field: 'contribution_message',
-            cardType: card.card_type || 'custom',
+            field: "contribution_message",
+            cardType: card.card_type || "custom",
             recipientName: card.recipient_name,
             senderName: card.sender_name,
             currentValue: current,
             userPrompt: prompt,
           }),
         })
-        if (!response.ok) throw new Error('Failed to refine message')
+        if (!response.ok) throw new Error("Failed to refine message")
         const { text } = (await response.json()) as { text?: string }
-        const next = String(text ?? '').trim()
+        const next = String(text ?? "").trim()
         setContributions((prev) =>
           prev.map((c) =>
             c.id === contributionId ? { ...c, message: next } : c,
@@ -238,24 +249,24 @@ export default function ContributeCardPage() {
   const handleComposeDraftRegenerate = useCallback(
     async (prompt: string) => {
       if (!card) return
-      const current = composeDraftRef.current?.message ?? ''
+      const current = composeDraftRef.current?.message ?? ""
       setComposeDraftRegenerating(true)
       try {
-        const response = await fetch('/api/regenerate-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/regenerate-text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            field: 'contribution_message',
-            cardType: card.card_type || 'custom',
+            field: "contribution_message",
+            cardType: card.card_type || "custom",
             recipientName: card.recipient_name,
             senderName: card.sender_name,
             currentValue: current,
             userPrompt: prompt,
           }),
         })
-        if (!response.ok) throw new Error('Failed to refine message')
+        if (!response.ok) throw new Error("Failed to refine message")
         const { text } = (await response.json()) as { text?: string }
-        const next = String(text ?? '').trim()
+        const next = String(text ?? "").trim()
         setComposeDraft((d) => (d ? { ...d, message: next } : d))
       } catch (e) {
         console.error(e)
@@ -268,7 +279,7 @@ export default function ContributeCardPage() {
 
   const cancelCompose = useCallback(() => {
     setComposeDraft(null)
-    setError('')
+    setError("")
   }, [])
 
   const submitComposeDraft = useCallback(async () => {
@@ -276,19 +287,19 @@ export default function ContributeCardPage() {
     if (!draft) return
 
     setSubmitting(true)
-    setError('')
+    setError("")
 
     const msg = draft.message.trim()
     if (!msg) {
-      setError('Please enter a message')
+      setError("Please enter a message")
       setSubmitting(false)
       return
     }
 
     try {
       const response = await fetch(`/api/contribute/${linkId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: msg,
           positionX: draft.x,
@@ -296,6 +307,7 @@ export default function ContributeCardPage() {
           widthPercent: 75,
           pageIndex: draft.pageIndex,
           fontSize: draft.fontSize,
+          textColor: draft.textColor,
         }),
       })
 
@@ -303,9 +315,9 @@ export default function ContributeCardPage() {
 
       if (!response.ok) {
         throw new Error(
-          typeof payload.error === 'string'
+          typeof payload.error === "string"
             ? payload.error
-            : 'Failed to add contribution',
+            : "Failed to add contribution",
         )
       }
 
@@ -313,16 +325,16 @@ export default function ContributeCardPage() {
         contribution?: Contribution
         editToken?: string
       }
-      const token = typeof editToken === 'string' ? editToken.trim() : ''
+      const token = typeof editToken === "string" ? editToken.trim() : ""
       const ok =
         contribution &&
-        typeof contribution.id === 'string' &&
+        typeof contribution.id === "string" &&
         contribution.id.length > 0 &&
         token.length > 0
 
       if (!ok) {
         setError(
-          'Your message could not be fully saved on this device. Please try again.',
+          "Your message could not be fully saved on this device. Please try again.",
         )
         return
       }
@@ -345,7 +357,7 @@ export default function ContributeCardPage() {
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 4000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add message')
+      setError(err instanceof Error ? err.message : "Failed to add message")
     } finally {
       setSubmitting(false)
     }
@@ -355,7 +367,7 @@ export default function ContributeCardPage() {
     () =>
       card
         ? forCardDisplay(contributions, card.copy_message)
-        : { bodyMessage: '', displayContributions: [] as Contribution[] },
+        : { bodyMessage: "", displayContributions: [] as Contribution[] },
     [contributions, card],
   )
 
@@ -396,14 +408,14 @@ export default function ContributeCardPage() {
         <div className="mx-auto max-w-lg space-y-6">
           <div className="text-center">
             <h1 className="mb-2 text-3xl font-bold">
-              {card.sent_at ? 'Sign this card' : "You're Invited!"}
+              {card.sent_at ? "Sign this card" : "You're Invited!"}
             </h1>
             <p className="text-sm text-muted-foreground md:text-base">
               {card.sent_at
-                ? 'The card may already be with the recipient — you can still add or edit your note from this device using the link you used before.'
+                ? "The card may already be with the recipient — you can still add or edit your note from this device using the link you used before."
                 : canPlaceNewGuestMessage
-                  ? 'Flip to the friends & family page and click where you want your note. Then type your message; drag and resize like when creating the card.'
-                  : 'Flip to the friends & family page to find your note. You can edit the text, drag it, and resize it from this device.'}
+                  ? "Flip to the friends & family page and click where you want your note. Then type your message; drag and resize like when creating the card."
+                  : "Flip to the friends & family page to find your note. You can edit the text, drag it, and resize it from this device."}
             </p>
           </div>
 
@@ -418,8 +430,8 @@ export default function ContributeCardPage() {
             imageUrl={card.image_url}
             headline={card.copy_headline}
             message={bodyMessage}
-            senderName={card.sender_name || 'Someone special'}
-            recipientName={card.recipient_name || 'You'}
+            senderName={card.sender_name || "Someone special"}
+            recipientName={card.recipient_name || "You"}
             contributions={displayContributions}
             extraPages={card.extra_pages || 0}
             hideEmptyCenterMessageBody={true}
@@ -440,10 +452,11 @@ export default function ContributeCardPage() {
               canPlaceNewGuestMessage
                 ? (pt) => {
                     setComposeDraft({
-                      message: '',
+                      message: "",
                       x: pt.x,
                       y: pt.y,
                       pageIndex: pt.pageIndex,
+                      textColor: randomPresetTextColor(),
                     })
                   }
                 : undefined

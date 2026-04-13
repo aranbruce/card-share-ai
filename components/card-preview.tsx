@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
-import { Card3D } from '@/components/card-3d'
+import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
+import { Card3D } from "@/components/card-3d"
 
 interface CardPreviewProps {
   imageUrl: string
@@ -31,7 +31,7 @@ interface CardPreviewProps {
     is_creator?: boolean | null
   }>
   extraPages?: number
-  onAddPage?: () => void
+  onAddPage?: () => void | Promise<void>
   messageFontSize?: number
   onMessageFontSizeChange?: (size: number) => void
   messagePageIndex?: number
@@ -76,11 +76,11 @@ export function CardPreview({
           {editMode ? (
             coverOnly ? (
               <>
-                Preview your cover, then save. After saving, you&apos;ll go to
-                the next step to add your personal message.
+                Preview your cover, then save. After saving, you&apos;ll open
+                the studio to edit your message and layout.
                 {isGuest && (
                   <>
-                    {' '}
+                    {" "}
                     <span className="text-muted-foreground/70">
                       Sign in to save your card.
                     </span>
@@ -92,7 +92,7 @@ export function CardPreview({
                 Use arrows to flip pages. Click any text to edit it.
                 {isGuest && (
                   <>
-                    {' '}
+                    {" "}
                     <span className="text-muted-foreground/70">
                       Sign in to save, download, or send your card.
                     </span>
@@ -101,7 +101,7 @@ export function CardPreview({
               </>
             )
           ) : (
-            'Use arrows to flip through the card'
+            "Use arrows to flip through the card"
           )}
         </p>
       </div>
@@ -138,7 +138,8 @@ export function CardPreview({
         {editMode && onSave && (
           <Button
             size="lg"
-            className="mt-4 w-full"
+            fullWidth
+            className="mt-4"
             onClick={onSave}
             disabled={isSaving}
           >
@@ -148,7 +149,7 @@ export function CardPreview({
                 Saving...
               </>
             ) : (
-              'Save Card'
+              "Write message"
             )}
           </Button>
         )}
