@@ -32,9 +32,16 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-  const { error: ownErr, card } = await assertOwnsCard(supabase, user.id, cardId)
-  if (ownErr || !card) {
-      return NextResponse.json({ error: ownErr ?? 'Not found' }, { status: 404 })
+    const { error: ownErr, card } = await assertOwnsCard(
+      supabase,
+      user.id,
+      cardId,
+    )
+    if (ownErr || !card) {
+      return NextResponse.json(
+        { error: ownErr ?? 'Not found' },
+        { status: 404 },
+      )
     }
 
     const { data: existing } = await supabase
@@ -60,7 +67,10 @@ export async function POST(
 
     const msg = typeof message === 'string' ? message.trim() : ''
     if (!msg) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 },
+      )
     }
 
     const { data: contribution, error: insertError } = await supabase
@@ -91,13 +101,19 @@ export async function POST(
       .eq('id', cardId)
       .eq('user_id', user.id)
     if (mirrorErr) {
-      console.error('[owner POST contributions] mirror copy_message:', mirrorErr)
+      console.error(
+        '[owner POST contributions] mirror copy_message:',
+        mirrorErr,
+      )
     }
 
     return NextResponse.json({ contribution })
   } catch (e) {
     console.error('[owner POST contributions]', e)
-    return NextResponse.json({ error: 'Failed to add message' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to add message' },
+      { status: 500 },
+    )
   }
 }
 
@@ -140,7 +156,9 @@ export async function PATCH(
         fontSize === undefined)
     ) {
       return NextResponse.json(
-        { error: 'contributionId and at least one field to update are required' },
+        {
+          error: 'contributionId and at least one field to update are required',
+        },
         { status: 400 },
       )
     }
@@ -169,7 +187,10 @@ export async function PATCH(
     if (typeof message === 'string') {
       const msg = message.trim()
       if (!msg) {
-        return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Message is required' },
+          { status: 400 },
+        )
       }
       updates.message = msg
     }
@@ -181,7 +202,9 @@ export async function PATCH(
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
-        { error: 'contributionId and at least one field to update are required' },
+        {
+          error: 'contributionId and at least one field to update are required',
+        },
         { status: 400 },
       )
     }
@@ -203,11 +226,17 @@ export async function PATCH(
     if (updates.message !== undefined) {
       const { error: mirrorErr } = await supabase
         .from('cards')
-        .update({ copy_message: updates.message, updated_at: new Date().toISOString() })
+        .update({
+          copy_message: updates.message,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', cardId)
         .eq('user_id', user.id)
       if (mirrorErr) {
-        console.error('[owner PATCH contributions] mirror copy_message:', mirrorErr)
+        console.error(
+          '[owner PATCH contributions] mirror copy_message:',
+          mirrorErr,
+        )
       }
     }
 

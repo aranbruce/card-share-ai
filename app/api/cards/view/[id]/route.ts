@@ -8,7 +8,7 @@ function quotePostgrestValue(value: string): string {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
@@ -18,7 +18,9 @@ export async function GET(
     // Share modal links use contributor_link_id; callers may also pass the card row id
     const { data: cardData, error: cardError } = await supabase
       .from('cards')
-      .select('id, sent_at, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages')
+      .select(
+        'id, sent_at, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages',
+      )
       .or(`id.eq.${safeId},contributor_link_id.eq.${safeId}`)
       .maybeSingle()
 
@@ -44,9 +46,6 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error fetching card:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch card' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch card' }, { status: 500 })
   }
 }

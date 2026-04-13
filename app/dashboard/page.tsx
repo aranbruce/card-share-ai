@@ -81,9 +81,11 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col gap-4 items-center justify-center bg-background">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
         <Spinner className="h-8 w-8 text-primary" />
-        <p className="text-sm text-muted-foreground font-medium animate-pulse">Loading your cards...</p>
+        <p className="animate-pulse text-sm font-medium text-muted-foreground">
+          Loading your cards...
+        </p>
       </div>
     )
   }
@@ -91,26 +93,38 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 h-16 flex items-center">
-        <div className="max-w-6xl w-full mx-auto px-4 md:px-8 flex justify-between items-center">
+      <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border/40 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 md:px-8">
           <Logo />
-          <Button variant="ghost" size="sm" className="rounded-full text-muted-foreground hover:text-foreground font-medium" onClick={handleLogout}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full font-medium text-muted-foreground hover:text-foreground"
+            onClick={handleLogout}
+          >
             Logout
           </Button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 md:px-8 py-8 lg:py-12">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+      <main className="mx-auto max-w-6xl px-4 py-8 md:px-8 lg:py-12">
+        <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">My Cards</h1>
-            <p className="text-muted-foreground mt-2">Manage and view your generated greeting cards.</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              My Cards
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Manage and view your generated greeting cards.
+            </p>
           </div>
-          
+
           {cards.length > 0 && (
             <Link href="/create" className="w-full sm:w-auto">
-              <Button size="lg" className="w-full sm:w-auto rounded-full shadow-sm font-semibold px-6 transition-transform hover:scale-[1.02] active:scale-[0.98]">
+              <Button
+                size="lg"
+                className="w-full rounded-full px-6 font-semibold shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+              >
                 Create New Card
               </Button>
             </Link>
@@ -118,35 +132,43 @@ export default function DashboardPage() {
         </div>
 
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded text-destructive mb-6">
+          <div className="mb-6 rounded border border-destructive/20 bg-destructive/10 p-4 text-destructive">
             {error}
           </div>
         )}
 
         {cards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
-            <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mb-6">
-              <Inbox className="w-8 h-8 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center px-4 py-24 text-center">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/50">
+              <Inbox className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-semibold mb-3 tracking-tight">No cards yet</h2>
-            <p className="text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
-              You haven&apos;t created any greeting cards. Start creating your first beautiful, AI-generated card today.
+            <h2 className="mb-3 text-2xl font-semibold tracking-tight">
+              No cards yet
+            </h2>
+            <p className="mx-auto mb-8 max-w-sm leading-relaxed text-muted-foreground">
+              You haven&apos;t created any greeting cards. Start creating your
+              first beautiful, AI-generated card today.
             </p>
             <Link href="/create">
-              <Button size="lg" className="h-12 px-8 rounded-full shadow-sm">Create Your First Card</Button>
+              <Button size="lg" className="h-12 rounded-full px-8 shadow-sm">
+                Create Your First Card
+              </Button>
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => (
-              <div key={card.id} className="group relative flex flex-col h-full">
+              <div
+                key={card.id}
+                className="group relative flex h-full flex-col"
+              >
                 <Link
                   href={`/dashboard/cards/${card.id}`}
                   className="absolute inset-0 z-0 rounded-3xl"
                   aria-label={`View card for ${card.recipient_name}`}
                 />
-                <Card className="relative z-10 pointer-events-none overflow-hidden hover:shadow-xl hover:shadow-black/5 transition-all hover:-translate-y-1 duration-300 h-full flex flex-col py-0 border-border/60 rounded-3xl bg-background shadow-sm">
-                  <div className="relative w-full aspect-4/3 shrink-0 bg-secondary overflow-hidden">
+                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden rounded-3xl border-border/60 bg-background py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
+                  <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-secondary">
                     {card.image_url && (
                       <Image
                         src={card.image_url}
@@ -155,18 +177,18 @@ export default function DashboardPage() {
                         className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                       />
                     )}
-                    
+
                     {/* Floating badge */}
                     <div className="absolute top-4 left-4 z-20">
-                      <div className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase bg-black/60 backdrop-blur-md text-white shadow-sm">
+                      <div className="inline-flex items-center rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-sm backdrop-blur-md">
                         {card.card_type.replace('_', ' ')}
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div className="flex flex-1 flex-col justify-between p-6">
                     <div className="mb-8">
-                      <h3 className="font-bold text-xl text-foreground tracking-tight mb-1.5">
+                      <h3 className="mb-1.5 text-xl font-bold tracking-tight text-foreground">
                         For {card.recipient_name}
                       </h3>
                       <p className="text-sm text-muted-foreground">
@@ -174,18 +196,20 @@ export default function DashboardPage() {
                       </p>
                     </div>
 
-                    <div className="flex gap-3 pointer-events-auto">
+                    <div className="pointer-events-auto flex gap-3">
                       <Button
-                        className="flex-1 rounded-full font-semibold shadow-sm h-10"
+                        className="h-10 flex-1 rounded-full font-semibold shadow-sm"
                         type="button"
-                        onClick={() => router.push(`/dashboard/cards/${card.id}`)}
+                        onClick={() =>
+                          router.push(`/dashboard/cards/${card.id}`)
+                        }
                       >
                         Open
                       </Button>
                       <Button
                         variant="outline"
                         type="button"
-                        className="rounded-full shadow-sm hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors px-6 font-semibold h-10 border-border/80"
+                        className="h-10 rounded-full border-border/80 px-6 font-semibold shadow-sm transition-colors hover:border-destructive hover:bg-destructive hover:text-destructive-foreground"
                         onClick={() => handleDeleteCard(card.id)}
                       >
                         Delete

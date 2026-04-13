@@ -10,7 +10,10 @@ export async function POST(request: NextRequest) {
     const { imagePrompt } = await request.json()
 
     if (!imagePrompt) {
-      return NextResponse.json({ error: 'Image prompt is required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Image prompt is required' },
+        { status: 400 },
+      )
     }
 
     // Generate image using fal.ai with flux model

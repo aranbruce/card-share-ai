@@ -48,11 +48,7 @@ export default function PublicCardPage() {
         setContributions(contribs)
       } catch (err) {
         console.error('Error loading card:', err)
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load card'
-        )
+        setError(err instanceof Error ? err.message : 'Failed to load card')
       } finally {
         setLoading(false)
       }
@@ -61,28 +57,9 @@ export default function PublicCardPage() {
     loadCard()
   }, [linkId])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-        <Spinner className="h-8 w-8" />
-      </div>
-    )
-  }
-
-  if (error || !card) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md p-8 text-center">
-          <h1 className="text-2xl font-bold mb-2">Card Not Found</h1>
-          <p className="text-muted-foreground">{error || 'The card could not be loaded'}</p>
-        </Card>
-      </div>
-    )
-  }
-
   const { bodyMessage, displayContributions } = useMemo(
-    () => forCardDisplay(contributions, card.copy_message),
-    [contributions, card.copy_message],
+    () => forCardDisplay(contributions, card?.copy_message ?? ''),
+    [contributions, card?.copy_message],
   )
 
   const guestMessageCount = useMemo(
@@ -90,46 +67,70 @@ export default function PublicCardPage() {
     [contributions],
   )
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+        <Spinner className="h-8 w-8" />
+      </div>
+    )
+  }
+
+  if (error || !card) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md p-8 text-center">
+          <h1 className="mb-2 text-2xl font-bold">Card Not Found</h1>
+          <p className="text-muted-foreground">
+            {error || 'The card could not be loaded'}
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 h-16 flex items-center justify-center shrink-0">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center border-b border-border/40 bg-background/80 backdrop-blur-md">
         <Logo />
       </header>
-      <main className="flex-1 p-4 md:p-8 pt-8 md:pt-12">
-        <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <p className="text-sm text-muted-foreground mb-2">A special card for</p>
-          <h1 className="text-3xl font-bold mb-2">{card.recipient_name}</h1>
-          <p className="text-muted-foreground">
-            Click the card to open it and read your messages
-          </p>
-        </div>
-
-        <Card3D
-          imageUrl={card.image_url}
-          headline={card.copy_headline}
-          message={bodyMessage}
-          senderName={card.sender_name || 'Someone special'}
-          recipientName={card.recipient_name || 'You'}
-          contributions={displayContributions}
-          extraPages={card.extra_pages || 0}
-          hideEmptyCenterMessageBody={true}
-        />
-
-        {guestMessageCount > 0 && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              This card contains {guestMessageCount} special{' '}
-              {guestMessageCount === 1 ? 'message' : 'messages'} from loved ones
+      <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-8 text-center">
+            <p className="mb-2 text-sm text-muted-foreground">
+              A special card for
+            </p>
+            <h1 className="mb-2 text-3xl font-bold">{card.recipient_name}</h1>
+            <p className="text-muted-foreground">
+              Click the card to open it and read your messages
             </p>
           </div>
-        )}
 
-        <div className="mt-12 text-center">
-          <p className="text-xs text-muted-foreground">
-            Created with CardsAI
-          </p>
-        </div>
+          <Card3D
+            imageUrl={card.image_url}
+            headline={card.copy_headline}
+            message={bodyMessage}
+            senderName={card.sender_name || 'Someone special'}
+            recipientName={card.recipient_name || 'You'}
+            contributions={displayContributions}
+            extraPages={card.extra_pages || 0}
+            hideEmptyCenterMessageBody={true}
+          />
+
+          {guestMessageCount > 0 && (
+            <div className="mt-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                This card contains {guestMessageCount} special{' '}
+                {guestMessageCount === 1 ? 'message' : 'messages'} from loved
+                ones
+              </p>
+            </div>
+          )}
+
+          <div className="mt-12 text-center">
+            <p className="text-xs text-muted-foreground">
+              Created with CardsAI
+            </p>
+          </div>
         </div>
       </main>
     </div>

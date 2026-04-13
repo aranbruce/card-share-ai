@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 import { friendlyAuthError } from '@/lib/auth-errors'
 
@@ -69,11 +68,15 @@ export default function SignUp() {
 
       // Check if email confirmation is required
       // If user.identities is empty, email confirmation is required
-      if (data.user && data.user.identities && data.user.identities.length > 0) {
+      if (
+        data.user &&
+        data.user.identities &&
+        data.user.identities.length > 0
+      ) {
         // User is auto-confirmed (dev mode or email confirmation disabled)
         // Try to save pending card
         const savedCardId = await savePendingCard()
-        
+
         if (savedCardId) {
           router.push(`/dashboard/cards/${savedCardId}`)
         } else {
@@ -83,25 +86,27 @@ export default function SignUp() {
         // Email confirmation required - store pending card info and redirect to success
         router.push('/auth/sign-up-success')
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md p-8 sm:p-10">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Create Account</h1>
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
+            Create Account
+          </h1>
           <p className="text-muted-foreground">
             Sign up to start creating virtual greeting cards
           </p>
         </div>
 
         {hasPendingCard && (
-          <div className="p-3 bg-primary/10 border border-primary/20 rounded mb-6">
-            <p className="text-sm text-center">
+          <div className="mb-6 rounded border border-primary/20 bg-primary/10 p-3">
+            <p className="text-center text-sm">
               Your card is ready! Create an account to save it.
             </p>
           </div>
@@ -109,13 +114,13 @@ export default function SignUp() {
 
         <form onSubmit={handleSignUp} className="space-y-4">
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
+            <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium">
               Email
             </label>
             <Input
@@ -126,12 +131,15 @@ export default function SignUp() {
               placeholder="you@example.com"
               required
               disabled={loading}
-              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
+              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="password"
+              className="mb-1 block text-sm font-medium"
+            >
               Password
             </label>
             <Input
@@ -142,20 +150,32 @@ export default function SignUp() {
               placeholder="••••••••"
               required
               disabled={loading}
-              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
+              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
             />
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-full text-base shadow-sm mt-4" disabled={loading}>
-            {loading ? 'Creating account...' : hasPendingCard ? 'Sign Up & Save Card' : 'Sign Up'}
+          <Button
+            type="submit"
+            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            disabled={loading}
+          >
+            {loading
+              ? 'Creating account...'
+              : hasPendingCard
+                ? 'Sign Up & Save Card'
+                : 'Sign Up'}
           </Button>
         </form>
 
-        <p className="text-sm text-center text-muted-foreground mt-8">
+        <p className="mt-8 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link 
-            href={hasPendingCard ? '/auth/login?redirect=/create&action=save' : '/auth/login'} 
-            className="text-primary hover:underline font-medium"
+          <Link
+            href={
+              hasPendingCard
+                ? '/auth/login?redirect=/create&action=save'
+                : '/auth/login'
+            }
+            className="font-medium text-primary hover:underline"
           >
             Log in
           </Link>

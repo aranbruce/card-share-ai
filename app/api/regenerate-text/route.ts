@@ -3,14 +3,24 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { field, cardType, recipientName, senderName, currentValue, userPrompt } = await request.json()
+    const {
+      field,
+      cardType,
+      recipientName,
+      senderName,
+      currentValue,
+      userPrompt,
+    } = await request.json()
 
     if (!field || !cardType) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 },
+      )
     }
 
     let prompt = ''
-    
+
     if (field === 'headline') {
       prompt = `Generate a single catchy, celebratory headline for a ${cardType} greeting card to ${recipientName} from ${senderName}. 
       
@@ -52,7 +62,8 @@ Rewrite the note to be warm and personal. Keep it concise. Respond with the note
     return NextResponse.json({ text: text.trim() })
   } catch (error) {
     console.error('Error regenerating text:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
       { error: 'Failed to regenerate text', details: errorMessage },
       { status: 500 },

@@ -67,20 +67,47 @@ export function CardPreview({
   onMessagePageIndexChange,
 }: CardPreviewProps) {
   return (
-    <div className="space-y-10 max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl space-y-10">
       <div className="text-center">
-        <h2 className="text-3xl font-extrabold mb-3 tracking-tight">Your Card</h2>
-        <p className="text-muted-foreground text-lg">
-          {editMode
-            ? coverOnly
-              ? <>Preview your cover, then save. After saving, you&apos;ll go to the next step to add your personal message.{isGuest && <>{' '}<span className="text-muted-foreground/70">Sign in to save your card.</span></>}</>
-              : <>Use arrows to flip pages. Click any text to edit it.{isGuest && <>{' '}<span className="text-muted-foreground/70">Sign in to save, download, or send your card.</span></>}</>
-            : 'Use arrows to flip through the card'}
+        <h2 className="mb-3 text-3xl font-extrabold tracking-tight">
+          Your Card
+        </h2>
+        <p className="text-lg text-muted-foreground">
+          {editMode ? (
+            coverOnly ? (
+              <>
+                Preview your cover, then save. After saving, you&apos;ll go to
+                the next step to add your personal message.
+                {isGuest && (
+                  <>
+                    {' '}
+                    <span className="text-muted-foreground/70">
+                      Sign in to save your card.
+                    </span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                Use arrows to flip pages. Click any text to edit it.
+                {isGuest && (
+                  <>
+                    {' '}
+                    <span className="text-muted-foreground/70">
+                      Sign in to save, download, or send your card.
+                    </span>
+                  </>
+                )}
+              </>
+            )
+          ) : (
+            'Use arrows to flip through the card'
+          )}
         </p>
       </div>
 
       {/* 3D Card Display with Inline Editing + Save Button constrained to card width */}
-      <div className="w-full max-w-lg mx-auto space-y-8 p-8 md:p-12 bg-secondary/20 border border-border/30 rounded-[2.5rem] relative">
+      <div className="relative mx-auto w-full max-w-lg space-y-8 rounded-[2.5rem] border border-border/30 bg-secondary/20 p-8 md:p-12">
         <Card3D
           imageUrl={imageUrl}
           headline={headline}
@@ -110,7 +137,7 @@ export function CardPreview({
         {/* Save Button - same width as card */}
         {editMode && onSave && (
           <Button
-            className="w-full h-14 rounded-full text-lg shadow-sm font-medium mt-4"
+            className="mt-4 h-14 w-full rounded-full text-lg font-medium shadow-sm"
             onClick={onSave}
             disabled={isSaving}
           >

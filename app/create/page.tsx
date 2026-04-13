@@ -49,7 +49,9 @@ export default function CreateCardPage() {
   // Check if user is logged in
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       setIsGuest(!user)
     }
     checkAuth()
@@ -147,7 +149,9 @@ export default function CreateCardPage() {
         headline: text,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate headline')
+      setError(
+        err instanceof Error ? err.message : 'Failed to regenerate headline',
+      )
     } finally {
       setIsRegeneratingHeadline(false)
     }
@@ -177,7 +181,9 @@ export default function CreateCardPage() {
         imagePrompt: newPrompt,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to regenerate image')
+      setError(
+        err instanceof Error ? err.message : 'Failed to regenerate image',
+      )
     } finally {
       setIsRegeneratingImage(false)
     }
@@ -231,13 +237,20 @@ export default function CreateCardPage() {
 
       if (!response.ok) throw new Error('Failed to save card')
 
-      const body = (await response.json()) as { card?: { id?: string }; error?: string }
+      const body = (await response.json()) as {
+        card?: { id?: string }
+        error?: string
+      }
       const id =
-        body.card && typeof body.card === 'object' && typeof body.card.id === 'string'
+        body.card &&
+        typeof body.card === 'object' &&
+        typeof body.card.id === 'string'
           ? body.card.id
           : undefined
       if (!id) {
-        throw new Error(body.error ?? 'Save succeeded but no card id was returned')
+        throw new Error(
+          body.error ?? 'Save succeeded but no card id was returned',
+        )
       }
       router.push(`/dashboard/cards/${id}?welcome=1`)
     } catch (err) {
@@ -249,7 +262,9 @@ export default function CreateCardPage() {
 
   const handleAuthRedirect = (type: 'login' | 'signup') => {
     storePendingCard()
-    router.push(`/auth/${type === 'login' ? 'login' : 'sign-up'}?redirect=/create&action=save`)
+    router.push(
+      `/auth/${type === 'login' ? 'login' : 'sign-up'}?redirect=/create&action=save`,
+    )
   }
 
   const handleBackTotype = () => {
@@ -257,16 +272,12 @@ export default function CreateCardPage() {
     setSelectedType('')
   }
 
-  const handleBackToDetails = () => {
-    setStep('details')
-  }
-
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <header className="py-6 mb-8 flex items-center justify-center">
+      <header className="mb-8 flex items-center justify-center py-6">
         <Logo />
       </header>
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-4xl">
         {step === 'select-type' && (
           <CardTypeSelector onSelect={handleCardTypeSelect} />
         )}
@@ -304,7 +315,7 @@ export default function CreateCardPage() {
         )}
 
         {error && (
-          <div className="fixed bottom-4 right-4 bg-destructive/10 border border-destructive/20 rounded p-4 max-w-sm text-destructive text-sm">
+          <div className="fixed right-4 bottom-4 max-w-sm rounded border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}

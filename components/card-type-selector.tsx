@@ -1,9 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 const CARD_TYPES = [
   { id: 'birthday', label: 'Birthday', icon: '🎂' },
@@ -13,37 +11,46 @@ const CARD_TYPES = [
   { id: 'custom', label: 'Custom', icon: '✨' },
 ]
 
-export function CardTypeSelector({ onSelect }: { onSelect: (type: string) => void }) {
-  const router = useRouter()
-
+export function CardTypeSelector({
+  onSelect,
+}: {
+  onSelect: (type: string) => void
+}) {
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div className="text-center mb-10">
-        <h2 className="text-3xl font-extrabold mb-3 tracking-tight">Create a Card</h2>
+    <div className="mx-auto max-w-4xl space-y-8">
+      <div className="mb-10 text-center">
+        <h2 className="mb-3 text-3xl font-extrabold tracking-tight">
+          Create a Card
+        </h2>
         <p className="text-lg text-muted-foreground">
           Choose what kind of card you&apos;d like to create
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {CARD_TYPES.map((cardType) => (
           <button
             key={cardType.id}
             onClick={() => onSelect(cardType.id)}
-            className="group relative overflow-hidden rounded-3xl border border-border/40 bg-secondary/20 p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-sm hover:bg-secondary/40 hover:border-border/60 cursor-pointer text-center"
+            className="group relative cursor-pointer overflow-hidden rounded-3xl border border-border/40 bg-secondary/20 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-border/60 hover:bg-secondary/40 hover:shadow-sm"
           >
-            <div className="text-5xl mb-5 transition-transform duration-300 group-hover:scale-110">{cardType.icon}</div>
-            <h3 className="font-semibold text-lg">{cardType.label}</h3>
-            <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+            <div className="mb-5 text-5xl transition-transform duration-300 group-hover:scale-110">
+              {cardType.icon}
+            </div>
+            <h3 className="text-lg font-semibold">{cardType.label}</h3>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               Create a personalized {cardType.label.toLowerCase()} card
             </p>
           </button>
         ))}
       </div>
 
-      <div className="text-center pt-8">
+      <div className="pt-8 text-center">
         <Link href="/dashboard">
-          <Button variant="outline" className="h-12 px-8 rounded-full border-border/50 hover:bg-secondary/50">
+          <Button
+            variant="outline"
+            className="h-12 rounded-full border-border/50 px-8 hover:bg-secondary/50"
+          >
             Back to Dashboard
           </Button>
         </Link>

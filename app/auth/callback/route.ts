@@ -8,8 +8,7 @@ export async function GET(request: NextRequest) {
   const type = requestUrl.searchParams.get('type')
   const nextParam = requestUrl.searchParams.get('next')
   const next =
-    nextParam ??
-    (type === 'recovery' ? '/auth/reset-password' : '/dashboard')
+    nextParam ?? (type === 'recovery' ? '/auth/reset-password' : '/dashboard')
 
   const errorParam = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')

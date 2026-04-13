@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
 import Link from 'next/link'
 import { friendlyAuthError } from '@/lib/auth-errors'
 
@@ -36,7 +35,7 @@ export default function ForgotPassword() {
 
       setSuccess(true)
       setLoading(false)
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
       setLoading(false)
     }
@@ -44,20 +43,26 @@ export default function ForgotPassword() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="w-full max-w-md p-8 sm:p-10">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Check Your Email</h1>
+          <div className="mb-8 text-center">
+            <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
+              Check Your Email
+            </h1>
             <p className="text-muted-foreground">
               We&apos;ve sent you a password reset link to{' '}
               <span className="font-medium text-foreground">{email}</span>
             </p>
           </div>
-          <p className="text-sm text-center text-muted-foreground mb-8">
-            Click the link in the email to reset your password. The link will expire in 1 hour.
+          <p className="mb-8 text-center text-sm text-muted-foreground">
+            Click the link in the email to reset your password. The link will
+            expire in 1 hour.
           </p>
           <Link href="/auth/login">
-            <Button variant="outline" className="w-full h-12 rounded-full text-base shadow-sm border-border/50 hover:bg-secondary/50">
+            <Button
+              variant="outline"
+              className="h-12 w-full rounded-full border-border/50 text-base shadow-sm hover:bg-secondary/50"
+            >
               Back to Login
             </Button>
           </Link>
@@ -67,24 +72,27 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md p-8 sm:p-10">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold mb-2 tracking-tight">Reset Password</h1>
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
+            Reset Password
+          </h1>
           <p className="text-muted-foreground">
-            Enter your email address and we&apos;ll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset
+            your password
           </p>
         </div>
 
         <form onSubmit={handleResetRequest} className="space-y-4">
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
+            <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium">
               Email
             </label>
             <Input
@@ -95,18 +103,25 @@ export default function ForgotPassword() {
               placeholder="you@example.com"
               required
               disabled={loading}
-              className="h-12 bg-secondary/20 border-border/50 focus-visible:ring-1 mt-1"
+              className="mt-1 h-12 border-border/50 bg-secondary/20 focus-visible:ring-1"
             />
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-full text-base shadow-sm mt-4" disabled={loading}>
+          <Button
+            type="submit"
+            className="mt-4 h-12 w-full rounded-full text-base shadow-sm"
+            disabled={loading}
+          >
             {loading ? 'Sending reset link...' : 'Send Reset Link'}
           </Button>
         </form>
 
-        <p className="text-sm text-center text-muted-foreground mt-8">
+        <p className="mt-8 text-center text-sm text-muted-foreground">
           Remember your password?{' '}
-          <Link href="/auth/login" className="text-primary hover:underline font-medium">
+          <Link
+            href="/auth/login"
+            className="font-medium text-primary hover:underline"
+          >
             Log in
           </Link>
         </p>

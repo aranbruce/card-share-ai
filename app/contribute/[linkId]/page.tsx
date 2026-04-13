@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
 import { Card3D } from '@/components/card-3d'
@@ -45,8 +44,11 @@ export default function ContributeCardPage() {
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitNonce, setSubmitNonce] = useState(0)
-  const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(null)
-  const [composeDraftRegenerating, setComposeDraftRegenerating] = useState(false)
+  const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(
+    null,
+  )
+  const [composeDraftRegenerating, setComposeDraftRegenerating] =
+    useState(false)
   /** contributionId → editToken (from POST only; never exposed via GET) */
   const [contributionEditTokens, setContributionEditTokens] = useState<
     Record<string, string>
@@ -66,11 +68,7 @@ export default function ContributeCardPage() {
       const raw = sessionStorage.getItem(`contribute_tokens_${linkId}`)
       if (raw) {
         const parsed = JSON.parse(raw) as unknown
-        if (
-          parsed &&
-          typeof parsed === 'object' &&
-          !Array.isArray(parsed)
-        ) {
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           const next: Record<string, string> = {}
           for (const [k, v] of Object.entries(parsed)) {
             if (typeof k === 'string' && typeof v === 'string' && v.trim()) {
@@ -98,11 +96,7 @@ export default function ContributeCardPage() {
         setCard(cardData)
         setContributions(contribs)
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to load card'
-        )
+        setError(err instanceof Error ? err.message : 'Failed to load card')
       } finally {
         setLoading(false)
       }
@@ -351,11 +345,7 @@ export default function ContributeCardPage() {
       setSubmitted(true)
       setTimeout(() => setSubmitted(false), 4000)
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to add message'
-      )
+      setError(err instanceof Error ? err.message : 'Failed to add message')
     } finally {
       setSubmitting(false)
     }
@@ -377,7 +367,7 @@ export default function ContributeCardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Spinner className="h-8 w-8" />
       </div>
     )
@@ -385,11 +375,12 @@ export default function ContributeCardPage() {
 
   if (!card) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md p-8 text-center">
-          <h1 className="text-2xl font-bold mb-2">Card Not Found</h1>
+          <h1 className="mb-2 text-2xl font-bold">Card Not Found</h1>
           <p className="text-muted-foreground">
-            The card you&apos;re looking for doesn&apos;t exist or has been sent.
+            The card you&apos;re looking for doesn&apos;t exist or has been
+            sent.
           </p>
         </Card>
       </div>
@@ -397,70 +388,73 @@ export default function ContributeCardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-      <header className="border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-50 h-16 flex items-center justify-center shrink-0">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center border-b border-border/40 bg-background/80 backdrop-blur-md">
         <Logo />
       </header>
-      <main className="flex-1 p-4 md:p-8 pt-8 md:pt-12">
-        <div className="max-w-lg mx-auto space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">
-            {card.sent_at ? 'Sign this card' : "You're Invited!"}
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            {card.sent_at
-              ? 'The card may already be with the recipient — you can still add or edit your note from this device using the link you used before.'
-              : canPlaceNewGuestMessage
-                ? 'Flip to the friends & family page and click where you want your note. Then type your message; drag and resize like when creating the card.'
-                : 'Flip to the friends & family page to find your note. You can edit the text, drag it, and resize it from this device.'}
-          </p>
-        </div>
-
-        {submitted && (
-          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded text-green-700 dark:text-green-400 text-sm text-center">
-            Message added! Find your note on the messages page—you can edit text, drag, and resize it.
+      <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
+        <div className="mx-auto max-w-lg space-y-6">
+          <div className="text-center">
+            <h1 className="mb-2 text-3xl font-bold">
+              {card.sent_at ? 'Sign this card' : "You're Invited!"}
+            </h1>
+            <p className="text-sm text-muted-foreground md:text-base">
+              {card.sent_at
+                ? 'The card may already be with the recipient — you can still add or edit your note from this device using the link you used before.'
+                : canPlaceNewGuestMessage
+                  ? 'Flip to the friends & family page and click where you want your note. Then type your message; drag and resize like when creating the card.'
+                  : 'Flip to the friends & family page to find your note. You can edit the text, drag it, and resize it from this device.'}
+            </p>
           </div>
-        )}
 
-        <Card3D
-          imageUrl={card.image_url}
-          headline={card.copy_headline}
-          message={bodyMessage}
-          senderName={card.sender_name || 'Someone special'}
-          recipientName={card.recipient_name || 'You'}
-          contributions={displayContributions}
-          extraPages={card.extra_pages || 0}
-          hideEmptyCenterMessageBody={true}
-          contributeSubmitNonce={submitNonce}
-          editableContributionIds={Object.keys(contributionEditTokens)}
-          onContributionEdit={handleContributionEdit}
-          onContributionLayoutChange={handleContributionLayoutChange}
-          onContributionRegenerateMessage={handleContributionRegenerateMessage}
-          contributionRegeneratingId={regeneratingContributionId}
-          composePageBump={canPlaceNewGuestMessage ? 1 : 0}
-          composeDraft={composeDraft}
-          onComposeDraftChange={(patch) =>
-            setComposeDraft((d) => (d ? { ...d, ...patch } : d))
-          }
-          onComposeCanvasPlace={
-            canPlaceNewGuestMessage
-              ? (pt) => {
-                  setComposeDraft({
-                    message: '',
-                    x: pt.x,
-                    y: pt.y,
-                    pageIndex: pt.pageIndex,
-                  })
-                }
-              : undefined
-          }
-          onComposeSubmit={submitComposeDraft}
-          onComposeCancel={cancelCompose}
-          composeSubmitting={submitting}
-          composeError={composeDraft ? error : null}
-          onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
-          composeDraftRegenerating={composeDraftRegenerating}
-        />
+          {submitted && (
+            <div className="rounded border border-green-500/20 bg-green-500/10 p-3 text-center text-sm text-green-700 dark:text-green-400">
+              Message added! Find your note on the messages page—you can edit
+              text, drag, and resize it.
+            </div>
+          )}
+
+          <Card3D
+            imageUrl={card.image_url}
+            headline={card.copy_headline}
+            message={bodyMessage}
+            senderName={card.sender_name || 'Someone special'}
+            recipientName={card.recipient_name || 'You'}
+            contributions={displayContributions}
+            extraPages={card.extra_pages || 0}
+            hideEmptyCenterMessageBody={true}
+            contributeSubmitNonce={submitNonce}
+            editableContributionIds={Object.keys(contributionEditTokens)}
+            onContributionEdit={handleContributionEdit}
+            onContributionLayoutChange={handleContributionLayoutChange}
+            onContributionRegenerateMessage={
+              handleContributionRegenerateMessage
+            }
+            contributionRegeneratingId={regeneratingContributionId}
+            composePageBump={canPlaceNewGuestMessage ? 1 : 0}
+            composeDraft={composeDraft}
+            onComposeDraftChange={(patch) =>
+              setComposeDraft((d) => (d ? { ...d, ...patch } : d))
+            }
+            onComposeCanvasPlace={
+              canPlaceNewGuestMessage
+                ? (pt) => {
+                    setComposeDraft({
+                      message: '',
+                      x: pt.x,
+                      y: pt.y,
+                      pageIndex: pt.pageIndex,
+                    })
+                  }
+                : undefined
+            }
+            onComposeSubmit={submitComposeDraft}
+            onComposeCancel={cancelCompose}
+            composeSubmitting={submitting}
+            composeError={composeDraft ? error : null}
+            onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
+            composeDraftRegenerating={composeDraftRegenerating}
+          />
         </div>
       </main>
     </div>

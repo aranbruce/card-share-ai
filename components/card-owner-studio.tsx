@@ -1,49 +1,49 @@
-"use client";
+'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Card3D } from "@/components/card-3d";
-import type { CardComposeDraft } from "@/lib/card-compose-draft";
-import { Spinner } from "@/components/ui/spinner";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Card3D } from '@/components/card-3d'
+import type { CardComposeDraft } from '@/lib/card-compose-draft'
+import { Spinner } from '@/components/ui/spinner'
 
 export type OwnerCard = {
-  id: string;
-  card_type?: string;
-  recipient_name: string;
-  recipient_email?: string;
-  sender_name: string;
-  copy_headline: string;
-  copy_message: string;
-  image_url: string;
-  image_prompt?: string | null;
-  extra_pages?: number;
-  contributor_link_id?: string;
-};
+  id: string
+  card_type?: string
+  recipient_name: string
+  recipient_email?: string
+  sender_name: string
+  copy_headline: string
+  copy_message: string
+  image_url: string
+  image_prompt?: string | null
+  extra_pages?: number
+  contributor_link_id?: string
+}
 
 export type OwnerContribution = {
-  id: string;
-  message: string;
-  created_at: string;
-  position_x?: number | null;
-  position_y?: number | null;
-  width_percent?: number | null;
-  page_index?: number | null;
-  font_size?: number | null;
-  is_creator?: boolean | null;
-};
+  id: string
+  message: string
+  created_at: string
+  position_x?: number | null
+  position_y?: number | null
+  width_percent?: number | null
+  page_index?: number | null
+  font_size?: number | null
+  is_creator?: boolean | null
+}
 
 export type CardOwnerStudioProps = {
-  cardId: string;
+  cardId: string
   /** 0 = cover; 1 = first inside spread (e.g. after creating a card). */
-  initialCardPage?: number;
+  initialCardPage?: number
   /**
    * When true (e.g. `?welcome=1`), guest contributions stay hidden until the
    * creator has placed a saved message, and compose behaves like the old
    * message-first step.
    */
-  prioritizeFirstOwnerMessage?: boolean;
+  prioritizeFirstOwnerMessage?: boolean
   /** Called after the owner’s first compose save updates `copy_message`. */
-  onOwnerComposeSaved?: () => void;
-};
+  onOwnerComposeSaved?: () => void
+}
 
 export function CardOwnerStudio({
   cardId,
@@ -51,98 +51,98 @@ export function CardOwnerStudio({
   prioritizeFirstOwnerMessage = false,
   onOwnerComposeSaved,
 }: CardOwnerStudioProps) {
-  const [card, setCard] = useState<OwnerCard | null>(null);
-  const [contributions, setContributions] = useState<OwnerContribution[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [composeError, setComposeError] = useState("");
-  const [submitNonce, setSubmitNonce] = useState(0);
+  const [card, setCard] = useState<OwnerCard | null>(null)
+  const [contributions, setContributions] = useState<OwnerContribution[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [composeError, setComposeError] = useState('')
+  const [submitNonce, setSubmitNonce] = useState(0)
   const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(
     null,
-  );
+  )
   const [composeDraftRegenerating, setComposeDraftRegenerating] =
-    useState(false);
+    useState(false)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<
     string | null
-  >(null);
-  const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false);
-  const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const composeDraftRef = useRef<CardComposeDraft | null>(null);
+  >(null)
+  const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
+  const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const composeDraftRef = useRef<CardComposeDraft | null>(null)
 
   useEffect(() => {
-    composeDraftRef.current = composeDraft;
-  }, [composeDraft]);
+    composeDraftRef.current = composeDraft
+  }, [composeDraft])
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
+    setLoading(true)
+    setError('')
     try {
       const res = await fetch(`/api/cards/${encodeURIComponent(cardId)}`, {
-        credentials: "same-origin",
-        cache: "no-store",
-      });
+        credentials: 'same-origin',
+        cache: 'no-store',
+      })
       if (res.status === 401) {
-        throw new Error("You need to be signed in to open this card.");
+        throw new Error('You need to be signed in to open this card.')
       }
-      if (!res.ok) throw new Error("Card not found");
+      if (!res.ok) throw new Error('Card not found')
       const { card: c, contributions: list } = (await res.json()) as {
-        card: OwnerCard;
-        contributions?: OwnerContribution[];
-      };
-      setCard(c);
-      setContributions(list ?? []);
+        card: OwnerCard
+        contributions?: OwnerContribution[]
+      }
+      setCard(c)
+      setContributions(list ?? [])
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+      setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [cardId]);
+  }, [cardId])
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load()
+  }, [load])
 
   const creatorRow = useMemo(
     () => contributions.find((c) => Boolean(c.is_creator)),
     [contributions],
-  );
+  )
 
   const editableContributionIds = useMemo(
     () => (creatorRow ? [creatorRow.id] : []),
     [creatorRow],
-  );
+  )
 
-  const creatorMessageSaved = Boolean(creatorRow?.message?.trim());
+  const creatorMessageSaved = Boolean(creatorRow?.message?.trim())
 
   const saveOwnerContributionPatch = useCallback(
     async (
       contributionId: string,
       updates: {
-        message?: string;
-        position_x?: number;
-        position_y?: number;
-        width_percent?: number;
-        page_index?: number;
-        font_size?: number;
+        message?: string
+        position_x?: number
+        position_y?: number
+        width_percent?: number
+        page_index?: number
+        font_size?: number
       },
     ) => {
       const res = await fetch(`/api/cards/${cardId}/contributions`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contributionId, ...updates }),
-      });
+      })
       if (!res.ok) {
-        const p = await res.json().catch(() => ({}));
+        const p = await res.json().catch(() => ({}))
         console.error(
-          "Owner contribution save failed",
-          typeof p.error === "string" ? p.error : p,
-        );
+          'Owner contribution save failed',
+          typeof p.error === 'string' ? p.error : p,
+        )
       }
     },
     [cardId],
-  );
+  )
 
   const handleContributionEdit = useCallback(
     (contributionId: string, value: string) => {
@@ -150,25 +150,25 @@ export function CardOwnerStudio({
         prev.map((c) =>
           c.id === contributionId ? { ...c, message: value } : c,
         ),
-      );
-      if (!creatorRow || contributionId !== creatorRow.id) return;
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      )
+      if (!creatorRow || contributionId !== creatorRow.id) return
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
-        void saveOwnerContributionPatch(contributionId, { message: value });
-      }, 600);
+        void saveOwnerContributionPatch(contributionId, { message: value })
+      }, 600)
     },
     [creatorRow, saveOwnerContributionPatch],
-  );
+  )
 
   const handleContributionLayoutChange = useCallback(
     (
       contributionId: string,
       layout: {
-        x: number;
-        y: number;
-        widthPercent: number;
-        pageIndex: number;
-        fontSize?: number;
+        x: number
+        y: number
+        widthPercent: number
+        pageIndex: number
+        fontSize?: number
       },
     ) => {
       setContributions((prev) =>
@@ -184,9 +184,9 @@ export function CardOwnerStudio({
               }
             : c,
         ),
-      );
-      if (!creatorRow || contributionId !== creatorRow.id) return;
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      )
+      if (!creatorRow || contributionId !== creatorRow.id) return
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         void saveOwnerContributionPatch(contributionId, {
           position_x: layout.x,
@@ -194,211 +194,211 @@ export function CardOwnerStudio({
           width_percent: layout.widthPercent,
           page_index: layout.pageIndex,
           font_size: layout.fontSize,
-        });
-      }, 200);
+        })
+      }, 200)
     },
     [creatorRow, saveOwnerContributionPatch],
-  );
+  )
 
   const handleContributionRegenerateMessage = useCallback(
     async (contributionId: string, prompt: string) => {
-      if (!card || !creatorRow || contributionId !== creatorRow.id) return;
+      if (!card || !creatorRow || contributionId !== creatorRow.id) return
       const current =
-        contributions.find((c) => c.id === contributionId)?.message ?? "";
-      setRegeneratingContributionId(contributionId);
+        contributions.find((c) => c.id === contributionId)?.message ?? ''
+      setRegeneratingContributionId(contributionId)
       try {
-        const response = await fetch("/api/regenerate-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/regenerate-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            field: "contribution_message",
-            cardType: card.card_type || "custom",
+            field: 'contribution_message',
+            cardType: card.card_type || 'custom',
             recipientName: card.recipient_name,
             senderName: card.sender_name,
             currentValue: current,
             userPrompt: prompt,
           }),
-        });
-        if (!response.ok) throw new Error("Failed to refine message");
-        const { text } = (await response.json()) as { text?: string };
-        const next = String(text ?? "").trim();
+        })
+        if (!response.ok) throw new Error('Failed to refine message')
+        const { text } = (await response.json()) as { text?: string }
+        const next = String(text ?? '').trim()
         setContributions((prev) =>
           prev.map((c) =>
             c.id === contributionId ? { ...c, message: next } : c,
           ),
-        );
-        await saveOwnerContributionPatch(contributionId, { message: next });
+        )
+        await saveOwnerContributionPatch(contributionId, { message: next })
       } catch (e) {
-        console.error(e);
+        console.error(e)
       } finally {
-        setRegeneratingContributionId(null);
+        setRegeneratingContributionId(null)
       }
     },
     [card, creatorRow, contributions, saveOwnerContributionPatch],
-  );
+  )
 
   const handleComposeDraftRegenerate = useCallback(
     async (prompt: string) => {
-      if (!card) return;
-      setComposeDraftRegenerating(true);
+      if (!card) return
+      setComposeDraftRegenerating(true)
       try {
-        const response = await fetch("/api/regenerate-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/regenerate-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            field: "contribution_message",
-            cardType: card.card_type || "custom",
+            field: 'contribution_message',
+            cardType: card.card_type || 'custom',
             recipientName: card.recipient_name,
             senderName: card.sender_name,
-            currentValue: composeDraftRef.current?.message ?? "",
+            currentValue: composeDraftRef.current?.message ?? '',
             userPrompt: prompt,
           }),
-        });
-        if (!response.ok) throw new Error("Failed to refine message");
-        const { text } = (await response.json()) as { text?: string };
-        const next = String(text ?? "").trim();
-        setComposeDraft((d) => (d ? { ...d, message: next } : d));
+        })
+        if (!response.ok) throw new Error('Failed to refine message')
+        const { text } = (await response.json()) as { text?: string }
+        const next = String(text ?? '').trim()
+        setComposeDraft((d) => (d ? { ...d, message: next } : d))
       } catch (e) {
-        console.error(e);
+        console.error(e)
       } finally {
-        setComposeDraftRegenerating(false);
+        setComposeDraftRegenerating(false)
       }
     },
     [card],
-  );
+  )
 
   const patchCardFields = useCallback(
     async (updates: Record<string, unknown>) => {
       const res = await fetch(`/api/cards/${cardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
-      });
+      })
       if (!res.ok) {
-        const p = await res.json().catch(() => ({}));
-        throw new Error(typeof p.error === "string" ? p.error : "Save failed");
+        const p = await res.json().catch(() => ({}))
+        throw new Error(typeof p.error === 'string' ? p.error : 'Save failed')
       }
-      const { card: next } = await res.json();
-      setCard(next);
+      const { card: next } = await res.json()
+      setCard(next)
     },
     [cardId],
-  );
+  )
 
   const handleHeadlineChange = useCallback(
     (value: string) => {
-      setCard((c) => (c ? { ...c, copy_headline: value } : c));
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      setCard((c) => (c ? { ...c, copy_headline: value } : c))
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
-        void patchCardFields({ copy_headline: value }).catch(console.error);
-      }, 600);
+        void patchCardFields({ copy_headline: value }).catch(console.error)
+      }, 600)
     },
     [patchCardFields],
-  );
+  )
 
   const handleRegenerateHeadline = useCallback(
     async (prompt: string) => {
-      if (!card) return;
-      setIsRegeneratingHeadline(true);
+      if (!card) return
+      setIsRegeneratingHeadline(true)
       try {
-        const response = await fetch("/api/regenerate-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const response = await fetch('/api/regenerate-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            field: "headline",
-            cardType: card.card_type || "custom",
+            field: 'headline',
+            cardType: card.card_type || 'custom',
             recipientName: card.recipient_name,
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
           }),
-        });
-        if (!response.ok) throw new Error("Failed");
-        const { text } = (await response.json()) as { text?: string };
-        const next = String(text ?? "").trim();
-        setCard((c) => (c ? { ...c, copy_headline: next } : c));
-        await patchCardFields({ copy_headline: next });
+        })
+        if (!response.ok) throw new Error('Failed')
+        const { text } = (await response.json()) as { text?: string }
+        const next = String(text ?? '').trim()
+        setCard((c) => (c ? { ...c, copy_headline: next } : c))
+        await patchCardFields({ copy_headline: next })
       } catch (e) {
-        console.error(e);
+        console.error(e)
       } finally {
-        setIsRegeneratingHeadline(false);
+        setIsRegeneratingHeadline(false)
       }
     },
     [card, patchCardFields],
-  );
+  )
 
   const handleRegenerateImage = useCallback(
     async (prompt: string) => {
-      if (!card) return;
-      setIsRegeneratingImage(true);
+      if (!card) return
+      setIsRegeneratingImage(true)
       try {
-        const newPrompt = prompt || card.image_prompt || "";
-        const response = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const newPrompt = prompt || card.image_prompt || ''
+        const response = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imagePrompt: newPrompt }),
-        });
-        if (!response.ok) throw new Error("Failed");
-        const { imageUrl } = (await response.json()) as { imageUrl?: string };
+        })
+        if (!response.ok) throw new Error('Failed')
+        const { imageUrl } = (await response.json()) as { imageUrl?: string }
         if (imageUrl) {
           setCard((c) =>
             c ? { ...c, image_url: imageUrl, image_prompt: newPrompt } : c,
-          );
+          )
           await patchCardFields({
             image_url: imageUrl,
             image_prompt: newPrompt,
-          });
+          })
         }
       } catch (e) {
-        console.error(e);
+        console.error(e)
       } finally {
-        setIsRegeneratingImage(false);
+        setIsRegeneratingImage(false)
       }
     },
     [card, patchCardFields],
-  );
+  )
 
   const handleAddPage = useCallback(async () => {
-    const next = (card?.extra_pages ?? 0) + 1;
+    const next = (card?.extra_pages ?? 0) + 1
     try {
-      await patchCardFields({ extra_pages: next });
-      setCard((c) => (c ? { ...c, extra_pages: next } : c));
+      await patchCardFields({ extra_pages: next })
+      setCard((c) => (c ? { ...c, extra_pages: next } : c))
     } catch (e) {
-      console.error(e);
+      console.error(e)
     }
-  }, [card?.extra_pages, patchCardFields]);
+  }, [card?.extra_pages, patchCardFields])
 
   const cancelCompose = useCallback(() => {
-    setComposeDraft(null);
-    setComposeError("");
-  }, []);
+    setComposeDraft(null)
+    setComposeError('')
+  }, [])
 
-  const isolateGuests = prioritizeFirstOwnerMessage && !creatorMessageSaved;
+  const isolateGuests = prioritizeFirstOwnerMessage && !creatorMessageSaved
 
   const contributionsForCard = useMemo(() => {
-    if (!isolateGuests) return contributions;
-    return contributions.filter((c) => !c.is_creator);
-  }, [isolateGuests, contributions]);
+    if (!isolateGuests) return contributions
+    return contributions.filter((c) => !c.is_creator)
+  }, [isolateGuests, contributions])
 
   const submitComposeDraft = useCallback(async () => {
-    const draft = composeDraftRef.current;
-    if (!draft) return;
+    const draft = composeDraftRef.current
+    if (!draft) return
 
-    setSubmitting(true);
-    setComposeError("");
-    const msg = draft.message.trim();
+    setSubmitting(true)
+    setComposeError('')
+    const msg = draft.message.trim()
     if (!msg) {
-      setComposeError("Please enter a message");
-      setSubmitting(false);
-      return;
+      setComposeError('Please enter a message')
+      setSubmitting(false)
+      return
     }
 
-    const hadCreatorMessage = creatorMessageSaved;
+    const hadCreatorMessage = creatorMessageSaved
 
     try {
       if (creatorRow) {
         const res = await fetch(`/api/cards/${cardId}/contributions`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contributionId: creatorRow.id,
             message: msg,
@@ -408,29 +408,29 @@ export function CardOwnerStudio({
             page_index: draft.pageIndex,
             font_size: draft.fontSize,
           }),
-        });
-        const payload = await res.json().catch(() => ({}));
+        })
+        const payload = await res.json().catch(() => ({}))
         if (!res.ok) {
           throw new Error(
-            typeof payload.error === "string"
+            typeof payload.error === 'string'
               ? payload.error
-              : "Failed to save message",
-          );
+              : 'Failed to save message',
+          )
         }
         const { contribution: updated } = payload as {
-          contribution?: OwnerContribution;
-        };
+          contribution?: OwnerContribution
+        }
         if (updated) {
           setContributions((prev) =>
             prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)),
-          );
-          setSubmitNonce((n) => n + 1);
-          setCard((c) => (c ? { ...c, copy_message: updated.message } : c));
+          )
+          setSubmitNonce((n) => n + 1)
+          setCard((c) => (c ? { ...c, copy_message: updated.message } : c))
         }
       } else {
         const res = await fetch(`/api/cards/${cardId}/contributions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: msg,
             positionX: draft.x,
@@ -439,36 +439,34 @@ export function CardOwnerStudio({
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
           }),
-        });
-        const payload = await res.json().catch(() => ({}));
+        })
+        const payload = await res.json().catch(() => ({}))
         if (!res.ok) {
           throw new Error(
-            typeof payload.error === "string"
+            typeof payload.error === 'string'
               ? payload.error
-              : "Failed to add message",
-          );
+              : 'Failed to add message',
+          )
         }
         const { contribution } = payload as {
-          contribution?: OwnerContribution;
-        };
+          contribution?: OwnerContribution
+        }
         if (contribution) {
-          setContributions((prev) => [...prev, contribution]);
-          setSubmitNonce((n) => n + 1);
-          setCard((c) =>
-            c ? { ...c, copy_message: contribution.message } : c,
-          );
+          setContributions((prev) => [...prev, contribution])
+          setSubmitNonce((n) => n + 1)
+          setCard((c) => (c ? { ...c, copy_message: contribution.message } : c))
         }
       }
-      setComposeDraft(null);
+      setComposeDraft(null)
       if (!hadCreatorMessage) {
-        onOwnerComposeSaved?.();
+        onOwnerComposeSaved?.()
       }
     } catch (e) {
-      setComposeError(e instanceof Error ? e.message : "Failed to add message");
+      setComposeError(e instanceof Error ? e.message : 'Failed to add message')
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  }, [cardId, creatorRow, creatorMessageSaved, onOwnerComposeSaved]);
+  }, [cardId, creatorRow, creatorMessageSaved, onOwnerComposeSaved])
 
   if (loading || !card) {
     return (
@@ -478,7 +476,7 @@ export function CardOwnerStudio({
           <p className="text-sm text-muted-foreground">Card not found</p>
         ) : null}
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -486,25 +484,25 @@ export function CardOwnerStudio({
       <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
         {error}
       </div>
-    );
+    )
   }
 
   const showCompose = prioritizeFirstOwnerMessage
     ? !creatorMessageSaved
-    : !creatorRow;
+    : !creatorRow
 
-  const editableIdsForCard = isolateGuests ? [] : editableContributionIds;
+  const editableIdsForCard = isolateGuests ? [] : editableContributionIds
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="w-full space-y-6">
       <Card3D
-        key={`${cardId}-${initialCardPage}-${prioritizeFirstOwnerMessage ? "p" : "n"}`}
+        key={`${cardId}-${initialCardPage}-${prioritizeFirstOwnerMessage ? 'p' : 'n'}`}
         imageUrl={card.image_url}
         headline={card.copy_headline}
         message=""
         hideEmptyCenterMessageBody
-        senderName={card.sender_name || "Someone special"}
-        recipientName={card.recipient_name || "You"}
+        senderName={card.sender_name || 'Someone special'}
+        recipientName={card.recipient_name || 'You'}
         contributions={contributionsForCard}
         editable
         onHeadlineChange={handleHeadlineChange}
@@ -532,11 +530,11 @@ export function CardOwnerStudio({
           showCompose
             ? (pt) => {
                 setComposeDraft({
-                  message: "",
+                  message: '',
                   x: pt.x,
                   y: pt.y,
                   pageIndex: pt.pageIndex,
-                });
+                })
               }
             : undefined
         }
@@ -550,5 +548,5 @@ export function CardOwnerStudio({
         composeDraftRegenerating={composeDraftRegenerating}
       />
     </div>
-  );
+  )
 }

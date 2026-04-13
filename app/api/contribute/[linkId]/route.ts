@@ -14,7 +14,10 @@ function tokensMatch(stored: string, provided: string): boolean {
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ linkId: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ linkId: string }> },
+) {
   try {
     const { linkId } = await params
     const body = await request.json()
@@ -49,8 +52,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!cardData) {
       return NextResponse.json(
         {
-          error:
-            'This card is not accepting new messages.',
+          error: 'This card is not accepting new messages.',
         },
         { status: 404 },
       )
@@ -95,7 +97,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
 const EDIT_WINDOW_MS = 24 * 60 * 60 * 1000
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ linkId: string }> }) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ linkId: string }> },
+) {
   try {
     const { linkId } = await params
     const body = await request.json()
@@ -112,14 +117,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       !contributionId ||
       typeof editToken !== 'string' ||
       !editToken.trim() ||
-      (
-        message === undefined &&
+      (message === undefined &&
         positionX === undefined &&
         positionY === undefined &&
         widthPercent === undefined &&
         pageIndex === undefined &&
-        fontSize === undefined
-      )
+        fontSize === undefined)
     ) {
       return NextResponse.json(
         {
@@ -157,7 +160,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .maybeSingle()
 
     if (fetchErr || !existing || existing.card_id !== cardData.id) {
-      return NextResponse.json({ error: 'Contribution not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Contribution not found' },
+        { status: 404 },
+      )
     }
 
     if (
@@ -173,7 +179,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const created = new Date(existing.created_at).getTime()
     if (Number.isFinite(created) && Date.now() - created > EDIT_WINDOW_MS) {
       return NextResponse.json(
-        { error: 'This message can no longer be edited (editing window ended).' },
+        {
+          error: 'This message can no longer be edited (editing window ended).',
+        },
         { status: 403 },
       )
     }
@@ -189,7 +197,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (typeof message === 'string') {
       const msg = message.trim()
       if (!msg) {
-        return NextResponse.json({ error: 'Message is required' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Message is required' },
+          { status: 400 },
+        )
       }
       updates.message = msg
     }
@@ -234,7 +245,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ linkId: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ linkId: string }> },
+) {
   try {
     const { linkId } = await params
     const supabase = await createClient()
@@ -260,7 +274,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       .order('created_at', { ascending: true })
 
     if (contribError) {
-      console.error('[GET /api/contribute/[linkId]] contributions:', contribError)
+      console.error(
+        '[GET /api/contribute/[linkId]] contributions:',
+        contribError,
+      )
       return NextResponse.json({ card: cardData, contributions: [] })
     }
 
@@ -270,9 +287,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
   } catch (error) {
     console.error('Error fetching card:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch card' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: 'Failed to fetch card' }, { status: 500 })
   }
 }
