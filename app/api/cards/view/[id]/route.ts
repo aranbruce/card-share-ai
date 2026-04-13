@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { validate as isValidUuid } from 'uuid'
 import { createClient } from '@/lib/supabase/server'
 
-function quotePostgrestValue(value: string): string {
-  const escaped = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-  return `"${escaped}"`
-}
+const CARD_VIEW_SELECT =
+  'id, sent_at, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages'
 
 export async function GET(
   request: NextRequest,
@@ -12,19 +11,38 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    if (!isValidUuid(id)) {
+      return NextResponse.json({ error: 'Card not found' }, { status: 404 })
+    }
+
     const supabase = await createClient()
-    const safeId = quotePostgrestValue(id)
 
     // Share modal links use contributor_link_id; callers may also pass the card row id
-    const { data: cardData, error: cardError } = await supabase
+    let { data: cardData, error: cardError } = await supabase
       .from('cards')
-      .select(
-        'id, sent_at, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages',
-      )
-      .or(`id.eq.${safeId},contributor_link_id.eq.${safeId}`)
+      .select(CARD_VIEW_SELECT)
+      .eq('id', id)
       .maybeSingle()
 
-    if (cardError || !cardData) {
+    if (cardError) {
+      console.error('[GET /api/cards/view/[id]] card by id:', cardError)
+      return NextResponse.json({ error: 'Failed to fetch card' }, { status: 500 })
+    }
+
+    if (!cardData) {
+      const byLink = await supabase
+        .from('cards')
+        .select(CARD_VIEW_SELECT)
+        .eq('contributor_link_id', id)
+        .maybeSingle()
+      cardData = byLink.data
+      if (byLink.error) {
+        console.error('[GET /api/cards/view/[id]] card by link:', byLink.error)
+        return NextResponse.json({ error: 'Failed to fetch card' }, { status: 500 })
+      }
+    }
+
+    if (!cardData) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 })
     }
 

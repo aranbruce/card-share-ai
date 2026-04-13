@@ -376,7 +376,7 @@ export function CardOwnerStudio({
 
   const contributionsForCard = useMemo(() => {
     if (!isolateGuests) return contributions
-    return contributions.filter((c) => !c.is_creator)
+    return contributions.filter((c) => Boolean(c.is_creator))
   }, [isolateGuests, contributions])
 
   const submitComposeDraft = useCallback(async () => {

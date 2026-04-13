@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+type OwnsCardResult =
+  | { kind: 'ok'; card: { id: string } }
+  | { kind: 'not_found' }
+  | { kind: 'query_error' }
+
 async function assertOwnsCard(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
   cardId: string,
-) {
+): Promise<OwnsCardResult> {
   const { data, error } = await supabase
     .from('cards')
     .select('id')
     .eq('id', cardId)
     .eq('user_id', userId)
     .maybeSingle()
-  if (error) return { error: error.message as string, card: null as null }
-  if (!data) return { error: 'Card not found', card: null as null }
-  return { error: null as null, card: data }
+  if (error) {
+    console.error('[assertOwnsCard]', error)
+    return { kind: 'query_error' }
+  }
+  if (!data) return { kind: 'not_found' }
+  return { kind: 'ok', card: data }
 }
 
 /** POST — create the single creator contribution (first placed message). */
@@ -32,16 +40,15 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { error: ownErr, card } = await assertOwnsCard(
-      supabase,
-      user.id,
-      cardId,
-    )
-    if (ownErr || !card) {
+    const ownership = await assertOwnsCard(supabase, user.id, cardId)
+    if (ownership.kind === 'query_error') {
       return NextResponse.json(
-        { error: ownErr ?? 'Not found' },
-        { status: 404 },
+        { error: 'Failed to verify card' },
+        { status: 500 },
       )
+    }
+    if (ownership.kind === 'not_found') {
+      return NextResponse.json({ error: 'Card not found' }, { status: 404 })
     }
 
     const { data: existing } = await supabase
@@ -132,9 +139,15 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { error: ownErr } = await assertOwnsCard(supabase, user.id, cardId)
-    if (ownErr) {
-      return NextResponse.json({ error: ownErr }, { status: 404 })
+    const ownership = await assertOwnsCard(supabase, user.id, cardId)
+    if (ownership.kind === 'query_error') {
+      return NextResponse.json(
+        { error: 'Failed to verify card' },
+        { status: 500 },
+      )
+    }
+    if (ownership.kind === 'not_found') {
+      return NextResponse.json({ error: 'Card not found' }, { status: 404 })
     }
 
     const body = await request.json()

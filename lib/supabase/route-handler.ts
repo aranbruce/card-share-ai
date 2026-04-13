@@ -23,7 +23,7 @@ export function createSupabaseRouteHandlerClient(
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options)
           })
-          Object.entries(headers).forEach(([key, value]) => {
+          Object.entries(headers ?? {}).forEach(([key, value]) => {
             response.headers.set(key, value)
           })
         },
