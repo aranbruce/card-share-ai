@@ -37,12 +37,6 @@ export type CardOwnerStudioProps = {
   cardId: string
   /** 0 = cover; 1 = first inside spread (e.g. after creating a card). */
   initialCardPage?: number
-  /**
-   * When true (e.g. `?welcome=1`), guest contributions stay hidden until the
-   * creator has placed a saved message, and compose behaves like the old
-   * message-first step.
-   */
-  prioritizeFirstOwnerMessage?: boolean
   /** Called after the owner’s first compose save updates `copy_message`. */
   onOwnerComposeSaved?: () => void
 }
@@ -50,7 +44,6 @@ export type CardOwnerStudioProps = {
 export function CardOwnerStudio({
   cardId,
   initialCardPage = 0,
-  prioritizeFirstOwnerMessage = false,
   onOwnerComposeSaved,
 }: CardOwnerStudioProps) {
   const [card, setCard] = useState<OwnerCard | null>(null)
@@ -131,12 +124,12 @@ export function CardOwnerStudio({
       contributionId: string,
       updates: {
         message?: string
-        position_x?: number
-        position_y?: number
-        width_percent?: number
-        page_index?: number
-        font_size?: number
-        text_color?: string | null
+        positionX?: number
+        positionY?: number
+        widthPercent?: number
+        pageIndex?: number
+        fontSize?: number
+        textColor?: string | null
       },
     ) => {
       const res = await fetch(`/api/cards/${cardId}/contributions`, {
@@ -207,13 +200,13 @@ export function CardOwnerStudio({
         clearTimeout(ownerLayoutSaveTimerRef.current)
       ownerLayoutSaveTimerRef.current = setTimeout(() => {
         void saveOwnerContributionPatch(contributionId, {
-          position_x: layout.x,
-          position_y: layout.y,
-          width_percent: layout.widthPercent,
-          page_index: layout.pageIndex,
-          font_size: layout.fontSize,
+          positionX: layout.x,
+          positionY: layout.y,
+          widthPercent: layout.widthPercent,
+          pageIndex: layout.pageIndex,
+          fontSize: layout.fontSize,
           ...(layout.textColor !== undefined && {
-            text_color: layout.textColor,
+            textColor: layout.textColor,
           }),
         })
       }, 200)
@@ -399,13 +392,6 @@ export function CardOwnerStudio({
     setComposeError("")
   }, [])
 
-  const isolateGuests = prioritizeFirstOwnerMessage && !creatorMessageSaved
-
-  const contributionsForCard = useMemo(() => {
-    if (!isolateGuests) return contributions
-    return contributions.filter((c) => Boolean(c.is_creator))
-  }, [isolateGuests, contributions])
-
   const submitComposeDraft = useCallback(async () => {
     const draft = composeDraftRef.current
     if (!draft) return
@@ -429,13 +415,13 @@ export function CardOwnerStudio({
           body: JSON.stringify({
             contributionId: creatorRow.id,
             message: msg,
-            position_x: draft.x,
-            position_y: draft.y,
-            width_percent: 75,
-            page_index: draft.pageIndex,
-            font_size: draft.fontSize,
+            positionX: draft.x,
+            positionY: draft.y,
+            widthPercent: 75,
+            pageIndex: draft.pageIndex,
+            fontSize: draft.fontSize,
             ...(draft.textColor !== undefined
-              ? { text_color: draft.textColor }
+              ? { textColor: draft.textColor }
               : {}),
           }),
         })
@@ -518,23 +504,19 @@ export function CardOwnerStudio({
     )
   }
 
-  const showCompose = prioritizeFirstOwnerMessage
-    ? !creatorMessageSaved
-    : !creatorRow
-
-  const editableIdsForCard = isolateGuests ? [] : editableContributionIds
+  const showCompose = !creatorRow
 
   return (
     <div className="w-full space-y-6">
       <Card3D
-        key={`${cardId}-${initialCardPage}-${prioritizeFirstOwnerMessage ? "p" : "n"}`}
+        key={`${cardId}-${initialCardPage}`}
         imageUrl={card.image_url}
         headline={card.copy_headline}
         message=""
         hideEmptyCenterMessageBody
         senderName={card.sender_name || "Someone special"}
         recipientName={card.recipient_name || "You"}
-        contributions={contributionsForCard}
+        contributions={contributions}
         editable
         onHeadlineChange={handleHeadlineChange}
         onRegenerateHeadline={handleRegenerateHeadline}
@@ -545,7 +527,7 @@ export function CardOwnerStudio({
         onAddPage={handleAddPage}
         initialPage={initialCardPage}
         contributeSubmitNonce={submitNonce}
-        editableContributionIds={editableIdsForCard}
+        editableContributionIds={editableContributionIds}
         onContributionEdit={handleContributionEdit}
         onContributionLayoutChange={handleContributionLayoutChange}
         onContributionRegenerateMessage={handleContributionRegenerateMessage}

@@ -149,7 +149,7 @@ export function CardPreview({
                 Saving...
               </>
             ) : (
-              "Save Card"
+              "Write message"
             )}
           </Button>
         )}

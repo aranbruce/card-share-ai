@@ -126,15 +126,16 @@ export async function PATCH(
     const contributionId = body.contributionId as string | undefined
     const editToken = body.editToken as string | undefined
     const message = body.message as string | undefined
-    const positionX = body.position_x as number | undefined
-    const positionY = body.position_y as number | undefined
-    const widthPercent = body.width_percent as number | undefined
-    const pageIndex = body.page_index as number | undefined
-    const fontSize = body.font_size as number | undefined
-    const hasTextColor = Object.prototype.hasOwnProperty.call(
-      body,
-      "text_color",
-    )
+    const positionX = (body.positionX ?? body.position_x) as number | undefined
+    const positionY = (body.positionY ?? body.position_y) as number | undefined
+    const widthPercent = (body.widthPercent ?? body.width_percent) as
+      | number
+      | undefined
+    const pageIndex = (body.pageIndex ?? body.page_index) as number | undefined
+    const fontSize = (body.fontSize ?? body.font_size) as number | undefined
+    const hasTextColor =
+      Object.prototype.hasOwnProperty.call(body, "textColor") ||
+      Object.prototype.hasOwnProperty.call(body, "text_color")
 
     if (
       !contributionId ||
@@ -235,12 +236,12 @@ export async function PATCH(
     if (typeof pageIndex === "number") updates.page_index = pageIndex
     if (typeof fontSize === "number") updates.font_size = fontSize
     if (hasTextColor) {
-      const tc = normalizeContributionTextColor(
-        (body as { text_color?: unknown }).text_color,
-      )
+      const rawTextColor =
+        body.textColor !== undefined ? body.textColor : body.text_color
+      const tc = normalizeContributionTextColor(rawTextColor)
       if (tc === undefined) {
         return NextResponse.json(
-          { error: "Invalid text_color (use #RRGGBB or null)" },
+          { error: "Invalid text color (use #RRGGBB or null)" },
           { status: 400 },
         )
       }

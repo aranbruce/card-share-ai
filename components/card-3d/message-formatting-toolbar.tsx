@@ -33,7 +33,7 @@ export function snapMessageFontSize(px: number) {
 }
 
 /** Shown when `text_color` is unset (theme handles actual foreground). */
-export const DEFAULT_MESSAGE_TEXT_COLOR_HEX = "#292524"
+export const DEFAULT_MESSAGE_TEXT_COLOR_HEX = "#171717"
 
 const messageFormatSelectClassName =
   "max-w-[9rem] cursor-pointer rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"

@@ -307,7 +307,7 @@ export default function CreateCardPage() {
           <CardPreview
             imageUrl={cardData.imageUrl}
             headline={cardData.headline}
-            message=""
+            message={cardData.message}
             senderName={senderName}
             recipientName={recipientName}
             editMode={editMode}

@@ -112,12 +112,12 @@ export default function ContributeCardPage() {
       contributionId: string,
       updates: {
         message?: string
-        position_x?: number
-        position_y?: number
-        width_percent?: number
-        page_index?: number
-        font_size?: number
-        text_color?: string | null
+        positionX?: number
+        positionY?: number
+        widthPercent?: number
+        pageIndex?: number
+        fontSize?: number
+        textColor?: string | null
       },
       editToken: string,
     ) => {
@@ -191,13 +191,13 @@ export default function ContributeCardPage() {
         void saveContributionPatch(
           contributionId,
           {
-            position_x: layout.x,
-            position_y: layout.y,
-            width_percent: layout.widthPercent,
-            page_index: layout.pageIndex,
-            font_size: layout.fontSize,
+            positionX: layout.x,
+            positionY: layout.y,
+            widthPercent: layout.widthPercent,
+            pageIndex: layout.pageIndex,
+            fontSize: layout.fontSize,
             ...(layout.textColor !== undefined && {
-              text_color: layout.textColor,
+              textColor: layout.textColor,
             }),
           },
           token,

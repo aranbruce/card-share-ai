@@ -1,7 +1,7 @@
 "use client"
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -9,7 +9,7 @@ import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
 import { ShareModal } from "@/components/share-modal"
 import { CardOwnerStudio } from "@/components/card-owner-studio"
-import { ArrowLeft, Send, Copy, CheckCircle2, X, Sparkles } from "lucide-react"
+import { ArrowLeft, Send, Copy, CheckCircle2 } from "lucide-react"
 import { Logo } from "@/components/logo"
 
 interface CardData {
@@ -28,7 +28,6 @@ interface CardData {
 function CardDetailInner() {
   const params = useParams()
   const router = useRouter()
-  const searchParams = useSearchParams()
   const cardId = params.id as string
 
   const supabase = useMemo(() => createClient(), [])
@@ -37,20 +36,6 @@ function CardDetailInner() {
   const [error, setError] = useState("")
   const [copyLinkCopied, setCopyLinkCopied] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [welcomeBannerDismissed, setWelcomeBannerDismissed] = useState(false)
-
-  const welcomeParam = searchParams.get("welcome") === "1"
-  const needsOwnerMessage = !card?.copy_message?.trim()
-  const welcomeActive = welcomeParam && !welcomeBannerDismissed
-  const showWelcomeBanner = welcomeActive && needsOwnerMessage
-  const prioritizeFirstOwnerMessage = showWelcomeBanner
-  /** Stay on the inside spread while the welcome URL flag is active (even after saving). */
-  const initialCardPage = welcomeActive ? 1 : 0
-
-  const dismissWelcome = useCallback(() => {
-    setWelcomeBannerDismissed(true)
-    router.replace(`/dashboard/cards/${cardId}`, { scroll: false })
-  }, [router, cardId])
 
   const loadCard = useCallback(async () => {
     try {
@@ -125,32 +110,6 @@ function CardDetailInner() {
           </div>
         )}
 
-        {showWelcomeBanner ? (
-          <div className="mb-10 flex flex-col gap-4 rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 shadow-sm sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-1.5 pr-2">
-              <p className="flex items-center gap-2 font-semibold text-primary">
-                <Sparkles className="h-4 w-4" />
-                Add your message
-              </p>
-              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground/90">
-                You&apos;re on the inside of the card—click a page to place your
-                note, the same way guests will. Use the contributor link below
-                when you&apos;re ready to invite others.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="shrink-0 self-end text-muted-foreground hover:bg-primary/10 hover:text-foreground sm:self-start"
-              onClick={dismissWelcome}
-              aria-label="Dismiss"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : null}
-
         <div className="mx-auto max-w-2xl space-y-12">
           <div className="space-y-8">
             <div className="space-y-3 text-center">
@@ -185,8 +144,7 @@ function CardDetailInner() {
               <CardOwnerStudio
                 key={`${cardId}-${card.recipient_email || ""}`}
                 cardId={cardId}
-                initialCardPage={initialCardPage}
-                prioritizeFirstOwnerMessage={prioritizeFirstOwnerMessage}
+                initialCardPage={0}
                 onOwnerComposeSaved={() => {
                   void loadCard()
                 }}
