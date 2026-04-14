@@ -2,6 +2,8 @@ import { Buffer } from "node:buffer"
 import { NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import type { GeneratedFile, ModelMessage } from "ai"
+import { fetchHttpsSourceImageBytes } from "@/lib/https-source-image"
+import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 import {
   MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH,
   MAX_SOURCE_IMAGE_BASE64_CHARS,
@@ -11,12 +13,15 @@ import {
 /** Nano Banana 2 — use `generateText`; image outputs are in `files`. */
 const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
 
-type SourceImageOk = { ok: true; input: string | Uint8Array }
+type SourceImageOk =
+  | { ok: true; kind: "https"; url: string }
+  | { ok: true; kind: "data"; bytes: Uint8Array }
 type SourceImageErr = { ok: false; message: string }
 
 /**
- * Only `https://` URLs (for the provider to fetch) or `data:image/*;base64,...`
- * (decoded here). Rejects http, other schemes, non-image data URLs, and bare strings.
+ * Only `https://` URLs (fetched server-side with host allowlist; never passed through)
+ * or `data:image/*;base64,...` (decoded here). Rejects http, other schemes, non-image
+ * data URLs, and bare strings.
  */
 function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
   const trimmed = source.trim()
@@ -33,7 +38,7 @@ function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
       if (parsed.protocol !== "https:") {
         return { ok: false, message: "Source image URL must use https" }
       }
-      return { ok: true, input: trimmed }
+      return { ok: true, kind: "https", url: trimmed }
     } catch {
       return { ok: false, message: "Invalid source image URL" }
     }
@@ -71,7 +76,7 @@ function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
         message: "Source image data URL exceeds maximum size",
       }
     }
-    return { ok: true, input: decoded }
+    return { ok: true, kind: "data", bytes: new Uint8Array(decoded) }
   }
 
   return {
@@ -118,7 +123,15 @@ export async function POST(request: NextRequest) {
       if (!parsed.ok) {
         return NextResponse.json({ error: parsed.message }, { status: 400 })
       }
-      source = parsed.input
+      if (parsed.kind === "data") {
+        source = parsed.bytes
+      } else {
+        const fetched = await fetchHttpsSourceImageBytes(parsed.url)
+        if (!fetched.ok) {
+          return NextResponse.json({ error: fetched.message }, { status: 400 })
+        }
+        source = fetched.bytes
+      }
     }
 
     const refinePrefix =
@@ -152,7 +165,8 @@ export async function POST(request: NextRequest) {
       throw new Error("No image generated")
     }
 
-    const imageUrl = generatedImageToDataUrl(imageFile)
+    const persisted = await persistGeneratedCardImage(imageFile)
+    const imageUrl = persisted ?? generatedImageToDataUrl(imageFile)
 
     return NextResponse.json({ imageUrl })
   } catch (error) {
