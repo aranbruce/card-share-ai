@@ -12,6 +12,7 @@ export function stripSurroundingQuotes(raw: string): string {
   for (const [open, close] of pairs) {
     if (s.length >= 2 && s.startsWith(open) && s.endsWith(close)) {
       s = s.slice(open.length, -close.length).trim()
+      break
     }
   }
   return s
