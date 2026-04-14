@@ -1,14 +1,29 @@
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { NextRequest, NextResponse } from "next/server"
+import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
 const cardCopySchema = z.object({
-  headline: z.string().describe("A catchy, celebratory headline for the card"),
-  message: z.string().describe("The main message body of the card"),
-  signoff: z.string().describe("A warm closing/signature line"),
+  headline: z
+    .string()
+    .describe(
+      "A catchy, celebratory headline for the card. Plain text only — no surrounding quotation marks.",
+    ),
+  message: z
+    .string()
+    .describe(
+      "The main message body of the card. Plain text only — no surrounding quotation marks.",
+    ),
+  signoff: z
+    .string()
+    .describe(
+      "A warm closing/signature line. Plain text only — no surrounding quotation marks.",
+    ),
   imagePrompt: z
     .string()
-    .describe("A detailed prompt for generating the card image"),
+    .describe(
+      "A detailed prompt for generating the card image. Do not wrap the prompt in quotation marks.",
+    ),
 })
 
 export async function POST(request: NextRequest) {
@@ -50,7 +65,9 @@ To: ${recipientName}
 ${customMessage ? `Additional context: ${customMessage}` : ""}
 ${existingBlock}
 
-Create warm, appropriate copy that matches the card type. The image prompt should be descriptive for AI image generation.`
+Create warm, appropriate copy that matches the card type. The image prompt should be descriptive for AI image generation.
+
+Never wrap the headline, message body, sign-off, or image prompt in ASCII or curly quotation marks — output the words themselves only.`
 
     const userLead = hasExisting
       ? `Please refine this greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.`
@@ -70,7 +87,15 @@ Create warm, appropriate copy that matches the card type. The image prompt shoul
       system: systemPrompt,
     })
 
-    return NextResponse.json({ cardCopy: output })
+    const cardCopy = {
+      ...output,
+      headline: stripSurroundingQuotes(output.headline),
+      message: stripSurroundingQuotes(output.message),
+      signoff: stripSurroundingQuotes(output.signoff),
+      imagePrompt: stripSurroundingQuotes(output.imagePrompt),
+    }
+
+    return NextResponse.json({ cardCopy })
   } catch (error) {
     console.error("Error generating card copy:", error)
     const errorMessage =
