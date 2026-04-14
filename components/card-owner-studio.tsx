@@ -293,7 +293,23 @@ export function CardOwnerStudio({
         throw new Error(typeof p.error === "string" ? p.error : "Save failed")
       }
       const { card: next } = await res.json()
-      setCard(next)
+      // Prefer the PATCH response for every field the server returns. Only fill in
+      // from `updates` when the returned row omits a property entirely (e.g. very
+      // large `image_url` stripped from JSON) so we do not overwrite a processed
+      // value such as a CDN URL with the client-sent data URL. Explicit `null` from
+      // the server is kept as authoritative.
+      setCard((prev) => {
+        if (!next) return prev
+        const merged = { ...(prev ?? {}), ...next } as OwnerCard
+        const serverRow = next as Record<string, unknown>
+        for (const [k, v] of Object.entries(updates)) {
+          if (v === undefined) continue
+          if (!Object.hasOwn(serverRow, k)) {
+            ;(merged as Record<string, unknown>)[k] = v
+          }
+        }
+        return merged
+      })
     },
     [cardId],
   )
@@ -342,7 +358,7 @@ export function CardOwnerStudio({
   )
 
   const handleRegenerateImage = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, sourceImageUrl?: string) => {
       if (!card) return
       setIsRegeneratingImage(true)
       try {
@@ -350,7 +366,10 @@ export function CardOwnerStudio({
         const response = await fetch("/api/generate-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imagePrompt: newPrompt }),
+          body: JSON.stringify({
+            imagePrompt: newPrompt,
+            ...(sourceImageUrl ? { sourceImageUrl } : {}),
+          }),
         })
         if (!response.ok) throw new Error("Failed")
         const { imageUrl } = (await response.json()) as { imageUrl?: string }
@@ -417,7 +436,7 @@ export function CardOwnerStudio({
             message: msg,
             positionX: draft.x,
             positionY: draft.y,
-            widthPercent: 75,
+            widthPercent: draft.widthPercent ?? 75,
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
             ...(draft.textColor !== undefined
@@ -451,7 +470,7 @@ export function CardOwnerStudio({
             message: msg,
             positionX: draft.x,
             positionY: draft.y,
-            widthPercent: 75,
+            widthPercent: draft.widthPercent ?? 75,
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
             textColor: draft.textColor,

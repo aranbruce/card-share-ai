@@ -169,7 +169,10 @@ export default function CreateCardPage() {
     }
   }
 
-  const handleRegenerateImage = async (prompt: string) => {
+  const handleRegenerateImage = async (
+    prompt: string,
+    sourceImageUrl?: string,
+  ) => {
     if (!cardData) return
 
     setIsRegeneratingImage(true)
@@ -181,17 +184,22 @@ export default function CreateCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imagePrompt: newPrompt,
+          ...(sourceImageUrl ? { sourceImageUrl } : {}),
         }),
       })
 
       if (!response.ok) throw new Error("Failed to regenerate image")
 
-      const { imageUrl } = await response.json()
-      setCardData({
-        ...cardData,
-        imageUrl,
-        imagePrompt: newPrompt,
-      })
+      const { imageUrl } = (await response.json()) as { imageUrl?: string }
+      setCardData((prev) =>
+        prev
+          ? {
+              ...prev,
+              imageUrl: imageUrl ?? prev.imageUrl,
+              imagePrompt: newPrompt,
+            }
+          : null,
+      )
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to regenerate image",

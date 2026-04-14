@@ -151,6 +151,46 @@
   }
 }
 
+/* AI refine — shimmer on the glyphs (background-clip: text), not a full-bleed overlay */
+.ai-refine-shimmer-text-cover {
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.55) 38%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.55) 62%,
+    rgba(255, 255, 255, 0.55) 100%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  animation: ai-refine-shimmer-slide 1.15s linear infinite;
+}
+
+.ai-refine-shimmer-text-paper {
+  --refine-shimmer-mid: var(--refine-shimmer-base, var(--foreground));
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--refine-shimmer-mid) 55%, transparent) 0%,
+    color-mix(in oklab, var(--refine-shimmer-mid) 55%, transparent) 38%,
+    var(--refine-shimmer-mid) 50%,
+    color-mix(in oklab, var(--refine-shimmer-mid) 55%, transparent) 62%,
+    color-mix(in oklab, var(--refine-shimmer-mid) 55%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  animation: ai-refine-shimmer-slide 1.15s linear infinite;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

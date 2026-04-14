@@ -93,10 +93,9 @@ export default function ContributeCardPage() {
         const response = await fetch(`/api/contribute/${linkId}`)
         if (!response.ok) throw new Error("Card not found")
 
-        const { card: cardData, contributions: contribs } =
-          await response.json()
+        const { card: cardData, contributions } = await response.json()
         setCard(cardData)
-        setContributions(contribs)
+        setContributions(contributions)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load card")
       } finally {
@@ -304,7 +303,7 @@ export default function ContributeCardPage() {
           message: msg,
           positionX: draft.x,
           positionY: draft.y,
-          widthPercent: 75,
+          widthPercent: draft.widthPercent ?? 75,
           pageIndex: draft.pageIndex,
           fontSize: draft.fontSize,
           textColor: draft.textColor,
@@ -400,7 +399,7 @@ export default function ContributeCardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+    <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
       <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
         <Logo />
       </header>
