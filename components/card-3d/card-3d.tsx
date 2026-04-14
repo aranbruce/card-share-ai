@@ -709,6 +709,7 @@ export function Card3D({
                                   ) {
                                     void onRegenerateImage?.(
                                       imagePromptText.trim(),
+                                      imageUrl || undefined,
                                     )
                                     setImagePromptText("")
                                     setShowImagePrompt(false)
@@ -727,6 +728,7 @@ export function Card3D({
                                   if (imagePromptText.trim()) {
                                     void onRegenerateImage?.(
                                       imagePromptText.trim(),
+                                      imageUrl || undefined,
                                     )
                                     setImagePromptText("")
                                     setShowImagePrompt(false)

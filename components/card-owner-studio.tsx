@@ -342,7 +342,7 @@ export function CardOwnerStudio({
   )
 
   const handleRegenerateImage = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, sourceImageUrl?: string) => {
       if (!card) return
       setIsRegeneratingImage(true)
       try {
@@ -350,7 +350,12 @@ export function CardOwnerStudio({
         const response = await fetch("/api/generate-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imagePrompt: newPrompt }),
+          body: JSON.stringify({
+            imagePrompt: newPrompt,
+            ...(sourceImageUrl
+              ? { sourceImageUrl }
+              : {}),
+          }),
         })
         if (!response.ok) throw new Error("Failed")
         const { imageUrl } = (await response.json()) as { imageUrl?: string }

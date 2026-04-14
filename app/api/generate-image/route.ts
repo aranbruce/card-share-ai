@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import * as fal from "@fal-ai/serverless-client"
-
-fal.config({
-  credentials: process.env.FAL_KEY,
-})
+import { generateImage } from "ai"
 
 export async function POST(request: NextRequest) {
   try {
-    const { imagePrompt } = await request.json()
+    const { imagePrompt, sourceImageUrl } = (await request.json()) as {
+      imagePrompt?: string
+      sourceImageUrl?: string
+    }
 
     if (!imagePrompt) {
       return NextResponse.json(
@@ -16,22 +15,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate image using fal.ai with flux model
-    type FluxResult = { images?: Array<{ url?: string }> }
-    const result = (await fal.subscribe("fal-ai/flux-pro/v1.1", {
-      input: {
-        prompt: imagePrompt,
-        image_size: "square_hd",
-        num_inference_steps: 25,
-        num_images: 1,
-      },
-    })) as FluxResult
+    const source =
+      typeof sourceImageUrl === "string" && sourceImageUrl.trim().length > 0
+        ? sourceImageUrl.trim()
+        : undefined
 
-    const imageUrl = result.images?.[0]?.url
+    const refinePrefix =
+      "Refine this greeting card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n"
 
-    if (!imageUrl) {
+    const { image } = await generateImage({
+      model: "google/gemini-3.1-flash-image-preview",
+      prompt: source
+        ? {
+            images: [source],
+            text: `${refinePrefix}${imagePrompt}`,
+          }
+        : imagePrompt,
+      aspectRatio: "1:1",
+    })
+
+    if (!image?.base64 || !image.mediaType) {
       throw new Error("No image generated")
     }
+
+    const imageUrl = `data:${image.mediaType};base64,${image.base64}`
 
     return NextResponse.json({ imageUrl })
   } catch (error) {
