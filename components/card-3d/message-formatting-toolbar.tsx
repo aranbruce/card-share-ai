@@ -6,7 +6,7 @@ import {
   MIN_CONTRIBUTION_ROTATION_DEGREES,
 } from "@/lib/contribution-rotation"
 import { Layers, Palette, RotateCcw, RotateCw, Type } from "lucide-react"
-import type { ReactNode } from "react"
+import { useMemo, type ReactNode } from "react"
 
 /** Discrete text sizes for inner messages (card canvas / compose). */
 const MESSAGE_FONT_SIZE_PRESETS = [12, 14, 16, 20, 24] as const
@@ -83,10 +83,19 @@ export function MessageFormattingToolbar({
   const snappedRotation = snapMessageRotationDegrees(
     rotationDegrees ?? DEFAULT_MESSAGE_ROTATION_DEGREES,
   )
+  const toolbarAriaLabel = useMemo(() => {
+    const parts: string[] = ["Text size"]
+    if (onTextColorChange) parts.push("color")
+    if (onRotationDegreesChange) parts.push("rotation")
+    if (showPage) parts.push("page")
+    if (aiTweakSlot) parts.push("refine")
+    return parts.join(", ")
+  }, [onTextColorChange, onRotationDegreesChange, showPage, aiTweakSlot])
+
   return (
     <div
       role="toolbar"
-      aria-label="Text size, color, page, and refine"
+      aria-label={toolbarAriaLabel}
       className={cn(
         "inline-flex max-w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-border/60 bg-background/95 px-2.5 py-1.5 shadow-md backdrop-blur-sm",
         className,

@@ -363,8 +363,7 @@ export function Card3D({
     y: typeof contrib.position_y === "number" ? contrib.position_y : 24,
     widthPercent:
       typeof contrib.width_percent === "number" ? contrib.width_percent : 75,
-    pageIndex:
-      typeof contrib.page_index === "number" ? contrib.page_index : validMessagePage,
+    pageIndex: effectiveContributionPage(contrib),
     fontSize: contrib.font_size ?? messageFontSize,
     textColor: contrib.text_color ?? null,
     rotationDegrees: contrib.rotation_degrees ?? null,
@@ -403,6 +402,11 @@ export function Card3D({
                     })
                 : undefined
             }
+            onFocusLeave={() => {
+              setEditingContributionId((id) =>
+                id === contrib.id ? null : id,
+              )
+            }}
             footer={
               onContributionLayoutChange &&
               editingContributionId === contrib.id ? (
@@ -494,30 +498,6 @@ export function Card3D({
             <div
               className="space-y-3"
               onFocus={() => setEditingContributionId(contrib.id)}
-              onBlur={(e) => {
-                const related = e.relatedTarget as Node | null
-                if (
-                  related &&
-                  e.currentTarget.parentElement?.contains(related)
-                ) {
-                  return
-                }
-                if (
-                  related instanceof Element &&
-                  related.closest(
-                    `[data-contribution-format-toolbar="${contrib.id}"]`,
-                  )
-                ) {
-                  return
-                }
-                if (
-                  related instanceof Element &&
-                  related.closest("[data-regenerate-area]")
-                ) {
-                  return
-                }
-                setEditingContributionId(null)
-              }}
             >
               <InlineEdit
                 ref={(el) => {

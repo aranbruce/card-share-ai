@@ -24,6 +24,45 @@ function getDraggableBoundsParent(el: HTMLElement | null): HTMLElement | null {
   return el.closest("[data-card-canvas]") as HTMLElement | null
 }
 
+/** Clamps note `left`/`top` (px) so the outer box — or rotated inner AABB — stays inside padded bounds. */
+function clampNotePositionInBounds(args: {
+  bounds: HTMLElement
+  containerEl: HTMLElement
+  rotatedInnerEl: HTMLElement | null
+  padding: number
+  x: number
+  y: number
+}): { x: number; y: number } {
+  const boundsRect = args.bounds.getBoundingClientRect()
+  const outerRect = args.containerEl.getBoundingClientRect()
+  const rotatedRect = args.rotatedInnerEl?.getBoundingClientRect()
+
+  let minX = args.padding
+  let maxX = boundsRect.width - outerRect.width - args.padding
+  let minY = args.padding
+  let maxY = boundsRect.height - outerRect.height - args.padding
+
+  if (rotatedRect && args.rotatedInnerEl) {
+    const dl = rotatedRect.left - outerRect.left
+    const dt = rotatedRect.top - outerRect.top
+    minX = args.padding - dl
+    maxX =
+      boundsRect.width -
+      args.padding -
+      (rotatedRect.right - outerRect.left)
+    minY = args.padding - dt
+    maxY =
+      boundsRect.height -
+      args.padding -
+      (rotatedRect.bottom - outerRect.top)
+  }
+
+  return {
+    x: Math.max(minX, Math.min(maxX, args.x)),
+    y: Math.max(minY, Math.min(maxY, args.y)),
+  }
+}
+
 // Draggable wrapper for positioning content
 export function DraggableWrapper({
   children,
@@ -34,6 +73,7 @@ export function DraggableWrapper({
   rotationDegrees = 0,
   onLayoutCommit,
   footer,
+  onFocusLeave,
 }: {
   children: ReactNode
   editable?: boolean
@@ -51,6 +91,11 @@ export function DraggableWrapper({
   }) => void
   /** Renders below the note; positioned to span the card canvas width while moving with the draggable. */
   footer?: ReactNode
+  /**
+   * Fires when focus leaves this wrapper (message + footer toolbar). Needed because the footer is
+   * outside the message subtree; `blur` on the message alone does not run when closing from toolbar controls.
+   */
+  onFocusLeave?: () => void
 }) {
   const [position, setPosition] = useState<{
     x: number | null
@@ -164,37 +209,18 @@ export function DraggableWrapper({
         if (containerRef.current) {
           const bounds = getDraggableBoundsParent(containerRef.current)
           if (bounds) {
-            const boundsRect = bounds.getBoundingClientRect()
-            const outerRect = containerRef.current.getBoundingClientRect()
-            const rotatedEl = rotatedInnerRef.current
-            const rotatedRect = rotatedEl?.getBoundingClientRect()
-
-            let minX = CANVAS_PADDING
-            let maxX = boundsRect.width - outerRect.width - CANVAS_PADDING
-            let minY = CANVAS_PADDING
-            let maxY = boundsRect.height - outerRect.height - CANVAS_PADDING
-
-            if (rotatedRect && rotatedEl) {
-              const dl = rotatedRect.left - outerRect.left
-              const dt = rotatedRect.top - outerRect.top
-              minX = CANVAS_PADDING - dl
-              maxX =
-                boundsRect.width -
-                CANVAS_PADDING -
-                (rotatedRect.right - outerRect.left)
-              minY = CANVAS_PADDING - dt
-              maxY =
-                boundsRect.height -
-                CANVAS_PADDING -
-                (rotatedRect.bottom - outerRect.top)
-            }
-
             const nextX = startPos.current.posX + dx
             const nextY = startPos.current.posY + dy
-            setPosition({
-              x: Math.max(minX, Math.min(maxX, nextX)),
-              y: Math.max(minY, Math.min(maxY, nextY)),
-            })
+            setPosition(
+              clampNotePositionInBounds({
+                bounds,
+                containerEl: containerRef.current,
+                rotatedInnerEl: rotatedInnerRef.current,
+                padding: CANVAS_PADDING,
+                x: nextX,
+                y: nextY,
+              }),
+            )
           } else {
             setPosition({
               x: startPos.current.posX + dx,
@@ -278,12 +304,39 @@ export function DraggableWrapper({
     })
   }, [initialWidthPercent])
 
+  useLayoutEffect(() => {
+    if (position.x === null || position.y === null) return
+    const container = containerRef.current
+    if (!container) return
+    const bounds = getDraggableBoundsParent(container)
+    if (!bounds) return
+
+    const clamped = clampNotePositionInBounds({
+      bounds,
+      containerEl: container,
+      rotatedInnerEl: rotatedInnerRef.current,
+      padding: CANVAS_PADDING,
+      x: position.x,
+      y: position.y,
+    })
+
+    if (clamped.x !== position.x || clamped.y !== position.y) {
+      setPosition(clamped)
+    }
+  }, [rotationDegrees, size.width, position.x, position.y, CANVAS_PADDING])
+
   const isPositioned = position.x !== null && position.y !== null
 
   return (
     <div
       ref={containerRef}
       className="relative"
+      onBlur={(e) => {
+        if (!onFocusLeave) return
+        const next = e.relatedTarget as Node | null
+        if (next && containerRef.current?.contains(next)) return
+        onFocusLeave()
+      }}
       style={
         isPositioned
           ? {
