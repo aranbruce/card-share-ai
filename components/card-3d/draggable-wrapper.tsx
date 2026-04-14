@@ -31,6 +31,7 @@ export function DraggableWrapper({
   isActive = true,
   initialOffset,
   initialWidthPercent,
+  rotationDegrees = 0,
   onLayoutCommit,
   footer,
 }: {
@@ -41,6 +42,8 @@ export function DraggableWrapper({
   initialOffset?: { x: number; y: number }
   /** Default 100; placed notes often use ~75 */
   initialWidthPercent?: number
+  /** Slight tilt in degrees; defaults to 0 */
+  rotationDegrees?: number
   onLayoutCommit?: (layout: {
     x: number
     y: number
@@ -263,7 +266,7 @@ export function DraggableWrapper({
   return (
     <div
       ref={containerRef}
-      className="group relative"
+      className="relative"
       style={
         isPositioned
           ? {
@@ -277,34 +280,39 @@ export function DraggableWrapper({
             }
       }
     >
-      {editable && isActive && (
-        <>
-          <div
-            role="button"
-            tabIndex={-1}
-            data-note-chrome
-            aria-label="Move note"
-            onMouseDown={(e) => handleMouseDown(e, "drag")}
-            className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Move className="h-3 w-3 text-muted-foreground" />
-          </div>
+      <div
+        className="group relative transition-transform"
+        style={{ transform: `rotate(${rotationDegrees}deg)` }}
+      >
+        {editable && isActive && (
+          <>
+            <div
+              role="button"
+              tabIndex={-1}
+              data-note-chrome
+              aria-label="Move note"
+              onMouseDown={(e) => handleMouseDown(e, "drag")}
+              className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Move className="h-3 w-3 text-muted-foreground" />
+            </div>
 
-          <div
-            role="button"
-            tabIndex={-1}
-            data-note-chrome
-            aria-label="Resize note"
-            onMouseDown={(e) => handleMouseDown(e, "resize")}
-            className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Maximize2 className="h-3 w-3 text-muted-foreground" />
-          </div>
+            <div
+              role="button"
+              tabIndex={-1}
+              data-note-chrome
+              aria-label="Resize note"
+              onMouseDown={(e) => handleMouseDown(e, "resize")}
+              className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Maximize2 className="h-3 w-3 text-muted-foreground" />
+            </div>
 
-          <div className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/30 p-2 transition-colors group-hover:border-primary/50" />
-        </>
-      )}
-      {children}
+            <div className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/30 p-2 transition-colors group-hover:border-primary/50" />
+          </>
+        )}
+        {children}
+      </div>
       {footer && footerPlacement ? (
         <div
           className="pointer-events-auto z-20"

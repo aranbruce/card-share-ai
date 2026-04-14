@@ -81,6 +81,7 @@ export function ComposeDraftEditor({
           y: composeDraft.y,
         }}
         initialWidthPercent={composeDraft.widthPercent ?? 75}
+        rotationDegrees={composeDraft.rotationDegrees ?? 0}
         onLayoutCommit={(layout) =>
           onComposeDraftChange({
             x: layout.x,
@@ -180,8 +181,6 @@ export function ComposeDraftEditor({
             className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
             style={{
               fontSize: `${snapMessageFontSize(composeDraft.fontSize ?? messageFontSize)}px`,
-              transform: `rotate(${snapMessageRotationDegrees(composeDraft.rotationDegrees ?? 0)}deg)`,
-              transformOrigin: "center",
               ...(composeDraft.textColor
                 ? { color: composeDraft.textColor }
                 : {}),

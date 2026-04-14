@@ -394,6 +394,7 @@ export function Card3D({
                 ? contrib.width_percent
                 : undefined
             }
+            rotationDegrees={contrib.rotation_degrees ?? 0}
             onLayoutCommit={
               onContributionLayoutChange
                 ? (layout) =>
@@ -556,8 +557,6 @@ export function Card3D({
                 className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
                 style={{
                   fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
-                  transform: `rotate(${snapMessageRotationDegrees(contrib.rotation_degrees ?? 0)}deg)`,
-                  transformOrigin: "center",
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
                 }}
                 placeholder="Type your message…"
@@ -581,13 +580,12 @@ export function Card3D({
               ? contrib.width_percent
               : undefined
           }
+          rotationDegrees={contrib.rotation_degrees ?? 0}
         >
           <p
             className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
             style={{
               fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
-              transform: `rotate(${snapMessageRotationDegrees(contrib.rotation_degrees ?? 0)}deg)`,
-              transformOrigin: "center",
               ...(contrib.text_color ? { color: contrib.text_color } : {}),
             }}
           >
