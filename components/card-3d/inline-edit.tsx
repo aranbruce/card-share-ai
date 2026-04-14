@@ -328,6 +328,22 @@ export const InlineEdit = forwardRef<
     return Object.keys(m).length ? m : undefined
   })()
 
+  const editStyle: CSSProperties | undefined = (() => {
+    if (!style) return undefined
+    const base = { ...style } as CSSProperties & {
+      "--refine-shimmer-base"?: string
+    }
+    if (
+      isRegenerating &&
+      regenerateShimmerTone === "paper" &&
+      style.color != null &&
+      String(style.color).length > 0
+    ) {
+      base["--refine-shimmer-base"] = String(style.color)
+    }
+    return base
+  })()
+
   return (
     <div
       ref={containerRef}
@@ -339,12 +355,6 @@ export const InlineEdit = forwardRef<
       }}
     >
       <div className="relative w-full min-w-0">
-        {isRegenerating ? (
-          <RegenerateShimmerOverlay
-            tone={regenerateShimmerTone}
-            className="absolute inset-0 z-20"
-          />
-        ) : null}
         {/* Outside contentEditable so React does not fight the browser over children (insertBefore errors).
             Match `editRef` horizontal padding so the hint does not jump when switching to edit mode. */}
         {isEditing && showActivePlaceholder ? (
@@ -372,10 +382,15 @@ export const InlineEdit = forwardRef<
               onChange &&
               !isEditing &&
               "cursor-text transition-colors hover:bg-primary/5",
-            isRegenerating && "opacity-90",
+            isRegenerating &&
+              regenerateShimmerTone === "cover" &&
+              "ai-refine-shimmer-text-cover rounded-sm",
+            isRegenerating &&
+              regenerateShimmerTone === "paper" &&
+              "ai-refine-shimmer-text-paper rounded-sm",
             isEditing && "outline-none",
           )}
-          style={style}
+          style={editStyle ?? style}
           contentEditable={Boolean(editable && onChange && isEditing)}
           suppressContentEditableWarning
           onBlur={handleBlur}
