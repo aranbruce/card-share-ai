@@ -6,6 +6,7 @@ ALTER TABLE card_contributions ADD COLUMN IF NOT EXISTS edit_token TEXT UNIQUE;
 
 -- 2) RLS so PATCH works (from 004_card_contributions_update_policy.sql)
 DROP POLICY IF EXISTS "Anyone can update contributions" ON card_contributions;
+DROP POLICY IF EXISTS "Card owners can update contributions" ON card_contributions;
 CREATE POLICY "Card owners can update contributions" ON card_contributions
   FOR UPDATE
   USING (

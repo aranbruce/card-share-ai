@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!field || !cardType) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 },
+        { status: 400, headers: rateLimit.headers },
       )
     }
 
@@ -60,7 +60,10 @@ User's request for the change: "${userPrompt}"
 
 Rewrite the note to be warm and personal. Keep it concise. Respond with the note text only: plain characters, no leading or trailing " or ' characters, no markdown, no labels.`
     } else {
-      return NextResponse.json({ error: "Invalid field" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid field" },
+        { status: 400, headers: rateLimit.headers },
+      )
     }
 
     const { text } = await generateText({

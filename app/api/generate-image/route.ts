@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     if (!trimmedPrompt) {
       return NextResponse.json(
         { error: "Image prompt is required" },
-        { status: 400 },
+        { status: 400, headers: rate.headers },
       )
     }
 
@@ -133,14 +133,20 @@ export async function POST(request: NextRequest) {
     if (sourceRaw) {
       const parsed = parseSourceImageInput(sourceRaw)
       if (!parsed.ok) {
-        return NextResponse.json({ error: parsed.message }, { status: 400 })
+        return NextResponse.json(
+          { error: parsed.message },
+          { status: 400, headers: rate.headers },
+        )
       }
       if (parsed.kind === "data") {
         source = parsed.bytes
       } else {
         const fetched = await fetchHttpsSourceImageBytes(parsed.url)
         if (!fetched.ok) {
-          return NextResponse.json({ error: fetched.message }, { status: 400 })
+          return NextResponse.json(
+            { error: fetched.message },
+            { status: 400, headers: rate.headers },
+          )
         }
         source = fetched.bytes
       }
