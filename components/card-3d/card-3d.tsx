@@ -12,6 +12,7 @@ import {
 import {
   MessageFormattingToolbar,
   snapMessageFontSize,
+  snapMessageRotationDegrees,
 } from "./message-formatting-toolbar"
 import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 import {
@@ -46,6 +47,8 @@ import {
 } from "react"
 
 const MESSAGES_SECTION_LABEL = "Messages"
+
+const DEFAULT_CONTRIBUTION_ROTATION_DEGREES = 0
 
 export function Card3D({
   imageUrl,
@@ -358,6 +361,18 @@ export function Card3D({
       (contrib) => effectiveContributionPage(contrib) === pageIdx,
     )
 
+  const withContributionDefaults = (contrib: (typeof contributions)[number]) => ({
+    x: typeof contrib.position_x === "number" ? contrib.position_x : 24,
+    y: typeof contrib.position_y === "number" ? contrib.position_y : 24,
+    widthPercent:
+      typeof contrib.width_percent === "number" ? contrib.width_percent : 75,
+    pageIndex:
+      typeof contrib.page_index === "number" ? contrib.page_index : validMessagePage,
+    fontSize: contrib.font_size ?? messageFontSize,
+    textColor: contrib.text_color ?? null,
+    rotationDegrees: contrib.rotation_degrees ?? null,
+  })
+
   const renderContributionsForPage = (pageIdx: number) => {
     return getContributionsForPage(pageIdx).map((contrib) => {
       const canCanvasEdit =
@@ -423,47 +438,25 @@ export function Card3D({
                       fontSize={contrib.font_size ?? messageFontSize}
                       onFontSizeChange={(newSize) =>
                         onContributionLayoutChange(contrib.id, {
-                          x:
-                            typeof contrib.position_x === "number"
-                              ? contrib.position_x
-                              : 24,
-                          y:
-                            typeof contrib.position_y === "number"
-                              ? contrib.position_y
-                              : 24,
-                          widthPercent:
-                            typeof contrib.width_percent === "number"
-                              ? contrib.width_percent
-                              : 75,
-                          pageIndex:
-                            typeof contrib.page_index === "number"
-                              ? contrib.page_index
-                              : pageIdx,
+                          ...withContributionDefaults(contrib),
+                          pageIndex: pageIdx,
                           fontSize: newSize,
-                          textColor: contrib.text_color ?? null,
                         })
                       }
                       textColor={contrib.text_color ?? null}
                       onTextColorChange={(hex) =>
                         onContributionLayoutChange(contrib.id, {
-                          x:
-                            typeof contrib.position_x === "number"
-                              ? contrib.position_x
-                              : 24,
-                          y:
-                            typeof contrib.position_y === "number"
-                              ? contrib.position_y
-                              : 24,
-                          widthPercent:
-                            typeof contrib.width_percent === "number"
-                              ? contrib.width_percent
-                              : 75,
-                          pageIndex:
-                            typeof contrib.page_index === "number"
-                              ? contrib.page_index
-                              : pageIdx,
-                          fontSize: contrib.font_size ?? messageFontSize,
+                          ...withContributionDefaults(contrib),
+                          pageIndex: pageIdx,
                           textColor: hex,
+                        })
+                      }
+                      rotationDegrees={contrib.rotation_degrees ?? null}
+                      onRotationDegreesChange={(deg) =>
+                        onContributionLayoutChange(contrib.id, {
+                          ...withContributionDefaults(contrib),
+                          pageIndex: pageIdx,
+                          rotationDegrees: deg,
                         })
                       }
                       showPage={totalPages > 1}
@@ -475,21 +468,8 @@ export function Card3D({
                       onPageChange={(newPage) => {
                         setCurrentPage(newPage)
                         onContributionLayoutChange(contrib.id, {
-                          x:
-                            typeof contrib.position_x === "number"
-                              ? contrib.position_x
-                              : 24,
-                          y:
-                            typeof contrib.position_y === "number"
-                              ? contrib.position_y
-                              : 24,
-                          widthPercent:
-                            typeof contrib.width_percent === "number"
-                              ? contrib.width_percent
-                              : 75,
+                          ...withContributionDefaults(contrib),
                           pageIndex: newPage,
-                          fontSize: contrib.font_size ?? messageFontSize,
-                          textColor: contrib.text_color ?? null,
                         })
                       }}
                       totalPages={totalPages}
@@ -578,6 +558,8 @@ export function Card3D({
                 className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
                 style={{
                   fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
+                  transform: `rotate(${snapMessageRotationDegrees(contrib.rotation_degrees ?? 0)}deg)`,
+                  transformOrigin: "center",
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
                 }}
                 placeholder="Type your message…"
@@ -606,6 +588,8 @@ export function Card3D({
             className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
             style={{
               fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
+              transform: `rotate(${snapMessageRotationDegrees(contrib.rotation_degrees ?? 0)}deg)`,
+              transformOrigin: "center",
               ...(contrib.text_color ? { color: contrib.text_color } : {}),
             }}
           >
@@ -869,6 +853,7 @@ export function Card3D({
                                     ? (hex) => onMessageTextColorChange(hex)
                                     : undefined
                                 }
+                                rotationDegrees={undefined}
                                 showPage={totalPages > 1}
                                 pageValue={validMessagePage}
                                 onPageChange={(newPage) => {

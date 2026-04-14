@@ -9,4 +9,6 @@ export type CardComposeDraft = {
   fontSize?: number
   /** Hex `#RRGGBB`; omit for theme default */
   textColor?: string | null
+  /** Slight tilt in degrees; null/omit = no rotation */
+  rotationDegrees?: number | null
 }

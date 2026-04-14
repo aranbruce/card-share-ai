@@ -1,7 +1,11 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Layers, Palette, Type } from "lucide-react"
+import {
+  MAX_CONTRIBUTION_ROTATION_DEGREES,
+  MIN_CONTRIBUTION_ROTATION_DEGREES,
+} from "@/lib/contribution-rotation"
+import { Layers, Palette, RotateCw, Type } from "lucide-react"
 import type { ReactNode } from "react"
 
 /** Discrete text sizes for inner messages (card canvas / compose). */
@@ -34,6 +38,15 @@ export function snapMessageFontSize(px: number) {
 
 /** Shown when `text_color` is unset (theme handles actual foreground). */
 export const DEFAULT_MESSAGE_TEXT_COLOR_HEX = "#171717"
+export const DEFAULT_MESSAGE_ROTATION_DEGREES = 0
+
+export function snapMessageRotationDegrees(deg: number) {
+  const bounded = Math.max(
+    MIN_CONTRIBUTION_ROTATION_DEGREES,
+    Math.min(MAX_CONTRIBUTION_ROTATION_DEGREES, deg),
+  )
+  return Math.round(bounded)
+}
 
 const messageFormatSelectClassName =
   "max-w-[9rem] cursor-pointer rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -43,6 +56,8 @@ export function MessageFormattingToolbar({
   onFontSizeChange,
   textColor,
   onTextColorChange,
+  rotationDegrees = DEFAULT_MESSAGE_ROTATION_DEGREES,
+  onRotationDegreesChange,
   showPage,
   pageValue,
   onPageChange,
@@ -54,6 +69,8 @@ export function MessageFormattingToolbar({
   onFontSizeChange: (px: number) => void
   textColor?: string | null
   onTextColorChange?: (hex: string | null) => void
+  rotationDegrees?: number | null
+  onRotationDegreesChange?: (deg: number) => void
   showPage: boolean
   pageValue: number
   onPageChange: (pageIndex: number) => void
@@ -63,6 +80,9 @@ export function MessageFormattingToolbar({
 }) {
   const snapped = snapMessageFontSize(fontSize)
   const colorInputValue = textColor ?? DEFAULT_MESSAGE_TEXT_COLOR_HEX
+  const snappedRotation = snapMessageRotationDegrees(
+    rotationDegrees ?? DEFAULT_MESSAGE_ROTATION_DEGREES,
+  )
   return (
     <div
       role="toolbar"
@@ -106,6 +126,35 @@ export function MessageFormattingToolbar({
               onChange={(e) => onTextColorChange(e.target.value)}
               title="Text color"
             />
+          </span>
+        ) : null}
+        {onRotationDegreesChange ? (
+          <span className="flex items-center gap-1.5">
+            <RotateCw
+              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <label className="sr-only">Text rotation</label>
+            <select
+              className={cn(messageFormatSelectClassName, "max-w-[7.5rem]")}
+              value={snappedRotation}
+              onMouseDown={(e) => e.stopPropagation()}
+              onChange={(e) => onRotationDegreesChange(Number(e.target.value))}
+            >
+              {Array.from(
+                {
+                  length:
+                    MAX_CONTRIBUTION_ROTATION_DEGREES -
+                    MIN_CONTRIBUTION_ROTATION_DEGREES +
+                    1,
+                },
+                (_, i) => MIN_CONTRIBUTION_ROTATION_DEGREES + i,
+              ).map((deg) => (
+                <option key={deg} value={deg}>
+                  {deg > 0 ? `+${deg}°` : `${deg}°`}
+                </option>
+              ))}
+            </select>
           </span>
         ) : null}
         {showPage ? (

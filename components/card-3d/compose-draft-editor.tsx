@@ -11,6 +11,7 @@ import {
 import {
   MessageFormattingToolbar,
   snapMessageFontSize,
+  snapMessageRotationDegrees,
 } from "./message-formatting-toolbar"
 import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 
@@ -118,6 +119,10 @@ export function ComposeDraftEditor({
                   onTextColorChange={(hex) =>
                     onComposeDraftChange({ textColor: hex })
                   }
+                  rotationDegrees={composeDraft.rotationDegrees ?? null}
+                  onRotationDegreesChange={(deg) =>
+                    onComposeDraftChange({ rotationDegrees: deg })
+                  }
                   showPage={totalPages > 1}
                   pageValue={composeDraft.pageIndex}
                   onPageChange={onSelectInnerPage}
@@ -175,6 +180,8 @@ export function ComposeDraftEditor({
             className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
             style={{
               fontSize: `${snapMessageFontSize(composeDraft.fontSize ?? messageFontSize)}px`,
+              transform: `rotate(${snapMessageRotationDegrees(composeDraft.rotationDegrees ?? 0)}deg)`,
+              transformOrigin: "center",
               ...(composeDraft.textColor
                 ? { color: composeDraft.textColor }
                 : {}),
