@@ -2,6 +2,11 @@ import { Buffer } from "node:buffer"
 import { NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import type { GeneratedFile, ModelMessage } from "ai"
+import {
+  MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH,
+  MAX_SOURCE_IMAGE_BASE64_CHARS,
+  MAX_SOURCE_IMAGE_BYTES,
+} from "@/lib/source-image-limits"
 
 /** Nano Banana 2 — use `generateText`; image outputs are in `files`. */
 const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
@@ -20,6 +25,9 @@ function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
   }
 
   if (trimmed.startsWith("https://")) {
+    if (trimmed.length > MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH) {
+      return { ok: false, message: "Source image URL is too long" }
+    }
     try {
       const parsed = new URL(trimmed)
       if (parsed.protocol !== "https:") {
@@ -49,8 +57,21 @@ function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
         message: "Source image data URL must be base64-encoded",
       }
     }
-    const b64 = trimmed.slice(comma + 1)
-    return { ok: true, input: Buffer.from(b64, "base64") }
+    const b64 = trimmed.slice(comma + 1).replace(/\s/g, "")
+    if (b64.length > MAX_SOURCE_IMAGE_BASE64_CHARS) {
+      return {
+        ok: false,
+        message: "Source image data URL exceeds maximum size",
+      }
+    }
+    const decoded = Buffer.from(b64, "base64")
+    if (decoded.length === 0 || decoded.length > MAX_SOURCE_IMAGE_BYTES) {
+      return {
+        ok: false,
+        message: "Source image data URL exceeds maximum size",
+      }
+    }
+    return { ok: true, input: decoded }
   }
 
   return {

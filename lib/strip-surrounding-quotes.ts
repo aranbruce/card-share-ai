@@ -4,7 +4,7 @@
 export function stripSurroundingQuotes(raw: string): string {
   let s = raw.trim()
   const pairs: Array<[string, string]> = [
-    ['"', '"'],
+    ["\"", "\""],
     ["'", "'"],
     ["\u201c", "\u201d"],
     ["\u2018", "\u2019"],

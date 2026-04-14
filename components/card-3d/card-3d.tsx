@@ -28,6 +28,7 @@ import {
   capSpreadToCommitted,
   type CommittedSpreadSnapshot,
 } from "./card-page-spread"
+import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
@@ -716,7 +717,9 @@ export function Card3D({
                                   ) {
                                     void onRegenerateImage?.(
                                       imagePromptText.trim(),
-                                      imageUrl || undefined,
+                                      sourceImageUrlForRefineRequest(
+                                        imageUrl || undefined,
+                                      ),
                                     )
                                     setImagePromptText("")
                                     setShowImagePrompt(false)
@@ -735,7 +738,9 @@ export function Card3D({
                                   if (imagePromptText.trim()) {
                                     void onRegenerateImage?.(
                                       imagePromptText.trim(),
-                                      imageUrl || undefined,
+                                      sourceImageUrlForRefineRequest(
+                                        imageUrl || undefined,
+                                      ),
                                     )
                                     setImagePromptText("")
                                     setShowImagePrompt(false)

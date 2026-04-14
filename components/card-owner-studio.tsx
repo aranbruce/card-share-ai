@@ -293,13 +293,18 @@ export function CardOwnerStudio({
         throw new Error(typeof p.error === "string" ? p.error : "Save failed")
       }
       const { card: next } = await res.json()
-      // Merge server row with fields we just sent so large `image_url` data URLs
-      // cannot be replaced by a stale or omitted value from the response.
+      // Prefer the PATCH response for every field the server returns. Only fill in
+      // from `updates` when the response omits a key (e.g. very large `image_url`
+      // stripped from JSON) so we do not overwrite a processed value such as a CDN
+      // URL with the client-sent data URL.
       setCard((prev) => {
         if (!next) return prev
         const merged = { ...(prev ?? {}), ...next } as OwnerCard
+        const serverRow = next as Record<string, unknown>
         for (const [k, v] of Object.entries(updates)) {
-          if (v !== undefined) {
+          if (v === undefined) continue
+          const serverVal = serverRow[k]
+          if (serverVal === undefined || serverVal === null) {
             ;(merged as Record<string, unknown>)[k] = v
           }
         }
