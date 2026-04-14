@@ -11,7 +11,6 @@ import {
 import {
   MessageFormattingToolbar,
   snapMessageFontSize,
-  snapMessageRotationDegrees,
 } from "./message-formatting-toolbar"
 import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 

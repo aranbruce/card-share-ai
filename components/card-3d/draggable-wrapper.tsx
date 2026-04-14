@@ -66,6 +66,7 @@ export function DraggableWrapper({
   const [isResizing, setIsResizing] = useState(false)
   const [dragStarted, setDragStarted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const rotatedInnerRef = useRef<HTMLDivElement>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const DRAG_THRESHOLD = 5
   const CANVAS_PADDING = CANVAS_EDGE_PADDING
@@ -164,20 +165,35 @@ export function DraggableWrapper({
           const bounds = getDraggableBoundsParent(containerRef.current)
           if (bounds) {
             const boundsRect = bounds.getBoundingClientRect()
-            const selfRect = containerRef.current.getBoundingClientRect()
+            const outerRect = containerRef.current.getBoundingClientRect()
+            const rotatedEl = rotatedInnerRef.current
+            const rotatedRect = rotatedEl?.getBoundingClientRect()
 
-            const maxX = boundsRect.width - selfRect.width - CANVAS_PADDING
-            const maxY = boundsRect.height - selfRect.height - CANVAS_PADDING
+            let minX = CANVAS_PADDING
+            let maxX = boundsRect.width - outerRect.width - CANVAS_PADDING
+            let minY = CANVAS_PADDING
+            let maxY = boundsRect.height - outerRect.height - CANVAS_PADDING
 
+            if (rotatedRect && rotatedEl) {
+              const dl = rotatedRect.left - outerRect.left
+              const dt = rotatedRect.top - outerRect.top
+              minX = CANVAS_PADDING - dl
+              maxX =
+                boundsRect.width -
+                CANVAS_PADDING -
+                (rotatedRect.right - outerRect.left)
+              minY = CANVAS_PADDING - dt
+              maxY =
+                boundsRect.height -
+                CANVAS_PADDING -
+                (rotatedRect.bottom - outerRect.top)
+            }
+
+            const nextX = startPos.current.posX + dx
+            const nextY = startPos.current.posY + dy
             setPosition({
-              x: Math.max(
-                CANVAS_PADDING,
-                Math.min(maxX, startPos.current.posX + dx),
-              ),
-              y: Math.max(
-                CANVAS_PADDING,
-                Math.min(maxY, startPos.current.posY + dy),
-              ),
+              x: Math.max(minX, Math.min(maxX, nextX)),
+              y: Math.max(minY, Math.min(maxY, nextY)),
             })
           } else {
             setPosition({
@@ -240,6 +256,7 @@ export function DraggableWrapper({
     position.y,
     size.width,
     CANVAS_PADDING,
+    rotationDegrees,
   ])
 
   // Depend on coordinates, not `initialOffset` identity — parents often pass
@@ -281,6 +298,7 @@ export function DraggableWrapper({
       }
     >
       <div
+        ref={rotatedInnerRef}
         className="group relative transition-transform"
         style={{ transform: `rotate(${rotationDegrees}deg)` }}
       >

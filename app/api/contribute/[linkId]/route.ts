@@ -32,7 +32,8 @@ export async function POST(
     const pageIndex = body.pageIndex as unknown
     const fontSize = body.fontSize as unknown
     const textColorRaw = body.textColor as unknown
-    const rotationDegreesRaw = body.rotationDegrees as unknown
+    const rotationDegreesRaw =
+      (body.rotationDegrees ?? body.rotation_degrees) as unknown
 
     const msg = typeof message === "string" ? message.trim() : ""
     if (!msg) {
