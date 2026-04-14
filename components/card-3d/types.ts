@@ -18,6 +18,8 @@ export interface Card3DProps {
     font_size?: number | null
     /** Hex `#RRGGBB`; null/omit = theme default */
     text_color?: string | null
+    /** Slight tilt in degrees; null/omit = no rotation */
+    rotation_degrees?: number | null
     is_creator?: boolean | null
   }>
   editable?: boolean
@@ -65,6 +67,7 @@ export interface Card3DProps {
       pageIndex: number
       fontSize?: number
       textColor?: string | null
+      rotationDegrees?: number | null
     },
   ) => void
   onContributionRegenerateMessage?: (

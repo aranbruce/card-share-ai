@@ -11,6 +11,8 @@ export type ContributionRow = {
   font_size?: number | null
   /** Hex `#RRGGBB`; null uses theme text color */
   text_color?: string | null
+  /** Slight tilt in degrees; null uses no rotation */
+  rotation_degrees?: number | null
 }
 
 /**

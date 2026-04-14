@@ -20,6 +20,7 @@ interface Contribution {
   page_index?: number | null
   font_size?: number | null
   text_color?: string | null
+  rotation_degrees?: number | null
   is_creator?: boolean | null
 }
 
@@ -117,6 +118,7 @@ export default function ContributeCardPage() {
         pageIndex?: number
         fontSize?: number
         textColor?: string | null
+        rotationDegrees?: number | null
       },
       editToken: string,
     ) => {
@@ -163,6 +165,7 @@ export default function ContributeCardPage() {
         pageIndex: number
         fontSize?: number
         textColor?: string | null
+        rotationDegrees?: number | null
       },
     ) => {
       setContributions((prev) =>
@@ -179,6 +182,10 @@ export default function ContributeCardPage() {
                   layout.textColor === undefined
                     ? c.text_color
                     : layout.textColor,
+                rotation_degrees:
+                  layout.rotationDegrees === undefined
+                    ? c.rotation_degrees
+                    : layout.rotationDegrees,
               }
             : c,
         ),
@@ -197,6 +204,9 @@ export default function ContributeCardPage() {
             fontSize: layout.fontSize,
             ...(layout.textColor !== undefined && {
               textColor: layout.textColor,
+            }),
+            ...(layout.rotationDegrees !== undefined && {
+              rotationDegrees: layout.rotationDegrees,
             }),
           },
           token,
@@ -307,6 +317,7 @@ export default function ContributeCardPage() {
           pageIndex: draft.pageIndex,
           fontSize: draft.fontSize,
           textColor: draft.textColor,
+          rotationDegrees: draft.rotationDegrees,
         }),
       })
 
@@ -456,6 +467,7 @@ export default function ContributeCardPage() {
                       y: pt.y,
                       pageIndex: pt.pageIndex,
                       textColor: randomPresetTextColor(),
+                      rotationDegrees: 0,
                     })
                   }
                 : undefined
