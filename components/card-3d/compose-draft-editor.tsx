@@ -65,11 +65,6 @@ export function ComposeDraftEditor({
     <div
       className="absolute inset-0 z-20"
       onFocus={() => setIsFocused(true)}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setIsFocused(false)
-        }
-      }}
     >
       <DraggableWrapper
         key={`compose-draft-p${composeDraft.pageIndex}`}
@@ -88,6 +83,10 @@ export function ComposeDraftEditor({
             widthPercent: layout.widthPercent,
           })
         }
+        onFocusLeave={() => {
+          messageInlineRef.current?.closeRegeneratePrompt()
+          setIsFocused(false)
+        }}
         footer={
           isFocused ? (
             composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (

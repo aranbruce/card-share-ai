@@ -121,6 +121,37 @@ export function DraggableWrapper({
     width: number
   } | null>(null)
 
+  const onFocusLeaveRef = useRef(onFocusLeave)
+  onFocusLeaveRef.current = onFocusLeave
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const handler = (e: FocusEvent) => {
+      if (!onFocusLeaveRef.current) return
+      const next = e.relatedTarget as Node | null
+      if (next && el.contains(next)) return
+
+      const runLeave = () => {
+        if (!onFocusLeaveRef.current) return
+        const active = document.activeElement
+        if (active instanceof Node && el.contains(active)) return
+        onFocusLeaveRef.current()
+      }
+
+      // `relatedTarget` is often null when the focused control unmounts (e.g. sparkle → AI prompt)
+      // or when clicking a non-focusable surface. Defer so `autoFocus` on the next control wins.
+      if (next == null) {
+        window.setTimeout(runLeave, 0)
+        return
+      }
+
+      runLeave()
+    }
+    el.addEventListener("focusout", handler)
+    return () => el.removeEventListener("focusout", handler)
+  }, [])
+
   const hasFooter = footer != null && footer !== false
 
   useLayoutEffect(() => {
@@ -331,12 +362,6 @@ export function DraggableWrapper({
     <div
       ref={containerRef}
       className="relative"
-      onBlur={(e) => {
-        if (!onFocusLeave) return
-        const next = e.relatedTarget as Node | null
-        if (next && containerRef.current?.contains(next)) return
-        onFocusLeave()
-      }}
       style={
         isPositioned
           ? {

@@ -403,6 +403,9 @@ export function Card3D({
                 : undefined
             }
             onFocusLeave={() => {
+              contributionInlineRegenRefs.current
+                .get(contrib.id)
+                ?.closeRegeneratePrompt()
               setEditingContributionId((id) =>
                 id === contrib.id ? null : id,
               )
@@ -790,6 +793,9 @@ export function Card3D({
                     <div className="pointer-events-none relative z-10 flex min-h-[360px] flex-col justify-center *:pointer-events-auto">
                       <DraggableWrapper
                         editable={editable}
+                        onFocusLeave={() => {
+                          mainMessageInlineRef.current?.closeRegeneratePrompt()
+                        }}
                         footer={
                           editable &&
                           !editingContributionOnCanvas &&
