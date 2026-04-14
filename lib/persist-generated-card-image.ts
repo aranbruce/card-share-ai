@@ -37,12 +37,10 @@ export async function persistGeneratedCardImage(
   const path = `covers/${randomUUID()}.${ext}`
   const contentType = file.mediaType.split(";")[0].trim() || "image/png"
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, bytes, {
-      contentType,
-      upsert: false,
-    })
+  const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, {
+    contentType,
+    upsert: false,
+  })
 
   if (error) {
     console.error("[persistGeneratedCardImage] upload failed:", error.message)

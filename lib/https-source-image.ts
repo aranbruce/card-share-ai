@@ -52,7 +52,10 @@ function isHostnameBlocked(ipLiteral: string): boolean {
   return false
 }
 
-function assertHttpsSourceImageUrl(url: URL, allow: Set<string>): string | null {
+function assertHttpsSourceImageUrl(
+  url: URL,
+  allow: Set<string>,
+): string | null {
   if (url.protocol !== "https:") {
     return "Source image URL must use https"
   }
@@ -79,7 +82,10 @@ function assertHttpsSourceImageUrl(url: URL, allow: Set<string>): string | null 
   return null
 }
 
-async function readBodyWithCap(res: Response, maxBytes: number): Promise<Uint8Array> {
+async function readBodyWithCap(
+  res: Response,
+  maxBytes: number,
+): Promise<Uint8Array> {
   const reader = res.body?.getReader()
   if (!reader) {
     const buf = Buffer.from(await res.arrayBuffer())
@@ -155,9 +161,13 @@ export async function fetchHttpsSourceImageBytes(
       return { ok: false, message: "Failed to fetch source image" }
     }
 
-    const ct = (res.headers.get("content-type") ?? "").split(";")[0]?.trim() ?? ""
+    const ct =
+      (res.headers.get("content-type") ?? "").split(";")[0]?.trim() ?? ""
     if (!ct.startsWith("image/")) {
-      return { ok: false, message: "Source URL must respond with an image content type" }
+      return {
+        ok: false,
+        message: "Source URL must respond with an image content type",
+      }
     }
 
     const cl = res.headers.get("content-length")
@@ -179,5 +189,8 @@ export async function fetchHttpsSourceImageBytes(
     }
   }
 
-  return { ok: false, message: "Too many redirects while fetching source image" }
+  return {
+    ok: false,
+    message: "Too many redirects while fetching source image",
+  }
 }
