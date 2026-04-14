@@ -34,10 +34,25 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
+SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=your_github_oauth_app_client_id
+SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 
 # Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to xAI Grok via the gateway.
 # AI_TEXT_MODEL=openai/gpt-4o
 ```
+
+### Enable GitHub login in Supabase
+
+1. In GitHub, create an OAuth App with:
+   - **Homepage URL**: your app URL (for local dev usually `http://localhost:3000`)
+   - **Authorization callback URL**:
+     `<YOUR_SUPABASE_URL>/auth/v1/callback`
+2. In Supabase Dashboard → **Authentication** → **Providers** → **GitHub**:
+   - Enable the provider
+   - Paste the GitHub OAuth app client ID and secret
+3. In Supabase Dashboard → **Authentication** → **URL Configuration**, ensure your app URL(s) are present in:
+   - Site URL
+   - Redirect URLs (e.g. `http://localhost:3000/auth/callback`)
 
 ### Installation
 

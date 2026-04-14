@@ -1,21 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
 
-export default function SignUp() {
+function SignUpForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [hasPendingCard, setHasPendingCard] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   // Check if there's a pending card
@@ -24,7 +25,7 @@ export default function SignUp() {
     setHasPendingCard(!!pendingCard)
   }, [])
 
-  const savePendingCard = async () => {
+  const savePendingCard = useCallback(async () => {
     const pendingCardData = localStorage.getItem("pendingCard")
     if (!pendingCardData) return null
 
@@ -44,6 +45,68 @@ export default function SignUp() {
     } catch (err) {
       console.error("Error saving pending card:", err)
       return null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get("oauth") !== "github") return
+
+    let cancelled = false
+
+    const completeOAuthSignUp = async () => {
+      setLoading(true)
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (cancelled) return
+
+      if (userError || !user) {
+        setError(userError?.message ?? "Could not complete GitHub sign up.")
+        setLoading(false)
+        return
+      }
+
+      const savedCardId = await savePendingCard()
+      if (cancelled) return
+
+      if (savedCardId) {
+        router.replace(`/dashboard/cards/${savedCardId}`)
+        return
+      }
+
+      const redirect = searchParams.get("redirect")
+      router.replace(redirect || "/dashboard")
+    }
+
+    void completeOAuthSignUp()
+
+    return () => {
+      cancelled = true
+    }
+  }, [router, savePendingCard, searchParams, supabase])
+
+  const handleGitHubSignUp = async () => {
+    setLoading(true)
+    setError("")
+
+    const redirect = searchParams.get("redirect") || "/dashboard"
+    const action = searchParams.get("action")
+    const nextParams = new URLSearchParams({ oauth: "github", redirect })
+    if (action) nextParams.set("action", action)
+
+    const callbackUrl = new URL("/auth/callback", window.location.origin)
+    callbackUrl.searchParams.set("next", `/auth/sign-up?${nextParams.toString()}`)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: { redirectTo: callbackUrl.toString() },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
     }
   }
 
@@ -110,6 +173,23 @@ export default function SignUp() {
           <AlertDescription>Create an account to save it.</AlertDescription>
         </Alert>
       )}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        fullWidth
+        onClick={handleGitHubSignUp}
+        disabled={loading}
+      >
+        Continue with GitHub
+      </Button>
+
+      <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        <span>or</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
 
       <form onSubmit={handleSignUp} className="space-y-4">
         {error && (
@@ -179,5 +259,15 @@ export default function SignUp() {
         </Link>
       </p>
     </>
+  )
+}
+
+export default function SignUp() {
+  return (
+    <Suspense
+      fallback={<p className="text-center text-muted-foreground">Loading…</p>}
+    >
+      <SignUpForm />
+    </Suspense>
   )
 }
