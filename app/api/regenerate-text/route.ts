@@ -1,5 +1,6 @@
 import { generateText } from "ai"
 import { NextRequest, NextResponse } from "next/server"
+import { getTextModel } from "@/lib/ai-text-model"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
 export async function POST(request: NextRequest) {
@@ -51,7 +52,7 @@ Rewrite the note to be warm and personal. Keep it concise. Respond with the note
     }
 
     const { text } = await generateText({
-      model: "openai/gpt-4o",
+      model: getTextModel(),
       messages: [
         {
           role: "user",

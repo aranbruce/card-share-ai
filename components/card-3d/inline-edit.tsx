@@ -30,7 +30,7 @@ export function RegenerateShimmerOverlay({
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-0 z-30 overflow-hidden",
+        "pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-sm",
         className,
       )}
       aria-hidden

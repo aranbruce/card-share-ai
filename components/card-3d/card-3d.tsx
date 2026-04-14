@@ -656,11 +656,18 @@ export function Card3D({
                         className={`group/image relative w-full flex-1 overflow-hidden rounded-2xl transition-all ${isRegeneratingImage ? "opacity-90" : ""}`}
                       >
                         <Image
+                          key={
+                            imageUrl.length > 128
+                              ? `${imageUrl.length}:${imageUrl.slice(-64)}`
+                              : imageUrl
+                          }
                           src={imageUrl}
                           alt="Card cover"
                           fill
                           className="object-cover"
-                          crossOrigin="anonymous"
+                          crossOrigin={
+                            imageUrl.startsWith("data:") ? undefined : "anonymous"
+                          }
                           priority
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

@@ -1,6 +1,7 @@
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { NextRequest, NextResponse } from "next/server"
+import { getTextModel } from "@/lib/ai-text-model"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
 const cardCopySchema = z.object({
@@ -74,7 +75,7 @@ Never wrap the headline, message body, sign-off, or image prompt in ASCII or cur
       : `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.`
 
     const { output } = await generateText({
-      model: "openai/gpt-4o",
+      model: getTextModel(),
       output: Output.object({
         schema: cardCopySchema,
       }),

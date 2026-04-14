@@ -1,6 +1,10 @@
 import { Buffer } from "node:buffer"
 import { NextRequest, NextResponse } from "next/server"
-import { generateImage } from "ai"
+import { generateText } from "ai"
+import type { GeneratedFile, ModelMessage } from "ai"
+
+/** Nano Banana 2 — use `generateText`; image outputs are in `files`. */
+const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
 
 type SourceImageOk = { ok: true; input: string | Uint8Array }
 type SourceImageErr = { ok: false; message: string }
@@ -56,6 +60,15 @@ function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
   }
 }
 
+/** Build a data URL from a generated image; prefer bytes so plain `{ uint8Array }` parts work. */
+function generatedImageToDataUrl(file: GeneratedFile): string {
+  const bytes =
+    file.uint8Array instanceof Uint8Array
+      ? file.uint8Array
+      : Buffer.from(file.base64, "base64")
+  return `data:${file.mediaType};base64,${Buffer.from(bytes).toString("base64")}`
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { imagePrompt, sourceImageUrl } = (await request.json()) as {
@@ -90,22 +103,35 @@ export async function POST(request: NextRequest) {
     const refinePrefix =
       "Refine this greeting card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n"
 
-    const { image } = await generateImage({
-      model: "google/gemini-3.1-flash-image-preview",
-      prompt: source
-        ? {
-            images: [source],
-            text: `${refinePrefix}${trimmedPrompt}`,
-          }
-        : trimmedPrompt,
-      aspectRatio: "1:1",
+    const prompt: ModelMessage[] = [
+      {
+        role: "user",
+        content: source
+          ? [
+              { type: "image", image: source },
+              {
+                type: "text",
+                text: `${refinePrefix}${trimmedPrompt}`,
+              },
+            ]
+          : trimmedPrompt,
+      },
+    ]
+
+    const { files } = await generateText({
+      model: GEMINI_IMAGE_MODEL,
+      prompt,
+      providerOptions: {
+        google: { responseModalities: ["TEXT", "IMAGE"] },
+      },
     })
 
-    if (!image?.base64 || !image.mediaType) {
+    const imageFile = files.find((f) => f.mediaType.startsWith("image/"))
+    if (!imageFile) {
       throw new Error("No image generated")
     }
 
-    const imageUrl = `data:${image.mediaType};base64,${image.base64}`
+    const imageUrl = generatedImageToDataUrl(imageFile)
 
     return NextResponse.json({ imageUrl })
   } catch (error) {
