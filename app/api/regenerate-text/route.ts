@@ -1,9 +1,21 @@
 import { generateText } from "ai"
 import { NextRequest, NextResponse } from "next/server"
 import { getTextModel } from "@/lib/ai-text-model"
+import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
 export async function POST(request: NextRequest) {
+  const rateLimit = checkFixedWindowRateLimit(request, {
+    namespace: "api-regenerate-text",
+    maxRequests: 30,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: rateLimit.headers },
+    )
+  }
   try {
     const {
       field,
@@ -61,14 +73,15 @@ Rewrite the note to be warm and personal. Keep it concise. Respond with the note
       ],
     })
 
-    return NextResponse.json({ text: stripSurroundingQuotes(text) })
+    return NextResponse.json(
+      { text: stripSurroundingQuotes(text) },
+      { headers: rateLimit.headers },
+    )
   } catch (error) {
     console.error("Error regenerating text:", error)
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to regenerate text", details: errorMessage },
-      { status: 500 },
+      { error: "Failed to regenerate text" },
+      { status: 500, headers: rateLimit.headers },
     )
   }
 }

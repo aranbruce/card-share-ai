@@ -9,6 +9,7 @@ import {
   MAX_SOURCE_IMAGE_BASE64_CHARS,
   MAX_SOURCE_IMAGE_BYTES,
 } from "@/lib/source-image-limits"
+import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 /** Nano Banana 2 — use `generateText`; image outputs are in `files`. */
 const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
@@ -96,6 +97,17 @@ function generatedImageToDataUrl(file: GeneratedFile): string {
 }
 
 export async function POST(request: NextRequest) {
+  const rate = checkFixedWindowRateLimit(request, {
+    namespace: "api-generate-image",
+    maxRequests: 20,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: rate.headers },
+    )
+  }
   try {
     const { imagePrompt, sourceImageUrl } = (await request.json()) as {
       imagePrompt?: string
@@ -168,12 +180,12 @@ export async function POST(request: NextRequest) {
     const persisted = await persistGeneratedCardImage(imageFile)
     const imageUrl = persisted ?? generatedImageToDataUrl(imageFile)
 
-    return NextResponse.json({ imageUrl })
+    return NextResponse.json({ imageUrl }, { headers: rate.headers })
   } catch (error) {
     console.error("Error generating image:", error)
     return NextResponse.json(
       { error: "Failed to generate image" },
-      { status: 500 },
+      { status: 500, headers: rate.headers },
     )
   }
 }

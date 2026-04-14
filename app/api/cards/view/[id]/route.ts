@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validate as isValidUuid } from "uuid"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
-import { createClient } from "@/lib/supabase/server"
+import { requireServiceRoleClient } from "@/lib/supabase/admin"
 
 const CARD_VIEW_SELECT =
   "id, sent_at, recipient_name, sender_name, copy_headline, copy_message, image_url, extra_pages"
@@ -10,13 +10,14 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  void request
   try {
     const { id } = await params
     if (!isValidUuid(id)) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 })
     }
 
-    const supabase = await createClient()
+    const supabase = requireServiceRoleClient()
 
     // Share modal links use contributor_link_id; callers may also pass the card row id
     const cardResult = await supabase

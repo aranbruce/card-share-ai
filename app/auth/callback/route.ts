@@ -2,13 +2,23 @@ import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+function resolveSafeNextPath(
+  nextParam: string | null,
+  type: string | null,
+): string {
+  const fallback = type === "recovery" ? "/auth/reset-password" : "/dashboard"
+  if (!nextParam) return fallback
+  if (!nextParam.startsWith("/")) return fallback
+  if (nextParam.startsWith("//")) return fallback
+  return nextParam
+}
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
   const type = requestUrl.searchParams.get("type")
   const nextParam = requestUrl.searchParams.get("next")
-  const next =
-    nextParam ?? (type === "recovery" ? "/auth/reset-password" : "/dashboard")
+  const next = resolveSafeNextPath(nextParam, type)
 
   const errorParam = requestUrl.searchParams.get("error")
   const errorDescription = requestUrl.searchParams.get("error_description")
