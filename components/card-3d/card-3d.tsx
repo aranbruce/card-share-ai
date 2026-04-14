@@ -28,7 +28,10 @@ import {
   capSpreadToCommitted,
   type CommittedSpreadSnapshot,
 } from "./card-page-spread"
-import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
+import {
+  looksLikeDataUrl,
+  sourceImageUrlForRefineRequest,
+} from "@/lib/source-image-limits"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
@@ -625,7 +628,7 @@ export function Card3D({
         ) : null}
         <div className="relative flex min-h-[500px] w-full flex-col overflow-visible rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out hover:shadow-2xl dark:ring-white/10">
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900" />
+            <div className="absolute inset-0 bg-linear-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900" />
             <div
               className="absolute inset-0 opacity-[0.04] mix-blend-multiply dark:opacity-[0.02] dark:mix-blend-overlay"
               style={{
@@ -634,7 +637,7 @@ export function Card3D({
               }}
             />
             {currentPage > 0 && (
-              <div className="absolute top-0 bottom-0 left-0 z-10 w-12 bg-gradient-to-r from-black/[0.06] to-transparent dark:from-black/[0.2]" />
+              <div className="absolute top-0 bottom-0 left-0 z-10 w-12 bg-linear-to-r from-black/6 to-transparent dark:from-black/20" />
             )}
           </div>
 
@@ -667,11 +670,11 @@ export function Card3D({
                           fill
                           className="object-cover"
                           crossOrigin={
-                            imageUrl.startsWith("data:") ? undefined : "anonymous"
+                            looksLikeDataUrl(imageUrl) ? undefined : "anonymous"
                           }
                           priority
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
                         {isRegeneratingImage ? (
                           <RegenerateShimmerOverlay
                             tone="cover"

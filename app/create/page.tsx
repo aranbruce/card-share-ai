@@ -193,7 +193,11 @@ export default function CreateCardPage() {
       const { imageUrl } = (await response.json()) as { imageUrl?: string }
       setCardData((prev) =>
         prev
-          ? { ...prev, imageUrl: imageUrl ?? prev.imageUrl, imagePrompt: newPrompt }
+          ? {
+              ...prev,
+              imageUrl: imageUrl ?? prev.imageUrl,
+              imagePrompt: newPrompt,
+            }
           : null,
       )
     } catch (err) {

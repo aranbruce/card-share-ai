@@ -28,10 +28,7 @@ export interface Card3DProps {
   onRegenerateHeadline?: (prompt: string) => Promise<void>
   onRegenerateMessage?: (prompt: string) => Promise<void>
   /** Second arg is the current cover image URL (data or https) for refinement. */
-  onRegenerateImage?: (
-    prompt: string,
-    sourceImageUrl?: string,
-  ) => Promise<void>
+  onRegenerateImage?: (prompt: string, sourceImageUrl?: string) => Promise<void>
   isRegeneratingHeadline?: boolean
   isRegeneratingMessage?: boolean
   isRegeneratingImage?: boolean

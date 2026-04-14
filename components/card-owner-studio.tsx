@@ -368,9 +368,7 @@ export function CardOwnerStudio({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imagePrompt: newPrompt,
-            ...(sourceImageUrl
-              ? { sourceImageUrl }
-              : {}),
+            ...(sourceImageUrl ? { sourceImageUrl } : {}),
           }),
         })
         if (!response.ok) throw new Error("Failed")
