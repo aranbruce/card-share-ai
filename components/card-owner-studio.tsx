@@ -294,17 +294,17 @@ export function CardOwnerStudio({
       }
       const { card: next } = await res.json()
       // Prefer the PATCH response for every field the server returns. Only fill in
-      // from `updates` when the response omits a key (e.g. very large `image_url`
-      // stripped from JSON) so we do not overwrite a processed value such as a CDN
-      // URL with the client-sent data URL.
+      // from `updates` when the returned row omits a property entirely (e.g. very
+      // large `image_url` stripped from JSON) so we do not overwrite a processed
+      // value such as a CDN URL with the client-sent data URL. Explicit `null` from
+      // the server is kept as authoritative.
       setCard((prev) => {
         if (!next) return prev
         const merged = { ...(prev ?? {}), ...next } as OwnerCard
         const serverRow = next as Record<string, unknown>
         for (const [k, v] of Object.entries(updates)) {
           if (v === undefined) continue
-          const serverVal = serverRow[k]
-          if (serverVal === undefined || serverVal === null) {
+          if (!Object.hasOwn(serverRow, k)) {
             ;(merged as Record<string, unknown>)[k] = v
           }
         }

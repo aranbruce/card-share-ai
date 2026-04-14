@@ -17,7 +17,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 - **Backend**: Next.js API Routes
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **AI Services**:
-  - Text Generation: Vercel AI Gateway (GPT-4o)
+  - Text Generation: Vercel AI Gateway (default `xai/grok-4.1-fast-non-reasoning`; override with `AI_TEXT_MODEL`)
   - Image Generation: Vercel AI SDK (Gemini 3.1 Flash Image Preview)
 - **Authentication**: Supabase Auth
 
@@ -34,6 +34,9 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
+
+# Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to xAI Grok via the gateway.
+# AI_TEXT_MODEL=openai/gpt-4o
 ```
 
 ### Installation
