@@ -48,8 +48,6 @@ import {
 
 const MESSAGES_SECTION_LABEL = "Messages"
 
-const DEFAULT_CONTRIBUTION_ROTATION_DEGREES = 0
-
 export function Card3D({
   imageUrl,
   headline,
