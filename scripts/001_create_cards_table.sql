@@ -27,8 +27,7 @@ CREATE POLICY "Users can create own cards" ON cards FOR INSERT WITH CHECK (auth.
 CREATE POLICY "Users can update own cards" ON cards FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own cards" ON cards FOR DELETE USING (auth.uid() = user_id);
 
--- Public access for cards with contributor links (for contributor and recipient viewing)
-CREATE POLICY "Public can view cards with contributor link" ON cards FOR SELECT USING (contributor_link_id IS NOT NULL);
+-- Public link access is served via trusted server routes, not direct anon-key queries.
 
 -- Index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_cards_user_id ON cards(user_id);

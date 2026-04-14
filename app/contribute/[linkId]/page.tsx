@@ -44,7 +44,6 @@ export default function ContributeCardPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
-  const [submitted, setSubmitted] = useState(false)
   const [submitNonce, setSubmitNonce] = useState(0)
   const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(
     null,
@@ -353,8 +352,6 @@ export default function ContributeCardPage() {
         return next
       })
       setComposeDraft(null)
-      setSubmitted(true)
-      setTimeout(() => setSubmitted(false), 4000)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add message")
     } finally {
@@ -417,13 +414,6 @@ export default function ContributeCardPage() {
                   : "Flip to the friends & family page to find your note. You can edit the text, drag it, and resize it from this device."}
             </p>
           </div>
-
-          {submitted && (
-            <div className="rounded border border-green-500/20 bg-green-500/10 p-3 text-center text-sm text-green-700 dark:text-green-400">
-              Message added! Find your note on the messages page—you can edit
-              text, drag, and resize it.
-            </div>
-          )}
 
           <Card3D
             imageUrl={card.image_url}

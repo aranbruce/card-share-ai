@@ -24,7 +24,6 @@ CREATE POLICY "Users can view own cards" ON cards FOR SELECT USING (auth.uid() =
 CREATE POLICY "Users can create own cards" ON cards FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own cards" ON cards FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own cards" ON cards FOR DELETE USING (auth.uid() = user_id);
-CREATE POLICY "Public can view cards with contributor link" ON cards FOR SELECT USING (contributor_link_id IS NOT NULL);
 
 CREATE INDEX IF NOT EXISTS idx_cards_user_id ON cards(user_id);
 CREATE INDEX IF NOT EXISTS idx_cards_contributor_link_id ON cards(contributor_link_id);
@@ -40,12 +39,37 @@ CREATE TABLE IF NOT EXISTS card_contributions (
 
 ALTER TABLE card_contributions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view contributions" ON card_contributions FOR SELECT USING (true);
-CREATE POLICY "Anyone can add contributions" ON card_contributions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Card owners can view contributions" ON card_contributions FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM cards
+    WHERE cards.id = card_contributions.card_id
+    AND cards.user_id = auth.uid()
+  )
+);
+CREATE POLICY "Card owners can add contributions" ON card_contributions FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM cards
+    WHERE cards.id = card_contributions.card_id
+    AND cards.user_id = auth.uid()
+  )
+);
 CREATE POLICY "Card owners can delete contributions" ON card_contributions FOR DELETE USING (
   EXISTS (
     SELECT 1 FROM cards 
     WHERE cards.id = card_contributions.card_id 
+    AND cards.user_id = auth.uid()
+  )
+);
+CREATE POLICY "Card owners can update contributions" ON card_contributions FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM cards
+    WHERE cards.id = card_contributions.card_id
+    AND cards.user_id = auth.uid()
+  )
+) WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM cards
+    WHERE cards.id = card_contributions.card_id
     AND cards.user_id = auth.uid()
   )
 );

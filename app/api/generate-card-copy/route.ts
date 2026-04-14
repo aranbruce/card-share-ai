@@ -2,6 +2,7 @@ import { generateText, Output } from "ai"
 import { z } from "zod"
 import { NextRequest, NextResponse } from "next/server"
 import { getTextModel } from "@/lib/ai-text-model"
+import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
 const cardCopySchema = z.object({
@@ -28,6 +29,18 @@ const cardCopySchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
+  const rateLimit = checkFixedWindowRateLimit(request, {
+    namespace: "api:generate-card-copy",
+    maxRequests: 20,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: rateLimit.headers },
+    )
+  }
+
   try {
     const {
       cardType,
@@ -42,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (!cardType || !recipientName || !senderName) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 },
+        { status: 400, headers: rateLimit.headers },
       )
     }
 
@@ -96,15 +109,12 @@ Never wrap the headline, message body, sign-off, or image prompt in ASCII or cur
       imagePrompt: stripSurroundingQuotes(output.imagePrompt),
     }
 
-    return NextResponse.json({ cardCopy })
+    return NextResponse.json({ cardCopy }, { headers: rateLimit.headers })
   } catch (error) {
     console.error("Error generating card copy:", error)
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error"
-    console.error("Error details:", errorMessage)
     return NextResponse.json(
-      { error: "Failed to generate card copy", details: errorMessage },
-      { status: 500 },
+      { error: "Failed to generate card copy" },
+      { status: 500, headers: rateLimit.headers },
     )
   }
 }
