@@ -436,7 +436,7 @@ export function CardOwnerStudio({
             message: msg,
             positionX: draft.x,
             positionY: draft.y,
-            widthPercent: 75,
+            widthPercent: draft.widthPercent ?? 75,
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
             ...(draft.textColor !== undefined
@@ -470,7 +470,7 @@ export function CardOwnerStudio({
             message: msg,
             positionX: draft.x,
             positionY: draft.y,
-            widthPercent: 75,
+            widthPercent: draft.widthPercent ?? 75,
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
             textColor: draft.textColor,

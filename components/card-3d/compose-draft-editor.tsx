@@ -72,14 +72,21 @@ export function ComposeDraftEditor({
       }}
     >
       <DraggableWrapper
-        key={`draft-${composeDraft.x}-${composeDraft.y}-${composeDraft.pageIndex}`}
+        key={`compose-draft-p${composeDraft.pageIndex}`}
         editable
         isActive={isFocused}
         initialOffset={{
           x: composeDraft.x,
           y: composeDraft.y,
         }}
-        initialWidthPercent={75}
+        initialWidthPercent={composeDraft.widthPercent ?? 75}
+        onLayoutCommit={(layout) =>
+          onComposeDraftChange({
+            x: layout.x,
+            y: layout.y,
+            widthPercent: layout.widthPercent,
+          })
+        }
         footer={
           isFocused ? (
             composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
