@@ -10,11 +10,25 @@ CREATE TABLE IF NOT EXISTS card_contributions (
 ALTER TABLE card_contributions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for contributions
--- Anyone can view contributions (filtered by card access at application level)
-CREATE POLICY "Anyone can view contributions" ON card_contributions FOR SELECT USING (true);
+CREATE POLICY "Card owners can view contributions" ON card_contributions
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM cards
+    WHERE cards.id = card_contributions.card_id
+    AND cards.user_id = auth.uid()
+  )
+);
 
--- Anyone can add contributions (validated at API level via contributor_link_id)
-CREATE POLICY "Anyone can add contributions" ON card_contributions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Card owners can add contributions" ON card_contributions
+FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM cards
+    WHERE cards.id = card_contributions.card_id
+    AND cards.user_id = auth.uid()
+  )
+);
 
 -- Card owners can delete contributions
 CREATE POLICY "Card owners can delete contributions" ON card_contributions FOR DELETE USING (

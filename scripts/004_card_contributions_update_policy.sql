@@ -1,6 +1,3 @@
--- Allow updates from the contribute API (validated in route: card link + 24h window)
-DROP POLICY IF EXISTS "Anyone can update contributions" ON card_contributions;
-CREATE POLICY "Anyone can update contributions" ON card_contributions
-  FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
+-- Legacy helper script (kept for historical reference).
+-- Public contribution UPDATE has been removed; owners-only RLS is enforced in
+-- migrations and trusted route handlers use service-role credentials.

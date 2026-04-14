@@ -5,7 +5,7 @@ import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
-import { createClient } from "@/lib/supabase/server"
+import { requireServiceRoleClient } from "@/lib/supabase/admin"
 
 function tokensMatch(stored: string, provided: string): boolean {
   try {
@@ -42,7 +42,7 @@ export async function POST(
       )
     }
 
-    const supabase = await createClient()
+    const supabase = requireServiceRoleClient()
 
     const { data: cardData, error: cardError } = await supabase
       .from("cards")
@@ -174,7 +174,7 @@ export async function PATCH(
       )
     }
 
-    const supabase = await createClient()
+    const supabase = requireServiceRoleClient()
 
     const { data: cardData, error: cardError } = await supabase
       .from("cards")
@@ -320,7 +320,7 @@ export async function GET(
 ) {
   try {
     const { linkId } = await params
-    const supabase = await createClient()
+    const supabase = requireServiceRoleClient()
 
     // Get card by contributor link
     const { data: cardData, error: cardError } = await supabase
