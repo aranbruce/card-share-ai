@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState, useEffect } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,7 @@ function LoginForm() {
     }
   }, [searchParams])
 
-  const savePendingCard = async () => {
+  const savePendingCard = useCallback(async () => {
     const pendingCardData = localStorage.getItem("pendingCard")
     if (!pendingCardData) return null
 
@@ -61,6 +61,68 @@ function LoginForm() {
     } catch (err) {
       console.error("Error saving pending card:", err)
       return null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get("oauth") !== "github") return
+
+    let cancelled = false
+
+    const completeOAuthLogin = async () => {
+      setLoading(true)
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+
+      if (cancelled) return
+
+      if (userError || !user) {
+        setError(userError?.message ?? "Could not complete GitHub login.")
+        setLoading(false)
+        return
+      }
+
+      const savedCardId = await savePendingCard()
+      if (cancelled) return
+
+      if (savedCardId) {
+        router.replace(`/dashboard/cards/${savedCardId}`)
+        return
+      }
+
+      const redirect = searchParams.get("redirect")
+      router.replace(redirect || "/dashboard")
+    }
+
+    void completeOAuthLogin()
+
+    return () => {
+      cancelled = true
+    }
+  }, [router, savePendingCard, searchParams, supabase])
+
+  const handleGitHubLogin = async () => {
+    setLoading(true)
+    setError("")
+
+    const redirect = searchParams.get("redirect") || "/dashboard"
+    const action = searchParams.get("action")
+    const nextParams = new URLSearchParams({ oauth: "github", redirect })
+    if (action) nextParams.set("action", action)
+
+    const callbackUrl = new URL("/auth/callback", window.location.origin)
+    callbackUrl.searchParams.set("next", `/auth/login?${nextParams.toString()}`)
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: { redirectTo: callbackUrl.toString() },
+    })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
     }
   }
 
@@ -121,6 +183,23 @@ function LoginForm() {
           <AlertDescription>Sign in to save it.</AlertDescription>
         </Alert>
       )}
+
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        fullWidth
+        onClick={handleGitHubLogin}
+        disabled={loading}
+      >
+        Continue with GitHub
+      </Button>
+
+      <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        <span>or</span>
+        <span className="h-px flex-1 bg-border" />
+      </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
         {error && (
