@@ -1,8 +1,12 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Layers, Palette, Type } from "lucide-react"
-import type { ReactNode } from "react"
+import {
+  MAX_CONTRIBUTION_ROTATION_DEGREES,
+  MIN_CONTRIBUTION_ROTATION_DEGREES,
+} from "@/lib/contribution-rotation"
+import { Layers, Palette, RotateCcw, RotateCw, Type } from "lucide-react"
+import { useMemo, type ReactNode } from "react"
 
 /** Discrete text sizes for inner messages (card canvas / compose). */
 const MESSAGE_FONT_SIZE_PRESETS = [12, 14, 16, 20, 24] as const
@@ -11,11 +15,11 @@ const MESSAGE_FONT_SIZE_LABEL: Record<
   (typeof MESSAGE_FONT_SIZE_PRESETS)[number],
   string
 > = {
-  12: "Extra small",
+  12: "Tiny",
   14: "Small",
-  16: "Normal",
+  16: "Base",
   20: "Large",
-  24: "Extra large",
+  24: "Huge",
 }
 
 export function snapMessageFontSize(px: number) {
@@ -34,6 +38,15 @@ export function snapMessageFontSize(px: number) {
 
 /** Shown when `text_color` is unset (theme handles actual foreground). */
 export const DEFAULT_MESSAGE_TEXT_COLOR_HEX = "#171717"
+export const DEFAULT_MESSAGE_ROTATION_DEGREES = 0
+
+export function snapMessageRotationDegrees(deg: number) {
+  const bounded = Math.max(
+    MIN_CONTRIBUTION_ROTATION_DEGREES,
+    Math.min(MAX_CONTRIBUTION_ROTATION_DEGREES, deg),
+  )
+  return Math.round(bounded)
+}
 
 const messageFormatSelectClassName =
   "max-w-[9rem] cursor-pointer rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-foreground shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -43,6 +56,8 @@ export function MessageFormattingToolbar({
   onFontSizeChange,
   textColor,
   onTextColorChange,
+  rotationDegrees = DEFAULT_MESSAGE_ROTATION_DEGREES,
+  onRotationDegreesChange,
   showPage,
   pageValue,
   onPageChange,
@@ -54,6 +69,8 @@ export function MessageFormattingToolbar({
   onFontSizeChange: (px: number) => void
   textColor?: string | null
   onTextColorChange?: (hex: string | null) => void
+  rotationDegrees?: number | null
+  onRotationDegreesChange?: (deg: number) => void
   showPage: boolean
   pageValue: number
   onPageChange: (pageIndex: number) => void
@@ -63,10 +80,22 @@ export function MessageFormattingToolbar({
 }) {
   const snapped = snapMessageFontSize(fontSize)
   const colorInputValue = textColor ?? DEFAULT_MESSAGE_TEXT_COLOR_HEX
+  const snappedRotation = snapMessageRotationDegrees(
+    rotationDegrees ?? DEFAULT_MESSAGE_ROTATION_DEGREES,
+  )
+  const toolbarAriaLabel = useMemo(() => {
+    const parts: string[] = ["Text size"]
+    if (onTextColorChange) parts.push("color")
+    if (onRotationDegreesChange) parts.push("rotation")
+    if (showPage) parts.push("page")
+    if (aiTweakSlot) parts.push("refine")
+    return parts.join(", ")
+  }, [onTextColorChange, onRotationDegreesChange, showPage, aiTweakSlot])
+
   return (
     <div
       role="toolbar"
-      aria-label="Text size, color, page, and refine"
+      aria-label={toolbarAriaLabel}
       className={cn(
         "inline-flex max-w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-lg border border-border/60 bg-background/95 px-2.5 py-1.5 shadow-md backdrop-blur-sm",
         className,
@@ -108,6 +137,50 @@ export function MessageFormattingToolbar({
             />
           </span>
         ) : null}
+        {onRotationDegreesChange ? (
+          <div
+            className="flex h-7 items-center rounded-md border border-border/60 bg-background shadow-sm"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="flex h-full items-center justify-center rounded-l-md px-2.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
+              disabled={snappedRotation <= MIN_CONTRIBUTION_ROTATION_DEGREES}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRotationDegreesChange(
+                  Math.max(
+                    MIN_CONTRIBUTION_ROTATION_DEGREES,
+                    snappedRotation - 1,
+                  ),
+                )
+              }}
+              title="Rotate counter-clockwise"
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+              <span className="sr-only">Rotate counter-clockwise</span>
+            </button>
+            <div className="h-4 w-[1px] bg-border/60" aria-hidden />
+            <button
+              type="button"
+              className="flex h-full items-center justify-center rounded-r-md px-2.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
+              disabled={snappedRotation >= MAX_CONTRIBUTION_ROTATION_DEGREES}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRotationDegreesChange(
+                  Math.min(
+                    MAX_CONTRIBUTION_ROTATION_DEGREES,
+                    snappedRotation + 1,
+                  ),
+                )
+              }}
+              title="Rotate clockwise"
+            >
+              <RotateCw className="h-3.5 w-3.5" aria-hidden />
+              <span className="sr-only">Rotate clockwise</span>
+            </button>
+          </div>
+        ) : null}
         {showPage ? (
           <span className="flex items-center gap-1.5">
             <Layers
@@ -116,7 +189,7 @@ export function MessageFormattingToolbar({
             />
             <label className="sr-only">Page</label>
             <select
-              className={cn(messageFormatSelectClassName, "max-w-[8rem]")}
+              className={cn(messageFormatSelectClassName, "max-w-32")}
               value={pageValue}
               onMouseDown={(e) => e.stopPropagation()}
               onChange={(e) => {

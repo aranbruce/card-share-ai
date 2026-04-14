@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
+import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { createClient } from "@/lib/supabase/server"
 
@@ -75,6 +76,8 @@ export async function POST(
     const pageIndex = body.pageIndex as unknown
     const fontSize = body.fontSize as unknown
     const textColorRaw = body.textColor as unknown
+    const rotationDegreesRaw =
+      (body.rotationDegrees ?? body.rotation_degrees) as unknown
 
     const msg = typeof message === "string" ? message.trim() : ""
     if (!msg) {
@@ -97,6 +100,14 @@ export async function POST(
       }
       text_color = tc
     }
+    const rotation_degrees =
+      normalizeContributionRotationDegrees(rotationDegreesRaw)
+    if (rotation_degrees === undefined && rotationDegreesRaw !== undefined) {
+      return NextResponse.json(
+        { error: "Invalid rotation (use a number or null)" },
+        { status: 400 },
+      )
+    }
 
     const { data: contribution, error: insertError } = await supabase
       .from("card_contributions")
@@ -110,6 +121,7 @@ export async function POST(
         page_index: typeof pageIndex === "number" ? pageIndex : null,
         font_size: typeof fontSize === "number" ? fontSize : null,
         text_color,
+        rotation_degrees: rotation_degrees ?? null,
       })
       .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
@@ -182,6 +194,9 @@ export async function PATCH(
     const hasTextColor =
       Object.prototype.hasOwnProperty.call(body, "textColor") ||
       Object.prototype.hasOwnProperty.call(body, "text_color")
+    const hasRotationDegrees =
+      Object.prototype.hasOwnProperty.call(body, "rotationDegrees") ||
+      Object.prototype.hasOwnProperty.call(body, "rotation_degrees")
 
     if (
       !contributionId ||
@@ -191,7 +206,8 @@ export async function PATCH(
         widthPercent === undefined &&
         pageIndex === undefined &&
         fontSize === undefined &&
-        !hasTextColor)
+        !hasTextColor &&
+        !hasRotationDegrees)
     ) {
       return NextResponse.json(
         {
@@ -222,6 +238,7 @@ export async function PATCH(
       page_index?: number
       font_size?: number
       text_color?: string | null
+      rotation_degrees?: number | null
     } = {}
     if (typeof message === "string") {
       const msg = message.trim()
@@ -253,6 +270,20 @@ export async function PATCH(
         )
       }
       updates.text_color = tc
+    }
+    if (hasRotationDegrees) {
+      const rotationRaw =
+        body.rotationDegrees !== undefined
+          ? body.rotationDegrees
+          : body.rotation_degrees
+      const rotation = normalizeContributionRotationDegrees(rotationRaw)
+      if (rotation === undefined) {
+        return NextResponse.json(
+          { error: "Invalid rotation (use a number or null)" },
+          { status: 400 },
+        )
+      }
+      updates.rotation_degrees = rotation
     }
 
     if (Object.keys(updates).length === 0) {

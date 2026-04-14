@@ -30,6 +30,7 @@ export type OwnerContribution = {
   page_index?: number | null
   font_size?: number | null
   text_color?: string | null
+  rotation_degrees?: number | null
   is_creator?: boolean | null
 }
 
@@ -130,6 +131,7 @@ export function CardOwnerStudio({
         pageIndex?: number
         fontSize?: number
         textColor?: string | null
+        rotationDegrees?: number | null
       },
     ) => {
       const res = await fetch(`/api/cards/${cardId}/contributions`, {
@@ -175,6 +177,7 @@ export function CardOwnerStudio({
         pageIndex: number
         fontSize?: number
         textColor?: string | null
+        rotationDegrees?: number | null
       },
     ) => {
       setContributions((prev) =>
@@ -191,6 +194,10 @@ export function CardOwnerStudio({
                   layout.textColor === undefined
                     ? c.text_color
                     : layout.textColor,
+                rotation_degrees:
+                  layout.rotationDegrees === undefined
+                    ? c.rotation_degrees
+                    : layout.rotationDegrees,
               }
             : c,
         ),
@@ -207,6 +214,9 @@ export function CardOwnerStudio({
           fontSize: layout.fontSize,
           ...(layout.textColor !== undefined && {
             textColor: layout.textColor,
+          }),
+          ...(layout.rotationDegrees !== undefined && {
+            rotationDegrees: layout.rotationDegrees,
           }),
         })
       }, 200)
@@ -442,6 +452,9 @@ export function CardOwnerStudio({
             ...(draft.textColor !== undefined
               ? { textColor: draft.textColor }
               : {}),
+            ...(draft.rotationDegrees !== undefined
+              ? { rotationDegrees: draft.rotationDegrees }
+              : {}),
           }),
         })
         const payload = await res.json().catch(() => ({}))
@@ -474,6 +487,7 @@ export function CardOwnerStudio({
             pageIndex: draft.pageIndex,
             fontSize: draft.fontSize,
             textColor: draft.textColor,
+            rotationDegrees: draft.rotationDegrees,
           }),
         })
         const payload = await res.json().catch(() => ({}))
@@ -567,6 +581,7 @@ export function CardOwnerStudio({
                   y: pt.y,
                   pageIndex: pt.pageIndex,
                   textColor: randomPresetTextColor(),
+                  rotationDegrees: 0,
                 })
               }
             : undefined

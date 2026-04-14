@@ -358,6 +358,17 @@ export function Card3D({
       (contrib) => effectiveContributionPage(contrib) === pageIdx,
     )
 
+  const withContributionDefaults = (contrib: (typeof contributions)[number]) => ({
+    x: typeof contrib.position_x === "number" ? contrib.position_x : 24,
+    y: typeof contrib.position_y === "number" ? contrib.position_y : 24,
+    widthPercent:
+      typeof contrib.width_percent === "number" ? contrib.width_percent : 75,
+    pageIndex: effectiveContributionPage(contrib),
+    fontSize: contrib.font_size ?? messageFontSize,
+    textColor: contrib.text_color ?? null,
+    rotationDegrees: contrib.rotation_degrees ?? null,
+  })
+
   const renderContributionsForPage = (pageIdx: number) => {
     return getContributionsForPage(pageIdx).map((contrib) => {
       const canCanvasEdit =
@@ -381,6 +392,7 @@ export function Card3D({
                 ? contrib.width_percent
                 : undefined
             }
+            rotationDegrees={contrib.rotation_degrees ?? 0}
             onLayoutCommit={
               onContributionLayoutChange
                 ? (layout) =>
@@ -390,6 +402,11 @@ export function Card3D({
                     })
                 : undefined
             }
+            onFocusLeave={() => {
+              setEditingContributionId((id) =>
+                id === contrib.id ? null : id,
+              )
+            }}
             footer={
               onContributionLayoutChange &&
               editingContributionId === contrib.id ? (
@@ -423,47 +440,25 @@ export function Card3D({
                       fontSize={contrib.font_size ?? messageFontSize}
                       onFontSizeChange={(newSize) =>
                         onContributionLayoutChange(contrib.id, {
-                          x:
-                            typeof contrib.position_x === "number"
-                              ? contrib.position_x
-                              : 24,
-                          y:
-                            typeof contrib.position_y === "number"
-                              ? contrib.position_y
-                              : 24,
-                          widthPercent:
-                            typeof contrib.width_percent === "number"
-                              ? contrib.width_percent
-                              : 75,
-                          pageIndex:
-                            typeof contrib.page_index === "number"
-                              ? contrib.page_index
-                              : pageIdx,
+                          ...withContributionDefaults(contrib),
+                          pageIndex: pageIdx,
                           fontSize: newSize,
-                          textColor: contrib.text_color ?? null,
                         })
                       }
                       textColor={contrib.text_color ?? null}
                       onTextColorChange={(hex) =>
                         onContributionLayoutChange(contrib.id, {
-                          x:
-                            typeof contrib.position_x === "number"
-                              ? contrib.position_x
-                              : 24,
-                          y:
-                            typeof contrib.position_y === "number"
-                              ? contrib.position_y
-                              : 24,
-                          widthPercent:
-                            typeof contrib.width_percent === "number"
-                              ? contrib.width_percent
-                              : 75,
-                          pageIndex:
-                            typeof contrib.page_index === "number"
-                              ? contrib.page_index
-                              : pageIdx,
-                          fontSize: contrib.font_size ?? messageFontSize,
+                          ...withContributionDefaults(contrib),
+                          pageIndex: pageIdx,
                           textColor: hex,
+                        })
+                      }
+                      rotationDegrees={contrib.rotation_degrees ?? null}
+                      onRotationDegreesChange={(deg) =>
+                        onContributionLayoutChange(contrib.id, {
+                          ...withContributionDefaults(contrib),
+                          pageIndex: pageIdx,
+                          rotationDegrees: deg,
                         })
                       }
                       showPage={totalPages > 1}
@@ -475,21 +470,8 @@ export function Card3D({
                       onPageChange={(newPage) => {
                         setCurrentPage(newPage)
                         onContributionLayoutChange(contrib.id, {
-                          x:
-                            typeof contrib.position_x === "number"
-                              ? contrib.position_x
-                              : 24,
-                          y:
-                            typeof contrib.position_y === "number"
-                              ? contrib.position_y
-                              : 24,
-                          widthPercent:
-                            typeof contrib.width_percent === "number"
-                              ? contrib.width_percent
-                              : 75,
+                          ...withContributionDefaults(contrib),
                           pageIndex: newPage,
-                          fontSize: contrib.font_size ?? messageFontSize,
-                          textColor: contrib.text_color ?? null,
                         })
                       }}
                       totalPages={totalPages}
@@ -516,30 +498,6 @@ export function Card3D({
             <div
               className="space-y-3"
               onFocus={() => setEditingContributionId(contrib.id)}
-              onBlur={(e) => {
-                const related = e.relatedTarget as Node | null
-                if (
-                  related &&
-                  e.currentTarget.parentElement?.contains(related)
-                ) {
-                  return
-                }
-                if (
-                  related instanceof Element &&
-                  related.closest(
-                    `[data-contribution-format-toolbar="${contrib.id}"]`,
-                  )
-                ) {
-                  return
-                }
-                if (
-                  related instanceof Element &&
-                  related.closest("[data-regenerate-area]")
-                ) {
-                  return
-                }
-                setEditingContributionId(null)
-              }}
             >
               <InlineEdit
                 ref={(el) => {
@@ -601,6 +559,7 @@ export function Card3D({
               ? contrib.width_percent
               : undefined
           }
+          rotationDegrees={contrib.rotation_degrees ?? 0}
         >
           <p
             className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
@@ -869,6 +828,7 @@ export function Card3D({
                                     ? (hex) => onMessageTextColorChange(hex)
                                     : undefined
                                 }
+                                rotationDegrees={undefined}
                                 showPage={totalPages > 1}
                                 pageValue={validMessagePage}
                                 onPageChange={(newPage) => {

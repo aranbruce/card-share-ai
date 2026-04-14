@@ -80,6 +80,7 @@ export function ComposeDraftEditor({
           y: composeDraft.y,
         }}
         initialWidthPercent={composeDraft.widthPercent ?? 75}
+        rotationDegrees={composeDraft.rotationDegrees ?? 0}
         onLayoutCommit={(layout) =>
           onComposeDraftChange({
             x: layout.x,
@@ -117,6 +118,10 @@ export function ComposeDraftEditor({
                   textColor={composeDraft.textColor ?? null}
                   onTextColorChange={(hex) =>
                     onComposeDraftChange({ textColor: hex })
+                  }
+                  rotationDegrees={composeDraft.rotationDegrees ?? null}
+                  onRotationDegreesChange={(deg) =>
+                    onComposeDraftChange({ rotationDegrees: deg })
                   }
                   showPage={totalPages > 1}
                   pageValue={composeDraft.pageIndex}

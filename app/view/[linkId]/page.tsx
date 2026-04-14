@@ -20,6 +20,13 @@ interface CardData {
 interface Contribution {
   id: string
   message: string
+  position_x?: number | null
+  position_y?: number | null
+  width_percent?: number | null
+  page_index?: number | null
+  font_size?: number | null
+  text_color?: string | null
+  rotation_degrees?: number | null
   is_creator?: boolean | null
 }
 

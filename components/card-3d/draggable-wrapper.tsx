@@ -24,6 +24,45 @@ function getDraggableBoundsParent(el: HTMLElement | null): HTMLElement | null {
   return el.closest("[data-card-canvas]") as HTMLElement | null
 }
 
+/** Clamps note `left`/`top` (px) so the outer box — or rotated inner AABB — stays inside padded bounds. */
+function clampNotePositionInBounds(args: {
+  bounds: HTMLElement
+  containerEl: HTMLElement
+  rotatedInnerEl: HTMLElement | null
+  padding: number
+  x: number
+  y: number
+}): { x: number; y: number } {
+  const boundsRect = args.bounds.getBoundingClientRect()
+  const outerRect = args.containerEl.getBoundingClientRect()
+  const rotatedRect = args.rotatedInnerEl?.getBoundingClientRect()
+
+  let minX = args.padding
+  let maxX = boundsRect.width - outerRect.width - args.padding
+  let minY = args.padding
+  let maxY = boundsRect.height - outerRect.height - args.padding
+
+  if (rotatedRect && args.rotatedInnerEl) {
+    const dl = rotatedRect.left - outerRect.left
+    const dt = rotatedRect.top - outerRect.top
+    minX = args.padding - dl
+    maxX =
+      boundsRect.width -
+      args.padding -
+      (rotatedRect.right - outerRect.left)
+    minY = args.padding - dt
+    maxY =
+      boundsRect.height -
+      args.padding -
+      (rotatedRect.bottom - outerRect.top)
+  }
+
+  return {
+    x: Math.max(minX, Math.min(maxX, args.x)),
+    y: Math.max(minY, Math.min(maxY, args.y)),
+  }
+}
+
 // Draggable wrapper for positioning content
 export function DraggableWrapper({
   children,
@@ -31,8 +70,10 @@ export function DraggableWrapper({
   isActive = true,
   initialOffset,
   initialWidthPercent,
+  rotationDegrees = 0,
   onLayoutCommit,
   footer,
+  onFocusLeave,
 }: {
   children: ReactNode
   editable?: boolean
@@ -41,6 +82,8 @@ export function DraggableWrapper({
   initialOffset?: { x: number; y: number }
   /** Default 100; placed notes often use ~75 */
   initialWidthPercent?: number
+  /** Slight tilt in degrees; defaults to 0 */
+  rotationDegrees?: number
   onLayoutCommit?: (layout: {
     x: number
     y: number
@@ -48,6 +91,11 @@ export function DraggableWrapper({
   }) => void
   /** Renders below the note; positioned to span the card canvas width while moving with the draggable. */
   footer?: ReactNode
+  /**
+   * Fires when focus leaves this wrapper (message + footer toolbar). Needed because the footer is
+   * outside the message subtree; `blur` on the message alone does not run when closing from toolbar controls.
+   */
+  onFocusLeave?: () => void
 }) {
   const [position, setPosition] = useState<{
     x: number | null
@@ -63,6 +111,7 @@ export function DraggableWrapper({
   const [isResizing, setIsResizing] = useState(false)
   const [dragStarted, setDragStarted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const rotatedInnerRef = useRef<HTMLDivElement>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const DRAG_THRESHOLD = 5
   const CANVAS_PADDING = CANVAS_EDGE_PADDING
@@ -160,22 +209,18 @@ export function DraggableWrapper({
         if (containerRef.current) {
           const bounds = getDraggableBoundsParent(containerRef.current)
           if (bounds) {
-            const boundsRect = bounds.getBoundingClientRect()
-            const selfRect = containerRef.current.getBoundingClientRect()
-
-            const maxX = boundsRect.width - selfRect.width - CANVAS_PADDING
-            const maxY = boundsRect.height - selfRect.height - CANVAS_PADDING
-
-            setPosition({
-              x: Math.max(
-                CANVAS_PADDING,
-                Math.min(maxX, startPos.current.posX + dx),
-              ),
-              y: Math.max(
-                CANVAS_PADDING,
-                Math.min(maxY, startPos.current.posY + dy),
-              ),
-            })
+            const nextX = startPos.current.posX + dx
+            const nextY = startPos.current.posY + dy
+            setPosition(
+              clampNotePositionInBounds({
+                bounds,
+                containerEl: containerRef.current,
+                rotatedInnerEl: rotatedInnerRef.current,
+                padding: CANVAS_PADDING,
+                x: nextX,
+                y: nextY,
+              }),
+            )
           } else {
             setPosition({
               x: startPos.current.posX + dx,
@@ -237,6 +282,7 @@ export function DraggableWrapper({
     position.y,
     size.width,
     CANVAS_PADDING,
+    rotationDegrees,
   ])
 
   // Depend on coordinates, not `initialOffset` identity — parents often pass
@@ -258,12 +304,39 @@ export function DraggableWrapper({
     })
   }, [initialWidthPercent])
 
+  useLayoutEffect(() => {
+    if (position.x === null || position.y === null) return
+    const container = containerRef.current
+    if (!container) return
+    const bounds = getDraggableBoundsParent(container)
+    if (!bounds) return
+
+    const clamped = clampNotePositionInBounds({
+      bounds,
+      containerEl: container,
+      rotatedInnerEl: rotatedInnerRef.current,
+      padding: CANVAS_PADDING,
+      x: position.x,
+      y: position.y,
+    })
+
+    if (clamped.x !== position.x || clamped.y !== position.y) {
+      setPosition(clamped)
+    }
+  }, [rotationDegrees, size.width, position.x, position.y, CANVAS_PADDING])
+
   const isPositioned = position.x !== null && position.y !== null
 
   return (
     <div
       ref={containerRef}
-      className="group relative"
+      className="relative"
+      onBlur={(e) => {
+        if (!onFocusLeave) return
+        const next = e.relatedTarget as Node | null
+        if (next && containerRef.current?.contains(next)) return
+        onFocusLeave()
+      }}
       style={
         isPositioned
           ? {
@@ -277,34 +350,40 @@ export function DraggableWrapper({
             }
       }
     >
-      {editable && isActive && (
-        <>
-          <div
-            role="button"
-            tabIndex={-1}
-            data-note-chrome
-            aria-label="Move note"
-            onMouseDown={(e) => handleMouseDown(e, "drag")}
-            className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Move className="h-3 w-3 text-muted-foreground" />
-          </div>
+      <div
+        ref={rotatedInnerRef}
+        className="group relative transition-transform"
+        style={{ transform: `rotate(${rotationDegrees}deg)` }}
+      >
+        {editable && isActive && (
+          <>
+            <div
+              role="button"
+              tabIndex={-1}
+              data-note-chrome
+              aria-label="Move note"
+              onMouseDown={(e) => handleMouseDown(e, "drag")}
+              className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Move className="h-3 w-3 text-muted-foreground" />
+            </div>
 
-          <div
-            role="button"
-            tabIndex={-1}
-            data-note-chrome
-            aria-label="Resize note"
-            onMouseDown={(e) => handleMouseDown(e, "resize")}
-            className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Maximize2 className="h-3 w-3 text-muted-foreground" />
-          </div>
+            <div
+              role="button"
+              tabIndex={-1}
+              data-note-chrome
+              aria-label="Resize note"
+              onMouseDown={(e) => handleMouseDown(e, "resize")}
+              className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Maximize2 className="h-3 w-3 text-muted-foreground" />
+            </div>
 
-          <div className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/30 p-2 transition-colors group-hover:border-primary/50" />
-        </>
-      )}
-      {children}
+            <div className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/30 p-2 transition-colors group-hover:border-primary/50" />
+          </>
+        )}
+        {children}
+      </div>
       {footer && footerPlacement ? (
         <div
           className="pointer-events-auto z-20"
