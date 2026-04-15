@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test"
 
 const port = Number(process.env.PLAYWRIGHT_PORT ?? 3100)
+const appUrl = `http://localhost:${port}`
 
 export default defineConfig({
   testDir: "./e2e",
@@ -9,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: "list",
   use: {
-    baseURL: `http://127.0.0.1:${port}`,
+    baseURL: appUrl,
     trace: "on-first-retry",
   },
   projects: [
@@ -20,7 +21,7 @@ export default defineConfig({
   ],
   webServer: {
     command: `pnpm dev --port ${port}`,
-    url: `http://127.0.0.1:${port}`,
+    url: appUrl,
     reuseExistingServer: !process.env.CI,
     env: {
       NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
