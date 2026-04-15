@@ -748,7 +748,7 @@ export function Card3D({
                       regenerateShimmerTone="cover"
                       className="-mx-1 mt-2 max-w-md text-3xl leading-tight font-bold text-white"
                       placeholder="Add a headline"
-                      placeholderClassName="text-muted-foreground/50 my-0"
+                      placeholderClassName="my-0 text-white/45"
                     />
                     <p className="mt-2 text-sm opacity-80">
                       For {recipientName}

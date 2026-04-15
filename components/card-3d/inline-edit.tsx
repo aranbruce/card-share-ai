@@ -412,6 +412,7 @@ export const InlineEdit = forwardRef<
             editable && onChange && isEditing && !isGenerating,
           )}
           suppressContentEditableWarning
+          aria-busy={isGenerating || isRegenerating}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           onInput={syncEditEmptyFromDom}
@@ -422,6 +423,11 @@ export const InlineEdit = forwardRef<
         >
           {isEditing ? (
             value
+          ) : showShimmer && !value.trim() ? (
+            /* Em spaces give the text-clip shimmer glyphs to paint on (empty = no visible sweep). */
+            <span aria-hidden className="select-none">
+              {"\u2003".repeat(28)}
+            </span>
           ) : showIdlePlaceholder ? (
             <span className={placeholderClassName}>{placeholder}</span>
           ) : (

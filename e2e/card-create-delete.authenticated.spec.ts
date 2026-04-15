@@ -32,9 +32,12 @@ test.describe("card create and delete", () => {
       timeout: 120_000,
     })
 
+    const writeMessage = page.getByRole("button", { name: "Write message" })
+    await expect(writeMessage).toBeEnabled({ timeout: 120_000 })
+
     await Promise.all([
       page.waitForURL(/\/dashboard\/cards\/[^/?]+/),
-      page.getByRole("button", { name: "Write message" }).click(),
+      writeMessage.click(),
     ])
 
     await page.goto("/dashboard")
