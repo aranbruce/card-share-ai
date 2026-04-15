@@ -21,3 +21,5 @@ node_modules
 .next/
 .DS_Store
 .vercel
+playwright-report/
+test-results/
