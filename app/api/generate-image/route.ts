@@ -87,6 +87,21 @@ function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
   }
 }
 
+/** Cover art rules: headline is rendered in the UI; image must stay illustration-only. */
+function coverArtInstructionBlock(coverHeadline?: string): string {
+  const lines = [
+    "Illustration for a greeting card cover only.",
+    "Do not include readable text, lettering, captions, words on signs or posters, watermarks, or logos in the image; the app shows the headline as separate text on the cover.",
+  ]
+  const h = coverHeadline?.trim()
+  if (h) {
+    lines.push(
+      `Match the mood and theme of this headline (do not spell or render this text inside the image): ${h}`,
+    )
+  }
+  return lines.join("\n")
+}
+
 /** Build a data URL from a generated image; prefer bytes so plain `{ uint8Array }` parts work. */
 function generatedImageToDataUrl(file: GeneratedFile): string {
   const bytes =
@@ -109,9 +124,11 @@ export async function POST(request: NextRequest) {
     )
   }
   try {
-    const { imagePrompt, sourceImageUrl } = (await request.json()) as {
+    const { imagePrompt, sourceImageUrl, coverHeadline } = (await request.json()) as {
       imagePrompt?: string
       sourceImageUrl?: string
+      /** Current card headline — guides mood/theme; must not appear as text in the image. */
+      coverHeadline?: string
     }
 
     const trimmedPrompt =
@@ -152,6 +169,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const headline =
+      typeof coverHeadline === "string" ? coverHeadline.trim() : ""
+    const constraints = coverArtInstructionBlock(
+      headline.length > 0 ? headline : undefined,
+    )
+    const userScene = `${constraints}\n\n${trimmedPrompt}`
+
     const refinePrefix =
       "Refine this greeting card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n"
 
@@ -163,10 +187,10 @@ export async function POST(request: NextRequest) {
               { type: "image", image: source },
               {
                 type: "text",
-                text: `${refinePrefix}${trimmedPrompt}`,
+                text: `${refinePrefix}${userScene}`,
               },
             ]
-          : trimmedPrompt,
+          : userScene,
       },
     ]
 

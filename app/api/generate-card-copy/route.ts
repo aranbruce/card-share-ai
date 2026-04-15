@@ -24,7 +24,7 @@ const cardCopySchema = z.object({
   imagePrompt: z
     .string()
     .describe(
-      "A detailed prompt for generating the card image. Do not wrap the prompt in quotation marks.",
+      "Detailed prompt for the card cover illustration only: scene, style, colors, mood. Do not ask for readable text, lettering, captions, or typography in the image; the headline is shown separately on the card. Align visually with the headline’s tone and subject. Plain text — no surrounding quotation marks.",
     ),
 })
 
@@ -79,7 +79,7 @@ To: ${recipientName}
 ${customMessage ? `Additional context: ${customMessage}` : ""}
 ${existingBlock}
 
-Create warm, appropriate copy that matches the card type. The image prompt should be descriptive for AI image generation.
+Create warm, appropriate copy that matches the card type. The headline and image prompt should feel cohesive: the image describes artwork only (no words in the picture); the headline carries the words.
 
 Never wrap the headline, message body, sign-off, or image prompt in ASCII or curly quotation marks — output the words themselves only.`
 
