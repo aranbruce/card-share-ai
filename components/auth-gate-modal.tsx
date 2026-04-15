@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
 
 interface AuthGateModalProps {
   isOpen: boolean
@@ -32,12 +33,18 @@ export function AuthGateModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="my-2 rounded-2xl bg-secondary/50 p-4">
+        {/* <div className="my-2 rounded-2xl bg-secondary/50 p-4">
           <p className="text-sm text-muted-foreground">
             Your card is safe! We&apos;ll save it automatically after you sign
             in.
           </p>
-        </div>
+        </div> */}
+        <Alert className="mb-6">
+          <AlertTitle>Your card is safe!</AlertTitle>
+          <AlertDescription>
+            We&apos;ll save it automatically after you sign in.
+          </AlertDescription>
+        </Alert>
 
         <div className="mt-2 flex flex-col gap-3">
           <Button fullWidth onClick={onSignUp}>
