@@ -455,7 +455,7 @@ export const InlineEdit = forwardRef<
       {showPromptInput && !toolbarExternal ? (
         <div
           data-regenerate-area
-          className="fixed z-[100]"
+          className="fixed z-100"
           style={{
             top: promptPosition.top,
             left: promptPosition.left,
