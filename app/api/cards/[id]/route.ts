@@ -156,6 +156,9 @@ export async function PATCH(
     }
 
     const cardRow = data?.[0]
+    if (!cardRow) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 })
+    }
     if (cardRow && typeof updates.copy_message === "string") {
       const { error: syncErr } = await supabase
         .from("card_contributions")
