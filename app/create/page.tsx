@@ -289,7 +289,7 @@ export default function CreateCardPage() {
           body.error ?? "Save succeeded but no card id was returned",
         )
       }
-      router.push(`/dashboard/cards/${id}?welcome=1`)
+      router.push(`/dashboard/cards/${id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save card")
     } finally {
