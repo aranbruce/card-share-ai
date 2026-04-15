@@ -6,8 +6,15 @@ import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
 const SYSTEM_OUTPUT_RULES = `You help rewrite greeting card text. Output only the requested field: plain text, no markdown, no labels like "Headline:" or "Message:", no leading or trailing quotation marks.`
 
+const MAX_BLOCK_BODY_CHARS = 12_000
+
+/** JSON-encode block payloads so delimiter-like text cannot break the structure. */
 function block(label: string, body: string): string {
-  return `<<<${label}>>>\n${body}\n<<<END_${label}>>>`
+  const capped =
+    body.length > MAX_BLOCK_BODY_CHARS
+      ? `${body.slice(0, MAX_BLOCK_BODY_CHARS)}\n…[truncated]`
+      : body
+  return `<<<${label}>>>\n${JSON.stringify(capped)}\n<<<END_${label}>>>`
 }
 
 export async function POST(request: NextRequest) {
