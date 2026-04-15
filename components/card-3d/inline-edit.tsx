@@ -61,6 +61,8 @@ export type InlineEditProps = {
   editable?: boolean
   onRegenerate?: (prompt: string) => Promise<void>
   isRegenerating?: boolean
+  /** Initial load / pending AI copy — shimmer only, no regenerate affordance. */
+  isGenerating?: boolean
   /** Hint when the field is empty (editable mode). */
   placeholder?: string
   /** Muted placeholder on light pages; use e.g. `text-white/45` on the cover headline. */
@@ -97,6 +99,7 @@ export const InlineEdit = forwardRef<
     editable = false,
     onRegenerate,
     isRegenerating = false,
+    isGenerating = false,
     placeholder,
     placeholderClassName = "text-muted-foreground/45",
     onFocusChange,
@@ -137,13 +140,24 @@ export const InlineEdit = forwardRef<
   }, [isEditing, onFocusChange])
 
   const showIdlePlaceholder = Boolean(
-    placeholder && editable && onChange && !isEditing && !value.trim(),
+    placeholder &&
+    editable &&
+    onChange &&
+    !isEditing &&
+    !value.trim() &&
+    !isGenerating,
   )
   const showActivePlaceholder = Boolean(
-    placeholder && editable && onChange && isEditing && editSurfaceEmpty,
+    placeholder &&
+    editable &&
+    onChange &&
+    isEditing &&
+    editSurfaceEmpty &&
+    !isGenerating,
   )
 
   const handleClick = (e: MouseEvent) => {
+    if (isGenerating) return
     if (editable && onChange) {
       e.stopPropagation()
       setIsEditing(true)
@@ -311,11 +325,14 @@ export const InlineEdit = forwardRef<
     }
   }
 
+  const showShimmer = isRegenerating || isGenerating
+
   const showFloatingRegenerate =
     editable &&
     onRegenerate &&
     !showPromptInput &&
-    regeneratePlacement === "floating"
+    regeneratePlacement === "floating" &&
+    !isGenerating
 
   /** Match typing metrics without applying message `color` to the hint overlay. */
   const placeholderMetricsStyle: CSSProperties | undefined = (() => {
@@ -334,7 +351,7 @@ export const InlineEdit = forwardRef<
       "--refine-shimmer-base"?: string
     }
     if (
-      isRegenerating &&
+      showShimmer &&
       regenerateShimmerTone === "paper" &&
       style.color != null &&
       String(style.color).length > 0
@@ -347,7 +364,7 @@ export const InlineEdit = forwardRef<
   return (
     <div
       ref={containerRef}
-      className="group relative"
+      className={cn("group relative", isGenerating && "pointer-events-none")}
       onMouseLeave={() => {
         if (!isEditing && !showPromptInput) {
           setShowPromptInput(false)
@@ -382,17 +399,20 @@ export const InlineEdit = forwardRef<
               onChange &&
               !isEditing &&
               "cursor-text transition-colors hover:bg-primary/5",
-            isRegenerating &&
+            showShimmer &&
               regenerateShimmerTone === "cover" &&
               "ai-refine-shimmer-text-cover rounded-sm",
-            isRegenerating &&
+            showShimmer &&
               regenerateShimmerTone === "paper" &&
               "ai-refine-shimmer-text-paper rounded-sm",
             isEditing && "outline-none",
           )}
           style={editStyle ?? style}
-          contentEditable={Boolean(editable && onChange && isEditing)}
+          contentEditable={Boolean(
+            editable && onChange && isEditing && !isGenerating,
+          )}
           suppressContentEditableWarning
+          aria-busy={isGenerating || isRegenerating}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           onInput={syncEditEmptyFromDom}
@@ -403,6 +423,11 @@ export const InlineEdit = forwardRef<
         >
           {isEditing ? (
             value
+          ) : showShimmer && !value.trim() ? (
+            /* Em spaces give the text-clip shimmer glyphs to paint on (empty = no visible sweep). */
+            <span aria-hidden className="select-none">
+              {"\u2003".repeat(28)}
+            </span>
           ) : showIdlePlaceholder ? (
             <span className={placeholderClassName}>{placeholder}</span>
           ) : (
@@ -430,7 +455,7 @@ export const InlineEdit = forwardRef<
       {showPromptInput && !toolbarExternal ? (
         <div
           data-regenerate-area
-          className="fixed z-[100]"
+          className="fixed z-100"
           style={{
             top: promptPosition.top,
             left: promptPosition.left,

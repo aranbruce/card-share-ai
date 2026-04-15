@@ -8,6 +8,8 @@ export interface Card3DProps {
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
+  /** Cover headline still loading (e.g. initial AI copy). */
+  isGeneratingHeadline?: boolean
   contributions?: Array<{
     id: string
     message: string

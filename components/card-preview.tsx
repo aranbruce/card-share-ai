@@ -11,6 +11,7 @@ interface CardPreviewProps {
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
+  isGeneratingHeadline?: boolean
   onRegenerateHeadline?: (prompt: string) => Promise<void>
   onRegenerateMessage?: (prompt: string) => Promise<void>
   onRegenerateImage?: (prompt: string, sourceImageUrl?: string) => Promise<void>
@@ -45,6 +46,7 @@ export function CardPreview({
   senderName,
   recipientName,
   isGeneratingImage,
+  isGeneratingHeadline,
   onRegenerateHeadline,
   onRegenerateMessage,
   onRegenerateImage,
@@ -67,12 +69,12 @@ export function CardPreview({
   onMessagePageIndexChange,
 }: CardPreviewProps) {
   return (
-    <div className="mx-auto max-w-3xl space-y-10">
-      <div className="text-center">
-        <h2 className="mb-3 text-3xl font-extrabold tracking-tight">
+    <div className="mx-auto max-w-md space-y-8">
+      <div className="space-y-3 text-center">
+        <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
           Your Card
         </h2>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {editMode ? (
             coverOnly ? (
               <>
@@ -107,7 +109,7 @@ export function CardPreview({
       </div>
 
       {/* 3D Card Display with Inline Editing + Save Button constrained to card width */}
-      <div className="relative mx-auto w-full max-w-lg space-y-8 rounded-3xl border border-border/30 bg-secondary/20 p-8 md:p-12">
+      <div className="relative mx-auto w-full max-w-md space-y-8">
         <Card3D
           imageUrl={imageUrl}
           headline={headline}
@@ -115,6 +117,7 @@ export function CardPreview({
           senderName={senderName}
           recipientName={recipientName}
           isGeneratingImage={isGeneratingImage}
+          isGeneratingHeadline={isGeneratingHeadline}
           contributions={contributions}
           editable={Boolean(editMode)}
           coverOnly={coverOnly}
@@ -141,7 +144,11 @@ export function CardPreview({
             fullWidth
             className="mt-4"
             onClick={onSave}
-            disabled={isSaving}
+            disabled={
+              isSaving ||
+              Boolean(isGeneratingImage) ||
+              Boolean(isGeneratingHeadline)
+            }
           >
             {isSaving ? (
               <>
