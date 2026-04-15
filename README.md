@@ -101,6 +101,8 @@ For authenticated E2E flows, set these environment variables (do not commit real
 ```bash
 E2E_EMAIL=your_test_user_email
 E2E_PASSWORD=your_test_user_password
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 The Playwright setup project logs in once and saves session state to `playwright/.auth/user.json`,

@@ -22,12 +22,12 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testIgnore: /.*\.setup\.ts/,
+      testIgnore: [/.*\.setup\.ts/, /.*dashboard-auth\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "chromium-authenticated",
-      testMatch: /.*authenticated.*\.spec\.ts/,
+      testMatch: /.*dashboard-auth\.spec\.ts/,
       dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],

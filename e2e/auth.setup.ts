@@ -2,8 +2,17 @@ import { expect, test } from "@playwright/test"
 import path from "node:path"
 
 const authFile = path.resolve(__dirname, "./.auth/user.json")
+const hasCreds = Boolean(process.env.E2E_EMAIL && process.env.E2E_PASSWORD)
+const hasSupabaseConfig = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+)
 
 test("authenticate via login form", async ({ page }) => {
+  test.skip(
+    !hasCreds || !hasSupabaseConfig,
+    "Set E2E_EMAIL, E2E_PASSWORD, NEXT_PUBLIC_SUPABASE_URL, and NEXT_PUBLIC_SUPABASE_ANON_KEY to run authenticated E2E tests.",
+  )
+
   const email = process.env.E2E_EMAIL
   const password = process.env.E2E_PASSWORD
 
