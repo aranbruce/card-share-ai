@@ -28,7 +28,10 @@ export async function GET(
 
     if (cardError) {
       console.error("[GET /api/cards/view/[id]] card by link:", cardError)
-      return NextResponse.json({ error: "Failed to fetch card" }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to fetch card" },
+        { status: 500 },
+      )
     }
 
     if (!cardData) {

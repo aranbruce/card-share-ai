@@ -195,7 +195,7 @@ function LoginForm() {
         Continue with GitHub
       </Button>
 
-      <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+      <div className="my-4 flex items-center gap-3 text-xs tracking-wide text-muted-foreground uppercase">
         <span className="h-px flex-1 bg-border" />
         <span>or</span>
         <span className="h-px flex-1 bg-border" />

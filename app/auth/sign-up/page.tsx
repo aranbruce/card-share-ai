@@ -97,7 +97,10 @@ function SignUpForm() {
     if (action) nextParams.set("action", action)
 
     const callbackUrl = new URL("/auth/callback", window.location.origin)
-    callbackUrl.searchParams.set("next", `/auth/sign-up?${nextParams.toString()}`)
+    callbackUrl.searchParams.set(
+      "next",
+      `/auth/sign-up?${nextParams.toString()}`,
+    )
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
@@ -185,7 +188,7 @@ function SignUpForm() {
         Continue with GitHub
       </Button>
 
-      <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+      <div className="my-4 flex items-center gap-3 text-xs tracking-wide text-muted-foreground uppercase">
         <span className="h-px flex-1 bg-border" />
         <span>or</span>
         <span className="h-px flex-1 bg-border" />

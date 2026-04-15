@@ -156,7 +156,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {cards.map((card) => (
+            {cards.map((card, index) => (
               <div
                 key={card.id}
                 className="group relative flex h-full flex-col"
@@ -173,6 +173,8 @@ export default function DashboardPage() {
                         src={card.image_url}
                         alt={`${card.recipient_name}'s card`}
                         fill
+                        loading={index === 0 ? "eager" : "lazy"}
+                        priority={index === 0}
                         className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                       />
                     )}
