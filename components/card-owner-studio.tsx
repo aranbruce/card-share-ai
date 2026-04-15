@@ -344,15 +344,15 @@ export function CardOwnerStudio({
         const response = await fetch("/api/regenerate-text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          field: "headline",
-          cardType: card.card_type || "custom",
-          recipientName: card.recipient_name,
-          senderName: card.sender_name,
-          currentValue: card.copy_headline,
-          userPrompt: prompt,
-          coverImagePrompt: card.image_prompt ?? "",
-        }),
+          body: JSON.stringify({
+            field: "headline",
+            cardType: card.card_type || "custom",
+            recipientName: card.recipient_name,
+            senderName: card.sender_name,
+            currentValue: card.copy_headline,
+            userPrompt: prompt,
+            coverImagePrompt: card.image_prompt ?? "",
+          }),
         })
         if (!response.ok) throw new Error("Failed")
         const { text } = (await response.json()) as { text?: string }
