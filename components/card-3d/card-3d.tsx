@@ -634,7 +634,6 @@ export function Card3D({
                           crossOrigin={
                             looksLikeDataUrl(imageUrl) ? undefined : "anonymous"
                           }
-                          loading="eager"
                           priority
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
