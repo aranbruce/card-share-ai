@@ -13,6 +13,7 @@ import {
   oauthProviderLabel,
   type OAuthProviderId,
 } from "@/lib/oauth-auth"
+import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
 
 function SignUpForm() {
   const [email, setEmail] = useState("")
@@ -85,8 +86,10 @@ function SignUpForm() {
         return
       }
 
-      const redirect = searchParams.get("redirect")
-      router.replace(redirect || "/dashboard")
+      const redirect = resolveSafePostAuthRedirectPath(
+        searchParams.get("redirect"),
+      )
+      router.replace(redirect)
     }
 
     void completeOAuthSignUp()
@@ -100,7 +103,9 @@ function SignUpForm() {
     setLoading(true)
     setError("")
 
-    const redirect = searchParams.get("redirect") || "/dashboard"
+    const redirect = resolveSafePostAuthRedirectPath(
+      searchParams.get("redirect"),
+    )
     const action = searchParams.get("action")
     const nextParams = new URLSearchParams({ oauth: provider, redirect })
     if (action) nextParams.set("action", action)

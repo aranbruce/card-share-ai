@@ -1,4 +1,5 @@
 import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
+import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -7,10 +8,7 @@ function resolveSafeNextPath(
   type: string | null,
 ): string {
   const fallback = type === "recovery" ? "/auth/reset-password" : "/dashboard"
-  if (!nextParam) return fallback
-  if (!nextParam.startsWith("/")) return fallback
-  if (nextParam.startsWith("//")) return fallback
-  return nextParam
+  return resolveSafePostAuthRedirectPath(nextParam, fallback)
 }
 
 export async function GET(request: NextRequest) {

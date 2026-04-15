@@ -12,6 +12,7 @@ import {
   oauthProviderLabel,
   type OAuthProviderId,
 } from "@/lib/oauth-auth"
+import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -101,8 +102,10 @@ function LoginForm() {
         return
       }
 
-      const redirect = searchParams.get("redirect")
-      router.replace(redirect || "/dashboard")
+      const redirect = resolveSafePostAuthRedirectPath(
+        searchParams.get("redirect"),
+      )
+      router.replace(redirect)
     }
 
     void completeOAuthLogin()
@@ -116,7 +119,9 @@ function LoginForm() {
     setLoading(true)
     setError("")
 
-    const redirect = searchParams.get("redirect") || "/dashboard"
+    const redirect = resolveSafePostAuthRedirectPath(
+      searchParams.get("redirect"),
+    )
     const action = searchParams.get("action")
     const nextParams = new URLSearchParams({ oauth: provider, redirect })
     if (action) nextParams.set("action", action)
@@ -160,8 +165,10 @@ function LoginForm() {
         router.push(`/dashboard/cards/${savedCardId}`)
       } else {
         // Normal redirect
-        const redirect = searchParams.get("redirect")
-        router.push(redirect || "/dashboard")
+        const redirect = resolveSafePostAuthRedirectPath(
+          searchParams.get("redirect"),
+        )
+        router.push(redirect)
       }
     } catch {
       setError("An unexpected error occurred")
