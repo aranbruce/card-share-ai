@@ -24,7 +24,9 @@ ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for cards
 CREATE POLICY "Users can view own cards" ON cards FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own cards" ON cards FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own cards" ON cards FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own cards" ON cards FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own cards" ON cards FOR DELETE USING (auth.uid() = user_id);
 
 -- Public link access is served via trusted server routes, not direct anon-key queries.

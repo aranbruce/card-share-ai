@@ -22,7 +22,9 @@ ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view own cards" ON cards FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own cards" ON cards FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own cards" ON cards FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own cards" ON cards FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own cards" ON cards FOR DELETE USING (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS idx_cards_user_id ON cards(user_id);
