@@ -746,9 +746,9 @@ export function Card3D({
                       isRegenerating={isRegeneratingHeadline}
                       isGenerating={isGeneratingHeadline}
                       regenerateShimmerTone="cover"
-                      className="block text-base font-semibold leading-snug tracking-tight text-white drop-shadow-md md:text-lg"
+                      className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground"
                       placeholder="Add a headline"
-                      placeholderClassName="text-white/45"
+                      placeholderClassName="text-muted-foreground/50"
                     />
                     <p className="mt-2 text-sm opacity-80">
                       For {recipientName}
