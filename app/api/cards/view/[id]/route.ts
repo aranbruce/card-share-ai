@@ -12,45 +12,23 @@ export async function GET(
 ) {
   void request
   try {
-    const { id } = await params
-    if (!isValidUuid(id)) {
+    const { id: linkId } = await params
+    if (!isValidUuid(linkId)) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 })
     }
 
     const supabase = requireServiceRoleClient()
 
-    // Share modal links use contributor_link_id; callers may also pass the card row id
-    const cardResult = await supabase
+    // Public view endpoints accept only contributor_link_id values.
+    const { data: cardData, error: cardError } = await supabase
       .from("cards")
       .select(CARD_VIEW_SELECT)
-      .eq("id", id)
+      .eq("contributor_link_id", linkId)
       .maybeSingle()
 
-    let cardData = cardResult.data
-    const cardError = cardResult.error
-
     if (cardError) {
-      console.error("[GET /api/cards/view/[id]] card by id:", cardError)
-      return NextResponse.json(
-        { error: "Failed to fetch card" },
-        { status: 500 },
-      )
-    }
-
-    if (!cardData) {
-      const byLink = await supabase
-        .from("cards")
-        .select(CARD_VIEW_SELECT)
-        .eq("contributor_link_id", id)
-        .maybeSingle()
-      cardData = byLink.data
-      if (byLink.error) {
-        console.error("[GET /api/cards/view/[id]] card by link:", byLink.error)
-        return NextResponse.json(
-          { error: "Failed to fetch card" },
-          { status: 500 },
-        )
-      }
+      console.error("[GET /api/cards/view/[id]] card by link:", cardError)
+      return NextResponse.json({ error: "Failed to fetch card" }, { status: 500 })
     }
 
     if (!cardData) {
