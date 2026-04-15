@@ -134,7 +134,7 @@ function CardDetailInner() {
                   </span>
                 </span>
               </p>
-              <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
                 Edit the cover, your personal note, and layout below. Guests can
                 add their messages using the contributor link.
               </p>

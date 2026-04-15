@@ -141,19 +141,19 @@ export const InlineEdit = forwardRef<
 
   const showIdlePlaceholder = Boolean(
     placeholder &&
-      editable &&
-      onChange &&
-      !isEditing &&
-      !value.trim() &&
-      !isGenerating,
+    editable &&
+    onChange &&
+    !isEditing &&
+    !value.trim() &&
+    !isGenerating,
   )
   const showActivePlaceholder = Boolean(
     placeholder &&
-      editable &&
-      onChange &&
-      isEditing &&
-      editSurfaceEmpty &&
-      !isGenerating,
+    editable &&
+    onChange &&
+    isEditing &&
+    editSurfaceEmpty &&
+    !isGenerating,
   )
 
   const handleClick = (e: MouseEvent) => {
@@ -325,8 +325,7 @@ export const InlineEdit = forwardRef<
     }
   }
 
-  const showShimmer =
-    isRegenerating || isGenerating
+  const showShimmer = isRegenerating || isGenerating
 
   const showFloatingRegenerate =
     editable &&
@@ -450,7 +449,7 @@ export const InlineEdit = forwardRef<
       {showPromptInput && !toolbarExternal ? (
         <div
           data-regenerate-area
-          className="fixed z-[100]"
+          className="fixed z-100"
           style={{
             top: promptPosition.top,
             left: promptPosition.left,

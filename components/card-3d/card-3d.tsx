@@ -609,7 +609,7 @@ export function Card3D({
               <div className="relative flex flex-1 flex-col">
                 <>
                   {isGeneratingImage && !imageUrl ? (
-                    <div className="relative min-h-[280px] w-full flex-1 overflow-hidden rounded-2xl bg-muted/40">
+                    <div className="relative min-h-[280px] w-full flex-1 overflow-hidden rounded-2xl bg-zinc-950/40">
                       <RegenerateShimmerOverlay
                         tone="cover"
                         className="z-10 rounded-2xl"
@@ -746,9 +746,9 @@ export function Card3D({
                       isRegenerating={isRegeneratingHeadline}
                       isGenerating={isGeneratingHeadline}
                       regenerateShimmerTone="cover"
-                      className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground"
+                      className="-mx-1 mt-2 max-w-md text-3xl leading-tight font-bold text-white"
                       placeholder="Add a headline"
-                      placeholderClassName="text-muted-foreground/50"
+                      placeholderClassName="text-muted-foreground/50 my-0"
                     />
                     <p className="mt-2 text-sm opacity-80">
                       For {recipientName}
