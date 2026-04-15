@@ -11,7 +11,8 @@ loadEnv({
   quiet: true,
 })
 
-const port = Number(process.env.PLAYWRIGHT_PORT ?? 3100)
+const parsedPort = Number(process.env.PLAYWRIGHT_PORT)
+const port = Number.isFinite(parsedPort) ? parsedPort : 3100
 const appUrl = `http://localhost:${port}`
 const authFile = resolve(process.cwd(), "playwright/.auth/user.json")
 
