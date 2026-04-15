@@ -45,7 +45,9 @@ export default function CreateCardPage() {
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")
   const [cardData, setCardData] = useState<CardData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isGeneratingCopy, setIsGeneratingCopy] = useState(false)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [error, setError] = useState("")
@@ -75,11 +77,22 @@ export default function CreateCardPage() {
     recipientName: string
     customMessage?: string
   }) => {
-    setIsLoading(true)
     setError("")
+    setSenderName(details.senderName)
+    setRecipientName(details.recipientName)
+    setCardData({
+      cardType: details.cardType,
+      headline: "",
+      message: "",
+      imageUrl: "",
+      imagePrompt: "",
+    })
+    setIsGeneratingCopy(true)
+    setIsGeneratingImage(true)
+    setStep("preview")
+    setEditMode(true)
 
     try {
-      // Generate card copy
       const copyResponse = await fetch("/api/generate-card-copy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,8 +109,23 @@ export default function CreateCardPage() {
       }
 
       const { cardCopy } = await copyResponse.json()
+      const innerMessage = formatInnerCardCopy(
+        cardCopy.message,
+        cardCopy.signoff,
+      )
 
-      // Generate image
+      setIsGeneratingCopy(false)
+      setCardData((prev) =>
+        prev
+          ? {
+              ...prev,
+              headline: cardCopy.headline,
+              message: innerMessage,
+              imagePrompt: cardCopy.imagePrompt,
+            }
+          : null,
+      )
+
       const imageResponse = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,26 +140,15 @@ export default function CreateCardPage() {
 
       const { imageUrl } = await imageResponse.json()
 
-      const innerMessage = formatInnerCardCopy(
-        cardCopy.message,
-        cardCopy.signoff,
+      setCardData((prev) =>
+        prev ? { ...prev, imageUrl } : null,
       )
-
-      setSenderName(details.senderName)
-      setRecipientName(details.recipientName)
-      setCardData({
-        cardType: details.cardType,
-        headline: cardCopy.headline,
-        message: innerMessage,
-        imageUrl,
-        imagePrompt: cardCopy.imagePrompt,
-      })
-      setStep("preview")
-      setEditMode(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
+      setStep("details")
     } finally {
-      setIsLoading(false)
+      setIsGeneratingCopy(false)
+      setIsGeneratingImage(false)
     }
   }
 
@@ -237,7 +254,7 @@ export default function CreateCardPage() {
     }
 
     // User is logged in, proceed with save
-    setIsLoading(true)
+    setIsSaving(true)
     try {
       const response = await fetch("/api/cards", {
         method: "POST",
@@ -276,7 +293,7 @@ export default function CreateCardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save card")
     } finally {
-      setIsLoading(false)
+      setIsSaving(false)
     }
   }
 
@@ -306,7 +323,7 @@ export default function CreateCardPage() {
           <CardDetailsForm
             cardType={selectedType}
             onSubmit={handleDetailsSubmit}
-            isLoading={isLoading}
+            isLoading={isGeneratingCopy || isGeneratingImage}
             onBack={handleBackTotype}
           />
         )}
@@ -319,7 +336,8 @@ export default function CreateCardPage() {
             senderName={senderName}
             recipientName={recipientName}
             editMode={editMode}
-            isGeneratingImage={isLoading}
+            isGeneratingImage={isGeneratingImage}
+            isGeneratingHeadline={isGeneratingCopy}
             isGuest={isGuest}
             coverOnly
             onHeadlineChange={(value) =>
@@ -330,7 +348,7 @@ export default function CreateCardPage() {
             isRegeneratingHeadline={isRegeneratingHeadline}
             isRegeneratingImage={isRegeneratingImage}
             onSave={handleSaveCard}
-            isSaving={isLoading}
+            isSaving={isSaving}
           />
         )}
 

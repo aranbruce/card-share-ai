@@ -11,6 +11,7 @@ interface CardPreviewProps {
   senderName: string
   recipientName: string
   isGeneratingImage?: boolean
+  isGeneratingHeadline?: boolean
   onRegenerateHeadline?: (prompt: string) => Promise<void>
   onRegenerateMessage?: (prompt: string) => Promise<void>
   onRegenerateImage?: (prompt: string, sourceImageUrl?: string) => Promise<void>
@@ -45,6 +46,7 @@ export function CardPreview({
   senderName,
   recipientName,
   isGeneratingImage,
+  isGeneratingHeadline,
   onRegenerateHeadline,
   onRegenerateMessage,
   onRegenerateImage,
@@ -115,6 +117,7 @@ export function CardPreview({
           senderName={senderName}
           recipientName={recipientName}
           isGeneratingImage={isGeneratingImage}
+          isGeneratingHeadline={isGeneratingHeadline}
           contributions={contributions}
           editable={Boolean(editMode)}
           coverOnly={coverOnly}
@@ -141,7 +144,11 @@ export function CardPreview({
             fullWidth
             className="mt-4"
             onClick={onSave}
-            disabled={isSaving}
+            disabled={
+              isSaving ||
+              Boolean(isGeneratingImage) ||
+              Boolean(isGeneratingHeadline)
+            }
           >
             {isSaving ? (
               <>
