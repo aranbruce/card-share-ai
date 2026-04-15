@@ -71,60 +71,41 @@ export function CardPreview({
   return (
     <div className="mx-auto max-w-3xl space-y-10">
       <div className="text-center">
-        {coverOnly ? (
-          <div className="space-y-3">
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              Card for {recipientName}
-            </h1>
-            <p className="flex items-center justify-center gap-2 text-base text-muted-foreground">
-              <span>
-                From{" "}
-                <span className="font-medium text-foreground">{senderName}</span>
-              </span>
-            </p>
-            <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
-              {editMode ? (
-                <>
-                  Preview your cover, then save. After saving, you&apos;ll open
-                  the studio to edit your message and layout.
-                  {isGuest && (
-                    <>
-                      {" "}
-                      <span className="text-muted-foreground/80">
-                        Sign in to save your card.
-                      </span>
-                    </>
-                  )}
-                </>
-              ) : (
-                "Use arrows to flip through the card"
-              )}
-            </p>
-          </div>
-        ) : (
-          <>
-            <h2 className="mb-3 text-3xl font-extrabold tracking-tight">
-              Your Card
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              {editMode ? (
-                <>
-                  Use arrows to flip pages. Click any text to edit it.
-                  {isGuest && (
-                    <>
-                      {" "}
-                      <span className="text-muted-foreground/70">
-                        Sign in to save, download, or send your card.
-                      </span>
-                    </>
-                  )}
-                </>
-              ) : (
-                "Use arrows to flip through the card"
-              )}
-            </p>
-          </>
-        )}
+        <h2 className="mb-3 text-3xl font-extrabold tracking-tight">
+          Your Card
+        </h2>
+        <p className="text-lg text-muted-foreground">
+          {editMode ? (
+            coverOnly ? (
+              <>
+                Preview your cover, then save. After saving, you&apos;ll open
+                the studio to edit your message and layout.
+                {isGuest && (
+                  <>
+                    {" "}
+                    <span className="text-muted-foreground/70">
+                      Sign in to save your card.
+                    </span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                Use arrows to flip pages. Click any text to edit it.
+                {isGuest && (
+                  <>
+                    {" "}
+                    <span className="text-muted-foreground/70">
+                      Sign in to save, download, or send your card.
+                    </span>
+                  </>
+                )}
+              </>
+            )
+          ) : (
+            "Use arrows to flip through the card"
+          )}
+        </p>
       </div>
 
       {/* 3D Card Display with Inline Editing + Save Button constrained to card width */}
