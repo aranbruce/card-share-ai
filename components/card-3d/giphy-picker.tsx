@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Dialog,
+  DialogFooter,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -54,6 +55,12 @@ export function GiphyPicker({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [gifs, setGifs] = useState<GiphyGif[]>([])
+  const [selectedGifUrl, setSelectedGifUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    setSelectedGifUrl(selectedUrl ?? null)
+  }, [open, selectedUrl])
 
   useEffect(() => {
     if (!open) return
@@ -147,7 +154,7 @@ export function GiphyPicker({
           ) : (
             <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3">
               {gifs.map((gif) => {
-                const isSelected = selectedUrl === gif.gifUrl
+                const isSelected = selectedGifUrl === gif.gifUrl
                 return (
                   <button
                     key={gif.id}
@@ -158,8 +165,7 @@ export function GiphyPicker({
                         : "border-border hover:border-primary/50"
                     }`}
                     onClick={() => {
-                      onSelect(gif.gifUrl)
-                      onOpenChange(false)
+                      setSelectedGifUrl(gif.gifUrl)
                     }}
                     title={gif.title}
                   >
@@ -182,6 +188,21 @@ export function GiphyPicker({
             </div>
           )}
         </div>
+        <DialogFooter className="border-t px-6 py-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              if (!selectedGifUrl) return
+              onSelect(selectedGifUrl)
+              onOpenChange(false)
+            }}
+            disabled={!selectedGifUrl}
+          >
+            Add selected GIF
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
