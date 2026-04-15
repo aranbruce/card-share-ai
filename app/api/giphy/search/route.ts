@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from "next/server"
+
+type GiphyResponse = {
+  data?: Array<{
+    id?: string
+    title?: string
+    images?: {
+      fixed_width?: { url?: string; width?: string; height?: string }
+      original?: { url?: string; width?: string; height?: string }
+    }
+  }>
+}
+
+function isGiphyUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false
+  try {
+    const parsed = new URL(value)
+    if (parsed.protocol !== "https:") return false
+    const host = parsed.hostname.toLowerCase()
+    return host === "giphy.com" || host.endsWith(".giphy.com")
+  } catch {
+    return false
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const apiKey = process.env.GIPHY_API_KEY?.trim()
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Giphy is not configured" },
+        { status: 503 },
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const q = searchParams.get("q")?.trim() ?? ""
+    const limitRaw = Number(searchParams.get("limit") ?? "20")
+    const limit = Number.isFinite(limitRaw)
+      ? Math.min(25, Math.max(1, Math.trunc(limitRaw)))
+      : 20
+
+    const endpoint = q.length > 0 ? "search" : "trending"
+    const upstreamUrl = new URL(`https://api.giphy.com/v1/gifs/${endpoint}`)
+    upstreamUrl.searchParams.set("api_key", apiKey)
+    upstreamUrl.searchParams.set("limit", String(limit))
+    upstreamUrl.searchParams.set("rating", "pg-13")
+    if (q.length > 0) {
+      upstreamUrl.searchParams.set("q", q)
+    }
+
+    const response = await fetch(upstreamUrl, {
+      method: "GET",
+      cache: "no-store",
+    })
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: "Failed to fetch GIFs from Giphy" },
+        { status: 502 },
+      )
+    }
+
+    const payload = (await response.json()) as GiphyResponse
+    const gifs = (payload.data ?? [])
+      .map((item) => {
+        const preview = item.images?.fixed_width
+        const full = item.images?.original
+        if (!preview?.url || !full?.url) return null
+        if (!isGiphyUrl(preview.url) || !isGiphyUrl(full.url)) return null
+
+        return {
+          id: item.id ?? "",
+          title: (item.title ?? "GIF").trim() || "GIF",
+          previewUrl: preview.url,
+          gifUrl: full.url,
+          width: Number.parseInt(full.width ?? "0", 10) || null,
+          height: Number.parseInt(full.height ?? "0", 10) || null,
+        }
+      })
+      .filter(
+        (
+          item,
+        ): item is {
+          id: string
+          title: string
+          previewUrl: string
+          gifUrl: string
+          width: number | null
+          height: number | null
+        } => item !== null,
+      )
+
+    return NextResponse.json({ gifs })
+  } catch (error) {
+    console.error("[GET /api/giphy/search]", error)
+    return NextResponse.json(
+      { error: "Failed to load GIFs" },
+      { status: 500 },
+    )
+  }
+}

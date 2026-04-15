@@ -23,6 +23,7 @@ export type OwnerCard = {
 export type OwnerContribution = {
   id: string
   message: string
+  giphy_url?: string | null
   created_at: string
   position_x?: number | null
   position_y?: number | null
@@ -125,6 +126,7 @@ export function CardOwnerStudio({
       contributionId: string,
       updates: {
         message?: string
+        giphyUrl?: string | null
         positionX?: number
         positionY?: number
         widthPercent?: number
@@ -218,6 +220,25 @@ export function CardOwnerStudio({
           ...(layout.rotationDegrees !== undefined && {
             rotationDegrees: layout.rotationDegrees,
           }),
+        })
+      }, 200)
+    },
+    [creatorRow, saveOwnerContributionPatch],
+  )
+
+  const handleContributionGifChange = useCallback(
+    (contributionId: string, giphyUrl: string | null) => {
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === contributionId ? { ...c, giphy_url: giphyUrl } : c,
+        ),
+      )
+      if (!creatorRow || contributionId !== creatorRow.id) return
+      if (ownerLayoutSaveTimerRef.current)
+        clearTimeout(ownerLayoutSaveTimerRef.current)
+      ownerLayoutSaveTimerRef.current = setTimeout(() => {
+        void saveOwnerContributionPatch(contributionId, {
+          giphyUrl,
         })
       }, 200)
     },
@@ -430,8 +451,8 @@ export function CardOwnerStudio({
     setSubmitting(true)
     setComposeError("")
     const msg = draft.message.trim()
-    if (!msg) {
-      setComposeError("Please enter a message")
+    if (!msg && !draft.giphyUrl) {
+      setComposeError("Please add a message or GIF")
       setSubmitting(false)
       return
     }
@@ -446,6 +467,7 @@ export function CardOwnerStudio({
           body: JSON.stringify({
             contributionId: creatorRow.id,
             message: msg,
+            giphyUrl: draft.giphyUrl ?? null,
             positionX: draft.x,
             positionY: draft.y,
             widthPercent: draft.widthPercent ?? 75,
@@ -483,6 +505,7 @@ export function CardOwnerStudio({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             message: msg,
+            giphyUrl: draft.giphyUrl ?? null,
             positionX: draft.x,
             positionY: draft.y,
             widthPercent: draft.widthPercent ?? 75,
@@ -564,6 +587,7 @@ export function CardOwnerStudio({
         contributeSubmitNonce={submitNonce}
         editableContributionIds={editableContributionIds}
         onContributionEdit={handleContributionEdit}
+        onContributionGifChange={handleContributionGifChange}
         onContributionLayoutChange={handleContributionLayoutChange}
         onContributionRegenerateMessage={handleContributionRegenerateMessage}
         contributionRegeneratingId={regeneratingContributionId}
@@ -579,6 +603,7 @@ export function CardOwnerStudio({
             ? (pt) => {
                 setComposeDraft({
                   message: "",
+                  giphyUrl: null,
                   x: pt.x,
                   y: pt.y,
                   pageIndex: pt.pageIndex,
@@ -594,6 +619,12 @@ export function CardOwnerStudio({
         composeError={showCompose && composeDraft ? composeError : null}
         onComposeDraftRegenerateMessage={
           showCompose ? handleComposeDraftRegenerate : undefined
+        }
+        onComposeDraftGifChange={
+          showCompose
+            ? (giphyUrl) =>
+                setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
+            : undefined
         }
         composeDraftRegenerating={composeDraftRegenerating}
       />

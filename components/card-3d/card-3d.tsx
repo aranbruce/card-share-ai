@@ -32,6 +32,7 @@ import {
   looksLikeDataUrl,
   sourceImageUrlForRefineRequest,
 } from "@/lib/source-image-limits"
+import { GiphyPicker } from "./giphy-picker"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
@@ -78,12 +79,14 @@ export function Card3D({
   contributeSubmitNonce = 0,
   editableContributionIds = [],
   onContributionEdit,
+  onContributionGifChange,
   onContributionLayoutChange,
   onContributionRegenerateMessage,
   contributionRegeneratingId = null,
   composePageBump = 0,
   composeDraft = null,
   onComposeDraftChange,
+  onComposeDraftGifChange,
   onComposeCanvasPlace,
   onComposeSubmit,
   onComposeCancel,
@@ -107,6 +110,9 @@ export function Card3D({
     string | null
   >(null)
   const [regeneratePromptDraft, setRegeneratePromptDraft] = useState("")
+  const [gifPickerContributionId, setGifPickerContributionId] = useState<
+    string | null
+  >(null)
   const lastContributeSubmitNavNonce = useRef(0)
   const mainMessageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
   const contributionInlineRegenRefs = useRef(
@@ -354,6 +360,13 @@ export function Card3D({
     return c
   }, [contributions, editingContributionId, currentPage, validMessagePage])
 
+  const gifPickerSelectedUrl = useMemo(
+    () =>
+      contributions.find((c) => c.id === gifPickerContributionId)?.giphy_url ??
+      null,
+    [contributions, gifPickerContributionId],
+  )
+
   const getContributionsForPage = (pageIdx: number) =>
     contributions.filter(
       (contrib) => effectiveContributionPage(contrib) === pageIdx,
@@ -457,6 +470,17 @@ export function Card3D({
                           textColor: hex,
                         })
                       }
+                      hasGif={Boolean(contrib.giphy_url)}
+                      onGifClick={
+                        onContributionGifChange
+                          ? () => setGifPickerContributionId(contrib.id)
+                          : undefined
+                      }
+                      onGifClear={
+                        onContributionGifChange
+                          ? () => onContributionGifChange(contrib.id, null)
+                          : undefined
+                      }
                       rotationDegrees={contrib.rotation_degrees ?? null}
                       onRotationDegreesChange={(deg) =>
                         onContributionLayoutChange(contrib.id, {
@@ -503,6 +527,18 @@ export function Card3D({
               className="space-y-3"
               onFocus={() => setEditingContributionId(contrib.id)}
             >
+              {contrib.giphy_url ? (
+                <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
+                  <Image
+                    src={contrib.giphy_url}
+                    alt="Attached GIF"
+                    fill
+                    sizes="(max-width: 768px) 90vw, 320px"
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : null}
               <InlineEdit
                 ref={(el) => {
                   if (el) {
@@ -565,15 +601,31 @@ export function Card3D({
           }
           rotationDegrees={contrib.rotation_degrees ?? 0}
         >
-          <p
-            className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
-            style={{
-              fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
-              ...(contrib.text_color ? { color: contrib.text_color } : {}),
-            }}
-          >
-            {contrib.message}
-          </p>
+          <div className="space-y-3">
+            {contrib.giphy_url ? (
+              <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
+                <Image
+                  src={contrib.giphy_url}
+                  alt="Attached GIF"
+                  fill
+                  sizes="(max-width: 768px) 90vw, 320px"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            ) : null}
+            {contrib.message ? (
+              <p
+                className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
+                style={{
+                  fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
+                  ...(contrib.text_color ? { color: contrib.text_color } : {}),
+                }}
+              >
+                {contrib.message}
+              </p>
+            ) : null}
+          </div>
         </DraggableWrapper>
       )
     })
@@ -915,6 +967,11 @@ export function Card3D({
                           composeDraftRegenerating={composeDraftRegenerating}
                           totalPages={totalPages}
                           onSelectInnerPage={handleComposeInnerPageSelect}
+                          onOpenGifPicker={
+                            onComposeDraftGifChange
+                              ? () => setGifPickerContributionId("__compose__")
+                              : undefined
+                          }
                         />
                       )}
                   </div>
@@ -1022,6 +1079,26 @@ export function Card3D({
             )}
           </div>
         )}
+      <GiphyPicker
+        open={Boolean(gifPickerContributionId)}
+        onOpenChange={(open) => {
+          if (!open) setGifPickerContributionId(null)
+        }}
+        selectedUrl={
+          gifPickerContributionId === "__compose__"
+            ? (composeDraft?.giphyUrl ?? null)
+            : gifPickerSelectedUrl
+        }
+        onSelect={(url) => {
+          if (!gifPickerContributionId) return
+          if (gifPickerContributionId === "__compose__") {
+            onComposeDraftGifChange?.(url)
+            return
+          }
+          if (!onContributionGifChange) return
+          onContributionGifChange(gifPickerContributionId, url)
+        }}
+      />
     </div>
   )
 }

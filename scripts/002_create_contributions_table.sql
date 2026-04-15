@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS card_contributions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
   message TEXT NOT NULL,
+  giphy_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

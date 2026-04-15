@@ -20,6 +20,7 @@ interface CardData {
 interface Contribution {
   id: string
   message: string
+  giphy_url?: string | null
   position_x?: number | null
   position_y?: number | null
   width_percent?: number | null

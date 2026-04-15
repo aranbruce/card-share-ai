@@ -2,6 +2,8 @@
 export type ContributionRow = {
   id: string
   message: string
+  /** Optional Giphy-hosted GIF URL attached to this note. */
+  giphy_url?: string | null
   created_at?: string
   is_creator?: boolean | null
   position_x?: number | null

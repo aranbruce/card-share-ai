@@ -1,6 +1,8 @@
 /** Placed note before submit — owner studio and contribute flows share this shape. */
 export type CardComposeDraft = {
   message: string
+  /** Optional Giphy-hosted GIF URL for this draft note. */
+  giphyUrl?: string | null
   x: number
   y: number
   pageIndex: number

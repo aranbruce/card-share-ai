@@ -29,6 +29,7 @@ interface CardPreviewProps {
   contributions?: Array<{
     id: string
     message: string
+    giphy_url?: string | null
     is_creator?: boolean | null
   }>
   extraPages?: number

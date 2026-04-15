@@ -13,6 +13,7 @@ import { Logo } from "@/components/logo"
 interface Contribution {
   id: string
   message: string
+  giphy_url?: string | null
   created_at: string
   position_x?: number | null
   position_y?: number | null
@@ -111,6 +112,7 @@ export default function ContributeCardPage() {
       contributionId: string,
       updates: {
         message?: string
+        giphyUrl?: string | null
         positionX?: number
         positionY?: number
         widthPercent?: number
@@ -150,6 +152,23 @@ export default function ContributeCardPage() {
       saveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(contributionId, { message: value }, token)
       }, 600)
+    },
+    [contributionEditTokens, saveContributionPatch],
+  )
+
+  const handleContributionGifChange = useCallback(
+    (contributionId: string, giphyUrl: string | null) => {
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === contributionId ? { ...c, giphy_url: giphyUrl } : c,
+        ),
+      )
+      const token = contributionEditTokens[contributionId]
+      if (!token) return
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        void saveContributionPatch(contributionId, { giphyUrl }, token)
+      }, 200)
     },
     [contributionEditTokens, saveContributionPatch],
   )
@@ -285,6 +304,10 @@ export default function ContributeCardPage() {
     [card],
   )
 
+  const handleComposeDraftGifChange = useCallback((giphyUrl: string | null) => {
+    setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
+  }, [])
+
   const cancelCompose = useCallback(() => {
     setComposeDraft(null)
     setError("")
@@ -298,8 +321,8 @@ export default function ContributeCardPage() {
     setError("")
 
     const msg = draft.message.trim()
-    if (!msg) {
-      setError("Please enter a message")
+    if (!msg && !draft.giphyUrl) {
+      setError("Please add a message or GIF")
       setSubmitting(false)
       return
     }
@@ -310,6 +333,7 @@ export default function ContributeCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: msg,
+          giphyUrl: draft.giphyUrl ?? null,
           positionX: draft.x,
           positionY: draft.y,
           widthPercent: draft.widthPercent ?? 75,
@@ -438,6 +462,7 @@ export default function ContributeCardPage() {
             contributeSubmitNonce={submitNonce}
             editableContributionIds={Object.keys(contributionEditTokens)}
             onContributionEdit={handleContributionEdit}
+            onContributionGifChange={handleContributionGifChange}
             onContributionLayoutChange={handleContributionLayoutChange}
             onContributionRegenerateMessage={
               handleContributionRegenerateMessage
@@ -453,6 +478,7 @@ export default function ContributeCardPage() {
                 ? (pt) => {
                     setComposeDraft({
                       message: "",
+                      giphyUrl: null,
                       x: pt.x,
                       y: pt.y,
                       pageIndex: pt.pageIndex,
@@ -467,6 +493,7 @@ export default function ContributeCardPage() {
             composeSubmitting={submitting}
             composeError={composeDraft ? error : null}
             onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
+            onComposeDraftGifChange={handleComposeDraftGifChange}
             composeDraftRegenerating={composeDraftRegenerating}
           />
         </div>
