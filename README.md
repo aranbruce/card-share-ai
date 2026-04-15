@@ -13,7 +13,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 with React, Tailwind CSS, shadcn/ui
+- **Frontend**: Next.js 16 with React, Tailwind CSS, shadcn/ui
 - **Backend**: Next.js API Routes
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **AI Services**:
@@ -25,7 +25,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.19 or later
 - Supabase project
 
 ### Environment Variables
