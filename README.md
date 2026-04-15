@@ -74,6 +74,38 @@ SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
    pnpm dev
    ```
 
+## Testing
+
+### Unit tests
+
+```bash
+pnpm test
+```
+
+### End-to-end tests (Playwright)
+
+Install browser dependencies once:
+
+```bash
+pnpm e2e:install
+```
+
+Run smoke tests:
+
+```bash
+pnpm e2e
+```
+
+For authenticated E2E flows, set these environment variables (do not commit real credentials):
+
+```bash
+E2E_EMAIL=your_test_user_email
+E2E_PASSWORD=your_test_user_password
+```
+
+The Playwright setup project logs in once and saves session state to `playwright/.auth/user.json`,
+which is then reused by authenticated tests (e.g. dashboard smoke coverage).
+
 ## Project Structure
 
 ```
