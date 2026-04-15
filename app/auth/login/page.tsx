@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
+import {
+  isOAuthProviderId,
+  oauthProviderLabel,
+  type OAuthProviderId,
+} from "@/lib/oauth-auth"
+import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -65,7 +71,8 @@ function LoginForm() {
   }, [])
 
   useEffect(() => {
-    if (searchParams.get("oauth") !== "github") return
+    const oauthParam = searchParams.get("oauth")
+    if (!isOAuthProviderId(oauthParam)) return
 
     let cancelled = false
 
@@ -79,7 +86,10 @@ function LoginForm() {
       if (cancelled) return
 
       if (userError || !user) {
-        setError(userError?.message ?? "Could not complete GitHub login.")
+        setError(
+          userError?.message ??
+            `Could not complete ${oauthProviderLabel(oauthParam)} login.`,
+        )
         setLoading(false)
         return
       }
@@ -92,8 +102,10 @@ function LoginForm() {
         return
       }
 
-      const redirect = searchParams.get("redirect")
-      router.replace(redirect || "/dashboard")
+      const redirect = resolveSafePostAuthRedirectPath(
+        searchParams.get("redirect"),
+      )
+      router.replace(redirect)
     }
 
     void completeOAuthLogin()
@@ -103,20 +115,22 @@ function LoginForm() {
     }
   }, [router, savePendingCard, searchParams, supabase])
 
-  const handleGitHubLogin = async () => {
+  const startOAuthLogin = async (provider: OAuthProviderId) => {
     setLoading(true)
     setError("")
 
-    const redirect = searchParams.get("redirect") || "/dashboard"
+    const redirect = resolveSafePostAuthRedirectPath(
+      searchParams.get("redirect"),
+    )
     const action = searchParams.get("action")
-    const nextParams = new URLSearchParams({ oauth: "github", redirect })
+    const nextParams = new URLSearchParams({ oauth: provider, redirect })
     if (action) nextParams.set("action", action)
 
     const callbackUrl = new URL("/auth/callback", window.location.origin)
     callbackUrl.searchParams.set("next", `/auth/login?${nextParams.toString()}`)
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
+      provider,
       options: { redirectTo: callbackUrl.toString() },
     })
 
@@ -151,8 +165,10 @@ function LoginForm() {
         router.push(`/dashboard/cards/${savedCardId}`)
       } else {
         // Normal redirect
-        const redirect = searchParams.get("redirect")
-        router.push(redirect || "/dashboard")
+        const redirect = resolveSafePostAuthRedirectPath(
+          searchParams.get("redirect"),
+        )
+        router.push(redirect)
       }
     } catch {
       setError("An unexpected error occurred")
@@ -184,16 +200,28 @@ function LoginForm() {
         </Alert>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        fullWidth
-        onClick={handleGitHubLogin}
-        disabled={loading}
-      >
-        Continue with GitHub
-      </Button>
+      <div className="flex flex-col gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          fullWidth
+          onClick={() => void startOAuthLogin("google")}
+          disabled={loading}
+        >
+          Continue with Google
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          fullWidth
+          onClick={() => void startOAuthLogin("github")}
+          disabled={loading}
+        >
+          Continue with GitHub
+        </Button>
+      </div>
 
       <div className="my-4 flex items-center gap-3 text-xs tracking-wide text-muted-foreground uppercase">
         <span className="h-px flex-1 bg-border" />
