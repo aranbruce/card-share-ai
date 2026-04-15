@@ -351,6 +351,7 @@ export function CardOwnerStudio({
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
+            coverImagePrompt: card.image_prompt ?? "",
           }),
         })
         if (!response.ok) throw new Error("Failed")
@@ -378,6 +379,7 @@ export function CardOwnerStudio({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             imagePrompt: newPrompt,
+            coverHeadline: card.copy_headline,
             ...(sourceImageUrl ? { sourceImageUrl } : {}),
           }),
         })

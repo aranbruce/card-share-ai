@@ -103,6 +103,7 @@ export default function CreateCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imagePrompt: cardCopy.imagePrompt,
+          coverHeadline: cardCopy.headline,
         }),
       })
 
@@ -150,6 +151,7 @@ export default function CreateCardPage() {
           senderName,
           currentValue: cardData.headline,
           userPrompt: prompt,
+          coverImagePrompt: cardData.imagePrompt,
         }),
       })
 
@@ -184,6 +186,7 @@ export default function CreateCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imagePrompt: newPrompt,
+          coverHeadline: cardData.headline,
           ...(sourceImageUrl ? { sourceImageUrl } : {}),
         }),
       })

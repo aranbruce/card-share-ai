@@ -4,6 +4,19 @@ import { getTextModel } from "@/lib/ai-text-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
+const SYSTEM_OUTPUT_RULES = `You help rewrite greeting card text. Output only the requested field: plain text, no markdown, no labels like "Headline:" or "Message:", no leading or trailing quotation marks.`
+
+const MAX_BLOCK_BODY_CHARS = 12_000
+
+/** JSON-encode block payloads so delimiter-like text cannot break the structure. */
+function block(label: string, body: string): string {
+  const capped =
+    body.length > MAX_BLOCK_BODY_CHARS
+      ? `${body.slice(0, MAX_BLOCK_BODY_CHARS)}\n…[truncated]`
+      : body
+  return `<<<${label}>>>\n${JSON.stringify(capped)}\n<<<END_${label}>>>`
+}
+
 export async function POST(request: NextRequest) {
   const rateLimit = checkFixedWindowRateLimit(request, {
     namespace: "api-regenerate-text",
@@ -24,7 +37,17 @@ export async function POST(request: NextRequest) {
       senderName,
       currentValue,
       userPrompt,
-    } = await request.json()
+      coverImagePrompt,
+    } = (await request.json()) as {
+      field?: string
+      cardType?: string
+      recipientName?: string
+      senderName?: string
+      currentValue?: string
+      userPrompt?: string
+      /** Optional: current cover art description so the headline matches the image theme. */
+      coverImagePrompt?: string
+    }
 
     if (!field || !cardType) {
       return NextResponse.json(
@@ -33,32 +56,41 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let prompt = ""
+    const cur = typeof currentValue === "string" ? currentValue : ""
+    const userReq = typeof userPrompt === "string" ? userPrompt : ""
+    const imagePrompt =
+      typeof coverImagePrompt === "string" ? coverImagePrompt.trim() : ""
+
+    let userContent = ""
 
     if (field === "headline") {
-      prompt = `Generate a single catchy, celebratory headline for a ${cardType} greeting card to ${recipientName} from ${senderName}. 
-      
-Current headline is: "${currentValue}"
+      const imageContext =
+        imagePrompt.length > 0
+          ? `\nThe cover illustration is described as follows; align the headline’s mood and subject with this art (the headline text is shown separately from the image — do not describe rendering text into the picture):\n${block("COVER_IMAGE_PROMPT", imagePrompt)}\n`
+          : ""
+      userContent = `Generate a single catchy, celebratory headline for a ${cardType} greeting card to ${recipientName ?? ""} from ${senderName ?? ""}.
+${imageContext}
+${block("CURRENT_HEADLINE", cur)}
 
-User's request for the change: "${userPrompt}"
+${block("USER_CHANGE_REQUEST", userReq)}
 
-Based on the user's request, generate a new headline. Respond with the headline text only: plain characters, no leading or trailing " or ' characters, no markdown, no labels.`
+Based on the user's request, write a new headline.`
     } else if (field === "message") {
-      prompt = `Generate a heartfelt message for a ${cardType} greeting card to ${recipientName} from ${senderName}.
+      userContent = `Generate a heartfelt message for a ${cardType} greeting card to ${recipientName ?? ""} from ${senderName ?? ""}.
 
-Current message is: "${currentValue}"
+${block("CURRENT_MESSAGE", cur)}
 
-User's request for the change: "${userPrompt}"
+${block("USER_CHANGE_REQUEST", userReq)}
 
-Based on the user's request, generate a new message that's warm and personal. Include a sign-off at the end. Respond with the message text only: plain characters, no leading or trailing " or ' characters, no markdown, no labels.`
+Based on the user's request, write a new message that's warm and personal. Include a sign-off at the end.`
     } else if (field === "contribution_message") {
-      prompt = `This is a short personal note from someone signing a ${cardType} greeting card. The card is for ${recipientName}; the main card is from ${senderName}. The person writing this note is a friend or family member adding their own message.
+      userContent = `This is a short personal note from someone signing a ${cardType} greeting card. The card is for ${recipientName ?? ""}; the main card is from ${senderName ?? ""}. The person writing this note is a friend or family member adding their own message.
 
-Current note text: "${currentValue}"
+${block("CURRENT_NOTE", cur)}
 
-User's request for the change: "${userPrompt}"
+${block("USER_CHANGE_REQUEST", userReq)}
 
-Rewrite the note to be warm and personal. Keep it concise. Respond with the note text only: plain characters, no leading or trailing " or ' characters, no markdown, no labels.`
+Rewrite the note to be warm and personal. Keep it concise.`
     } else {
       return NextResponse.json(
         { error: "Invalid field" },
@@ -68,10 +100,11 @@ Rewrite the note to be warm and personal. Keep it concise. Respond with the note
 
     const { text } = await generateText({
       model: getTextModel(),
+      system: SYSTEM_OUTPUT_RULES,
       messages: [
         {
           role: "user",
-          content: prompt,
+          content: userContent,
         },
       ],
     })
