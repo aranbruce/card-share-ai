@@ -8,6 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
+import {
+  isOAuthProviderId,
+  oauthProviderLabel,
+  type OAuthProviderId,
+} from "@/lib/oauth-auth"
 
 function SignUpForm() {
   const [email, setEmail] = useState("")
@@ -49,7 +54,8 @@ function SignUpForm() {
   }, [])
 
   useEffect(() => {
-    if (searchParams.get("oauth") !== "github") return
+    const oauthParam = searchParams.get("oauth")
+    if (!isOAuthProviderId(oauthParam)) return
 
     let cancelled = false
 
@@ -63,7 +69,10 @@ function SignUpForm() {
       if (cancelled) return
 
       if (userError || !user) {
-        setError(userError?.message ?? "Could not complete GitHub sign up.")
+        setError(
+          userError?.message ??
+            `Could not complete ${oauthProviderLabel(oauthParam)} sign up.`,
+        )
         setLoading(false)
         return
       }
@@ -87,20 +96,20 @@ function SignUpForm() {
     }
   }, [router, savePendingCard, searchParams, supabase])
 
-  const handleGitHubSignUp = async () => {
+  const startOAuthSignUp = async (provider: OAuthProviderId) => {
     setLoading(true)
     setError("")
 
     const redirect = searchParams.get("redirect") || "/dashboard"
     const action = searchParams.get("action")
-    const nextParams = new URLSearchParams({ oauth: "github", redirect })
+    const nextParams = new URLSearchParams({ oauth: provider, redirect })
     if (action) nextParams.set("action", action)
 
     const callbackUrl = new URL("/auth/callback", window.location.origin)
     callbackUrl.searchParams.set("next", `/auth/sign-up?${nextParams.toString()}`)
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "github",
+      provider,
       options: { redirectTo: callbackUrl.toString() },
     })
 
@@ -174,16 +183,28 @@ function SignUpForm() {
         </Alert>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="lg"
-        fullWidth
-        onClick={handleGitHubSignUp}
-        disabled={loading}
-      >
-        Continue with GitHub
-      </Button>
+      <div className="flex flex-col gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          fullWidth
+          onClick={() => void startOAuthSignUp("google")}
+          disabled={loading}
+        >
+          Continue with Google
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          fullWidth
+          onClick={() => void startOAuthSignUp("github")}
+          disabled={loading}
+        >
+          Continue with GitHub
+        </Button>
+      </div>
 
       <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
         <span className="h-px flex-1 bg-border" />

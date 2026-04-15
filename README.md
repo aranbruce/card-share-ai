@@ -41,16 +41,22 @@ SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 # AI_TEXT_MODEL=openai/gpt-4o
 ```
 
-### Enable GitHub login in Supabase
+### Enable Google and GitHub login in Supabase
 
-1. In GitHub, create an OAuth App with:
+1. **Google**: In [Google Cloud Console](https://console.cloud.google.com/), create OAuth 2.0 credentials (Web application) with:
+   - **Authorized JavaScript origins**: your app origin (e.g. `http://localhost:3000`)
+   - **Authorized redirect URIs**: `<YOUR_SUPABASE_URL>/auth/v1/callback`
+2. In Supabase Dashboard → **Authentication** → **Providers** → **Google**:
+   - Enable the provider
+   - Paste the Google OAuth client ID and client secret
+3. **GitHub**: In GitHub, create an OAuth App with:
    - **Homepage URL**: your app URL (for local dev usually `http://localhost:3000`)
    - **Authorization callback URL**:
      `<YOUR_SUPABASE_URL>/auth/v1/callback`
-2. In Supabase Dashboard → **Authentication** → **Providers** → **GitHub**:
+4. In Supabase Dashboard → **Authentication** → **Providers** → **GitHub**:
    - Enable the provider
    - Paste the GitHub OAuth app client ID and secret
-3. In Supabase Dashboard → **Authentication** → **URL Configuration**, ensure your app URL(s) are present in:
+5. In Supabase Dashboard → **Authentication** → **URL Configuration**, ensure your app URL(s) are present in:
    - Site URL
    - Redirect URLs (e.g. `http://localhost:3000/auth/callback`)
 
