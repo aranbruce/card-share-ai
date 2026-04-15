@@ -2,6 +2,40 @@ import { NextRequest, NextResponse } from "next/server"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { createClient } from "@/lib/supabase/server"
 
+function extractAllowedCardUpdates(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {}
+  }
+
+  const body = raw as Record<string, unknown>
+  const updates: Record<string, unknown> = {}
+
+  if (typeof body.card_type === "string") updates.card_type = body.card_type
+  if (typeof body.recipient_name === "string")
+    updates.recipient_name = body.recipient_name
+  if (typeof body.recipient_email === "string")
+    updates.recipient_email = body.recipient_email
+  if (typeof body.sender_name === "string") updates.sender_name = body.sender_name
+  if (typeof body.copy_headline === "string")
+    updates.copy_headline = body.copy_headline
+  if (typeof body.copy_message === "string") updates.copy_message = body.copy_message
+  if (typeof body.image_url === "string") updates.image_url = body.image_url
+  if (typeof body.image_prompt === "string")
+    updates.image_prompt = body.image_prompt
+  if (
+    typeof body.extra_pages === "number" &&
+    Number.isFinite(body.extra_pages) &&
+    body.extra_pages >= 0
+  ) {
+    updates.extra_pages = Math.trunc(body.extra_pages)
+  }
+  if (typeof body.sent_at === "string" && body.sent_at.trim()) {
+    updates.sent_at = body.sent_at
+  }
+
+  return updates
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -64,14 +98,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const raw = await request.json()
-    const updates: Record<string, unknown> =
-      raw && typeof raw === "object" && !Array.isArray(raw)
-        ? { ...(raw as Record<string, unknown>) }
-        : {}
-
-    // Removed column; ignore legacy clients.
-    delete updates.status
+    const updates = extractAllowedCardUpdates(await request.json())
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields provided for update" },
+        { status: 400 },
+      )
+    }
 
     if (
       "sent_at" in updates &&
@@ -93,6 +126,18 @@ export async function PATCH(
       }
       if (existing?.sent_at) {
         delete updates.sent_at
+        if (Object.keys(updates).length === 0) {
+          const { data: currentCard, error: currentCardError } = await supabase
+            .from("cards")
+            .select("*")
+            .eq("id", id)
+            .eq("user_id", user.id)
+            .maybeSingle()
+          if (currentCardError || !currentCard) {
+            return NextResponse.json({ error: "Card not found" }, { status: 404 })
+          }
+          return NextResponse.json({ card: currentCard })
+        }
       }
     }
 
@@ -111,6 +156,9 @@ export async function PATCH(
     }
 
     const cardRow = data?.[0]
+    if (!cardRow) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 })
+    }
     if (cardRow && typeof updates.copy_message === "string") {
       const { error: syncErr } = await supabase
         .from("card_contributions")

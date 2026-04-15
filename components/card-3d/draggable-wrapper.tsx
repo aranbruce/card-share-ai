@@ -118,7 +118,6 @@ export function DraggableWrapper({
   } | null>(null)
 
   const onFocusLeaveRef = useRef(onFocusLeave)
-
   useEffect(() => {
     onFocusLeaveRef.current = onFocusLeave
   }, [onFocusLeave])
