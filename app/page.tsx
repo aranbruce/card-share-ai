@@ -10,7 +10,6 @@ import { Logo } from "@/components/logo"
 export default function HomePage() {
   const router = useRouter()
   const supabase = createClient()
-  const [signedIn, setSignedIn] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -18,55 +17,20 @@ export default function HomePage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      setSignedIn(!!user)
+
+      if (user) {
+        router.replace("/dashboard")
+        return
+      }
+
       setLoading(false)
     }
 
     checkUser()
-  }, [supabase])
+  }, [router, supabase])
 
   if (loading) {
     return null
-  }
-
-  if (signedIn) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b border-border/40 bg-background/60 backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-8">
-            <Logo />
-            <div className="flex gap-3">
-              <Link href="/dashboard">
-                <Button>Dashboard</Button>
-              </Link>
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  await supabase.auth.signOut()
-                  router.push("/")
-                }}
-              >
-                Logout
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        {/* Welcome Section */}
-        <div className="mx-auto max-w-4xl px-4 py-32 text-center md:px-8">
-          <h2 className="mb-6 text-5xl font-extrabold tracking-tight">
-            Welcome Back!
-          </h2>
-          <p className="mb-12 text-xl text-muted-foreground">
-            Ready to create another amazing card?
-          </p>
-          <Link href="/create">
-            <Button size="lg">Create New Card</Button>
-          </Link>
-        </div>
-      </div>
-    )
   }
 
   return (
