@@ -15,7 +15,9 @@ describe("normalizeContributionRotationDegrees", () => {
   it("ignores non-finite and non-number values", () => {
     expect(normalizeContributionRotationDegrees("3")).toBeUndefined()
     expect(normalizeContributionRotationDegrees(Number.NaN)).toBeUndefined()
-    expect(normalizeContributionRotationDegrees(Number.POSITIVE_INFINITY)).toBeUndefined()
+    expect(
+      normalizeContributionRotationDegrees(Number.POSITIVE_INFINITY),
+    ).toBeUndefined()
   })
 
   it("clamps to the configured min and max", () => {

@@ -7,10 +7,9 @@ test.describe("auth smoke flows", () => {
     await expect(
       page.getByRole("heading", { name: "Check Your Email" }),
     ).toBeVisible()
-    await expect(page.getByRole("link", { name: "Return Home" })).toHaveAttribute(
-      "href",
-      "/",
-    )
+    await expect(
+      page.getByRole("link", { name: "Return Home" }),
+    ).toHaveAttribute("href", "/")
   })
 
   test("navigates from auth error page back to login", async ({ page }) => {

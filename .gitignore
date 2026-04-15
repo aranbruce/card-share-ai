@@ -22,4 +22,5 @@ node_modules
 .DS_Store
 .vercel
 playwright-report/
+playwright/.auth/
 test-results/

@@ -11,8 +11,12 @@ describe("friendlyAuthError", () => {
   })
 
   it("maps common rate-limit message variants", () => {
-    expect(friendlyAuthError("Rate limit exceeded")).toBe(expectedRateLimitMessage)
-    expect(friendlyAuthError("TOO MANY REQUESTS")).toBe(expectedRateLimitMessage)
+    expect(friendlyAuthError("Rate limit exceeded")).toBe(
+      expectedRateLimitMessage,
+    )
+    expect(friendlyAuthError("TOO MANY REQUESTS")).toBe(
+      expectedRateLimitMessage,
+    )
     expect(friendlyAuthError("request failed with status 429")).toBe(
       expectedRateLimitMessage,
     )

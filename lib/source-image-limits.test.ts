@@ -18,16 +18,18 @@ describe("source-image-limits", () => {
 
   describe("isDataUrlSourceImageTooLargeForRequest", () => {
     it("returns false for non-data urls", () => {
-      expect(isDataUrlSourceImageTooLargeForRequest("https://example.com/a.png")).toBe(
-        false,
-      )
+      expect(
+        isDataUrlSourceImageTooLargeForRequest("https://example.com/a.png"),
+      ).toBe(false)
     })
 
     it("flags malformed or empty data urls as too large/invalid", () => {
-      expect(isDataUrlSourceImageTooLargeForRequest("data:image/png;base64")).toBe(true)
-      expect(isDataUrlSourceImageTooLargeForRequest("data:image/png;base64,   ")).toBe(
-        true,
-      )
+      expect(
+        isDataUrlSourceImageTooLargeForRequest("data:image/png;base64"),
+      ).toBe(true)
+      expect(
+        isDataUrlSourceImageTooLargeForRequest("data:image/png;base64,   "),
+      ).toBe(true)
     })
 
     it("enforces max base64 payload length", () => {
@@ -51,9 +53,9 @@ describe("source-image-limits", () => {
     })
 
     it("returns trimmed values unless an oversized data url is provided", () => {
-      expect(sourceImageUrlForRefineRequest("  https://example.com/a.png ")).toBe(
-        "https://example.com/a.png",
-      )
+      expect(
+        sourceImageUrlForRefineRequest("  https://example.com/a.png "),
+      ).toBe("https://example.com/a.png")
 
       const oversized = `data:image/png;base64,${"A".repeat(
         MAX_SOURCE_IMAGE_BASE64_CHARS + 1,

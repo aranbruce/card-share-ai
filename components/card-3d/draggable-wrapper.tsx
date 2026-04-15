@@ -47,14 +47,10 @@ function clampNotePositionInBounds(args: {
     const dt = rotatedRect.top - outerRect.top
     minX = args.padding - dl
     maxX =
-      boundsRect.width -
-      args.padding -
-      (rotatedRect.right - outerRect.left)
+      boundsRect.width - args.padding - (rotatedRect.right - outerRect.left)
     minY = args.padding - dt
     maxY =
-      boundsRect.height -
-      args.padding -
-      (rotatedRect.bottom - outerRect.top)
+      boundsRect.height - args.padding - (rotatedRect.bottom - outerRect.top)
   }
 
   return {
@@ -122,7 +118,10 @@ export function DraggableWrapper({
   } | null>(null)
 
   const onFocusLeaveRef = useRef(onFocusLeave)
-  onFocusLeaveRef.current = onFocusLeave
+
+  useEffect(() => {
+    onFocusLeaveRef.current = onFocusLeave
+  }, [onFocusLeave])
 
   useEffect(() => {
     const el = containerRef.current

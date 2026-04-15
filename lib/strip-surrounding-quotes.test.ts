@@ -14,10 +14,10 @@ describe("stripSurroundingQuotes", () => {
   })
 
   it("keeps mismatched surrounding quotes", () => {
-    expect(stripSurroundingQuotes('"hello world\'')).toBe('"hello world\'')
+    expect(stripSurroundingQuotes("\"hello world'")).toBe("\"hello world'")
   })
 
   it("strips only one surrounding layer", () => {
-    expect(stripSurroundingQuotes('"\'hello world\'"')).toBe("'hello world'")
+    expect(stripSurroundingQuotes("\"'hello world'\"")).toBe("'hello world'")
   })
 })

@@ -1,18 +1,10 @@
+import { mkdirSync } from "node:fs"
+import { dirname, resolve } from "node:path"
 import { expect, test } from "@playwright/test"
-import path from "node:path"
 
-const authFile = path.resolve(__dirname, "./.auth/user.json")
-const hasCreds = Boolean(process.env.E2E_EMAIL && process.env.E2E_PASSWORD)
-const hasSupabaseConfig = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-)
+const authFile = resolve(process.cwd(), "playwright/.auth/user.json")
 
 test("authenticate via login form", async ({ page }) => {
-  test.skip(
-    !hasCreds || !hasSupabaseConfig,
-    "Set E2E_EMAIL, E2E_PASSWORD, NEXT_PUBLIC_SUPABASE_URL, and NEXT_PUBLIC_SUPABASE_ANON_KEY to run authenticated E2E tests.",
-  )
-
   const email = process.env.E2E_EMAIL
   const password = process.env.E2E_PASSWORD
 
@@ -23,7 +15,9 @@ test("authenticate via login form", async ({ page }) => {
   }
 
   await page.goto("/auth/login")
-  await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "Welcome Back" }),
+  ).toBeVisible()
 
   await page.getByLabel("Email").fill(email)
   await page.getByLabel("Password").fill(password)
@@ -32,5 +26,6 @@ test("authenticate via login form", async ({ page }) => {
   await expect(page).toHaveURL(/\/dashboard(\/|$)/)
   await expect(page.getByRole("heading", { name: "My Cards" })).toBeVisible()
 
+  mkdirSync(dirname(authFile), { recursive: true })
   await page.context().storageState({ path: authFile })
 })

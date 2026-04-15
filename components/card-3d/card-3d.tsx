@@ -358,7 +358,9 @@ export function Card3D({
       (contrib) => effectiveContributionPage(contrib) === pageIdx,
     )
 
-  const withContributionDefaults = (contrib: (typeof contributions)[number]) => ({
+  const withContributionDefaults = (
+    contrib: (typeof contributions)[number],
+  ) => ({
     x: typeof contrib.position_x === "number" ? contrib.position_x : 24,
     y: typeof contrib.position_y === "number" ? contrib.position_y : 24,
     widthPercent:
@@ -406,9 +408,7 @@ export function Card3D({
               contributionInlineRegenRefs.current
                 .get(contrib.id)
                 ?.closeRegeneratePrompt()
-              setEditingContributionId((id) =>
-                id === contrib.id ? null : id,
-              )
+              setEditingContributionId((id) => (id === contrib.id ? null : id))
             }}
             footer={
               onContributionLayoutChange &&
@@ -634,6 +634,7 @@ export function Card3D({
                           crossOrigin={
                             looksLikeDataUrl(imageUrl) ? undefined : "anonymous"
                           }
+                          loading="eager"
                           priority
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
