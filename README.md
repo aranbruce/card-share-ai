@@ -13,7 +13,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 with React, Tailwind CSS, shadcn/ui
+- **Frontend**: Next.js 16 with React, Tailwind CSS, shadcn/ui
 - **Backend**: Next.js API Routes
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **AI Services**:
@@ -25,7 +25,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.19 or later
 - Supabase project
 
 ### Environment Variables
@@ -79,6 +79,40 @@ SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
    ```bash
    pnpm dev
    ```
+
+## Testing
+
+### Unit tests
+
+```bash
+pnpm test
+```
+
+### End-to-end tests (Playwright)
+
+Install browser dependencies once:
+
+```bash
+pnpm e2e:install
+```
+
+Run smoke tests:
+
+```bash
+pnpm e2e
+```
+
+For authenticated E2E flows, set these environment variables (do not commit real credentials):
+
+```bash
+E2E_EMAIL=your_test_user_email
+E2E_PASSWORD=your_test_user_password
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+The Playwright setup project logs in once and saves session state to `playwright/.auth/user.json`,
+which is then reused by authenticated tests (e.g. dashboard smoke coverage).
 
 ## Project Structure
 

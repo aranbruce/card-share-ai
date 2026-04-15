@@ -15,10 +15,12 @@ function extractAllowedCardUpdates(raw: unknown): Record<string, unknown> {
     updates.recipient_name = body.recipient_name
   if (typeof body.recipient_email === "string")
     updates.recipient_email = body.recipient_email
-  if (typeof body.sender_name === "string") updates.sender_name = body.sender_name
+  if (typeof body.sender_name === "string")
+    updates.sender_name = body.sender_name
   if (typeof body.copy_headline === "string")
     updates.copy_headline = body.copy_headline
-  if (typeof body.copy_message === "string") updates.copy_message = body.copy_message
+  if (typeof body.copy_message === "string")
+    updates.copy_message = body.copy_message
   if (typeof body.image_url === "string") updates.image_url = body.image_url
   if (typeof body.image_prompt === "string")
     updates.image_prompt = body.image_prompt
@@ -134,7 +136,10 @@ export async function PATCH(
             .eq("user_id", user.id)
             .maybeSingle()
           if (currentCardError || !currentCard) {
-            return NextResponse.json({ error: "Card not found" }, { status: 404 })
+            return NextResponse.json(
+              { error: "Card not found" },
+              { status: 404 },
+            )
           }
           return NextResponse.json({ card: currentCard })
         }
