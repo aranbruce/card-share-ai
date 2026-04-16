@@ -15,7 +15,14 @@ CardsAI is a single Next.js 16 application (not a monorepo) that creates AI-powe
 
 ### Environment variables
 
-Create `.env.local` from local Supabase output (`supabase status -o env`):
+Cursor secrets are injected as environment variables on VM startup. If present, write them to `.env.local` so Next.js picks them up:
+
+```bash
+# Write any injected Supabase/AI secrets to .env.local for Next.js
+env | grep -E '^(NEXT_PUBLIC_|SUPABASE_|AI_TEXT_MODEL)' > .env.local
+```
+
+If no hosted Supabase secrets are injected, fall back to local Supabase (`supabase status -o env`):
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
