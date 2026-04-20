@@ -168,6 +168,10 @@ export function Card3D({
 
   useLayoutEffect(() => {
     if (pendingToolbarPageMove === null) return
+    if (!onMessagePageIndexChange) {
+      startTransition(() => setPendingToolbarPageMove(null))
+      return
+    }
     const { target, baseline } = pendingToolbarPageMove
     if (messagePageIndex === target) {
       startTransition(() => setPendingToolbarPageMove(null))
@@ -176,7 +180,7 @@ export function Card3D({
     if (messagePageIndex !== baseline && messagePageIndex !== target) {
       startTransition(() => setPendingToolbarPageMove(null))
     }
-  }, [messagePageIndex, pendingToolbarPageMove])
+  }, [messagePageIndex, pendingToolbarPageMove, onMessagePageIndexChange])
 
   const naturalPageSpread = useMemo(
     () =>
@@ -874,11 +878,13 @@ export function Card3D({
                                 showPage={totalPages > 1}
                                 pageValue={validMessagePage}
                                 onPageChange={(newPage) => {
-                                  setPendingToolbarPageMove({
-                                    target: newPage,
-                                    baseline: messagePageIndex,
-                                  })
-                                  onMessagePageIndexChange?.(newPage)
+                                  if (onMessagePageIndexChange) {
+                                    setPendingToolbarPageMove({
+                                      target: newPage,
+                                      baseline: messagePageIndex,
+                                    })
+                                    onMessagePageIndexChange(newPage)
+                                  }
                                   setCurrentPage(newPage)
                                 }}
                                 totalPages={totalPages}
