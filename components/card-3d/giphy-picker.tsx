@@ -35,8 +35,8 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
         typeof row.previewUrl === "string" ? row.previewUrl : null
       const gifUrl = typeof row.gifUrl === "string" ? row.gifUrl : null
       if (!previewUrl || !gifUrl) return null
-      const rawPw = row.previewWidth
-      const rawPh = row.previewHeight
+      const rawPw = row.previewWidth ?? row.preview_width
+      const rawPh = row.previewHeight ?? row.preview_height
       const pw =
         typeof rawPw === "number" && Number.isFinite(rawPw) && rawPw > 0
           ? rawPw
@@ -167,51 +167,57 @@ export function GiphyPicker({
           ) : gifs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No GIFs found.</p>
           ) : (
-            <div className="grid grid-cols-2 content-start items-start gap-3 overflow-y-auto pb-2 sm:grid-cols-3">
-              {gifs.map((gif, index) => {
-                const isSelected = selectedGifUrl === gif.gifUrl
-                const hasPreviewDims =
-                  typeof gif.previewWidth === "number" &&
-                  gif.previewWidth > 0 &&
-                  typeof gif.previewHeight === "number" &&
-                  gif.previewHeight > 0
-                return (
-                  <button
-                    key={gif.id ? gif.id : `${gif.gifUrl}-${index}`}
-                    type="button"
-                    className={`group relative min-w-0 self-start overflow-hidden rounded-lg border text-left transition ${
-                      isSelected
-                        ? "border-primary ring-2 ring-primary/30"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                    onClick={() => {
-                      setSelectedGifUrl(gif.gifUrl)
-                      onSelect(gif.gifUrl)
-                      onOpenChange(false)
-                    }}
-                    title={gif.title}
-                  >
-                    {/* Intrinsic <img> keeps Giphy preview aspect ratio; avoids grid stretch + fill/crop issues */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={gif.previewUrl}
-                      alt={gif.title}
-                      width={
-                        hasPreviewDims ? gif.previewWidth : undefined
-                      }
-                      height={
-                        hasPreviewDims ? gif.previewHeight : undefined
-                      }
-                      className="block h-auto w-full bg-muted object-contain"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="pointer-events-none absolute right-2 bottom-2 left-2 rounded bg-black/55 px-2 py-1 text-left text-[11px] leading-tight text-white opacity-0 transition group-hover:opacity-100">
-                      {gif.title}
-                    </div>
-                  </button>
-                )
-              })}
+            /*
+             * CSS columns (masonry): each GIF keeps its natural height. A CSS grid
+             * forces every cell in a row to the row height, so previews looked like
+             * identical wide strips even when aspect ratios differed.
+             */
+            <div className="max-h-[min(55vh,28rem)] min-h-0 overflow-y-auto overflow-x-hidden pb-2 [scrollbar-gutter:stable]">
+              <div className="columns-2 gap-x-3 [column-fill:_balance] sm:columns-3">
+                {gifs.map((gif, index) => {
+                  const isSelected = selectedGifUrl === gif.gifUrl
+                  const hasPreviewDims =
+                    typeof gif.previewWidth === "number" &&
+                    gif.previewWidth > 0 &&
+                    typeof gif.previewHeight === "number" &&
+                    gif.previewHeight > 0
+                  return (
+                    <button
+                      key={gif.id ? gif.id : `${gif.gifUrl}-${index}`}
+                      type="button"
+                      className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition ${
+                        isSelected
+                          ? "border-primary ring-2 ring-primary/30"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                      onClick={() => {
+                        setSelectedGifUrl(gif.gifUrl)
+                        onSelect(gif.gifUrl)
+                        onOpenChange(false)
+                      }}
+                      title={gif.title}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={gif.previewUrl}
+                        alt={gif.title}
+                        width={
+                          hasPreviewDims ? gif.previewWidth : undefined
+                        }
+                        height={
+                          hasPreviewDims ? gif.previewHeight : undefined
+                        }
+                        className="block h-auto max-h-none w-full bg-muted align-bottom object-contain"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="pointer-events-none absolute right-2 bottom-2 left-2 rounded bg-black/55 px-2 py-1 text-left text-[11px] leading-tight text-white opacity-0 transition group-hover:opacity-100">
+                        {gif.title}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
