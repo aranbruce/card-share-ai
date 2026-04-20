@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -37,15 +36,20 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
         typeof row.previewUrl === "string" ? row.previewUrl : null
       const gifUrl = typeof row.gifUrl === "string" ? row.gifUrl : null
       if (!previewUrl || !gifUrl) return null
+      const rawPw = row.previewWidth
+      const rawPh = row.previewHeight
       const pw =
-        typeof row.previewWidth === "number" && Number.isFinite(row.previewWidth)
-          ? row.previewWidth
-          : null
+        typeof rawPw === "number" && Number.isFinite(rawPw) && rawPw > 0
+          ? rawPw
+          : typeof rawPw === "string"
+            ? Number.parseInt(rawPw, 10) || null
+            : null
       const ph =
-        typeof row.previewHeight === "number" &&
-        Number.isFinite(row.previewHeight)
-          ? row.previewHeight
-          : null
+        typeof rawPh === "number" && Number.isFinite(rawPh) && rawPh > 0
+          ? rawPh
+          : typeof rawPh === "string"
+            ? Number.parseInt(rawPh, 10) || null
+            : null
       return { id, title, previewUrl, gifUrl, previewWidth: pw, previewHeight: ph }
     })
     .filter((item): item is GiphyGif => item !== null)
@@ -164,7 +168,7 @@ export function GiphyPicker({
           ) : gifs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No GIFs found.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 content-start items-start gap-3 overflow-y-auto pb-2 sm:grid-cols-3">
               {gifs.map((gif, index) => {
                 const isSelected = selectedGifUrl === gif.gifUrl
                 const hasPreviewDims =
@@ -172,16 +176,11 @@ export function GiphyPicker({
                   gif.previewWidth > 0 &&
                   typeof gif.previewHeight === "number" &&
                   gif.previewHeight > 0
-                const aspectStyle = hasPreviewDims
-                  ? {
-                      aspectRatio: `${gif.previewWidth} / ${gif.previewHeight}`,
-                    }
-                  : { aspectRatio: "1" }
                 return (
                   <button
                     key={gif.id ? gif.id : `${gif.gifUrl}-${index}`}
                     type="button"
-                    className={`group relative w-full overflow-hidden rounded-lg border transition ${
+                    className={`group relative min-w-0 self-start overflow-hidden rounded-lg border text-left transition ${
                       isSelected
                         ? "border-primary ring-2 ring-primary/30"
                         : "border-border hover:border-primary/50"
@@ -193,20 +192,22 @@ export function GiphyPicker({
                     }}
                     title={gif.title}
                   >
-                    <div
-                      className="relative w-full bg-muted"
-                      style={aspectStyle}
-                    >
-                      <Image
-                        src={gif.previewUrl}
-                        alt={gif.title}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 200px"
-                        className="object-contain"
-                        unoptimized
-                      />
-                    </div>
-                    <div className="absolute right-2 bottom-2 left-2 rounded bg-black/55 px-2 py-1 text-left text-[11px] leading-tight text-white opacity-0 transition group-hover:opacity-100">
+                    {/* Intrinsic <img> keeps Giphy preview aspect ratio; avoids grid stretch + fill/crop issues */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={gif.previewUrl}
+                      alt={gif.title}
+                      width={
+                        hasPreviewDims ? gif.previewWidth : undefined
+                      }
+                      height={
+                        hasPreviewDims ? gif.previewHeight : undefined
+                      }
+                      className="block h-auto w-full bg-muted object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="pointer-events-none absolute right-2 bottom-2 left-2 rounded bg-black/55 px-2 py-1 text-left text-[11px] leading-tight text-white opacity-0 transition group-hover:opacity-100">
                       {gif.title}
                     </div>
                   </button>
