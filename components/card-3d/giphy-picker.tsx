@@ -20,6 +20,9 @@ type GiphyGif = {
   title: string
   previewUrl: string
   gifUrl: string
+  /** Pixels for fixed_width preview from Giphy (used for correct aspect in the grid). */
+  previewWidth?: number | null
+  previewHeight?: number | null
 }
 
 function normalizeGifList(raw: unknown): GiphyGif[] {
@@ -34,7 +37,16 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
         typeof row.previewUrl === "string" ? row.previewUrl : null
       const gifUrl = typeof row.gifUrl === "string" ? row.gifUrl : null
       if (!previewUrl || !gifUrl) return null
-      return { id, title, previewUrl, gifUrl }
+      const pw =
+        typeof row.previewWidth === "number" && Number.isFinite(row.previewWidth)
+          ? row.previewWidth
+          : null
+      const ph =
+        typeof row.previewHeight === "number" &&
+        Number.isFinite(row.previewHeight)
+          ? row.previewHeight
+          : null
+      return { id, title, previewUrl, gifUrl, previewWidth: pw, previewHeight: ph }
     })
     .filter((item): item is GiphyGif => item !== null)
 }
@@ -155,11 +167,21 @@ export function GiphyPicker({
             <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3">
               {gifs.map((gif, index) => {
                 const isSelected = selectedGifUrl === gif.gifUrl
+                const hasPreviewDims =
+                  typeof gif.previewWidth === "number" &&
+                  gif.previewWidth > 0 &&
+                  typeof gif.previewHeight === "number" &&
+                  gif.previewHeight > 0
+                const aspectStyle = hasPreviewDims
+                  ? {
+                      aspectRatio: `${gif.previewWidth} / ${gif.previewHeight}`,
+                    }
+                  : { aspectRatio: "1" }
                 return (
                   <button
                     key={gif.id ? gif.id : `${gif.gifUrl}-${index}`}
                     type="button"
-                    className={`group relative overflow-hidden rounded-lg border transition ${
+                    className={`group relative w-full overflow-hidden rounded-lg border transition ${
                       isSelected
                         ? "border-primary ring-2 ring-primary/30"
                         : "border-border hover:border-primary/50"
@@ -171,13 +193,16 @@ export function GiphyPicker({
                     }}
                     title={gif.title}
                   >
-                    <div className="relative aspect-square w-full bg-muted">
+                    <div
+                      className="relative w-full bg-muted"
+                      style={aspectStyle}
+                    >
                       <Image
                         src={gif.previewUrl}
                         alt={gif.title}
                         fill
                         sizes="(max-width: 768px) 50vw, 200px"
-                        className="object-cover"
+                        className="object-contain"
                         unoptimized
                       />
                     </div>

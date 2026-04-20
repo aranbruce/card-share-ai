@@ -68,11 +68,16 @@ export async function GET(request: NextRequest) {
         if (!preview?.url || !full?.url) return null
         if (!isGiphyUrl(preview.url) || !isGiphyUrl(full.url)) return null
 
+        const previewWidth = Number.parseInt(preview.width ?? "0", 10) || null
+        const previewHeight = Number.parseInt(preview.height ?? "0", 10) || null
+
         return {
           id: item.id ?? "",
           title: (item.title ?? "GIF").trim() || "GIF",
           previewUrl: preview.url,
           gifUrl: full.url,
+          previewWidth,
+          previewHeight,
           width: Number.parseInt(full.width ?? "0", 10) || null,
           height: Number.parseInt(full.height ?? "0", 10) || null,
         }
@@ -85,6 +90,8 @@ export async function GET(request: NextRequest) {
           title: string
           previewUrl: string
           gifUrl: string
+          previewWidth: number | null
+          previewHeight: number | null
           width: number | null
           height: number | null
         } => item !== null,
