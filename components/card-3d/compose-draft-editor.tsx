@@ -64,7 +64,6 @@ export function ComposeDraftEditor({
   return (
     <div className="absolute inset-0 z-20" onFocus={() => setIsFocused(true)}>
       <DraggableWrapper
-        key={`compose-draft-p${composeDraft.pageIndex}`}
         editable
         isActive={isFocused}
         initialOffset={{
