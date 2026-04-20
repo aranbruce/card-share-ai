@@ -145,17 +145,55 @@ export function Card3D({
 
   const [committedSpread, setCommittedSpread] =
     useState<CommittedSpreadSnapshot | null>(null)
+  /**
+   * Toolbar page changes call `onMessagePageIndexChange` and `setCurrentPage` in the same tick,
+   * but `messagePageIndex` from the parent may not update until the next render. Without this,
+   * `validMessagePage` lags and `isMessagePage` becomes false, unmounting the toolbar.
+   */
+  const [pendingToolbarPageMove, setPendingToolbarPageMove] = useState<{
+    target: number
+    /** `messagePageIndex` from the parent when the toolbar change started (still stale until parent re-renders). */
+    baseline: number
+  } | null>(null)
+
+  const effectiveMessagePageIndex = useMemo(() => {
+    if (pendingToolbarPageMove === null) return messagePageIndex
+    const { target, baseline } = pendingToolbarPageMove
+    if (messagePageIndex === target) return messagePageIndex
+    if (currentPage !== target) return messagePageIndex
+    if (messagePageIndex !== baseline && messagePageIndex !== target)
+      return messagePageIndex
+    return target
+  }, [messagePageIndex, currentPage, pendingToolbarPageMove])
+
+  useLayoutEffect(() => {
+    if (pendingToolbarPageMove === null) return
+    const { target, baseline } = pendingToolbarPageMove
+    if (messagePageIndex === target) {
+      startTransition(() => setPendingToolbarPageMove(null))
+      return
+    }
+    if (messagePageIndex !== baseline && messagePageIndex !== target) {
+      startTransition(() => setPendingToolbarPageMove(null))
+    }
+  }, [messagePageIndex, pendingToolbarPageMove])
 
   const naturalPageSpread = useMemo(
     () =>
       computeNaturalPageSpread(
         coverOnly,
-        messagePageIndex,
+        effectiveMessagePageIndex,
         contributions,
         extraPages,
         composePageBump,
       ),
-    [coverOnly, messagePageIndex, contributions, extraPages, composePageBump],
+    [
+      coverOnly,
+      effectiveMessagePageIndex,
+      contributions,
+      extraPages,
+      composePageBump,
+    ],
   )
 
   const { totalPages, validMessagePage } = useMemo(
@@ -163,7 +201,7 @@ export function Card3D({
       capSpreadToCommitted(
         naturalPageSpread,
         committedSpread,
-        messagePageIndex,
+        effectiveMessagePageIndex,
         extraPages,
         composePageBump,
         coverOnly,
@@ -171,7 +209,7 @@ export function Card3D({
     [
       naturalPageSpread,
       committedSpread,
-      messagePageIndex,
+      effectiveMessagePageIndex,
       extraPages,
       composePageBump,
       coverOnly,
@@ -836,6 +874,10 @@ export function Card3D({
                                 showPage={totalPages > 1}
                                 pageValue={validMessagePage}
                                 onPageChange={(newPage) => {
+                                  setPendingToolbarPageMove({
+                                    target: newPage,
+                                    baseline: messagePageIndex,
+                                  })
                                   onMessagePageIndexChange?.(newPage)
                                   setCurrentPage(newPage)
                                 }}
