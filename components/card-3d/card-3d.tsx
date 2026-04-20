@@ -529,11 +529,10 @@ export function Card3D({
               onFocus={() => setEditingContributionId(contrib.id)}
             >
               {contrib.giphy_url ? (
-                <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
+                <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
                   <GiphyCanvasGif
                     src={contrib.giphy_url}
                     alt="Attached GIF"
-                    className="absolute inset-0 size-full object-cover"
                   />
                 </div>
               ) : null}
@@ -601,11 +600,10 @@ export function Card3D({
         >
           <div className="space-y-3">
             {contrib.giphy_url ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
+              <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
                 <GiphyCanvasGif
                   src={contrib.giphy_url}
                   alt="Attached GIF"
-                  className="absolute inset-0 size-full object-cover"
                 />
               </div>
             ) : null}

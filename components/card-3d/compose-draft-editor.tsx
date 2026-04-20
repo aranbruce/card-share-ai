@@ -156,11 +156,10 @@ export function ComposeDraftEditor({
             </div>
           ) : null}
           {composeDraft.giphyUrl ? (
-            <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
+            <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
               <GiphyCanvasGif
                 src={composeDraft.giphyUrl}
                 alt="Attached GIF"
-                className="absolute inset-0 size-full object-cover"
               />
             </div>
           ) : null}
