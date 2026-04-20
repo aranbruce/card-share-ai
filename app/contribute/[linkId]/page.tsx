@@ -5,7 +5,6 @@ import { useParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Card3D } from "@/components/card-3d"
-import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { Logo } from "@/components/logo"
@@ -30,7 +29,6 @@ interface CardData {
   recipient_name: string
   sender_name: string
   copy_headline: string
-  copy_message: string
   image_url: string
   sent_at?: string | null
   extra_pages?: number
@@ -370,14 +368,6 @@ export default function ContributeCardPage() {
     }
   }, [linkId])
 
-  const { bodyMessage, displayContributions } = useMemo(
-    () =>
-      card
-        ? forCardDisplay(contributions, card.copy_message)
-        : { bodyMessage: "", displayContributions: [] as Contribution[] },
-    [contributions, card],
-  )
-
   /** One note per device/session: tokens are only set after a successful POST. */
   const canPlaceNewGuestMessage = useMemo(
     () => Object.keys(contributionEditTokens).length === 0,
@@ -429,10 +419,10 @@ export default function ContributeCardPage() {
           <Card3D
             imageUrl={card.image_url}
             headline={card.copy_headline}
-            message={bodyMessage}
+            message=""
             senderName={card.sender_name || "Someone special"}
             recipientName={card.recipient_name || "You"}
-            contributions={displayContributions}
+            contributions={contributions}
             extraPages={card.extra_pages || 0}
             hideEmptyCenterMessageBody={true}
             contributeSubmitNonce={submitNonce}

@@ -5,14 +5,12 @@ import { useParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Card3D } from "@/components/card-3d"
-import { forCardDisplay } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
 
 interface CardData {
   recipient_name: string
   sender_name: string
   copy_headline: string
-  copy_message: string
   image_url: string
   extra_pages?: number
 }
@@ -64,11 +62,6 @@ export default function PublicCardPage() {
     loadCard()
   }, [linkId])
 
-  const { bodyMessage, displayContributions } = useMemo(
-    () => forCardDisplay(contributions, card?.copy_message ?? ""),
-    [contributions, card?.copy_message],
-  )
-
   const guestMessageCount = useMemo(
     () => contributions.filter((c) => !c.is_creator).length,
     [contributions],
@@ -115,10 +108,10 @@ export default function PublicCardPage() {
           <Card3D
             imageUrl={card.image_url}
             headline={card.copy_headline}
-            message={bodyMessage}
+            message=""
             senderName={card.sender_name || "Someone special"}
             recipientName={card.recipient_name || "You"}
-            contributions={displayContributions}
+            contributions={contributions}
             extraPages={card.extra_pages || 0}
             hideEmptyCenterMessageBody={true}
           />
