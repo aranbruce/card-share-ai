@@ -1,7 +1,7 @@
 "use client"
 
 import type { Card3DProps } from "./types"
-import Image from "next/image"
+import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import { useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
 import {
@@ -157,13 +157,10 @@ export function ComposeDraftEditor({
           ) : null}
           {composeDraft.giphyUrl ? (
             <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
-              <Image
+              <GiphyCanvasGif
                 src={composeDraft.giphyUrl}
                 alt="Attached GIF"
-                fill
-                sizes="(max-width: 768px) 90vw, 320px"
-                className="object-cover"
-                unoptimized
+                className="absolute inset-0 size-full object-cover"
               />
             </div>
           ) : null}

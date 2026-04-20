@@ -153,11 +153,11 @@ export function GiphyPicker({
             <p className="text-sm text-muted-foreground">No GIFs found.</p>
           ) : (
             <div className="grid grid-cols-2 gap-3 overflow-y-auto pb-2 sm:grid-cols-3">
-              {gifs.map((gif) => {
+              {gifs.map((gif, index) => {
                 const isSelected = selectedGifUrl === gif.gifUrl
                 return (
                   <button
-                    key={gif.id}
+                    key={gif.id ? gif.id : `${gif.gifUrl}-${index}`}
                     type="button"
                     className={`group relative overflow-hidden rounded-lg border transition ${
                       isSelected
@@ -166,6 +166,8 @@ export function GiphyPicker({
                     }`}
                     onClick={() => {
                       setSelectedGifUrl(gif.gifUrl)
+                      onSelect(gif.gifUrl)
+                      onOpenChange(false)
                     }}
                     title={gif.title}
                   >
@@ -189,18 +191,11 @@ export function GiphyPicker({
           )}
         </div>
         <DialogFooter className="border-t px-6 py-4">
+          <p className="mr-auto hidden text-xs text-muted-foreground sm:block">
+            Click a GIF to add it to your note.
+          </p>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (!selectedGifUrl) return
-              onSelect(selectedGifUrl)
-              onOpenChange(false)
-            }}
-            disabled={!selectedGifUrl}
-          >
-            Add selected GIF
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -33,6 +33,7 @@ import {
   sourceImageUrlForRefineRequest,
 } from "@/lib/source-image-limits"
 import { GiphyPicker } from "./giphy-picker"
+import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
@@ -529,13 +530,10 @@ export function Card3D({
             >
               {contrib.giphy_url ? (
                 <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
-                  <Image
+                  <GiphyCanvasGif
                     src={contrib.giphy_url}
                     alt="Attached GIF"
-                    fill
-                    sizes="(max-width: 768px) 90vw, 320px"
-                    className="object-cover"
-                    unoptimized
+                    className="absolute inset-0 size-full object-cover"
                   />
                 </div>
               ) : null}
@@ -604,13 +602,10 @@ export function Card3D({
           <div className="space-y-3">
             {contrib.giphy_url ? (
               <div className="relative aspect-video w-full overflow-hidden rounded-md border border-border/50 bg-muted/50">
-                <Image
+                <GiphyCanvasGif
                   src={contrib.giphy_url}
                   alt="Attached GIF"
-                  fill
-                  sizes="(max-width: 768px) 90vw, 320px"
-                  className="object-cover"
-                  unoptimized
+                  className="absolute inset-0 size-full object-cover"
                 />
               </div>
             ) : null}
