@@ -1,7 +1,7 @@
 "use client"
 
 import type { Card3DProps } from "./types"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
 import {
   InlineEdit,
@@ -54,17 +54,43 @@ export function ComposeDraftEditor({
   totalPages: number
   onSelectInnerPage: (pageIndex: number) => void
 }) {
-  /** Drives drag/resize chrome only; footer toolbar stays mounted so page picker focus changes cannot hide it. */
-  const [isFocused, setIsFocused] = useState(false)
+  /** Matches dashed outline + footer toolbar: active while the note is “selected” on the canvas. */
+  const [isFocused, setIsFocused] = useState(true)
   const [composeRegeneratePromptOpen, setComposeRegeneratePromptOpen] =
     useState(false)
   const [composeRegeneratePromptText, setComposeRegeneratePromptText] =
     useState("")
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
+  const draggableRef = useRef<HTMLDivElement | null>(null)
+  const isFocusedRef = useRef(true)
+
+  useEffect(() => {
+    isFocusedRef.current = isFocused
+  }, [isFocused])
+
+  useEffect(() => {
+    const onPointerDownCapture = (e: PointerEvent) => {
+      const el = draggableRef.current
+      if (!el) return
+      const target = e.target
+      if (!(target instanceof Node)) return
+      if (el.contains(target)) {
+        if (!isFocusedRef.current) setIsFocused(true)
+        return
+      }
+      if (!isFocusedRef.current) return
+      setIsFocused(false)
+      messageInlineRef.current?.closeRegeneratePrompt()
+    }
+    document.addEventListener("pointerdown", onPointerDownCapture, true)
+    return () =>
+      document.removeEventListener("pointerdown", onPointerDownCapture, true)
+  }, [])
 
   return (
-    <div className="absolute inset-0 z-20" onFocus={() => setIsFocused(true)}>
+    <div className="absolute inset-0 z-20">
       <DraggableWrapper
+        ref={draggableRef}
         editable
         isActive={isFocused}
         initialOffset={{
@@ -80,61 +106,59 @@ export function ComposeDraftEditor({
             widthPercent: layout.widthPercent,
           })
         }
-        onFocusLeave={() => {
-          messageInlineRef.current?.closeRegeneratePrompt()
-          setIsFocused(false)
-        }}
         footer={
-          composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
-            <div data-compose-format-toolbar data-regenerate-area>
-              <RegeneratePromptBar
-                className="w-full max-w-none"
-                value={composeRegeneratePromptText}
-                onValueChange={setComposeRegeneratePromptText}
-                isRegenerating={composeDraftRegenerating}
-                onSubmit={() =>
-                  void messageInlineRef.current?.submitRegenerateWithPrompt(
-                    composeRegeneratePromptText,
-                  )
-                }
-                onCancel={() =>
-                  messageInlineRef.current?.closeRegeneratePrompt()
-                }
-              />
-            </div>
-          ) : (
-            <div data-compose-format-toolbar>
-              <MessageFormattingToolbar
-                className="flex w-full max-w-none"
-                fontSize={composeDraft.fontSize ?? messageFontSize}
-                onFontSizeChange={(px) =>
-                  onComposeDraftChange({ fontSize: px })
-                }
-                textColor={composeDraft.textColor ?? null}
-                onTextColorChange={(hex) =>
-                  onComposeDraftChange({ textColor: hex })
-                }
-                rotationDegrees={composeDraft.rotationDegrees ?? null}
-                onRotationDegreesChange={(deg) =>
-                  onComposeDraftChange({ rotationDegrees: deg })
-                }
-                showPage={totalPages > 1}
-                pageValue={composeDraft.pageIndex}
-                onPageChange={onSelectInnerPage}
-                totalPages={totalPages}
-                aiTweakSlot={
-                  onComposeDraftRegenerateMessage ? (
-                    <ToolbarRegenerateButton
-                      isRegenerating={composeDraftRegenerating}
-                      onOpen={() =>
-                        messageInlineRef.current?.openRegeneratePrompt()
-                      }
-                    />
-                  ) : undefined
-                }
-              />
-            </div>
-          )
+          isFocused ? (
+            composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
+              <div data-compose-format-toolbar data-regenerate-area>
+                <RegeneratePromptBar
+                  className="w-full max-w-none"
+                  value={composeRegeneratePromptText}
+                  onValueChange={setComposeRegeneratePromptText}
+                  isRegenerating={composeDraftRegenerating}
+                  onSubmit={() =>
+                    void messageInlineRef.current?.submitRegenerateWithPrompt(
+                      composeRegeneratePromptText,
+                    )
+                  }
+                  onCancel={() =>
+                    messageInlineRef.current?.closeRegeneratePrompt()
+                  }
+                />
+              </div>
+            ) : (
+              <div data-compose-format-toolbar>
+                <MessageFormattingToolbar
+                  className="flex w-full max-w-none"
+                  fontSize={composeDraft.fontSize ?? messageFontSize}
+                  onFontSizeChange={(px) =>
+                    onComposeDraftChange({ fontSize: px })
+                  }
+                  textColor={composeDraft.textColor ?? null}
+                  onTextColorChange={(hex) =>
+                    onComposeDraftChange({ textColor: hex })
+                  }
+                  rotationDegrees={composeDraft.rotationDegrees ?? null}
+                  onRotationDegreesChange={(deg) =>
+                    onComposeDraftChange({ rotationDegrees: deg })
+                  }
+                  showPage={totalPages > 1}
+                  pageValue={composeDraft.pageIndex}
+                  onPageChange={onSelectInnerPage}
+                  totalPages={totalPages}
+                  aiTweakSlot={
+                    onComposeDraftRegenerateMessage ? (
+                      <ToolbarRegenerateButton
+                        isRegenerating={composeDraftRegenerating}
+                        onOpen={() =>
+                          messageInlineRef.current?.openRegeneratePrompt()
+                        }
+                      />
+                    ) : undefined
+                  }
+                />
+              </div>
+            )
+          ) : null
         }
       >
         <div className="space-y-3">

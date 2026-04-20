@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  forwardRef,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -60,39 +61,45 @@ function clampNotePositionInBounds(args: {
 }
 
 // Draggable wrapper for positioning content
-export function DraggableWrapper({
-  children,
-  editable = false,
-  isActive = true,
-  initialOffset,
-  initialWidthPercent,
-  rotationDegrees = 0,
-  onLayoutCommit,
-  footer,
-  onFocusLeave,
-}: {
-  children: ReactNode
-  editable?: boolean
-  isActive?: boolean
-  /** Pixel `left`/`top` inside the positioning containing block (same as click-to-place overlay when it aligns). */
-  initialOffset?: { x: number; y: number }
-  /** Default 100; placed notes often use ~75 */
-  initialWidthPercent?: number
-  /** Slight tilt in degrees; defaults to 0 */
-  rotationDegrees?: number
-  onLayoutCommit?: (layout: {
-    x: number
-    y: number
-    widthPercent: number
-  }) => void
-  /** Renders below the note; positioned to span the card canvas width while moving with the draggable. */
-  footer?: ReactNode
-  /**
-   * Fires when focus leaves this wrapper (message + footer toolbar). Needed because the footer is
-   * outside the message subtree; `blur` on the message alone does not run when closing from toolbar controls.
-   */
-  onFocusLeave?: () => void
-}) {
+export const DraggableWrapper = forwardRef<
+  HTMLDivElement,
+  {
+    children: ReactNode
+    editable?: boolean
+    isActive?: boolean
+    /** Pixel `left`/`top` inside the positioning containing block (same as click-to-place overlay when it aligns). */
+    initialOffset?: { x: number; y: number }
+    /** Default 100; placed notes often use ~75 */
+    initialWidthPercent?: number
+    /** Slight tilt in degrees; defaults to 0 */
+    rotationDegrees?: number
+    onLayoutCommit?: (layout: {
+      x: number
+      y: number
+      widthPercent: number
+    }) => void
+    /** Renders below the note; positioned to span the card canvas width while moving with the draggable. */
+    footer?: ReactNode
+    /**
+     * Fires when focus leaves this wrapper (message + footer toolbar). Needed because the footer is
+     * outside the message subtree; `blur` on the message alone does not run when closing from toolbar controls.
+     */
+    onFocusLeave?: () => void
+  }
+>(function DraggableWrapper(
+  {
+    children,
+    editable = false,
+    isActive = true,
+    initialOffset,
+    initialWidthPercent,
+    rotationDegrees = 0,
+    onLayoutCommit,
+    footer,
+    onFocusLeave,
+  },
+  ref,
+) {
   const [position, setPosition] = useState<{
     x: number | null
     y: number | null
@@ -358,7 +365,11 @@ export function DraggableWrapper({
 
   return (
     <div
-      ref={containerRef}
+      ref={(node) => {
+        containerRef.current = node
+        if (typeof ref === "function") ref(node)
+        else if (ref) ref.current = node
+      }}
       className="relative"
       style={
         isPositioned
@@ -431,4 +442,6 @@ export function DraggableWrapper({
       ) : null}
     </div>
   )
-}
+})
+
+DraggableWrapper.displayName = "DraggableWrapper"
