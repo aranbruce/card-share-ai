@@ -54,6 +54,7 @@ export function ComposeDraftEditor({
   totalPages: number
   onSelectInnerPage: (pageIndex: number) => void
 }) {
+  /** Drives drag/resize chrome only; footer toolbar stays mounted so page picker focus changes cannot hide it. */
   const [isFocused, setIsFocused] = useState(false)
   const [composeRegeneratePromptOpen, setComposeRegeneratePromptOpen] =
     useState(false)
@@ -84,58 +85,56 @@ export function ComposeDraftEditor({
           setIsFocused(false)
         }}
         footer={
-          isFocused ? (
-            composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
-              <div data-compose-format-toolbar data-regenerate-area>
-                <RegeneratePromptBar
-                  className="w-full max-w-none"
-                  value={composeRegeneratePromptText}
-                  onValueChange={setComposeRegeneratePromptText}
-                  isRegenerating={composeDraftRegenerating}
-                  onSubmit={() =>
-                    void messageInlineRef.current?.submitRegenerateWithPrompt(
-                      composeRegeneratePromptText,
-                    )
-                  }
-                  onCancel={() =>
-                    messageInlineRef.current?.closeRegeneratePrompt()
-                  }
-                />
-              </div>
-            ) : (
-              <div data-compose-format-toolbar>
-                <MessageFormattingToolbar
-                  className="flex w-full max-w-none"
-                  fontSize={composeDraft.fontSize ?? messageFontSize}
-                  onFontSizeChange={(px) =>
-                    onComposeDraftChange({ fontSize: px })
-                  }
-                  textColor={composeDraft.textColor ?? null}
-                  onTextColorChange={(hex) =>
-                    onComposeDraftChange({ textColor: hex })
-                  }
-                  rotationDegrees={composeDraft.rotationDegrees ?? null}
-                  onRotationDegreesChange={(deg) =>
-                    onComposeDraftChange({ rotationDegrees: deg })
-                  }
-                  showPage={totalPages > 1}
-                  pageValue={composeDraft.pageIndex}
-                  onPageChange={onSelectInnerPage}
-                  totalPages={totalPages}
-                  aiTweakSlot={
-                    onComposeDraftRegenerateMessage ? (
-                      <ToolbarRegenerateButton
-                        isRegenerating={composeDraftRegenerating}
-                        onOpen={() =>
-                          messageInlineRef.current?.openRegeneratePrompt()
-                        }
-                      />
-                    ) : undefined
-                  }
-                />
-              </div>
-            )
-          ) : null
+          composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
+            <div data-compose-format-toolbar data-regenerate-area>
+              <RegeneratePromptBar
+                className="w-full max-w-none"
+                value={composeRegeneratePromptText}
+                onValueChange={setComposeRegeneratePromptText}
+                isRegenerating={composeDraftRegenerating}
+                onSubmit={() =>
+                  void messageInlineRef.current?.submitRegenerateWithPrompt(
+                    composeRegeneratePromptText,
+                  )
+                }
+                onCancel={() =>
+                  messageInlineRef.current?.closeRegeneratePrompt()
+                }
+              />
+            </div>
+          ) : (
+            <div data-compose-format-toolbar>
+              <MessageFormattingToolbar
+                className="flex w-full max-w-none"
+                fontSize={composeDraft.fontSize ?? messageFontSize}
+                onFontSizeChange={(px) =>
+                  onComposeDraftChange({ fontSize: px })
+                }
+                textColor={composeDraft.textColor ?? null}
+                onTextColorChange={(hex) =>
+                  onComposeDraftChange({ textColor: hex })
+                }
+                rotationDegrees={composeDraft.rotationDegrees ?? null}
+                onRotationDegreesChange={(deg) =>
+                  onComposeDraftChange({ rotationDegrees: deg })
+                }
+                showPage={totalPages > 1}
+                pageValue={composeDraft.pageIndex}
+                onPageChange={onSelectInnerPage}
+                totalPages={totalPages}
+                aiTweakSlot={
+                  onComposeDraftRegenerateMessage ? (
+                    <ToolbarRegenerateButton
+                      isRegenerating={composeDraftRegenerating}
+                      onOpen={() =>
+                        messageInlineRef.current?.openRegeneratePrompt()
+                      }
+                    />
+                  ) : undefined
+                }
+              />
+            </div>
+          )
         }
       >
         <div className="space-y-3">
