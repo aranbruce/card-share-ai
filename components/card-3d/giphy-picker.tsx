@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Dialog,
-  DialogFooter,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -216,14 +215,12 @@ export function GiphyPicker({
             </div>
           )}
         </div>
-        <DialogFooter className="border-t px-6 py-4">
-          <p className="mr-auto hidden text-xs text-muted-foreground sm:block">
-            Click a GIF to add it to your note.
+        <div className="border-t px-6 py-3">
+          <p className="text-center text-xs text-muted-foreground sm:text-left">
+            Click a GIF to add it to your note. Press Esc or click outside to
+            close.
           </p>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
