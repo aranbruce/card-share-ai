@@ -144,8 +144,10 @@ export async function POST(
     }
 
     const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+    const compactedContribution =
+      contributions.find((item) => item.id === contribution.id) ?? contribution
 
-    return NextResponse.json({ contribution, contributions, extra_pages })
+    return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
   } catch (e) {
     console.error("[owner POST contributions]", e)
     return NextResponse.json(
@@ -327,8 +329,10 @@ export async function PATCH(
     }
 
     const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+    const compactedContribution =
+      contributions.find((item) => item.id === updated.id) ?? updated
 
-    return NextResponse.json({ contribution: updated, contributions, extra_pages })
+    return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
   } catch (e) {
     console.error("[owner PATCH contributions]", e)
     return NextResponse.json({ error: "Failed to update" }, { status: 500 })

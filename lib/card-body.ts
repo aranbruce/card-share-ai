@@ -1,4 +1,4 @@
-/** Row shape returned from card_contributions. */
+/** UI subset of card_contributions columns (excludes card_id, edit_token, etc.). */
 export type Contribution = {
   id: string
   message: string

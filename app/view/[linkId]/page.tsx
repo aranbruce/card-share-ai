@@ -36,10 +36,10 @@ export default function PublicCardPage() {
           throw new Error(errorData.error || "Card not found")
         }
 
-        const { card: cardData, contributions: contributions } =
+        const { card: cardData, contributions: fetchedContributions } =
           await response.json()
         setCard(cardData)
-        setContributions(contributions)
+        setContributions(fetchedContributions)
       } catch (err) {
         console.error("Error loading card:", err)
         setError(err instanceof Error ? err.message : "Failed to load card")

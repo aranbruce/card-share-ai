@@ -118,9 +118,11 @@ export async function POST(
     }
 
     const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+    const compactedContribution =
+      contributions.find((item) => item.id === contribution.id) ?? contribution
 
     // editToken is only ever returned here — not in GET — so only the browser that added the message can PATCH.
-    return NextResponse.json({ contribution, editToken, contributions, extra_pages })
+    return NextResponse.json({ contribution: compactedContribution, editToken, contributions, extra_pages })
   } catch (error) {
     console.error("Error adding contribution:", error)
     return NextResponse.json(
@@ -142,21 +144,15 @@ export async function PATCH(
 
     if (body.action === "add_page") {
       const supabase = requireServiceRoleClient()
-      const { data: cardData, error: cardError } = await supabase
-        .from("cards")
-        .select("id, extra_pages")
-        .eq("contributor_link_id", linkId)
-        .maybeSingle()
-      if (cardError || !cardData) {
-        return NextResponse.json({ error: "Card not found" }, { status: 404 })
+      const { data: next, error: rpcError } = await supabase.rpc(
+        "increment_extra_pages",
+        { card_link_id: linkId },
+      )
+      if (rpcError) {
+        return NextResponse.json({ error: rpcError.message }, { status: 500 })
       }
-      const next = (cardData.extra_pages ?? 0) + 1
-      const { error: updateError } = await supabase
-        .from("cards")
-        .update({ extra_pages: next })
-        .eq("id", cardData.id)
-      if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 })
+      if (next === null) {
+        return NextResponse.json({ error: "Card not found" }, { status: 404 })
       }
       return NextResponse.json({ extra_pages: next })
     }
@@ -331,8 +327,10 @@ export async function PATCH(
     }
 
     const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+    const compactedContribution =
+      contributions.find((item) => item.id === updated.id) ?? updated
 
-    return NextResponse.json({ contribution: updated, contributions, extra_pages })
+    return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
   } catch (error) {
     console.error("Error updating contribution:", error)
     return NextResponse.json(
@@ -343,7 +341,7 @@ export async function PATCH(
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ linkId: string }> },
 ) {
   try {
