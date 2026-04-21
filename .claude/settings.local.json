@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm add *)"
+    ]
+  }
+}

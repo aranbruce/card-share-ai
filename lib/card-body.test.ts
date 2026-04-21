@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { forCardDisplay, type ContributionRow } from "./card-body"
+import { forCardDisplay, type Contribution } from "./card-body"
 
 describe("forCardDisplay", () => {
   it("uses fallback body message when no creator contribution exists", () => {
-    const contributions: ContributionRow[] = [
-      { id: "c1", message: "Happy birthday!" },
-      { id: "c2", message: "Hope you have a great day!", is_creator: false },
+    const contributions: Contribution[] = [
+      { id: "c1", message: "Happy birthday!", created_at: "2024-01-01T00:00:00.000Z" },
+      { id: "c2", message: "Hope you have a great day!", created_at: "2024-01-01T00:00:00.000Z", is_creator: false },
     ]
 
     expect(forCardDisplay(contributions, "Fallback copy")).toEqual({
@@ -16,9 +16,9 @@ describe("forCardDisplay", () => {
   })
 
   it("returns an empty body message when a creator contribution exists", () => {
-    const contributions: ContributionRow[] = [
-      { id: "creator", message: "Owner text", is_creator: true },
-      { id: "friend", message: "From me!" },
+    const contributions: Contribution[] = [
+      { id: "creator", message: "Owner text", created_at: "2024-01-01T00:00:00.000Z", is_creator: true },
+      { id: "friend", message: "From me!", created_at: "2024-01-01T00:00:00.000Z" },
     ]
 
     expect(forCardDisplay(contributions, "Fallback copy")).toEqual({

@@ -5,6 +5,7 @@ import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import { compactCardPages } from "@/lib/compact-card-pages"
 import { requireServiceRoleClient } from "@/lib/supabase/admin"
 
 function tokensMatch(stored: string, provided: string): boolean {
@@ -116,8 +117,10 @@ export async function POST(
       )
     }
 
+    const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+
     // editToken is only ever returned here — not in GET — so only the browser that added the message can PATCH.
-    return NextResponse.json({ contribution, editToken })
+    return NextResponse.json({ contribution, editToken, contributions, extra_pages })
   } catch (error) {
     console.error("Error adding contribution:", error)
     return NextResponse.json(
@@ -136,6 +139,28 @@ export async function PATCH(
   try {
     const { linkId } = await params
     const body = await request.json()
+
+    if (body.action === "add_page") {
+      const supabase = requireServiceRoleClient()
+      const { data: cardData, error: cardError } = await supabase
+        .from("cards")
+        .select("id, extra_pages")
+        .eq("contributor_link_id", linkId)
+        .maybeSingle()
+      if (cardError || !cardData) {
+        return NextResponse.json({ error: "Card not found" }, { status: 404 })
+      }
+      const next = (cardData.extra_pages ?? 0) + 1
+      const { error: updateError } = await supabase
+        .from("cards")
+        .update({ extra_pages: next })
+        .eq("id", cardData.id)
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 })
+      }
+      return NextResponse.json({ extra_pages: next })
+    }
+
     const contributionId = body.contributionId as string | undefined
     const editToken = body.editToken as string | undefined
     const message = body.message as string | undefined
@@ -305,7 +330,9 @@ export async function PATCH(
       )
     }
 
-    return NextResponse.json({ contribution: updated })
+    const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+
+    return NextResponse.json({ contribution: updated, contributions, extra_pages })
   } catch (error) {
     console.error("Error updating contribution:", error)
     return NextResponse.json(

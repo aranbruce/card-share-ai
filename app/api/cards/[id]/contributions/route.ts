@@ -3,6 +3,7 @@ import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import { compactCardPages } from "@/lib/compact-card-pages"
 import { createClient } from "@/lib/supabase/server"
 
 type OwnsCardResult =
@@ -139,13 +140,12 @@ export async function POST(
       .eq("id", cardId)
       .eq("user_id", user.id)
     if (mirrorErr) {
-      console.error(
-        "[owner POST contributions] mirror copy_message:",
-        mirrorErr,
-      )
+      console.error("[owner POST contributions] mirror copy_message:", mirrorErr)
     }
 
-    return NextResponse.json({ contribution })
+    const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+
+    return NextResponse.json({ contribution, contributions, extra_pages })
   } catch (e) {
     console.error("[owner POST contributions]", e)
     return NextResponse.json(
@@ -326,7 +326,9 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ contribution: updated })
+    const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+
+    return NextResponse.json({ contribution: updated, contributions, extra_pages })
   } catch (e) {
     console.error("[owner PATCH contributions]", e)
     return NextResponse.json({ error: "Failed to update" }, { status: 500 })
