@@ -203,7 +203,7 @@ export function GiphyPicker({
                     <button
                       key={gif.id}
                       type="button"
-                      className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition ${
+                      className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                         isSelected
                           ? "border-primary ring-2 ring-primary/30"
                           : "border-border hover:border-primary/50"
