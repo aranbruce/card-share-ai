@@ -1,10 +1,13 @@
-/** Row shape returned from card_contributions (subset used by UI). */
-export type ContributionRow = {
+/**
+ * UI-focused card_contributions shape used by card body rendering.
+ * APIs may return additional columns (e.g. card_id) that are not declared here.
+ */
+export type Contribution = {
   id: string
   message: string
   /** Optional Giphy-hosted GIF URL attached to this note. */
   giphy_url?: string | null
-  created_at?: string
+  created_at: string
   is_creator?: boolean | null
   position_x?: number | null
   position_y?: number | null
@@ -28,7 +31,7 @@ export type ContributionRow = {
  * contributions as canvas notes only.
  */
 export function forCardDisplay(
-  contributions: ContributionRow[],
+  contributions: Contribution[],
   fallbackCopyMessage: string,
 ) {
   const creator = contributions.find((c) => Boolean(c.is_creator))

@@ -300,8 +300,7 @@ export function Card3D({
 
   const isLastPage = currentPage === totalPages - 1
   const canGoRight =
-    !coverOnly &&
-    (currentPage < totalPages - 1 || (editable && onAddPage !== undefined))
+    !coverOnly && (currentPage < totalPages - 1 || onAddPage !== undefined)
 
   const reportComposePlace = useCallback(
     (e: MouseEvent) => {
@@ -1022,12 +1021,12 @@ export function Card3D({
             variant="ghost"
             size="icon-lg"
             onClick={() =>
-              isLastPage && editable
+              isLastPage && onAddPage
                 ? handleAddPage()
                 : goToPage(currentPage + 1)
             }
-            disabled={!canGoRight && !editable}
-            title={isLastPage && editable ? "Add a new page" : "Next page"}
+            disabled={!canGoRight}
+            title={isLastPage && onAddPage ? "Add a new page" : "Next page"}
           >
             <ChevronRight className="h-5 w-5" />
           </Button>

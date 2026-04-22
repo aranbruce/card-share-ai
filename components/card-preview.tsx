@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Card3D } from "@/components/card-3d"
+import type { Contribution } from "@/lib/card-body"
 
 interface CardPreviewProps {
   imageUrl: string
@@ -26,12 +27,7 @@ interface CardPreviewProps {
   /** Cover + headline only; inner message page is not edited here. */
   coverOnly?: boolean
   isGuest?: boolean
-  contributions?: Array<{
-    id: string
-    message: string
-    giphy_url?: string | null
-    is_creator?: boolean | null
-  }>
+  contributions?: Contribution[]
   extraPages?: number
   onAddPage?: () => void | Promise<void>
   messageFontSize?: number

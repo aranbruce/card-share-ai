@@ -8,22 +8,9 @@ import { Card3D } from "@/components/card-3d"
 import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import type { Contribution } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
 
-interface Contribution {
-  id: string
-  message: string
-  giphy_url?: string | null
-  created_at: string
-  position_x?: number | null
-  position_y?: number | null
-  width_percent?: number | null
-  page_index?: number | null
-  font_size?: number | null
-  text_color?: string | null
-  rotation_degrees?: number | null
-  is_creator?: boolean | null
-}
 
 interface CardData {
   id: string
@@ -57,6 +44,7 @@ export default function ContributeCardPage() {
     Record<string, string>
   >({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const addPageInFlightRef = useRef(false)
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<
     string | null
@@ -107,6 +95,27 @@ export default function ContributeCardPage() {
     loadCard()
   }, [linkId])
 
+  const handleAddPage = useCallback(async () => {
+    if (addPageInFlightRef.current) return
+    addPageInFlightRef.current = true
+    try {
+      const response = await fetch(`/api/contribute/${linkId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "add_page" }),
+      })
+      if (!response.ok) throw new Error("Failed to add page")
+      const { extra_pages } = (await response.json()) as {
+        extra_pages?: number
+      }
+      if (typeof extra_pages === "number") {
+        setCard((prev) => (prev ? { ...prev, extra_pages } : prev))
+      }
+    } finally {
+      addPageInFlightRef.current = false
+    }
+  }, [linkId])
+
   const saveContributionPatch = useCallback(
     async (
       contributionId: string,
@@ -128,11 +137,20 @@ export default function ContributeCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contributionId, editToken, ...updates }),
       })
+      const payload = await response.json().catch(() => ({}))
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({}))
         console.error(
           "Failed to save contribution",
           typeof payload.error === "string" ? payload.error : payload,
+        )
+        return
+      }
+      if (Array.isArray(payload.contributions)) {
+        setContributions(payload.contributions as Contribution[])
+      }
+      if (typeof payload.extra_pages === "number") {
+        setCard((prev) =>
+          prev ? { ...prev, extra_pages: payload.extra_pages } : prev,
         )
       }
     },
@@ -354,9 +372,16 @@ export default function ContributeCardPage() {
         )
       }
 
-      const { contribution, editToken } = payload as {
+      const {
+        contribution,
+        editToken,
+        contributions: allContributions,
+        extra_pages,
+      } = payload as {
         contribution?: Contribution
         editToken?: string
+        contributions?: Contribution[]
+        extra_pages?: number
       }
       const token = typeof editToken === "string" ? editToken.trim() : ""
       const ok =
@@ -372,8 +397,15 @@ export default function ContributeCardPage() {
         return
       }
 
-      setContributions((prev) => [...prev, contribution])
+      if (Array.isArray(allContributions)) {
+        setContributions(allContributions)
+      } else {
+        setContributions((prev) => [...prev, contribution])
+      }
       setSubmitNonce((n) => n + 1)
+      if (typeof extra_pages === "number") {
+        setCard((prev) => (prev ? { ...prev, extra_pages } : prev))
+      }
       setContributionEditTokens((prev) => {
         const next = { ...prev, [contribution.id]: token }
         try {
@@ -458,6 +490,7 @@ export default function ContributeCardPage() {
             recipientName={card.recipient_name || "You"}
             contributions={displayContributions}
             extraPages={card.extra_pages || 0}
+            onAddPage={handleAddPage}
             hideEmptyCenterMessageBody={true}
             contributeSubmitNonce={submitNonce}
             editableContributionIds={Object.keys(contributionEditTokens)}

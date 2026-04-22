@@ -1,3 +1,4 @@
+import type { Contribution } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
 import type { ReactNode } from "react"
 
@@ -10,22 +11,7 @@ export interface Card3DProps {
   isGeneratingImage?: boolean
   /** Cover headline still loading (e.g. initial AI copy). */
   isGeneratingHeadline?: boolean
-  contributions?: Array<{
-    id: string
-    message: string
-    /** Optional Giphy-hosted GIF URL for this note. */
-    giphy_url?: string | null
-    position_x?: number | null
-    position_y?: number | null
-    width_percent?: number | null
-    page_index?: number | null
-    font_size?: number | null
-    /** Hex `#RRGGBB`; null/omit = theme default */
-    text_color?: string | null
-    /** Slight tilt in degrees; null/omit = no rotation */
-    rotation_degrees?: number | null
-    is_creator?: boolean | null
-  }>
+  contributions?: Contribution[]
   editable?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void

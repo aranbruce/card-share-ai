@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Card3D } from "@/components/card-3d"
-import { forCardDisplay } from "@/lib/card-body"
+import { forCardDisplay, type Contribution } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
 
 interface CardData {
@@ -17,19 +17,6 @@ interface CardData {
   extra_pages?: number
 }
 
-interface Contribution {
-  id: string
-  message: string
-  giphy_url?: string | null
-  position_x?: number | null
-  position_y?: number | null
-  width_percent?: number | null
-  page_index?: number | null
-  font_size?: number | null
-  text_color?: string | null
-  rotation_degrees?: number | null
-  is_creator?: boolean | null
-}
 
 export default function PublicCardPage() {
   const params = useParams()
@@ -50,10 +37,10 @@ export default function PublicCardPage() {
           throw new Error(errorData.error || "Card not found")
         }
 
-        const { card: cardData, contributions: contribs } =
+        const { card: cardData, contributions: fetchedContributions } =
           await response.json()
         setCard(cardData)
-        setContributions(contribs)
+        setContributions(fetchedContributions)
       } catch (err) {
         console.error("Error loading card:", err)
         setError(err instanceof Error ? err.message : "Failed to load card")
@@ -77,7 +64,7 @@ export default function PublicCardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
         <Spinner className="h-8 w-8" />
       </div>
     )

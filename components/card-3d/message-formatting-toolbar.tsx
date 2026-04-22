@@ -201,7 +201,7 @@ export function MessageFormattingToolbar({
               <RotateCcw className="h-3.5 w-3.5" aria-hidden />
               <span className="sr-only">Rotate counter-clockwise</span>
             </button>
-            <div className="h-4 w-[1px] bg-border/60" aria-hidden />
+            <div className="h-4 w-px bg-border/60" aria-hidden />
             <button
               type="button"
               className="flex h-full items-center justify-center rounded-r-md px-2.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
