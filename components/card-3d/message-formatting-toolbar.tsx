@@ -98,7 +98,7 @@ export function MessageFormattingToolbar({
   )
   const toolbarAriaLabel = useMemo(() => {
     const parts: string[] = ["Text size"]
-    if (onGifClick) parts.push("gif")
+    if (onGifClick) parts.push("GIF")
     if (onTextColorChange) parts.push("color")
     if (onRotationDegreesChange) parts.push("rotation")
     if (showPage) parts.push("page")
