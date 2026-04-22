@@ -1,4 +1,7 @@
-/** UI subset of card_contributions columns (excludes card_id, edit_token, etc.). */
+/**
+ * UI-focused card_contributions shape used by card body rendering.
+ * APIs may return additional columns (e.g. card_id) that are not declared here.
+ */
 export type Contribution = {
   id: string
   message: string

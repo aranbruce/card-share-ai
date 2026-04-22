@@ -150,7 +150,7 @@ export async function POST(
       return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
     } catch (compactErr) {
       console.error("[owner POST contributions] compactCardPages:", compactErr)
-      return NextResponse.json({ contribution, contributions: [contribution], extra_pages: 0 })
+      return NextResponse.json({ contribution, extra_pages: 0 })
     }
   } catch (e) {
     console.error("[owner POST contributions]", e)
@@ -339,7 +339,7 @@ export async function PATCH(
       return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
     } catch (compactErr) {
       console.error("[owner PATCH contributions] compactCardPages:", compactErr)
-      return NextResponse.json({ contribution: updated, contributions: [updated], extra_pages: 0 })
+      return NextResponse.json({ contribution: updated, extra_pages: 0 })
     }
   } catch (e) {
     console.error("[owner PATCH contributions]", e)

@@ -125,7 +125,7 @@ export async function POST(
       return NextResponse.json({ contribution: compactedContribution, editToken, contributions, extra_pages })
     } catch (compactErr) {
       console.error("[contribute POST] compactCardPages:", compactErr)
-      return NextResponse.json({ contribution, editToken, contributions: [contribution], extra_pages: 0 })
+      return NextResponse.json({ contribution, editToken })
     }
   } catch (error) {
     console.error("Error adding contribution:", error)
@@ -353,7 +353,7 @@ export async function PATCH(
       return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
     } catch (compactErr) {
       console.error("[contribute PATCH] compactCardPages:", compactErr)
-      return NextResponse.json({ contribution: updated, contributions: [updated], extra_pages: 0 })
+      return NextResponse.json({ contribution: updated })
     }
   } catch (error) {
     console.error("Error updating contribution:", error)
