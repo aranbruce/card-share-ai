@@ -34,10 +34,15 @@ CREATE INDEX IF NOT EXISTS idx_cards_contributor_link_id ON cards(contributor_li
 CREATE TABLE IF NOT EXISTS card_contributions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-  message TEXT NOT NULL,
+  message TEXT,
   is_creator BOOLEAN NOT NULL DEFAULT false,
   giphy_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT card_contributions_message_or_gif_required
+    CHECK (
+      NULLIF(BTRIM(message), '') IS NOT NULL
+      OR NULLIF(BTRIM(giphy_url), '') IS NOT NULL
+    )
 );
 
 ALTER TABLE card_contributions ENABLE ROW LEVEL SECURITY;

@@ -387,9 +387,10 @@ export function Card3D({
   })
 
   const renderContributionsForPage = (pageIdx: number) => {
+    const editableSet = new Set(editableContributionIds)
     const pageContribs = [...getContributionsForPage(pageIdx)].sort((a, b) => {
-      const aEditable = editableContributionIds.includes(a.id) ? 1 : 0
-      const bEditable = editableContributionIds.includes(b.id) ? 1 : 0
+      const aEditable = editableSet.has(a.id) ? 1 : 0
+      const bEditable = editableSet.has(b.id) ? 1 : 0
       return aEditable - bEditable
     })
     return pageContribs.map((contrib) => {
@@ -483,7 +484,9 @@ export function Card3D({
                           : undefined
                       }
                       onGifClear={
-                        onContributionGifChange
+                        onContributionGifChange &&
+                        typeof contrib.message === "string" &&
+                        contrib.message.trim().length > 0
                           ? () => onContributionGifChange(contrib.id, null)
                           : undefined
                       }

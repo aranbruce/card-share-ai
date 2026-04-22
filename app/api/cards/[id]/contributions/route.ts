@@ -329,7 +329,11 @@ export async function PATCH(
       updates.rotation_degrees = rotation
     }
     const nextMessage =
-      updates.message !== undefined ? updates.message.trim() : row.message
+      updates.message !== undefined
+        ? updates.message.trim()
+        : typeof row.message === "string"
+          ? row.message.trim()
+          : row.message
     const nextGiphy =
       updates.giphy_url !== undefined ? updates.giphy_url : row.giphy_url
     if (!nextMessage && !nextGiphy) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { normalizeGiphyUrl } from "@/lib/giphy-url"
+import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 type GiphyResponse = {
   data?: Array<{
@@ -13,6 +14,18 @@ type GiphyResponse = {
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = checkFixedWindowRateLimit(request, {
+    namespace: "api:giphy-search",
+    maxRequests: 60,
+    windowMs: 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: rateLimit.headers },
+    )
+  }
+
   try {
     const apiKey = process.env.GIPHY_API_KEY?.trim()
     if (!apiKey) {
@@ -54,18 +67,19 @@ export async function GET(request: NextRequest) {
       .map((item) => {
         const preview = item.images?.fixed_width
         const full = item.images?.original
-        if (!item.id || !preview?.url || !full?.url) return null
-        if (!normalizeGiphyUrl(preview.url) || !normalizeGiphyUrl(full.url))
-          return null
+        if (!preview?.url || !full?.url) return null
+        const normalizedPreviewUrl = normalizeGiphyUrl(preview.url)
+        const normalizedFullUrl = normalizeGiphyUrl(full.url)
+        if (!normalizedPreviewUrl || !normalizedFullUrl) return null
 
         const previewWidth = Number.parseInt(preview.width ?? "0", 10) || null
         const previewHeight = Number.parseInt(preview.height ?? "0", 10) || null
 
         return {
-          id: item.id,
+          id: item.id ?? normalizedPreviewUrl,
           title: (item.title ?? "GIF").trim() || "GIF",
-          previewUrl: preview.url,
-          gifUrl: full.url,
+          previewUrl: normalizedPreviewUrl,
+          gifUrl: normalizedFullUrl,
           previewWidth,
           previewHeight,
         }

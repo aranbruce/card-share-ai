@@ -69,6 +69,15 @@ export function CardOwnerStudio({
     composeDraftRef.current = composeDraft
   }, [composeDraft])
 
+  useEffect(() => {
+    return () => {
+      if (headlineSaveTimerRef.current) clearTimeout(headlineSaveTimerRef.current)
+      if (ownerMessageSaveTimerRef.current) clearTimeout(ownerMessageSaveTimerRef.current)
+      if (ownerLayoutSaveTimerRef.current) clearTimeout(ownerLayoutSaveTimerRef.current)
+      if (ownerGifSaveTimerRef.current) clearTimeout(ownerGifSaveTimerRef.current)
+    }
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError("")

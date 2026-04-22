@@ -29,13 +29,13 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
     .map((item): GiphyGif | null => {
       if (!item || typeof item !== "object") return null
       const row = item as Record<string, unknown>
-      const id = typeof row.id === "string" && row.id ? row.id : null
-      if (!id) return null
       const title = typeof row.title === "string" ? row.title : "GIF"
       const previewUrl =
         typeof row.previewUrl === "string" ? row.previewUrl : null
       const gifUrl = typeof row.gifUrl === "string" ? row.gifUrl : null
       if (!previewUrl || !gifUrl) return null
+      const id =
+        typeof row.id === "string" && row.id ? row.id : gifUrl
       const rawPw = row.previewWidth
       const rawPh = row.previewHeight
       const pw =

@@ -362,7 +362,11 @@ export async function PATCH(
       updates.rotation_degrees = rotation
     }
     const nextMessage =
-      updates.message !== undefined ? updates.message.trim() : existing.message
+      updates.message !== undefined
+        ? updates.message.trim()
+        : typeof existing.message === "string"
+          ? existing.message.trim()
+          : existing.message
     const nextGiphy =
       updates.giphy_url !== undefined ? updates.giphy_url : existing.giphy_url
     if (!nextMessage && !nextGiphy) {

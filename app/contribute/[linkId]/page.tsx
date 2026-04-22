@@ -55,6 +55,13 @@ export default function ContributeCardPage() {
   }, [composeDraft])
 
   useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      if (gifSaveTimerRef.current) clearTimeout(gifSaveTimerRef.current)
+    }
+  }, [linkId])
+
+  useEffect(() => {
     try {
       const raw = sessionStorage.getItem(`contribute_tokens_${linkId}`)
       if (raw) {

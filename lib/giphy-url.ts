@@ -4,8 +4,8 @@ const GIPHY_HOST = "giphy.com"
  * Accept only HTTPS URLs hosted on giphy domains.
  * Returns:
  * - string: normalized URL
- * - null: explicit clear / empty value
- * - undefined: invalid value
+ * - null: no value / clear (raw is null, undefined, or blank string)
+ * - undefined: invalid value (wrong type, bad URL, non-HTTPS, non-giphy host)
  */
 export function normalizeGiphyUrl(raw: unknown): string | null | undefined {
   if (raw === null || raw === undefined) return null
