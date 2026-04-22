@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         } => item !== null,
       )
 
-    return NextResponse.json({ gifs })
+    return NextResponse.json({ gifs }, { headers: rateLimit.headers })
   } catch (error) {
     console.error("[GET /api/giphy/search]", error)
     return NextResponse.json(

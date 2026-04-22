@@ -2,6 +2,10 @@
 ALTER TABLE card_contributions
   ADD COLUMN IF NOT EXISTS giphy_url TEXT;
 
+-- Allow GIF-only contributions by making message optional.
+ALTER TABLE card_contributions
+  ALTER COLUMN message DROP NOT NULL;
+
 -- Enforce at the DB level that every row has a non-blank message, a non-blank GIF, or both.
 ALTER TABLE card_contributions
   DROP CONSTRAINT IF EXISTS message_or_gif_required,

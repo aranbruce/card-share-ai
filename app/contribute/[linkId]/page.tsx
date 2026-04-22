@@ -43,7 +43,7 @@ export default function ContributeCardPage() {
     Record<string, string>
   >({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const gifSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const addPageInFlightRef = useRef(false)
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<
@@ -57,7 +57,7 @@ export default function ContributeCardPage() {
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      if (gifSaveTimerRef.current) clearTimeout(gifSaveTimerRef.current)
+      gifSaveTimersRef.current.forEach(clearTimeout)
     }
   }, [linkId])
 
@@ -190,10 +190,15 @@ export default function ContributeCardPage() {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
-      if (gifSaveTimerRef.current) clearTimeout(gifSaveTimerRef.current)
-      gifSaveTimerRef.current = setTimeout(() => {
-        void saveContributionPatch(contributionId, { giphyUrl }, token)
-      }, 200)
+      const existing = gifSaveTimersRef.current.get(contributionId)
+      if (existing) clearTimeout(existing)
+      gifSaveTimersRef.current.set(
+        contributionId,
+        setTimeout(() => {
+          gifSaveTimersRef.current.delete(contributionId)
+          void saveContributionPatch(contributionId, { giphyUrl }, token)
+        }, 200),
+      )
     },
     [contributionEditTokens, saveContributionPatch],
   )
