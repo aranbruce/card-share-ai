@@ -56,8 +56,12 @@ export default function ContributeCardPage() {
 
   useEffect(() => {
     return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
       gifSaveTimersRef.current.forEach(clearTimeout)
+      gifSaveTimersRef.current.clear()
     }
   }, [linkId])
 
