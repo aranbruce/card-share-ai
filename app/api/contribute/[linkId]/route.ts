@@ -152,7 +152,20 @@ export async function PATCH(
         return NextResponse.json({ error: rpcError.message }, { status: 500 })
       }
       if (next === null) {
-        return NextResponse.json({ error: "Card not found" }, { status: 404 })
+        // NULL means either the card doesn't exist or extra_pages is already at
+        // the cap (10). A follow-up lookup tells us which.
+        const { data: card } = await supabase
+          .from("cards")
+          .select("extra_pages")
+          .eq("contributor_link_id", linkId)
+          .maybeSingle()
+        if (!card) {
+          return NextResponse.json({ error: "Card not found" }, { status: 404 })
+        }
+        return NextResponse.json(
+          { error: "Maximum number of pages reached", extra_pages: card.extra_pages },
+          { status: 409 },
+        )
       }
       return NextResponse.json({ extra_pages: next })
     }
