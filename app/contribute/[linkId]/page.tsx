@@ -187,6 +187,8 @@ export default function ContributeCardPage() {
 
   const handleContributionGifChange = useCallback(
     (contributionId: string, giphyUrl: string | null) => {
+      const currentMessage =
+        contributions.find((c) => c.id === contributionId)?.message ?? null
       setContributions((prev) =>
         prev.map((c) =>
           c.id === contributionId ? { ...c, giphy_url: giphyUrl } : c,
@@ -200,11 +202,15 @@ export default function ContributeCardPage() {
         contributionId,
         setTimeout(() => {
           gifSaveTimersRef.current.delete(contributionId)
-          void saveContributionPatch(contributionId, { giphyUrl }, token)
+          void saveContributionPatch(
+            contributionId,
+            { giphyUrl, ...(currentMessage && { message: currentMessage }) },
+            token,
+          )
         }, 200),
       )
     },
-    [contributionEditTokens, saveContributionPatch],
+    [contributionEditTokens, contributions, saveContributionPatch],
   )
 
   const handleContributionLayoutChange = useCallback(

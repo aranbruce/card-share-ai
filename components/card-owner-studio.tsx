@@ -276,9 +276,11 @@ export function CardOwnerStudio({
       if (!creatorRow || contributionId !== creatorRow.id) return
       if (ownerGifSaveTimerRef.current)
         clearTimeout(ownerGifSaveTimerRef.current)
+      const currentMessage = creatorRow.message
       ownerGifSaveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(contributionId, {
           giphyUrl,
+          ...(currentMessage && { message: currentMessage }),
         })
       }, 200)
     },
