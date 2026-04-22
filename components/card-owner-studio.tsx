@@ -518,7 +518,7 @@ export function CardOwnerStudio({
             c
               ? {
                   ...c,
-                  copy_message: updated.message,
+                  copy_message: updated.message ?? "",
                   ...(typeof extra_pages === "number" && { extra_pages }),
                 }
               : c,
@@ -568,7 +568,7 @@ export function CardOwnerStudio({
             c
               ? {
                   ...c,
-                  copy_message: contribution.message,
+                  copy_message: contribution.message ?? "",
                   ...(typeof extra_pages === "number" && { extra_pages }),
                 }
               : c,

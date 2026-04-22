@@ -549,7 +549,7 @@ export function Card3D({
                     contributionInlineRegenRefs.current.delete(contrib.id)
                   }
                 }}
-                value={contrib.message}
+                value={contrib.message ?? ""}
                 onChange={(v) => onContributionEdit!(contrib.id, v)}
                 editable
                 onRegenerate={

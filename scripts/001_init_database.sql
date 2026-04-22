@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS card_contributions (
   is_creator BOOLEAN NOT NULL DEFAULT false,
   giphy_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
-  CONSTRAINT card_contributions_message_or_gif_required
+  CONSTRAINT message_or_gif_required
     CHECK (
       NULLIF(BTRIM(message), '') IS NOT NULL
       OR NULLIF(BTRIM(giphy_url), '') IS NOT NULL

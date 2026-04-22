@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         { error: "Giphy is not configured" },
-        { status: 503 },
+        { status: 503, headers: rateLimit.headers },
       )
     }
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { error: "Failed to fetch GIFs from Giphy" },
-        { status: 502 },
+        { status: 502, headers: rateLimit.headers },
       )
     }
 
@@ -100,6 +100,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ gifs })
   } catch (error) {
     console.error("[GET /api/giphy/search]", error)
-    return NextResponse.json({ error: "Failed to load GIFs" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Failed to load GIFs" },
+      { status: 500, headers: rateLimit.headers },
+    )
   }
 }
