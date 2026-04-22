@@ -104,7 +104,7 @@ export default function ContributeCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "add_page" }),
       })
-      if (!response.ok) return
+      if (!response.ok) throw new Error("Failed to add page")
       const { extra_pages } = (await response.json()) as { extra_pages?: number }
       if (typeof extra_pages === "number") {
         setCard((prev) => (prev ? { ...prev, extra_pages } : prev))
