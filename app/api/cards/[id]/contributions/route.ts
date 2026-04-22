@@ -125,7 +125,7 @@ export async function POST(
       .from("card_contributions")
       .insert({
         card_id: cardId,
-        message: msg,
+        message: msg || null,
         is_creator: true,
         position_x: typeof positionX === "number" ? positionX : null,
         position_y: typeof positionY === "number" ? positionY : null,
@@ -264,7 +264,7 @@ export async function PATCH(
     }
 
     const updates: {
-      message?: string
+      message?: string | null
       position_x?: number
       position_y?: number
       width_percent?: number
@@ -276,7 +276,7 @@ export async function PATCH(
     } = {}
     if (typeof message === "string") {
       const msg = message.trim()
-      updates.message = msg
+      updates.message = msg || null
     }
     if (typeof positionX === "number") updates.position_x = positionX
     if (typeof positionY === "number") updates.position_y = positionY
@@ -330,7 +330,7 @@ export async function PATCH(
     }
     const nextMessage =
       updates.message !== undefined
-        ? updates.message.trim()
+        ? (updates.message ?? "").trim()
         : typeof row.message === "string"
           ? row.message.trim()
           : row.message

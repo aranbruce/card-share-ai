@@ -38,17 +38,19 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
         typeof row.id === "string" && row.id ? row.id : gifUrl
       const rawPw = row.previewWidth
       const rawPh = row.previewHeight
+      const parsedPw = typeof rawPw === "string" ? Number.parseInt(rawPw, 10) : null
+      const parsedPh = typeof rawPh === "string" ? Number.parseInt(rawPh, 10) : null
       const pw =
         typeof rawPw === "number" && Number.isFinite(rawPw) && rawPw > 0
           ? rawPw
-          : typeof rawPw === "string"
-            ? Number.parseInt(rawPw, 10) || null
+          : parsedPw !== null && Number.isFinite(parsedPw) && parsedPw > 0
+            ? parsedPw
             : null
       const ph =
         typeof rawPh === "number" && Number.isFinite(rawPh) && rawPh > 0
           ? rawPh
-          : typeof rawPh === "string"
-            ? Number.parseInt(rawPh, 10) || null
+          : parsedPh !== null && Number.isFinite(parsedPh) && parsedPh > 0
+            ? parsedPh
             : null
       return {
         id,
