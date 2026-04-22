@@ -6,7 +6,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 
 - **AI-Generated Cards**: Automatically generate card text and images using AI
 - **Multiple Card Types**: Birthday, Thank You, Congratulations, Holiday, and Custom cards
-- **Group Contributions**: Share unique links with friends and family to add messages before sending
+- **Group Contributions**: Share unique links with friends and family to add messages and optional GIFs before sending
 - **Card Editing**: Manually edit generated text or regenerate using AI
 - **Easy Sharing**: Share via link or (future) email integration
 - **User Accounts**: Secure authentication with Supabase to save and manage cards
@@ -36,6 +36,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=your_github_oauth_app_client_id
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
+GIPHY_API_KEY=your_giphy_api_key
 
 # Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to xAI Grok via the gateway.
 # AI_TEXT_MODEL=openai/gpt-4o
@@ -146,7 +147,7 @@ lib/
 
 1. Card owner generates shareable link
 2. Others visit `/contribute/[linkId]`
-3. Add their name and message
+3. Add their message and optional GIF
 4. Messages appear on the card in real-time
 
 ### Managing Cards

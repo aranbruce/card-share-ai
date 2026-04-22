@@ -5,7 +5,14 @@ import {
   MAX_CONTRIBUTION_ROTATION_DEGREES,
   MIN_CONTRIBUTION_ROTATION_DEGREES,
 } from "@/lib/contribution-rotation"
-import { Layers, Palette, RotateCcw, RotateCw, Type } from "lucide-react"
+import {
+  Image as ImageIcon,
+  Layers,
+  Palette,
+  RotateCcw,
+  RotateCw,
+  Type,
+} from "lucide-react"
 import { useMemo, type ReactNode } from "react"
 
 /** Discrete text sizes for inner messages (card canvas / compose). */
@@ -56,6 +63,9 @@ export function MessageFormattingToolbar({
   onFontSizeChange,
   textColor,
   onTextColorChange,
+  hasGif = false,
+  onGifClick,
+  onGifClear,
   rotationDegrees = DEFAULT_MESSAGE_ROTATION_DEGREES,
   onRotationDegreesChange,
   showPage,
@@ -69,6 +79,9 @@ export function MessageFormattingToolbar({
   onFontSizeChange: (px: number) => void
   textColor?: string | null
   onTextColorChange?: (hex: string | null) => void
+  hasGif?: boolean
+  onGifClick?: () => void
+  onGifClear?: () => void
   rotationDegrees?: number | null
   onRotationDegreesChange?: (deg: number) => void
   showPage: boolean
@@ -85,12 +98,19 @@ export function MessageFormattingToolbar({
   )
   const toolbarAriaLabel = useMemo(() => {
     const parts: string[] = ["Text size"]
+    if (onGifClick) parts.push("GIF")
     if (onTextColorChange) parts.push("color")
     if (onRotationDegreesChange) parts.push("rotation")
     if (showPage) parts.push("page")
     if (aiTweakSlot) parts.push("refine")
     return parts.join(", ")
-  }, [onTextColorChange, onRotationDegreesChange, showPage, aiTweakSlot])
+  }, [
+    onGifClick,
+    onTextColorChange,
+    onRotationDegreesChange,
+    showPage,
+    aiTweakSlot,
+  ])
 
   return (
     <div
@@ -135,6 +155,40 @@ export function MessageFormattingToolbar({
               onChange={(e) => onTextColorChange(e.target.value)}
               title="Text color"
             />
+          </span>
+        ) : null}
+        {onGifClick ? (
+          <span className="flex items-center gap-1.5">
+            <ImageIcon
+              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <button
+              type="button"
+              className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs shadow-sm hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                onGifClick()
+              }}
+              title={hasGif ? "Change GIF" : "Add GIF"}
+            >
+              {hasGif ? "Change GIF" : "Add GIF"}
+            </button>
+            {hasGif && onGifClear ? (
+              <button
+                type="button"
+                className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs text-muted-foreground shadow-sm hover:bg-muted/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onGifClear()
+                }}
+                title="Remove GIF"
+              >
+                Remove
+              </button>
+            ) : null}
           </span>
         ) : null}
         {onRotationDegreesChange ? (

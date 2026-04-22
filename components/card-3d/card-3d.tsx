@@ -32,6 +32,8 @@ import {
   looksLikeDataUrl,
   sourceImageUrlForRefineRequest,
 } from "@/lib/source-image-limits"
+import { GiphyPicker } from "./giphy-picker"
+import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
@@ -46,6 +48,7 @@ import {
 } from "react"
 
 const MESSAGES_SECTION_LABEL = "Messages"
+const COMPOSE_DRAFT_GIF_TARGET = "__compose__"
 
 export function Card3D({
   imageUrl,
@@ -78,12 +81,14 @@ export function Card3D({
   contributeSubmitNonce = 0,
   editableContributionIds = [],
   onContributionEdit,
+  onContributionGifChange,
   onContributionLayoutChange,
   onContributionRegenerateMessage,
   contributionRegeneratingId = null,
   composePageBump = 0,
   composeDraft = null,
   onComposeDraftChange,
+  onComposeDraftGifChange,
   onComposeCanvasPlace,
   onComposeSubmit,
   onComposeCancel,
@@ -107,6 +112,9 @@ export function Card3D({
     string | null
   >(null)
   const [regeneratePromptDraft, setRegeneratePromptDraft] = useState("")
+  const [gifPickerContributionId, setGifPickerContributionId] = useState<
+    string | null
+  >(null)
   const lastContributeSubmitNavNonce = useRef(0)
   const mainMessageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
   const contributionInlineRegenRefs = useRef(
@@ -353,6 +361,13 @@ export function Card3D({
     return c
   }, [contributions, editingContributionId, currentPage, validMessagePage])
 
+  const gifPickerSelectedUrl = useMemo(
+    () =>
+      contributions.find((c) => c.id === gifPickerContributionId)?.giphy_url ??
+      null,
+    [contributions, gifPickerContributionId],
+  )
+
   const getContributionsForPage = (pageIdx: number) =>
     contributions.filter(
       (contrib) => effectiveContributionPage(contrib) === pageIdx,
@@ -372,7 +387,13 @@ export function Card3D({
   })
 
   const renderContributionsForPage = (pageIdx: number) => {
-    return getContributionsForPage(pageIdx).map((contrib) => {
+    const editableSet = new Set(editableContributionIds)
+    const pageContribs = [...getContributionsForPage(pageIdx)].sort((a, b) => {
+      const aEditable = editableSet.has(a.id) ? 1 : 0
+      const bEditable = editableSet.has(b.id) ? 1 : 0
+      return aEditable - bEditable
+    })
+    return pageContribs.map((contrib) => {
       const canCanvasEdit =
         Boolean(onContributionEdit) &&
         editableContributionIds.includes(contrib.id)
@@ -456,6 +477,19 @@ export function Card3D({
                           textColor: hex,
                         })
                       }
+                      hasGif={Boolean(contrib.giphy_url)}
+                      onGifClick={
+                        onContributionGifChange
+                          ? () => setGifPickerContributionId(contrib.id)
+                          : undefined
+                      }
+                      onGifClear={
+                        onContributionGifChange &&
+                        typeof contrib.message === "string" &&
+                        contrib.message.trim().length > 0
+                          ? () => onContributionGifChange(contrib.id, null)
+                          : undefined
+                      }
                       rotationDegrees={contrib.rotation_degrees ?? null}
                       onRotationDegreesChange={(deg) =>
                         onContributionLayoutChange(contrib.id, {
@@ -502,6 +536,11 @@ export function Card3D({
               className="space-y-3"
               onFocus={() => setEditingContributionId(contrib.id)}
             >
+              {contrib.giphy_url ? (
+                <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
+                  <GiphyCanvasGif src={contrib.giphy_url} alt="Attached GIF" />
+                </div>
+              ) : null}
               <InlineEdit
                 ref={(el) => {
                   if (el) {
@@ -510,7 +549,7 @@ export function Card3D({
                     contributionInlineRegenRefs.current.delete(contrib.id)
                   }
                 }}
-                value={contrib.message}
+                value={contrib.message ?? ""}
                 onChange={(v) => onContributionEdit!(contrib.id, v)}
                 editable
                 onRegenerate={
@@ -564,15 +603,24 @@ export function Card3D({
           }
           rotationDegrees={contrib.rotation_degrees ?? 0}
         >
-          <p
-            className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
-            style={{
-              fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
-              ...(contrib.text_color ? { color: contrib.text_color } : {}),
-            }}
-          >
-            {contrib.message}
-          </p>
+          <div className="space-y-3">
+            {contrib.giphy_url ? (
+              <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
+                <GiphyCanvasGif src={contrib.giphy_url} alt="Attached GIF" />
+              </div>
+            ) : null}
+            {contrib.message ? (
+              <p
+                className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
+                style={{
+                  fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
+                  ...(contrib.text_color ? { color: contrib.text_color } : {}),
+                }}
+              >
+                {contrib.message}
+              </p>
+            ) : null}
+          </div>
         </DraggableWrapper>
       )
     })
@@ -914,6 +962,14 @@ export function Card3D({
                           composeDraftRegenerating={composeDraftRegenerating}
                           totalPages={totalPages}
                           onSelectInnerPage={handleComposeInnerPageSelect}
+                          onOpenGifPicker={
+                            onComposeDraftGifChange
+                              ? () =>
+                                  setGifPickerContributionId(
+                                    COMPOSE_DRAFT_GIF_TARGET,
+                                  )
+                              : undefined
+                          }
                         />
                       )}
                   </div>
@@ -1021,6 +1077,26 @@ export function Card3D({
             )}
           </div>
         )}
+      <GiphyPicker
+        open={Boolean(gifPickerContributionId)}
+        onOpenChange={(open) => {
+          if (!open) setGifPickerContributionId(null)
+        }}
+        selectedUrl={
+          gifPickerContributionId === COMPOSE_DRAFT_GIF_TARGET
+            ? (composeDraft?.giphyUrl ?? null)
+            : gifPickerSelectedUrl
+        }
+        onSelect={(url) => {
+          if (!gifPickerContributionId) return
+          if (gifPickerContributionId === COMPOSE_DRAFT_GIF_TARGET) {
+            onComposeDraftGifChange?.(url)
+            return
+          }
+          if (!onContributionGifChange) return
+          onContributionGifChange(gifPickerContributionId, url)
+        }}
+      />
     </div>
   )
 }

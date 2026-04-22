@@ -43,6 +43,9 @@ export default function ContributeCardPage() {
     Record<string, string>
   >({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  )
   const addPageInFlightRef = useRef(false)
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<
@@ -52,6 +55,17 @@ export default function ContributeCardPage() {
   useEffect(() => {
     composeDraftRef.current = composeDraft
   }, [composeDraft])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
+      gifSaveTimersRef.current.forEach(clearTimeout)
+      gifSaveTimersRef.current.clear()
+    }
+  }, [linkId])
 
   useEffect(() => {
     try {
@@ -120,6 +134,7 @@ export default function ContributeCardPage() {
       contributionId: string,
       updates: {
         message?: string
+        giphyUrl?: string | null
         positionX?: number
         positionY?: number
         widthPercent?: number
@@ -170,6 +185,34 @@ export default function ContributeCardPage() {
       }, 600)
     },
     [contributionEditTokens, saveContributionPatch],
+  )
+
+  const handleContributionGifChange = useCallback(
+    (contributionId: string, giphyUrl: string | null) => {
+      const currentMessage =
+        contributions.find((c) => c.id === contributionId)?.message ?? null
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === contributionId ? { ...c, giphy_url: giphyUrl } : c,
+        ),
+      )
+      const token = contributionEditTokens[contributionId]
+      if (!token) return
+      const existing = gifSaveTimersRef.current.get(contributionId)
+      if (existing) clearTimeout(existing)
+      gifSaveTimersRef.current.set(
+        contributionId,
+        setTimeout(() => {
+          gifSaveTimersRef.current.delete(contributionId)
+          void saveContributionPatch(
+            contributionId,
+            { giphyUrl, ...(currentMessage && { message: currentMessage }) },
+            token,
+          )
+        }, 200),
+      )
+    },
+    [contributionEditTokens, contributions, saveContributionPatch],
   )
 
   const handleContributionLayoutChange = useCallback(
@@ -303,6 +346,10 @@ export default function ContributeCardPage() {
     [card],
   )
 
+  const handleComposeDraftGifChange = useCallback((giphyUrl: string | null) => {
+    setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
+  }, [])
+
   const cancelCompose = useCallback(() => {
     setComposeDraft(null)
     setError("")
@@ -316,8 +363,8 @@ export default function ContributeCardPage() {
     setError("")
 
     const msg = draft.message.trim()
-    if (!msg) {
-      setError("Please enter a message")
+    if (!msg && !draft.giphyUrl) {
+      setError("Please add a message or GIF")
       setSubmitting(false)
       return
     }
@@ -328,6 +375,7 @@ export default function ContributeCardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: msg,
+          giphyUrl: draft.giphyUrl ?? null,
           positionX: draft.x,
           positionY: draft.y,
           widthPercent: draft.widthPercent ?? 75,
@@ -471,6 +519,7 @@ export default function ContributeCardPage() {
             contributeSubmitNonce={submitNonce}
             editableContributionIds={Object.keys(contributionEditTokens)}
             onContributionEdit={handleContributionEdit}
+            onContributionGifChange={handleContributionGifChange}
             onContributionLayoutChange={handleContributionLayoutChange}
             onContributionRegenerateMessage={
               handleContributionRegenerateMessage
@@ -486,6 +535,7 @@ export default function ContributeCardPage() {
                 ? (pt) => {
                     setComposeDraft({
                       message: "",
+                      giphyUrl: null,
                       x: pt.x,
                       y: pt.y,
                       pageIndex: pt.pageIndex,
@@ -500,6 +550,7 @@ export default function ContributeCardPage() {
             composeSubmitting={submitting}
             composeError={composeDraft ? error : null}
             onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
+            onComposeDraftGifChange={handleComposeDraftGifChange}
             composeDraftRegenerating={composeDraftRegenerating}
           />
         </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
+import { normalizeGiphyUrl } from "@/lib/giphy-url"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
@@ -76,14 +77,25 @@ export async function POST(
     const widthPercent = body.widthPercent as unknown
     const pageIndex = body.pageIndex as unknown
     const fontSize = body.fontSize as unknown
+    const giphyUrlRaw = (body.giphyUrl ?? body.giphy_url) as unknown
     const textColorRaw = body.textColor as unknown
     const rotationDegreesRaw = (body.rotationDegrees ??
       body.rotation_degrees) as unknown
 
     const msg = typeof message === "string" ? message.trim() : ""
-    if (!msg) {
+    const giphy_url = normalizeGiphyUrl(giphyUrlRaw)
+    if (giphy_url === undefined) {
       return NextResponse.json(
-        { error: "Message is required" },
+        {
+          error:
+            "Invalid GIF URL (must be a https://media*.giphy.com URL or null)",
+        },
+        { status: 400 },
+      )
+    }
+    if (!msg && !giphy_url) {
+      return NextResponse.json(
+        { error: "Message or GIF is required" },
         { status: 400 },
       )
     }
@@ -114,7 +126,7 @@ export async function POST(
       .from("card_contributions")
       .insert({
         card_id: cardId,
-        message: msg,
+        message: msg || null,
         is_creator: true,
         position_x: typeof positionX === "number" ? positionX : null,
         position_y: typeof positionY === "number" ? positionY : null,
@@ -123,6 +135,7 @@ export async function POST(
         font_size: typeof fontSize === "number" ? fontSize : null,
         text_color,
         rotation_degrees: rotation_degrees ?? null,
+        giphy_url,
       })
       .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
@@ -208,6 +221,9 @@ export async function PATCH(
       | undefined
     const pageIndex = (body.pageIndex ?? body.page_index) as number | undefined
     const fontSize = (body.fontSize ?? body.font_size) as number | undefined
+    const hasGiphyUrl =
+      Object.prototype.hasOwnProperty.call(body, "giphyUrl") ||
+      Object.prototype.hasOwnProperty.call(body, "giphy_url")
     const hasTextColor =
       Object.prototype.hasOwnProperty.call(body, "textColor") ||
       Object.prototype.hasOwnProperty.call(body, "text_color")
@@ -223,6 +239,7 @@ export async function PATCH(
         widthPercent === undefined &&
         pageIndex === undefined &&
         fontSize === undefined &&
+        !hasGiphyUrl &&
         !hasTextColor &&
         !hasRotationDegrees)
     ) {
@@ -236,7 +253,7 @@ export async function PATCH(
 
     const { data: row, error: fetchErr } = await supabase
       .from("card_contributions")
-      .select("id, card_id, is_creator")
+      .select("id, card_id, is_creator, message, giphy_url")
       .eq("id", contributionId)
       .maybeSingle()
 
@@ -248,30 +265,40 @@ export async function PATCH(
     }
 
     const updates: {
-      message?: string
+      message?: string | null
       position_x?: number
       position_y?: number
       width_percent?: number
       page_index?: number
       font_size?: number
+      giphy_url?: string | null
       text_color?: string | null
       rotation_degrees?: number | null
     } = {}
     if (typeof message === "string") {
       const msg = message.trim()
-      if (!msg) {
-        return NextResponse.json(
-          { error: "Message is required" },
-          { status: 400 },
-        )
-      }
-      updates.message = msg
+      updates.message = msg || null
     }
     if (typeof positionX === "number") updates.position_x = positionX
     if (typeof positionY === "number") updates.position_y = positionY
     if (typeof widthPercent === "number") updates.width_percent = widthPercent
     if (typeof pageIndex === "number") updates.page_index = pageIndex
     if (typeof fontSize === "number") updates.font_size = fontSize
+    if (hasGiphyUrl) {
+      const giphyRaw =
+        body.giphyUrl !== undefined ? body.giphyUrl : body.giphy_url
+      const normalizedGiphy = normalizeGiphyUrl(giphyRaw)
+      if (normalizedGiphy === undefined) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid GIF URL (must be a https://media*.giphy.com URL or null)",
+          },
+          { status: 400 },
+        )
+      }
+      updates.giphy_url = normalizedGiphy
+    }
     if (hasTextColor) {
       const textColorRaw = Object.prototype.hasOwnProperty.call(
         body,
@@ -302,6 +329,20 @@ export async function PATCH(
       }
       updates.rotation_degrees = rotation
     }
+    const nextMessage =
+      updates.message !== undefined
+        ? (updates.message ?? "").trim()
+        : typeof row.message === "string"
+          ? row.message.trim()
+          : row.message
+    const nextGiphy =
+      updates.giphy_url !== undefined ? updates.giphy_url : row.giphy_url
+    if (!nextMessage && !nextGiphy) {
+      return NextResponse.json(
+        { error: "Message or GIF is required" },
+        { status: 400 },
+      )
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
@@ -330,7 +371,7 @@ export async function PATCH(
       const { error: mirrorErr } = await supabase
         .from("cards")
         .update({
-          copy_message: updates.message,
+          copy_message: updates.message ?? "",
           updated_at: new Date().toISOString(),
         })
         .eq("id", cardId)

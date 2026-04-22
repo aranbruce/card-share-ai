@@ -48,6 +48,10 @@ export interface Card3DProps {
   editableContributionIds?: string[]
   /** Fired when an editable contribution’s message changes (blur on InlineEdit). */
   onContributionEdit?: (contributionId: string, value: string) => void
+  onContributionGifChange?: (
+    contributionId: string,
+    giphyUrl: string | null,
+  ) => void
   onContributionLayoutChange?: (
     contributionId: string,
     layout: {
@@ -75,6 +79,7 @@ export interface Card3DProps {
     y: number
     pageIndex: number
   }) => void
+  onComposeDraftGifChange?: (giphyUrl: string | null) => void
   onComposeSubmit?: () => void
   onComposeCancel?: () => void
   composeSubmitting?: boolean

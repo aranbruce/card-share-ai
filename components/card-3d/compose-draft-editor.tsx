@@ -1,6 +1,7 @@
 "use client"
 
 import type { Card3DProps } from "./types"
+import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import { useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
 import {
@@ -44,6 +45,7 @@ export function ComposeDraftEditor({
   composeDraftRegenerating,
   totalPages,
   onSelectInnerPage,
+  onOpenGifPicker,
 }: {
   composeDraft: NonNullable<Card3DProps["composeDraft"]>
   messageFontSize: number
@@ -53,6 +55,7 @@ export function ComposeDraftEditor({
   composeDraftRegenerating: boolean
   totalPages: number
   onSelectInnerPage: (pageIndex: number) => void
+  onOpenGifPicker?: () => void
 }) {
   const [isFocused, setIsFocused] = useState(false)
   const [composeRegeneratePromptOpen, setComposeRegeneratePromptOpen] =
@@ -115,6 +118,13 @@ export function ComposeDraftEditor({
                   onTextColorChange={(hex) =>
                     onComposeDraftChange({ textColor: hex })
                   }
+                  hasGif={Boolean(composeDraft.giphyUrl)}
+                  onGifClick={onOpenGifPicker}
+                  onGifClear={
+                    composeDraft.giphyUrl
+                      ? () => onComposeDraftChange({ giphyUrl: null })
+                      : undefined
+                  }
                   rotationDegrees={composeDraft.rotationDegrees ?? null}
                   onRotationDegreesChange={(deg) =>
                     onComposeDraftChange({ rotationDegrees: deg })
@@ -143,6 +153,11 @@ export function ComposeDraftEditor({
           {composeError ? (
             <div className="rounded border border-destructive/20 bg-destructive/10 p-2.5 text-sm text-destructive">
               {composeError}
+            </div>
+          ) : null}
+          {composeDraft.giphyUrl ? (
+            <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
+              <GiphyCanvasGif src={composeDraft.giphyUrl} alt="Attached GIF" />
             </div>
           ) : null}
           <InlineEdit
