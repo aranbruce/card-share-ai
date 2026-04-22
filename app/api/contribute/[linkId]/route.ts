@@ -5,6 +5,7 @@ import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import { compactCardPages } from "@/lib/compact-card-pages"
 import { requireServiceRoleClient } from "@/lib/supabase/admin"
 
 function tokensMatch(stored: string, provided: string): boolean {
@@ -117,7 +118,24 @@ export async function POST(
     }
 
     // editToken is only ever returned here — not in GET — so only the browser that added the message can PATCH.
-    return NextResponse.json({ contribution, editToken })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardData.id,
+      )
+      const compactedContribution =
+        contributions.find((item) => item.id === contribution.id) ??
+        contribution
+      return NextResponse.json({
+        contribution: compactedContribution,
+        editToken,
+        contributions,
+        extra_pages,
+      })
+    } catch (compactErr) {
+      console.error("[contribute POST] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution, editToken })
+    }
   } catch (error) {
     console.error("Error adding contribution:", error)
     return NextResponse.json(
@@ -136,6 +154,44 @@ export async function PATCH(
   try {
     const { linkId } = await params
     const body = await request.json()
+
+    if (body.action === "add_page") {
+      const supabase = requireServiceRoleClient()
+      const { data: next, error: rpcError } = await supabase.rpc(
+        "increment_extra_pages",
+        { card_link_id: linkId },
+      )
+      if (rpcError) {
+        return NextResponse.json({ error: rpcError.message }, { status: 500 })
+      }
+      if (next === null) {
+        // NULL means either the card doesn't exist or extra_pages is already at
+        // the cap (10). A follow-up lookup tells us which.
+        const { data: card, error: cardLookupError } = await supabase
+          .from("cards")
+          .select("extra_pages")
+          .eq("contributor_link_id", linkId)
+          .maybeSingle()
+        if (cardLookupError) {
+          return NextResponse.json(
+            { error: cardLookupError.message },
+            { status: 500 },
+          )
+        }
+        if (!card) {
+          return NextResponse.json({ error: "Card not found" }, { status: 404 })
+        }
+        return NextResponse.json(
+          {
+            error: "Maximum number of pages reached",
+            extra_pages: card.extra_pages,
+          },
+          { status: 409 },
+        )
+      }
+      return NextResponse.json({ extra_pages: next })
+    }
+
     const contributionId = body.contributionId as string | undefined
     const editToken = body.editToken as string | undefined
     const message = body.message as string | undefined
@@ -305,7 +361,22 @@ export async function PATCH(
       )
     }
 
-    return NextResponse.json({ contribution: updated })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardData.id,
+      )
+      const compactedContribution =
+        contributions.find((item) => item.id === updated.id) ?? updated
+      return NextResponse.json({
+        contribution: compactedContribution,
+        contributions,
+        extra_pages,
+      })
+    } catch (compactErr) {
+      console.error("[contribute PATCH] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution: updated })
+    }
   } catch (error) {
     console.error("Error updating contribution:", error)
     return NextResponse.json(
@@ -316,7 +387,7 @@ export async function PATCH(
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ linkId: string }> },
 ) {
   try {

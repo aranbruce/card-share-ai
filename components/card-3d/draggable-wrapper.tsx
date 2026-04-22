@@ -132,6 +132,9 @@ export function DraggableWrapper({
 
       const runLeave = () => {
         if (!onFocusLeaveRef.current) return
+        // If the container was removed from the DOM (e.g. page navigation unmounted it),
+        // don't treat this as a user-initiated focus leave.
+        if (!el.isConnected) return
         const active = document.activeElement
         if (active instanceof Node && el.contains(active)) return
         onFocusLeaveRef.current()

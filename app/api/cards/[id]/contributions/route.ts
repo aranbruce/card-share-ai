@@ -3,6 +3,7 @@ import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import { compactCardPages } from "@/lib/compact-card-pages"
 import { createClient } from "@/lib/supabase/server"
 
 type OwnsCardResult =
@@ -145,7 +146,23 @@ export async function POST(
       )
     }
 
-    return NextResponse.json({ contribution })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardId,
+      )
+      const compactedContribution =
+        contributions.find((item) => item.id === contribution.id) ??
+        contribution
+      return NextResponse.json({
+        contribution: compactedContribution,
+        contributions,
+        extra_pages,
+      })
+    } catch (compactErr) {
+      console.error("[owner POST contributions] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution, extra_pages: 0 })
+    }
   } catch (e) {
     console.error("[owner POST contributions]", e)
     return NextResponse.json(
@@ -326,7 +343,22 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ contribution: updated })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardId,
+      )
+      const compactedContribution =
+        contributions.find((item) => item.id === updated.id) ?? updated
+      return NextResponse.json({
+        contribution: compactedContribution,
+        contributions,
+        extra_pages,
+      })
+    } catch (compactErr) {
+      console.error("[owner PATCH contributions] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution: updated, extra_pages: 0 })
+    }
   } catch (e) {
     console.error("[owner PATCH contributions]", e)
     return NextResponse.json({ error: "Failed to update" }, { status: 500 })

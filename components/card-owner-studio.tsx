@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card3D } from "@/components/card-3d"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
+import type { Contribution } from "@/lib/card-body"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -20,20 +21,6 @@ export type OwnerCard = {
   contributor_link_id?: string
 }
 
-export type OwnerContribution = {
-  id: string
-  message: string
-  created_at: string
-  position_x?: number | null
-  position_y?: number | null
-  width_percent?: number | null
-  page_index?: number | null
-  font_size?: number | null
-  text_color?: string | null
-  rotation_degrees?: number | null
-  is_creator?: boolean | null
-}
-
 export type CardOwnerStudioProps = {
   cardId: string
   /** 0 = cover; 1 = first inside spread (e.g. after creating a card). */
@@ -48,7 +35,7 @@ export function CardOwnerStudio({
   onOwnerComposeSaved,
 }: CardOwnerStudioProps) {
   const [card, setCard] = useState<OwnerCard | null>(null)
-  const [contributions, setContributions] = useState<OwnerContribution[]>([])
+  const [contributions, setContributions] = useState<Contribution[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -93,7 +80,7 @@ export function CardOwnerStudio({
       if (!res.ok) throw new Error("Card not found")
       const { card: c, contributions: list } = (await res.json()) as {
         card: OwnerCard
-        contributions?: OwnerContribution[]
+        contributions?: Contribution[]
       }
       setCard(c)
       setContributions(list ?? [])
@@ -120,7 +107,7 @@ export function CardOwnerStudio({
 
   const creatorMessageSaved = Boolean(creatorRow?.message?.trim())
 
-  const saveOwnerContributionPatch = useCallback(
+  const saveContributionPatch = useCallback(
     async (
       contributionId: string,
       updates: {
@@ -139,13 +126,55 @@ export function CardOwnerStudio({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contributionId, ...updates }),
       })
+      const p = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const p = await res.json().catch(() => ({}))
         console.error(
           "Owner contribution save failed",
           typeof p.error === "string" ? p.error : p,
         )
+        return
       }
+      if (Array.isArray(p.contributions)) {
+        setContributions(p.contributions as Contribution[])
+      }
+      if (typeof p.extra_pages === "number") {
+        setCard((prev) =>
+          prev ? { ...prev, extra_pages: p.extra_pages } : prev,
+        )
+      }
+    },
+    [cardId],
+  )
+
+  const patchCardFields = useCallback(
+    async (updates: Record<string, unknown>) => {
+      const res = await fetch(`/api/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      })
+      if (!res.ok) {
+        const p = await res.json().catch(() => ({}))
+        throw new Error(typeof p.error === "string" ? p.error : "Save failed")
+      }
+      const { card: next } = await res.json()
+      // Prefer the PATCH response for every field the server returns. Only fill in
+      // from `updates` when the returned row omits a property entirely (e.g. very
+      // large `image_url` stripped from JSON) so we do not overwrite a processed
+      // value such as a CDN URL with the client-sent data URL. Explicit `null` from
+      // the server is kept as authoritative.
+      setCard((prev) => {
+        if (!next) return prev
+        const merged = { ...(prev ?? {}), ...next } as OwnerCard
+        const serverRow = next as Record<string, unknown>
+        for (const [k, v] of Object.entries(updates)) {
+          if (v === undefined) continue
+          if (!Object.hasOwn(serverRow, k)) {
+            ;(merged as Record<string, unknown>)[k] = v
+          }
+        }
+        return merged
+      })
     },
     [cardId],
   )
@@ -161,10 +190,10 @@ export function CardOwnerStudio({
       if (ownerMessageSaveTimerRef.current)
         clearTimeout(ownerMessageSaveTimerRef.current)
       ownerMessageSaveTimerRef.current = setTimeout(() => {
-        void saveOwnerContributionPatch(contributionId, { message: value })
+        void saveContributionPatch(contributionId, { message: value })
       }, 600)
     },
-    [creatorRow, saveOwnerContributionPatch],
+    [creatorRow, saveContributionPatch],
   )
 
   const handleContributionLayoutChange = useCallback(
@@ -206,7 +235,7 @@ export function CardOwnerStudio({
       if (ownerLayoutSaveTimerRef.current)
         clearTimeout(ownerLayoutSaveTimerRef.current)
       ownerLayoutSaveTimerRef.current = setTimeout(() => {
-        void saveOwnerContributionPatch(contributionId, {
+        void saveContributionPatch(contributionId, {
           positionX: layout.x,
           positionY: layout.y,
           widthPercent: layout.widthPercent,
@@ -221,7 +250,7 @@ export function CardOwnerStudio({
         })
       }, 200)
     },
-    [creatorRow, saveOwnerContributionPatch],
+    [creatorRow, saveContributionPatch],
   )
 
   const handleContributionRegenerateMessage = useCallback(
@@ -251,14 +280,14 @@ export function CardOwnerStudio({
             c.id === contributionId ? { ...c, message: next } : c,
           ),
         )
-        await saveOwnerContributionPatch(contributionId, { message: next })
+        await saveContributionPatch(contributionId, { message: next })
       } catch (e) {
         console.error(e)
       } finally {
         setRegeneratingContributionId(null)
       }
     },
-    [card, creatorRow, contributions, saveOwnerContributionPatch],
+    [card, creatorRow, contributions, saveContributionPatch],
   )
 
   const handleComposeDraftRegenerate = useCallback(
@@ -289,39 +318,6 @@ export function CardOwnerStudio({
       }
     },
     [card],
-  )
-
-  const patchCardFields = useCallback(
-    async (updates: Record<string, unknown>) => {
-      const res = await fetch(`/api/cards/${cardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      })
-      if (!res.ok) {
-        const p = await res.json().catch(() => ({}))
-        throw new Error(typeof p.error === "string" ? p.error : "Save failed")
-      }
-      const { card: next } = await res.json()
-      // Prefer the PATCH response for every field the server returns. Only fill in
-      // from `updates` when the returned row omits a property entirely (e.g. very
-      // large `image_url` stripped from JSON) so we do not overwrite a processed
-      // value such as a CDN URL with the client-sent data URL. Explicit `null` from
-      // the server is kept as authoritative.
-      setCard((prev) => {
-        if (!next) return prev
-        const merged = { ...(prev ?? {}), ...next } as OwnerCard
-        const serverRow = next as Record<string, unknown>
-        for (const [k, v] of Object.entries(updates)) {
-          if (v === undefined) continue
-          if (!Object.hasOwn(serverRow, k)) {
-            ;(merged as Record<string, unknown>)[k] = v
-          }
-        }
-        return merged
-      })
-    },
-    [cardId],
   )
 
   const handleHeadlineChange = useCallback(
@@ -467,15 +463,33 @@ export function CardOwnerStudio({
               : "Failed to save message",
           )
         }
-        const { contribution: updated } = payload as {
-          contribution?: OwnerContribution
+        const {
+          contribution: updated,
+          contributions: allContributions,
+          extra_pages,
+        } = payload as {
+          contribution?: Contribution
+          contributions?: Contribution[]
+          extra_pages?: number
         }
         if (updated) {
-          setContributions((prev) =>
-            prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)),
-          )
+          if (Array.isArray(allContributions)) {
+            setContributions(allContributions)
+          } else {
+            setContributions((prev) =>
+              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)),
+            )
+          }
           setSubmitNonce((n) => n + 1)
-          setCard((c) => (c ? { ...c, copy_message: updated.message } : c))
+          setCard((c) =>
+            c
+              ? {
+                  ...c,
+                  copy_message: updated.message,
+                  ...(typeof extra_pages === "number" && { extra_pages }),
+                }
+              : c,
+          )
         }
       } else {
         const res = await fetch(`/api/cards/${cardId}/contributions`, {
@@ -500,13 +514,31 @@ export function CardOwnerStudio({
               : "Failed to add message",
           )
         }
-        const { contribution } = payload as {
-          contribution?: OwnerContribution
+        const {
+          contribution,
+          contributions: allContributions,
+          extra_pages,
+        } = payload as {
+          contribution?: Contribution
+          contributions?: Contribution[]
+          extra_pages?: number
         }
         if (contribution) {
-          setContributions((prev) => [...prev, contribution])
+          if (Array.isArray(allContributions)) {
+            setContributions(allContributions)
+          } else {
+            setContributions((prev) => [...prev, contribution])
+          }
           setSubmitNonce((n) => n + 1)
-          setCard((c) => (c ? { ...c, copy_message: contribution.message } : c))
+          setCard((c) =>
+            c
+              ? {
+                  ...c,
+                  copy_message: contribution.message,
+                  ...(typeof extra_pages === "number" && { extra_pages }),
+                }
+              : c,
+          )
         }
       }
       setComposeDraft(null)
