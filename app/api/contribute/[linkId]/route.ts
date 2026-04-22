@@ -117,12 +117,16 @@ export async function POST(
       )
     }
 
-    const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
-    const compactedContribution =
-      contributions.find((item) => item.id === contribution.id) ?? contribution
-
     // editToken is only ever returned here — not in GET — so only the browser that added the message can PATCH.
-    return NextResponse.json({ contribution: compactedContribution, editToken, contributions, extra_pages })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+      const compactedContribution =
+        contributions.find((item) => item.id === contribution.id) ?? contribution
+      return NextResponse.json({ contribution: compactedContribution, editToken, contributions, extra_pages })
+    } catch (compactErr) {
+      console.error("[contribute POST] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution, editToken, contributions: [contribution], extra_pages: 0 })
+    }
   } catch (error) {
     console.error("Error adding contribution:", error)
     return NextResponse.json(
@@ -342,11 +346,15 @@ export async function PATCH(
       )
     }
 
-    const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
-    const compactedContribution =
-      contributions.find((item) => item.id === updated.id) ?? updated
-
-    return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+      const compactedContribution =
+        contributions.find((item) => item.id === updated.id) ?? updated
+      return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+    } catch (compactErr) {
+      console.error("[contribute PATCH] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution: updated, contributions: [updated], extra_pages: 0 })
+    }
   } catch (error) {
     console.error("Error updating contribution:", error)
     return NextResponse.json(

@@ -143,11 +143,15 @@ export async function POST(
       console.error("[owner POST contributions] mirror copy_message:", mirrorErr)
     }
 
-    const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
-    const compactedContribution =
-      contributions.find((item) => item.id === contribution.id) ?? contribution
-
-    return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+      const compactedContribution =
+        contributions.find((item) => item.id === contribution.id) ?? contribution
+      return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+    } catch (compactErr) {
+      console.error("[owner POST contributions] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution, contributions: [contribution], extra_pages: 0 })
+    }
   } catch (e) {
     console.error("[owner POST contributions]", e)
     return NextResponse.json(
@@ -328,11 +332,15 @@ export async function PATCH(
       }
     }
 
-    const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
-    const compactedContribution =
-      contributions.find((item) => item.id === updated.id) ?? updated
-
-    return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+    try {
+      const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+      const compactedContribution =
+        contributions.find((item) => item.id === updated.id) ?? updated
+      return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+    } catch (compactErr) {
+      console.error("[owner PATCH contributions] compactCardPages:", compactErr)
+      return NextResponse.json({ contribution: updated, contributions: [updated], extra_pages: 0 })
+    }
   } catch (e) {
     console.error("[owner PATCH contributions]", e)
     return NextResponse.json({ error: "Failed to update" }, { status: 500 })
