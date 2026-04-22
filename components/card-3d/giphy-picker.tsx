@@ -161,6 +161,7 @@ export function GiphyPicker({
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search GIFs"
                 placeholder="Search GIFs (e.g. birthday cake)"
                 className="pl-9"
               />
