@@ -21,7 +21,6 @@ export type OwnerCard = {
   contributor_link_id?: string
 }
 
-
 export type CardOwnerStudioProps = {
   cardId: string
   /** 0 = cover; 1 = first inside spread (e.g. after creating a card). */
@@ -59,6 +58,9 @@ export function CardOwnerStudio({
     null,
   )
   const ownerLayoutSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  )
+  const ownerGifSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   )
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
@@ -263,9 +265,9 @@ export function CardOwnerStudio({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
-      if (ownerLayoutSaveTimerRef.current)
-        clearTimeout(ownerLayoutSaveTimerRef.current)
-      ownerLayoutSaveTimerRef.current = setTimeout(() => {
+      if (ownerGifSaveTimerRef.current)
+        clearTimeout(ownerGifSaveTimerRef.current)
+      ownerGifSaveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(contributionId, {
           giphyUrl,
         })
@@ -654,8 +656,7 @@ export function CardOwnerStudio({
         }
         onComposeDraftGifChange={
           showCompose
-            ? (giphyUrl) =>
-                setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
+            ? (giphyUrl) => setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
             : undefined
         }
         composeDraftRegenerating={composeDraftRegenerating}

@@ -17,7 +17,6 @@ interface CardData {
   extra_pages?: number
 }
 
-
 export default function PublicCardPage() {
   const params = useParams()
   const linkId = params.linkId as string

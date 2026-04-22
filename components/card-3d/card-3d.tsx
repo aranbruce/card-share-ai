@@ -48,6 +48,7 @@ import {
 } from "react"
 
 const MESSAGES_SECTION_LABEL = "Messages"
+const COMPOSE_DRAFT_GIF_TARGET = "__compose__"
 
 export function Card3D({
   imageUrl,
@@ -534,10 +535,7 @@ export function Card3D({
             >
               {contrib.giphy_url ? (
                 <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
-                  <GiphyCanvasGif
-                    src={contrib.giphy_url}
-                    alt="Attached GIF"
-                  />
+                  <GiphyCanvasGif src={contrib.giphy_url} alt="Attached GIF" />
                 </div>
               ) : null}
               <InlineEdit
@@ -605,10 +603,7 @@ export function Card3D({
           <div className="space-y-3">
             {contrib.giphy_url ? (
               <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
-                <GiphyCanvasGif
-                  src={contrib.giphy_url}
-                  alt="Attached GIF"
-                />
+                <GiphyCanvasGif src={contrib.giphy_url} alt="Attached GIF" />
               </div>
             ) : null}
             {contrib.message ? (
@@ -966,7 +961,10 @@ export function Card3D({
                           onSelectInnerPage={handleComposeInnerPageSelect}
                           onOpenGifPicker={
                             onComposeDraftGifChange
-                              ? () => setGifPickerContributionId("__compose__")
+                              ? () =>
+                                  setGifPickerContributionId(
+                                    COMPOSE_DRAFT_GIF_TARGET,
+                                  )
                               : undefined
                           }
                         />
@@ -1082,13 +1080,13 @@ export function Card3D({
           if (!open) setGifPickerContributionId(null)
         }}
         selectedUrl={
-          gifPickerContributionId === "__compose__"
+          gifPickerContributionId === COMPOSE_DRAFT_GIF_TARGET
             ? (composeDraft?.giphyUrl ?? null)
             : gifPickerSelectedUrl
         }
         onSelect={(url) => {
           if (!gifPickerContributionId) return
-          if (gifPickerContributionId === "__compose__") {
+          if (gifPickerContributionId === COMPOSE_DRAFT_GIF_TARGET) {
             onComposeDraftGifChange?.(url)
             return
           }

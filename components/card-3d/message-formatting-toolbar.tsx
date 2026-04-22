@@ -5,7 +5,14 @@ import {
   MAX_CONTRIBUTION_ROTATION_DEGREES,
   MIN_CONTRIBUTION_ROTATION_DEGREES,
 } from "@/lib/contribution-rotation"
-import { Image as ImageIcon, Layers, Palette, RotateCcw, RotateCw, Type } from "lucide-react"
+import {
+  Image as ImageIcon,
+  Layers,
+  Palette,
+  RotateCcw,
+  RotateCw,
+  Type,
+} from "lucide-react"
 import { useMemo, type ReactNode } from "react"
 
 /** Discrete text sizes for inner messages (card canvas / compose). */
@@ -97,7 +104,13 @@ export function MessageFormattingToolbar({
     if (showPage) parts.push("page")
     if (aiTweakSlot) parts.push("refine")
     return parts.join(", ")
-  }, [onGifClick, onTextColorChange, onRotationDegreesChange, showPage, aiTweakSlot])
+  }, [
+    onGifClick,
+    onTextColorChange,
+    onRotationDegreesChange,
+    showPage,
+    aiTweakSlot,
+  ])
 
   return (
     <div

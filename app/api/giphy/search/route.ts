@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { normalizeGiphyUrl } from "@/lib/giphy-url"
 
 type GiphyResponse = {
   data?: Array<{
@@ -6,21 +7,9 @@ type GiphyResponse = {
     title?: string
     images?: {
       fixed_width?: { url?: string; width?: string; height?: string }
-      original?: { url?: string; width?: string; height?: string }
+      original?: { url?: string }
     }
   }>
-}
-
-function isGiphyUrl(value: unknown): value is string {
-  if (typeof value !== "string") return false
-  try {
-    const parsed = new URL(value)
-    if (parsed.protocol !== "https:") return false
-    const host = parsed.hostname.toLowerCase()
-    return host === "giphy.com" || host.endsWith(".giphy.com")
-  } catch {
-    return false
-  }
 }
 
 export async function GET(request: NextRequest) {
@@ -65,21 +54,20 @@ export async function GET(request: NextRequest) {
       .map((item) => {
         const preview = item.images?.fixed_width
         const full = item.images?.original
-        if (!preview?.url || !full?.url) return null
-        if (!isGiphyUrl(preview.url) || !isGiphyUrl(full.url)) return null
+        if (!item.id || !preview?.url || !full?.url) return null
+        if (!normalizeGiphyUrl(preview.url) || !normalizeGiphyUrl(full.url))
+          return null
 
         const previewWidth = Number.parseInt(preview.width ?? "0", 10) || null
         const previewHeight = Number.parseInt(preview.height ?? "0", 10) || null
 
         return {
-          id: item.id ?? "",
+          id: item.id,
           title: (item.title ?? "GIF").trim() || "GIF",
           previewUrl: preview.url,
           gifUrl: full.url,
           previewWidth,
           previewHeight,
-          width: Number.parseInt(full.width ?? "0", 10) || null,
-          height: Number.parseInt(full.height ?? "0", 10) || null,
         }
       })
       .filter(
@@ -92,17 +80,12 @@ export async function GET(request: NextRequest) {
           gifUrl: string
           previewWidth: number | null
           previewHeight: number | null
-          width: number | null
-          height: number | null
         } => item !== null,
       )
 
     return NextResponse.json({ gifs })
   } catch (error) {
     console.error("[GET /api/giphy/search]", error)
-    return NextResponse.json(
-      { error: "Failed to load GIFs" },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to load GIFs" }, { status: 500 })
   }
 }

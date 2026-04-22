@@ -11,7 +11,6 @@ import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import type { Contribution } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
 
-
 interface CardData {
   id: string
   card_type: string
@@ -44,6 +43,7 @@ export default function ContributeCardPage() {
     Record<string, string>
   >({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const gifSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const addPageInFlightRef = useRef(false)
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<
@@ -183,8 +183,8 @@ export default function ContributeCardPage() {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = setTimeout(() => {
+      if (gifSaveTimerRef.current) clearTimeout(gifSaveTimerRef.current)
+      gifSaveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(contributionId, { giphyUrl }, token)
       }, 200)
     },

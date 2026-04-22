@@ -26,17 +26,18 @@ type GiphyGif = {
 function normalizeGifList(raw: unknown): GiphyGif[] {
   if (!Array.isArray(raw)) return []
   return raw
-    .map((item) => {
+    .map((item): GiphyGif | null => {
       if (!item || typeof item !== "object") return null
       const row = item as Record<string, unknown>
-      const id = typeof row.id === "string" ? row.id : ""
+      const id = typeof row.id === "string" && row.id ? row.id : null
+      if (!id) return null
       const title = typeof row.title === "string" ? row.title : "GIF"
       const previewUrl =
         typeof row.previewUrl === "string" ? row.previewUrl : null
       const gifUrl = typeof row.gifUrl === "string" ? row.gifUrl : null
       if (!previewUrl || !gifUrl) return null
-      const rawPw = row.previewWidth ?? row.preview_width
-      const rawPh = row.previewHeight ?? row.preview_height
+      const rawPw = row.previewWidth
+      const rawPh = row.previewHeight
       const pw =
         typeof rawPw === "number" && Number.isFinite(rawPw) && rawPw > 0
           ? rawPw
@@ -49,7 +50,14 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
           : typeof rawPh === "string"
             ? Number.parseInt(rawPh, 10) || null
             : null
-      return { id, title, previewUrl, gifUrl, previewWidth: pw, previewHeight: ph }
+      return {
+        id,
+        title,
+        previewUrl,
+        gifUrl,
+        previewWidth: pw,
+        previewHeight: ph,
+      }
     })
     .filter((item): item is GiphyGif => item !== null)
 }
@@ -73,8 +81,14 @@ export function GiphyPicker({
   const [selectedGifUrl, setSelectedGifUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!open) return
-    setSelectedGifUrl(selectedUrl ?? null)
+    if (open) {
+      setSelectedGifUrl(selectedUrl ?? null)
+    } else {
+      setQuery("")
+      setSearchTerm("")
+      setGifs([])
+      setError(null)
+    }
   }, [open, selectedUrl])
 
   useEffect(() => {
@@ -122,7 +136,8 @@ export function GiphyPicker({
   }, [open, searchTerm])
 
   const title = useMemo(
-    () => (searchTerm.trim() ? `Results for "${searchTerm.trim()}"` : "Trending"),
+    () =>
+      searchTerm.trim() ? `Results for "${searchTerm.trim()}"` : "Trending",
     [searchTerm],
   )
 
@@ -172,9 +187,9 @@ export function GiphyPicker({
              * forces every cell in a row to the row height, so previews looked like
              * identical wide strips even when aspect ratios differed.
              */
-            <div className="max-h-[min(55vh,28rem)] min-h-0 overflow-y-auto overflow-x-hidden pb-2 [scrollbar-gutter:stable]">
-              <div className="columns-2 gap-x-3 [column-fill:_balance] sm:columns-3">
-                {gifs.map((gif, index) => {
+            <div className="max-h-[min(55vh,28rem)] min-h-0 overflow-x-hidden overflow-y-auto pb-2 [scrollbar-gutter:stable]">
+              <div className="columns-2 gap-x-3 [column-fill:balance] sm:columns-3">
+                {gifs.map((gif) => {
                   const isSelected = selectedGifUrl === gif.gifUrl
                   const hasPreviewDims =
                     typeof gif.previewWidth === "number" &&
@@ -183,7 +198,7 @@ export function GiphyPicker({
                     gif.previewHeight > 0
                   return (
                     <button
-                      key={gif.id ? gif.id : `${gif.gifUrl}-${index}`}
+                      key={gif.id}
                       type="button"
                       className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition ${
                         isSelected
@@ -202,12 +217,16 @@ export function GiphyPicker({
                         src={gif.previewUrl}
                         alt={gif.title}
                         width={
-                          hasPreviewDims ? gif.previewWidth : undefined
+                          hasPreviewDims
+                            ? (gif.previewWidth ?? undefined)
+                            : undefined
                         }
                         height={
-                          hasPreviewDims ? gif.previewHeight : undefined
+                          hasPreviewDims
+                            ? (gif.previewHeight ?? undefined)
+                            : undefined
                         }
-                        className="block h-auto max-h-none w-full bg-muted align-bottom object-contain"
+                        className="block h-auto max-h-none w-full bg-muted object-contain align-bottom"
                         loading="lazy"
                         decoding="async"
                       />

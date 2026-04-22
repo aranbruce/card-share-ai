@@ -42,7 +42,9 @@ export async function POST(
     const giphy_url = normalizeGiphyUrl(giphyUrlRaw)
     if (giphy_url === undefined) {
       return NextResponse.json(
-        { error: "Invalid GIF URL (must be a https://*.giphy.com URL or null)" },
+        {
+          error: "Invalid GIF URL (must be a https://*.giphy.com URL or null)",
+        },
         { status: 400 },
       )
     }
@@ -325,7 +327,8 @@ export async function PATCH(
       if (normalizedGiphy === undefined) {
         return NextResponse.json(
           {
-            error: "Invalid GIF URL (must be a https://*.giphy.com URL or null)",
+            error:
+              "Invalid GIF URL (must be a https://*.giphy.com URL or null)",
           },
           { status: 400 },
         )
@@ -359,13 +362,9 @@ export async function PATCH(
       updates.rotation_degrees = rotation
     }
     const nextMessage =
-      updates.message !== undefined
-        ? updates.message.trim()
-        : (existing.message ?? "").trim()
+      updates.message !== undefined ? updates.message.trim() : existing.message
     const nextGiphy =
-      updates.giphy_url !== undefined
-        ? updates.giphy_url
-        : (existing.giphy_url ?? null)
+      updates.giphy_url !== undefined ? updates.giphy_url : existing.giphy_url
     if (!nextMessage && !nextGiphy) {
       return NextResponse.json(
         { error: "Message or GIF is required" },
