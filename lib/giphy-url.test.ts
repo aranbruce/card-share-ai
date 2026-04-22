@@ -29,19 +29,27 @@ describe("normalizeGiphyUrl", () => {
     expect(normalizeGiphyUrl("http://media.giphy.com/gifs/abc")).toBeUndefined()
   })
 
-  it("accepts https giphy.com URLs", () => {
-    expect(normalizeGiphyUrl("https://giphy.com/gifs/abc")).toBe(
-      "https://giphy.com/gifs/abc",
-    )
+  it("rejects giphy.com page URLs (not CDN asset hosts)", () => {
+    expect(normalizeGiphyUrl("https://giphy.com/gifs/abc")).toBeUndefined()
+    expect(normalizeGiphyUrl("https://giphy.com/stickers/abc")).toBeUndefined()
   })
 
-  it("accepts https subdomains of giphy.com", () => {
+  it("accepts https media*.giphy.com CDN URLs", () => {
     expect(
       normalizeGiphyUrl("https://media.giphy.com/media/abc/giphy.gif"),
     ).toBe("https://media.giphy.com/media/abc/giphy.gif")
     expect(
+      normalizeGiphyUrl("https://media0.giphy.com/media/abc/200w.gif"),
+    ).toBe("https://media0.giphy.com/media/abc/200w.gif")
+    expect(
       normalizeGiphyUrl("https://media3.giphy.com/media/abc/giphy.gif"),
     ).toBe("https://media3.giphy.com/media/abc/giphy.gif")
+  })
+
+  it("rejects non-media subdomains of giphy.com", () => {
+    expect(normalizeGiphyUrl("https://giphy.com/gifs/abc")).toBeUndefined()
+    expect(normalizeGiphyUrl("https://api.giphy.com/v1/gifs")).toBeUndefined()
+    expect(normalizeGiphyUrl("https://www.giphy.com/gifs/abc")).toBeUndefined()
   })
 
   it("returns undefined for non-giphy domains", () => {

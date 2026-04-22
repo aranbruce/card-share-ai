@@ -1,11 +1,12 @@
 const GIPHY_HOST = "giphy.com"
 
 /**
- * Accept only HTTPS URLs hosted on giphy domains.
+ * Accept only HTTPS URLs on Giphy CDN asset hosts (media*.giphy.com).
+ * Page URLs (giphy.com/gifs/...) are rejected as they are not image assets.
  * Returns:
  * - string: normalized URL
  * - null: no value / clear (raw is null, undefined, or blank string)
- * - undefined: invalid value (wrong type, bad URL, non-HTTPS, non-giphy host)
+ * - undefined: invalid value (wrong type, bad URL, non-HTTPS, non-CDN host)
  */
 export function normalizeGiphyUrl(raw: unknown): string | null | undefined {
   if (raw === null || raw === undefined) return null
@@ -23,9 +24,9 @@ export function normalizeGiphyUrl(raw: unknown): string | null | undefined {
 
   if (parsed.protocol !== "https:") return undefined
   const host = parsed.hostname.toLowerCase()
-  if (host !== GIPHY_HOST && !host.endsWith(`.${GIPHY_HOST}`)) {
-    return undefined
-  }
+  if (!host.endsWith(`.${GIPHY_HOST}`)) return undefined
+  const subdomain = host.slice(0, host.length - GIPHY_HOST.length - 1)
+  if (!/^media\d*$/.test(subdomain)) return undefined
 
   return parsed.toString()
 }
