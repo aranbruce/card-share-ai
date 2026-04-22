@@ -34,12 +34,13 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
         typeof row.previewUrl === "string" ? row.previewUrl : null
       const gifUrl = typeof row.gifUrl === "string" ? row.gifUrl : null
       if (!previewUrl || !gifUrl) return null
-      const id =
-        typeof row.id === "string" && row.id ? row.id : gifUrl
+      const id = typeof row.id === "string" && row.id ? row.id : gifUrl
       const rawPw = row.previewWidth
       const rawPh = row.previewHeight
-      const parsedPw = typeof rawPw === "string" ? Number.parseInt(rawPw, 10) : null
-      const parsedPh = typeof rawPh === "string" ? Number.parseInt(rawPh, 10) : null
+      const parsedPw =
+        typeof rawPw === "string" ? Number.parseInt(rawPw, 10) : null
+      const parsedPh =
+        typeof rawPh === "string" ? Number.parseInt(rawPh, 10) : null
       const pw =
         typeof rawPw === "number" && Number.isFinite(rawPw) && rawPw > 0
           ? rawPw
@@ -203,7 +204,7 @@ export function GiphyPicker({
                     <button
                       key={gif.id}
                       type="button"
-                      className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                      className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${
                         isSelected
                           ? "border-primary ring-2 ring-primary/30"
                           : "border-border hover:border-primary/50"

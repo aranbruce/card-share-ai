@@ -43,7 +43,9 @@ export default function ContributeCardPage() {
     Record<string, string>
   >({})
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  )
   const addPageInFlightRef = useRef(false)
   const composeDraftRef = useRef<CardComposeDraft | null>(null)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<

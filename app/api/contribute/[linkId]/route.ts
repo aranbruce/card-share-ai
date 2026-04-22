@@ -43,7 +43,8 @@ export async function POST(
     if (giphy_url === undefined) {
       return NextResponse.json(
         {
-          error: "Invalid GIF URL (must be a https://media*.giphy.com URL or null)",
+          error:
+            "Invalid GIF URL (must be a https://media*.giphy.com URL or null)",
         },
         { status: 400 },
       )

@@ -62,7 +62,9 @@ describe("normalizeGiphyUrl", () => {
 
   it("rejects URLs with embedded credentials", () => {
     expect(
-      normalizeGiphyUrl("https://user:pass@media.giphy.com/media/abc/giphy.gif"),
+      normalizeGiphyUrl(
+        "https://user:pass@media.giphy.com/media/abc/giphy.gif",
+      ),
     ).toBeUndefined()
     expect(
       normalizeGiphyUrl("https://user@media.giphy.com/media/abc/giphy.gif"),
@@ -79,7 +81,9 @@ describe("normalizeGiphyUrl", () => {
   })
 
   it("normalizes URLs via URL parsing (canonical form)", () => {
-    const result = normalizeGiphyUrl("https://media.giphy.com/media/abc/../abc/giphy.gif")
+    const result = normalizeGiphyUrl(
+      "https://media.giphy.com/media/abc/../abc/giphy.gif",
+    )
     expect(result).toBeTruthy()
     expect(result).not.toContain("..")
   })
