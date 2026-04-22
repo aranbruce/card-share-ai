@@ -136,12 +136,13 @@ export async function POST(request: NextRequest) {
     )
   }
   try {
-    const { imagePrompt, sourceImageUrl, coverHeadline } = (await request.json()) as {
-      imagePrompt?: string
-      sourceImageUrl?: string
-      /** Current card headline — guides mood/theme; must not appear as text in the image. */
-      coverHeadline?: string
-    }
+    const { imagePrompt, sourceImageUrl, coverHeadline } =
+      (await request.json()) as {
+        imagePrompt?: string
+        sourceImageUrl?: string
+        /** Current card headline — guides mood/theme; must not appear as text in the image. */
+        coverHeadline?: string
+      }
 
     const trimmedPrompt =
       typeof imagePrompt === "string" ? imagePrompt.trim() : ""

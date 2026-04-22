@@ -140,14 +140,25 @@ export async function POST(
       .eq("id", cardId)
       .eq("user_id", user.id)
     if (mirrorErr) {
-      console.error("[owner POST contributions] mirror copy_message:", mirrorErr)
+      console.error(
+        "[owner POST contributions] mirror copy_message:",
+        mirrorErr,
+      )
     }
 
     try {
-      const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardId,
+      )
       const compactedContribution =
-        contributions.find((item) => item.id === contribution.id) ?? contribution
-      return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+        contributions.find((item) => item.id === contribution.id) ??
+        contribution
+      return NextResponse.json({
+        contribution: compactedContribution,
+        contributions,
+        extra_pages,
+      })
     } catch (compactErr) {
       console.error("[owner POST contributions] compactCardPages:", compactErr)
       return NextResponse.json({ contribution, extra_pages: 0 })
@@ -333,10 +344,17 @@ export async function PATCH(
     }
 
     try {
-      const { contributions, extra_pages } = await compactCardPages(supabase, cardId)
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardId,
+      )
       const compactedContribution =
         contributions.find((item) => item.id === updated.id) ?? updated
-      return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+      return NextResponse.json({
+        contribution: compactedContribution,
+        contributions,
+        extra_pages,
+      })
     } catch (compactErr) {
       console.error("[owner PATCH contributions] compactCardPages:", compactErr)
       return NextResponse.json({ contribution: updated, extra_pages: 0 })

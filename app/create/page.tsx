@@ -141,9 +141,7 @@ export default function CreateCardPage() {
 
       const { imageUrl } = await imageResponse.json()
 
-      setCardData((prev) =>
-        prev ? { ...prev, imageUrl } : null,
-      )
+      setCardData((prev) => (prev ? { ...prev, imageUrl } : null))
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
       setStep("details")

@@ -119,10 +119,19 @@ export async function POST(
 
     // editToken is only ever returned here — not in GET — so only the browser that added the message can PATCH.
     try {
-      const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardData.id,
+      )
       const compactedContribution =
-        contributions.find((item) => item.id === contribution.id) ?? contribution
-      return NextResponse.json({ contribution: compactedContribution, editToken, contributions, extra_pages })
+        contributions.find((item) => item.id === contribution.id) ??
+        contribution
+      return NextResponse.json({
+        contribution: compactedContribution,
+        editToken,
+        contributions,
+        extra_pages,
+      })
     } catch (compactErr) {
       console.error("[contribute POST] compactCardPages:", compactErr)
       return NextResponse.json({ contribution, editToken })
@@ -164,13 +173,19 @@ export async function PATCH(
           .eq("contributor_link_id", linkId)
           .maybeSingle()
         if (cardLookupError) {
-          return NextResponse.json({ error: cardLookupError.message }, { status: 500 })
+          return NextResponse.json(
+            { error: cardLookupError.message },
+            { status: 500 },
+          )
         }
         if (!card) {
           return NextResponse.json({ error: "Card not found" }, { status: 404 })
         }
         return NextResponse.json(
-          { error: "Maximum number of pages reached", extra_pages: card.extra_pages },
+          {
+            error: "Maximum number of pages reached",
+            extra_pages: card.extra_pages,
+          },
           { status: 409 },
         )
       }
@@ -347,10 +362,17 @@ export async function PATCH(
     }
 
     try {
-      const { contributions, extra_pages } = await compactCardPages(supabase, cardData.id)
+      const { contributions, extra_pages } = await compactCardPages(
+        supabase,
+        cardData.id,
+      )
       const compactedContribution =
         contributions.find((item) => item.id === updated.id) ?? updated
-      return NextResponse.json({ contribution: compactedContribution, contributions, extra_pages })
+      return NextResponse.json({
+        contribution: compactedContribution,
+        contributions,
+        extra_pages,
+      })
     } catch (compactErr) {
       console.error("[contribute PATCH] compactCardPages:", compactErr)
       return NextResponse.json({ contribution: updated })

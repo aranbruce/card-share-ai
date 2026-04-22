@@ -6,7 +6,12 @@ import type { Contribution } from "./card-body"
 const CARD_ID = "card-1"
 
 function row(id: string, page: number | null): Contribution {
-  return { id, message: "hi", created_at: "2024-01-01T00:00:00Z", page_index: page }
+  return {
+    id,
+    message: "hi",
+    created_at: "2024-01-01T00:00:00Z",
+    page_index: page,
+  }
 }
 
 // Builds a minimal Supabase-shaped client that tracks contribution updates.
@@ -74,7 +79,8 @@ function buildClient({
       } = {
         select: () => updateChain,
         update: (patch) => {
-          if (typeof patch.page_index === "number") state.page_index = patch.page_index
+          if (typeof patch.page_index === "number")
+            state.page_index = patch.page_index
           return updateChain
         },
         eq: (col, val) => {
@@ -83,7 +89,10 @@ function buildClient({
         },
         single: () => {
           if (updateError) {
-            return Promise.resolve({ data: null, error: { message: updateError } })
+            return Promise.resolve({
+              data: null,
+              error: { message: updateError },
+            })
           }
           appliedUpdates.push({ id: state.id!, page_index: state.page_index! })
           const updated = rows.find((r) => r.id === state.id)
@@ -148,7 +157,10 @@ describe("compactCardPages", () => {
       expect.objectContaining({ id: "creator" }),
     )
     // page 4 compacts to 2 (first available extra page).
-    expect(client._appliedUpdates).toContainEqual({ id: "guest", page_index: 2 })
+    expect(client._appliedUpdates).toContainEqual({
+      id: "guest",
+      page_index: 2,
+    })
   })
 
   it("always resets extra_pages to 0", async () => {
@@ -163,7 +175,9 @@ describe("compactCardPages", () => {
   it("throws when the initial select fails", async () => {
     const client = buildClient({ rows: [], selectError: "db error" })
 
-    await expect(compactCardPages(client as never, CARD_ID)).rejects.toThrow("db error")
+    await expect(compactCardPages(client as never, CARD_ID)).rejects.toThrow(
+      "db error",
+    )
   })
 
   it("throws when a per-row update fails", async () => {

@@ -138,7 +138,9 @@ export function CardOwnerStudio({
         setContributions(p.contributions as Contribution[])
       }
       if (typeof p.extra_pages === "number") {
-        setCard((prev) => (prev ? { ...prev, extra_pages: p.extra_pages } : prev))
+        setCard((prev) =>
+          prev ? { ...prev, extra_pages: p.extra_pages } : prev,
+        )
       }
     },
     [cardId],
@@ -461,7 +463,11 @@ export function CardOwnerStudio({
               : "Failed to save message",
           )
         }
-        const { contribution: updated, contributions: allContributions, extra_pages } = payload as {
+        const {
+          contribution: updated,
+          contributions: allContributions,
+          extra_pages,
+        } = payload as {
           contribution?: Contribution
           contributions?: Contribution[]
           extra_pages?: number
@@ -508,7 +514,11 @@ export function CardOwnerStudio({
               : "Failed to add message",
           )
         }
-        const { contribution, contributions: allContributions, extra_pages } = payload as {
+        const {
+          contribution,
+          contributions: allContributions,
+          extra_pages,
+        } = payload as {
           contribution?: Contribution
           contributions?: Contribution[]
           extra_pages?: number

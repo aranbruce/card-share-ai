@@ -293,8 +293,7 @@ export function Card3D({
 
   const isLastPage = currentPage === totalPages - 1
   const canGoRight =
-    !coverOnly &&
-    (currentPage < totalPages - 1 || onAddPage !== undefined)
+    !coverOnly && (currentPage < totalPages - 1 || onAddPage !== undefined)
 
   const reportComposePlace = useCallback(
     (e: MouseEvent) => {

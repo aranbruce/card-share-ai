@@ -11,7 +11,6 @@ import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import type { Contribution } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
 
-
 interface CardData {
   id: string
   card_type: string
@@ -105,7 +104,9 @@ export default function ContributeCardPage() {
         body: JSON.stringify({ action: "add_page" }),
       })
       if (!response.ok) throw new Error("Failed to add page")
-      const { extra_pages } = (await response.json()) as { extra_pages?: number }
+      const { extra_pages } = (await response.json()) as {
+        extra_pages?: number
+      }
       if (typeof extra_pages === "number") {
         setCard((prev) => (prev ? { ...prev, extra_pages } : prev))
       }
@@ -146,7 +147,9 @@ export default function ContributeCardPage() {
         setContributions(payload.contributions as Contribution[])
       }
       if (typeof payload.extra_pages === "number") {
-        setCard((prev) => (prev ? { ...prev, extra_pages: payload.extra_pages } : prev))
+        setCard((prev) =>
+          prev ? { ...prev, extra_pages: payload.extra_pages } : prev,
+        )
       }
     },
     [linkId],
@@ -345,7 +348,12 @@ export default function ContributeCardPage() {
         )
       }
 
-      const { contribution, editToken, contributions: allContributions, extra_pages } = payload as {
+      const {
+        contribution,
+        editToken,
+        contributions: allContributions,
+        extra_pages,
+      } = payload as {
         contribution?: Contribution
         editToken?: string
         contributions?: Contribution[]

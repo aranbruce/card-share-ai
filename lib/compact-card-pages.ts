@@ -43,7 +43,11 @@ export async function compactCardPages(
 
   const updated = await Promise.all(
     contributions.map(async (c) => {
-      if (c.page_index === null || c.page_index === undefined || !pageMap.has(c.page_index)) {
+      if (
+        c.page_index === null ||
+        c.page_index === undefined ||
+        !pageMap.has(c.page_index)
+      ) {
         return c
       }
       const newPage = pageMap.get(c.page_index)!
