@@ -370,7 +370,7 @@ export async function PATCH(
       const { error: mirrorErr } = await supabase
         .from("cards")
         .update({
-          copy_message: updates.message,
+          copy_message: updates.message ?? "",
           updated_at: new Date().toISOString(),
         })
         .eq("id", cardId)
