@@ -386,7 +386,12 @@ export function Card3D({
   })
 
   const renderContributionsForPage = (pageIdx: number) => {
-    return getContributionsForPage(pageIdx).map((contrib) => {
+    const pageContribs = [...getContributionsForPage(pageIdx)].sort((a, b) => {
+      const aEditable = editableContributionIds.includes(a.id) ? 1 : 0
+      const bEditable = editableContributionIds.includes(b.id) ? 1 : 0
+      return aEditable - bEditable
+    })
+    return pageContribs.map((contrib) => {
       const canCanvasEdit =
         Boolean(onContributionEdit) &&
         editableContributionIds.includes(contrib.id)

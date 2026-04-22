@@ -266,12 +266,12 @@ export function CardOwnerStudio({
       if (ownerLayoutSaveTimerRef.current)
         clearTimeout(ownerLayoutSaveTimerRef.current)
       ownerLayoutSaveTimerRef.current = setTimeout(() => {
-        void saveOwnerContributionPatch(contributionId, {
+        void saveContributionPatch(contributionId, {
           giphyUrl,
         })
       }, 200)
     },
-    [creatorRow, saveOwnerContributionPatch],
+    [creatorRow, saveContributionPatch],
   )
 
   const handleContributionRegenerateMessage = useCallback(
