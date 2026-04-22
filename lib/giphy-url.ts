@@ -23,6 +23,8 @@ export function normalizeGiphyUrl(raw: unknown): string | null | undefined {
   }
 
   if (parsed.protocol !== "https:") return undefined
+  if (parsed.username || parsed.password) return undefined
+  if (parsed.port) return undefined
   const host = parsed.hostname.toLowerCase()
   if (!host.endsWith(`.${GIPHY_HOST}`)) return undefined
   const subdomain = host.slice(0, host.length - GIPHY_HOST.length - 1)

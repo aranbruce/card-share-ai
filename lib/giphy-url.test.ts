@@ -60,6 +60,24 @@ describe("normalizeGiphyUrl", () => {
     ).toBeUndefined()
   })
 
+  it("rejects URLs with embedded credentials", () => {
+    expect(
+      normalizeGiphyUrl("https://user:pass@media.giphy.com/media/abc/giphy.gif"),
+    ).toBeUndefined()
+    expect(
+      normalizeGiphyUrl("https://user@media.giphy.com/media/abc/giphy.gif"),
+    ).toBeUndefined()
+  })
+
+  it("rejects URLs with a non-default HTTPS port", () => {
+    expect(
+      normalizeGiphyUrl("https://media.giphy.com:444/media/abc/giphy.gif"),
+    ).toBeUndefined()
+    expect(
+      normalizeGiphyUrl("https://media.giphy.com:8443/media/abc/giphy.gif"),
+    ).toBeUndefined()
+  })
+
   it("normalizes URLs via URL parsing (canonical form)", () => {
     const result = normalizeGiphyUrl("https://media.giphy.com/media/abc/../abc/giphy.gif")
     expect(result).toBeTruthy()
