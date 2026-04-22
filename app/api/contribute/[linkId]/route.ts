@@ -154,11 +154,14 @@ export async function PATCH(
       if (next === null) {
         // NULL means either the card doesn't exist or extra_pages is already at
         // the cap (10). A follow-up lookup tells us which.
-        const { data: card } = await supabase
+        const { data: card, error: cardLookupError } = await supabase
           .from("cards")
           .select("extra_pages")
           .eq("contributor_link_id", linkId)
           .maybeSingle()
+        if (cardLookupError) {
+          return NextResponse.json({ error: cardLookupError.message }, { status: 500 })
+        }
         if (!card) {
           return NextResponse.json({ error: "Card not found" }, { status: 404 })
         }
