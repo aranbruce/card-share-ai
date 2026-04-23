@@ -11,6 +11,7 @@ import Image from "next/image"
 import { Inbox, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { apiFetch, apiDelete } from "@/lib/api-client"
+import { looksLikeDataUrl } from "@/lib/source-image-limits"
 
 interface CardItem {
   id: string
@@ -475,6 +476,7 @@ export default function DashboardPage() {
                             fill
                             loading={index === 0 ? "eager" : "lazy"}
                             priority={index === 0}
+                            unoptimized={looksLikeDataUrl(card.image_url)}
                             className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                           />
                         ) : (
