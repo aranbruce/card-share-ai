@@ -55,8 +55,12 @@ export default function HomePage() {
   const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("default")
   const [isGenerating, setIsGenerating] = useState(false)
   const [showShimmer, setShowShimmer] = useState(false)
-  const [displayedImageUrl, setDisplayedImageUrl] = useState(DEMO_STATES.default.imageUrl)
-  const [displayedMessage, setDisplayedMessage] = useState(DEMO_STATES.default.message)
+  const [displayedImageUrl, setDisplayedImageUrl] = useState<string>(
+    DEMO_STATES.default.imageUrl,
+  )
+  const [displayedMessage, setDisplayedMessage] = useState<string>(
+    DEMO_STATES.default.message,
+  )
 
   const handleVariantClick = (key: keyof typeof DEMO_STATES) => {
     if (isGenerating || key === demoKey) return
@@ -215,7 +219,9 @@ export default function HomePage() {
                 {/* Shimmer overlay during generation */}
                 <div
                   className={`absolute inset-0 z-10 transition-opacity duration-500 ${
-                    showShimmer ? "opacity-100" : "opacity-0 pointer-events-none"
+                    showShimmer
+                      ? "opacity-100"
+                      : "pointer-events-none opacity-0"
                   }`}
                 >
                   <div className="h-full w-full animate-pulse bg-stone-200" />
