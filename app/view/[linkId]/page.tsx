@@ -4,9 +4,12 @@ import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
+import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
 import { forCardDisplay, type Contribution } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
+import Link from "next/link"
+import { Sparkles } from "lucide-react"
 
 interface CardData {
   recipient_name: string
@@ -89,15 +92,26 @@ export default function PublicCardPage() {
       </header>
       <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
         <div className="mx-auto max-w-2xl">
-          <div className="mb-8 text-center">
-            <p className="mb-2 text-sm text-muted-foreground">
-              A special card for
+          <section className="mb-8 text-center">
+            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.15em] text-brand">
+              A card arrived for you
             </p>
-            <h1 className="mb-2 text-3xl font-bold">{card.recipient_name}</h1>
-            <p className="text-muted-foreground">
-              Click the card to open it and read your messages
+            <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
+              {card.recipient_name}
+              {guestMessageCount > 0 && (
+                <>
+                  {" "}
+                  <span className="text-muted-foreground">
+                    — {guestMessageCount}{" "}
+                    {guestMessageCount === 1 ? "person" : "people"} signed this.
+                  </span>
+                </>
+              )}
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Sent by {card.sender_name || "Someone special"} · received today
             </p>
-          </div>
+          </section>
 
           <Card3D
             imageUrl={card.image_url}
@@ -110,20 +124,17 @@ export default function PublicCardPage() {
             hideEmptyCenterMessageBody={true}
           />
 
-          {guestMessageCount > 0 && (
-            <div className="mt-8 text-center">
-              <p className="text-sm text-muted-foreground">
-                This card contains {guestMessageCount} special{" "}
-                {guestMessageCount === 1 ? "message" : "messages"} from loved
-                ones
-              </p>
-            </div>
-          )}
+          <div className="mt-8 flex justify-center">
+            <Button variant="brand" size="xl" asChild>
+              <Link href="/auth/sign-up">
+                <Sparkles />
+                Create your own card
+              </Link>
+            </Button>
+          </div>
 
           <div className="mt-12 text-center">
-            <p className="text-xs text-muted-foreground">
-              Created with CardsAI
-            </p>
+            <p className="text-xs text-muted-foreground">Created with CardsAI</p>
           </div>
         </div>
       </main>

@@ -29,7 +29,7 @@ import {
 import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Sparkles, X, ArrowUp } from "lucide-react"
+import { ArrowLeft, ArrowRight, Sparkles, X, ArrowUp } from "lucide-react"
 import {
   useState,
   useRef,
@@ -742,12 +742,12 @@ export function Card3D({
       {totalPages > 1 ? (
         <div className="flex items-center justify-center gap-4">
           <Button
-            variant="ghost"
-            size="icon-lg"
+            variant="outline"
+            size="icon-sm"
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 0}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ArrowLeft className="h-3.5 w-3.5" />
           </Button>
 
           <div className="flex items-center gap-2">
@@ -755,7 +755,7 @@ export function Card3D({
               <button
                 key={i}
                 onClick={() => setCurrentPage(i)}
-                className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                className={`h-2 w-2 rounded-full transition-colors ${
                   i === currentPage
                     ? "bg-primary"
                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
@@ -766,8 +766,8 @@ export function Card3D({
           </div>
 
           <Button
-            variant="ghost"
-            size="icon-lg"
+            variant="outline"
+            size="icon-sm"
             onClick={() =>
               isLastPage && onAddPage
                 ? handleAddPage()
@@ -776,7 +776,7 @@ export function Card3D({
             disabled={!canGoRight}
             title={isLastPage && onAddPage ? "Add a new page" : "Next page"}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       ) : null}
