@@ -17,6 +17,9 @@ interface CardDetailsFormProps {
   }) => Promise<void>
   isLoading?: boolean
   onBack?: () => void
+  hasGenerated?: boolean
+  onContinue?: () => void
+  isContinuing?: boolean
 }
 
 export function CardDetailsForm({
@@ -24,6 +27,9 @@ export function CardDetailsForm({
   onSubmit,
   isLoading,
   onBack,
+  hasGenerated,
+  onContinue,
+  isContinuing,
 }: CardDetailsFormProps) {
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")
@@ -187,35 +193,86 @@ export function CardDetailsForm({
 
         {/* Actions */}
         <div className="mt-auto flex gap-2.5 pt-4">
-          <Button
-            type="submit"
-            variant="brand"
-            size="default"
-            className="flex-1"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Generating…
-              </>
-            ) : (
-              <>
-                <svg
-                  className="mr-1.5 h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-                </svg>
-                Generate card
-              </>
-            )}
-          </Button>
+          {hasGenerated ? (
+            <>
+              <Button
+                type="submit"
+                variant="outline"
+                size="default"
+                className="flex-1"
+                disabled={isLoading || isContinuing}
+              >
+                {isLoading ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4" />
+                    Regenerating…
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="mr-1.5 h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                    </svg>
+                    Regenerate
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="brand"
+                size="default"
+                className="flex-1"
+                disabled={isLoading || isContinuing}
+                onClick={onContinue}
+              >
+                {isContinuing ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4" />
+                    Saving…
+                  </>
+                ) : (
+                  "Continue"
+                )}
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="submit"
+              variant="brand"
+              size="default"
+              className="flex-1"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Generating…
+                </>
+              ) : (
+                <>
+                  <svg
+                    className="mr-1.5 h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                  </svg>
+                  Generate card
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </form>
     </aside>

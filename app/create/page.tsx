@@ -358,6 +358,9 @@ export default function CreateCardPage() {
             onSubmit={handleDetailsSubmit}
             isLoading={isGeneratingCopy || isGeneratingImage}
             onBack={handleBackToType}
+            hasGenerated={!!cardData}
+            onContinue={handleSaveCard}
+            isContinuing={isSaving}
           />
 
           {/* Right panel — live preview */}
@@ -470,23 +473,6 @@ export default function CreateCardPage() {
                       isRegeneratingHeadline={isRegeneratingHeadline}
                       isRegeneratingImage={isRegeneratingImage}
                     />
-                    <Button
-                      size="lg"
-                      fullWidth
-                      onClick={handleSaveCard}
-                      disabled={
-                        isSaving || isGeneratingImage || isGeneratingCopy
-                      }
-                    >
-                      {isSaving ? (
-                        <>
-                          <Spinner className="mr-2 h-4 w-4" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Write message"
-                      )}
-                    </Button>
                   </div>
                 ) : (
                   /* Placeholder card — matches Card3D dimensions */
