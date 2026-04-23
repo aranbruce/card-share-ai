@@ -31,11 +31,15 @@ function LoginForm() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState(
-    urlError === "auth_callback_failed"
-      ? "Sign-in link expired or could not be completed. Request a new reset email or try again."
-      : (urlError ?? ""),
-  )
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    setError(
+      urlError === "auth_callback_failed"
+        ? "Sign-in link expired or could not be completed. Request a new reset email or try again."
+        : (urlError ?? ""),
+    )
+  }, [urlError])
   const successMessage = !urlError && urlMessage ? urlMessage : ""
   const [loading, setLoading] = useState(false)
   const [hasPendingCard, setHasPendingCard] = useState(false)

@@ -10,6 +10,7 @@ function makeFetchMock(
   return vi.fn().mockResolvedValue({
     ok,
     status,
+    headers: { get: () => null },
     json: vi.fn().mockResolvedValue(body),
   })
 }
@@ -98,9 +99,14 @@ describe("apiPatch", () => {
 })
 
 describe("apiDelete", () => {
-  it("sends method DELETE", async () => {
-    vi.stubGlobal("fetch", makeFetchMock(204, null))
-    await apiDelete("/api/cards/1")
+  it("sends method DELETE and resolves on 204 without parsing a body", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      status: 204,
+      headers: { get: () => null },
+      json: vi.fn().mockRejectedValue(new SyntaxError("no body")),
+    }))
+    await expect(apiDelete("/api/cards/1")).resolves.toBeUndefined()
     const [, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]
     expect(init.method).toBe("DELETE")
   })
