@@ -69,7 +69,9 @@ export type CardOwnerStudioProps = {
   onRegeneratingHeadlineChange?: (v: boolean) => void
   /** Called when the card's headline, image URL, or image prompt changes (after a successful regeneration). */
   onCardDataChange?: (
-    updates: Partial<Pick<OwnerCard, "copy_headline" | "image_url" | "image_prompt">>,
+    updates: Partial<
+      Pick<OwnerCard, "copy_headline" | "image_url" | "image_prompt">
+    >,
   ) => void
 }
 

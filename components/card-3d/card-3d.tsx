@@ -507,7 +507,6 @@ export function Card3D({
                           className="z-20 rounded-2xl"
                         />
                       ) : null}
-
                     </div>
                   ) : null}
 

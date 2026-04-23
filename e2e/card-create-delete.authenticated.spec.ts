@@ -51,9 +51,7 @@ test.describe("card create and delete", () => {
 
     await page.getByRole("button", { name: /Birthday/i }).click()
     // Step 2 heading is dynamic: "Tell us about who." before name is filled
-    await expect(
-      page.getByRole("heading", { name: /Tell us/i }),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: /Tell us/i })).toBeVisible()
 
     await page.getByRole("textbox", { name: "To" }).fill(recipient)
     await page.getByRole("textbox", { name: "From" }).fill(sender)
@@ -61,12 +59,12 @@ test.describe("card create and delete", () => {
     await page.getByRole("button", { name: /Generate card/i }).click()
 
     // Generation is instant with mocked routes — just wait for button to be enabled
-    const writeMessage = page.getByRole("button", { name: "Write message" })
-    await expect(writeMessage).toBeEnabled()
+    const continueButton = page.getByRole("button", { name: "Continue" })
+    await expect(continueButton).toBeEnabled()
 
     await Promise.all([
       page.waitForURL(/\/dashboard\/cards\/[^/?]+/),
-      writeMessage.click(),
+      continueButton.click(),
     ])
 
     await page.goto("/dashboard")
