@@ -613,7 +613,7 @@ export default function ContributeCardPage() {
   }
 
   const instructionLine = card.sent_at
-    ? "The card may already be with the recipient — you can still edit your note from this device."
+    ? "The card may already be with the recipient. You can still edit your note from this device."
     : canPlaceNewGuestMessage
       ? "Flip to the inside and click anywhere to place your note."
       : "Flip to the inside to find and edit your note."
@@ -714,9 +714,13 @@ export default function ContributeCardPage() {
               }}
               isRegenerating={composeDraftRegenerating}
               onRegenerate={handleComposeDraftRegenerate}
-              onTextColorChange={(color) => patchComposeValues({ textColor: color })}
+              onTextColorChange={(color) =>
+                patchComposeValues({ textColor: color })
+              }
               onFontSizeChange={(px) => patchComposeValues({ fontSize: px })}
-              onRotationChange={(deg) => patchComposeValues({ rotationDegrees: deg })}
+              onRotationChange={(deg) =>
+                patchComposeValues({ rotationDegrees: deg })
+              }
               onPageChange={(pageNum) => {
                 patchComposeValues({ pageIndex: pageNum })
                 setNavigateToPage(pageNum)
@@ -729,7 +733,6 @@ export default function ContributeCardPage() {
               onCancel={cancelCompose}
               submitting={submitting}
             />
-
           ) : editableContrib !== null ? (
             <NotePanel
               title="Edit your note."

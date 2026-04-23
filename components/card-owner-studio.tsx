@@ -49,7 +49,9 @@ export type CardOwnerStudioProps = {
   /** Hide the inline image regenerate button on the cover (use when the control lives in a sidebar). */
   hideImageRegenerateButton?: boolean
   /** Fired when the active contribution formatting state changes (null = no note selected). */
-  onActiveContributionChange?: (state: ActiveContributionFormattingState | null) => void
+  onActiveContributionChange?: (
+    state: ActiveContributionFormattingState | null,
+  ) => void
 }
 
 export function CardOwnerStudio({
@@ -68,9 +70,14 @@ export function CardOwnerStudio({
   >(null)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
-  const [editingContributionId, setEditingContributionId] = useState<string | null>(null)
-  const [contribGifPickerContributionId, setContribGifPickerContributionId] = useState<string | null>(null)
-  const [navigateToPage, setNavigateToPage] = useState<number | undefined>(undefined)
+  const [editingContributionId, setEditingContributionId] = useState<
+    string | null
+  >(null)
+  const [contribGifPickerContributionId, setContribGifPickerContributionId] =
+    useState<string | null>(null)
+  const [navigateToPage, setNavigateToPage] = useState<number | undefined>(
+    undefined,
+  )
   const headlineSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   )
@@ -340,7 +347,9 @@ export function CardOwnerStudio({
         widthPercent,
         pageIndex,
         ...(partial.fontSize !== undefined && { fontSize: partial.fontSize }),
-        ...(partial.textColor !== undefined && { textColor: partial.textColor }),
+        ...(partial.textColor !== undefined && {
+          textColor: partial.textColor,
+        }),
         ...(partial.rotationDegrees !== undefined && {
           rotationDegrees: partial.rotationDegrees,
         }),
@@ -430,7 +439,8 @@ export function CardOwnerStudio({
         totalInnerPages,
         isRegeneratingMessage:
           regeneratingContributionId === editingContributionId,
-        onFontSizeChange: (px) => changeActiveContributionLayout({ fontSize: px }),
+        onFontSizeChange: (px) =>
+          changeActiveContributionLayout({ fontSize: px }),
         onTextColorChange: (hex) =>
           changeActiveContributionLayout({ textColor: hex }),
         onRotationChange: (deg) =>
@@ -637,7 +647,8 @@ export function CardOwnerStudio({
   // created before this flow existed (new cards already have one from the API).
   const creatingCreatorContribRef = useRef(false)
   useEffect(() => {
-    if (loading || creatorRow || !card || creatingCreatorContribRef.current) return
+    if (loading || creatorRow || !card || creatingCreatorContribRef.current)
+      return
     creatingCreatorContribRef.current = true
     void fetch(`/api/cards/${cardId}/contributions`, {
       method: "POST",
@@ -712,7 +723,9 @@ export function CardOwnerStudio({
         isRegeneratingImage={isRegeneratingImage}
         hideImageRegenerateButton={hideImageRegenerateButton}
         suppressComposeActions
-        onComposeCanvasPlace={showCompose ? handleComposeCanvasPlace : undefined}
+        onComposeCanvasPlace={
+          showCompose ? handleComposeCanvasPlace : undefined
+        }
         onEditingContributionChange={(id) => {
           if (id !== null) setEditingContributionId(id)
         }}

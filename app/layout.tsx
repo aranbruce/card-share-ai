@@ -43,7 +43,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${interTight.variable} ${jetBrainsMono.variable} font-sans antialiased`} style={{ fontFamily: "var(--font-inter-tight), system-ui, sans-serif" }}>
+      <body
+        className={`${interTight.variable} ${jetBrainsMono.variable} font-sans antialiased`}
+        style={{ fontFamily: "var(--font-inter-tight), system-ui, sans-serif" }}
+      >
         {children}
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>

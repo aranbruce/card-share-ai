@@ -163,7 +163,13 @@ export function Card3D({
         extraPages,
         coverOnly,
       ),
-    [naturalPageSpread, committedSpread, messagePageIndex, extraPages, coverOnly],
+    [
+      naturalPageSpread,
+      committedSpread,
+      messagePageIndex,
+      extraPages,
+      coverOnly,
+    ],
   )
 
   useLayoutEffect(() => {
@@ -317,7 +323,6 @@ export function Card3D({
     [onComposeDraftChange, setCurrentPage],
   )
 
-
   const gifPickerSelectedUrl = useMemo(
     () =>
       contributions.find((c) => c.id === gifPickerContributionId)?.giphy_url ??
@@ -330,14 +335,15 @@ export function Card3D({
       (contribution) => effectiveContributionPage(contribution) === pageIdx,
     )
 
-
   const renderContributionsForPage = (pageIdx: number) => {
     const editableSet = new Set(editableContributionIds)
-    const pageContributions = [...getContributionsForPage(pageIdx)].sort((a, b) => {
-      const aEditable = editableSet.has(a.id) ? 1 : 0
-      const bEditable = editableSet.has(b.id) ? 1 : 0
-      return aEditable - bEditable
-    })
+    const pageContributions = [...getContributionsForPage(pageIdx)].sort(
+      (a, b) => {
+        const aEditable = editableSet.has(a.id) ? 1 : 0
+        const bEditable = editableSet.has(b.id) ? 1 : 0
+        return aEditable - bEditable
+      },
+    )
     return pageContributions.map((contrib) => {
       const canCanvasEdit =
         Boolean(onContributionEdit) &&
@@ -667,9 +673,7 @@ export function Card3D({
 
                   {isMessagePage && showMainSpreadInnerBody ? (
                     <div className="pointer-events-none relative z-10 flex min-h-[360px] flex-col justify-center *:pointer-events-auto">
-                      <DraggableWrapper
-                        editable={editable}
-                      >
+                      <DraggableWrapper editable={editable}>
                         <div className="space-y-3">
                           <InlineEdit
                             value={message}

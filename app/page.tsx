@@ -7,6 +7,39 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 
+const DEMO_STATES = {
+  default: {
+    imageUrl: "/demo/card-default.png",
+    greeting: "Happy Birthday,",
+    name: "Mira",
+    message: "Here's to making 30 look completely effortless.",
+  },
+  Warmer: {
+    imageUrl: "/demo/card-warmer.png",
+    greeting: "Warmest wishes,",
+    name: "Mira",
+    message: "May your 30th be as radiant and wonderful as you are.",
+  },
+  Sassier: {
+    imageUrl: "/demo/card-sassier.png",
+    greeting: "30 never looked so good -",
+    name: "Mira",
+    message: "Let's be honest, you've always been the coolest one in the room.",
+  },
+  Shorter: {
+    imageUrl: "/demo/card-shorter.png",
+    greeting: "Happy 30th,",
+    name: "Mira",
+    message: "Make it a good one.",
+  },
+  Friendlier: {
+    imageUrl: "/demo/card-friendlier.png",
+    greeting: "Hip hip hooray!",
+    name: "Mira",
+    message: "So glad you're on our team - today is all yours!",
+  },
+} as const
+
 const FEATURES = [
   {
     n: "01",
@@ -16,7 +49,7 @@ const FEATURES = [
   {
     n: "02",
     title: "AI drafts first, you edit",
-    desc: "Regenerate any line, any cover, any time. The AI has a light touch — never saccharine.",
+    desc: "Regenerate any line, any cover, any time. The AI has a light touch. Never saccharine.",
   },
   {
     n: "03",
@@ -29,7 +62,8 @@ export default function HomePage() {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
-  const [activeOccasion, setActiveOccasion] = useState("birthday")
+  const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("default")
+  const demo = DEMO_STATES[demoKey]
 
   useEffect(() => {
     const checkUser = async () => {
@@ -101,18 +135,21 @@ export default function HomePage() {
           </h1>
           <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
             Type one sentence. We design the cover, draft the note, and pass it
-            around for the whole team to sign — before it lands on the birthday
+            around for the whole team to sign, before it lands on the birthday
             desk.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/create">
               <Button variant="brand" size="lg">
-                Start a card — free
+                Start a card
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                  Free
+                </span>
               </Button>
             </Link>
             <Link href="/auth/login">
               <Button variant="outline" size="lg">
-                I have an account
+                Sign in
               </Button>
             </Link>
           </div>
@@ -141,7 +178,7 @@ export default function HomePage() {
             <div className="rounded-xl bg-background p-3.5 text-sm leading-relaxed text-foreground">
               <span className="text-muted-foreground">Describe the card.</span>
               <br />
-              Mira turns 30 on Thursday — she&apos;s on the design team, loves
+              Mira turns 30 on Thursday. She&apos;s on the design team, loves
               botanical illustration and long train rides.
             </div>
             {/* Card preview */}
@@ -150,36 +187,43 @@ export default function HomePage() {
                 className="relative w-full overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
                 style={{ aspectRatio: "3/4" }}
               >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, oklch(0.85 0.12 45) 0%, oklch(0.75 0.15 25) 60%, oklch(0.65 0.18 15) 100%)",
-                  }}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={demo.imageUrl}
+                  src={demo.imageUrl}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end p-4">
-                  <div className="text-xs leading-snug font-medium text-white/90">
-                    Happy Birthday,
-                    <br />
-                    <span className="text-base font-semibold">Mira</span>
-                  </div>
+                  <p className="text-[10px] leading-snug text-white/80">
+                    {demo.greeting}
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {demo.name}
+                  </p>
+                  <p className="mt-1 text-[9px] leading-relaxed text-white/70">
+                    {demo.message}
+                  </p>
                 </div>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {[
-                "Try warmer",
-                "Bolder type",
-                "More botanical",
-                "Regenerate",
-              ].map((c) => (
-                <div
-                  key={c}
-                  className="cursor-pointer rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
-                >
-                  {c}
-                </div>
-              ))}
+              {(["Warmer", "Sassier", "Shorter", "Friendlier"] as const).map(
+                (c) => (
+                  <button
+                    key={c}
+                    onClick={() => setDemoKey(c)}
+                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                      demoKey === c
+                        ? "border-foreground/30 bg-foreground/5 text-foreground"
+                        : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ),
+              )}
             </div>
           </div>
         </div>
@@ -192,7 +236,7 @@ export default function HomePage() {
             Built for group cards
           </p>
           <h2 className="mt-4 max-w-3xl text-4xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-5xl lg:text-6xl">
-            The card used to take ten Slack messages. Now it takes one link.
+            The card used to take ten follow-ups. Now it takes one link.
           </h2>
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
             {FEATURES.map((f) => (
@@ -216,16 +260,18 @@ export default function HomePage() {
       <section className="border-t border-border bg-secondary/50">
         <div className="mx-auto max-w-4xl px-6 py-24 text-center">
           <h2 className="text-4xl font-semibold tracking-[-0.03em]">
-            Ready to create your first card?
+            Start the card. We&apos;ll handle the rest.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-muted-foreground">
-            Start creating now — no account needed until you&apos;re ready to
-            save.
+            No account needed. Just type one sentence and go.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/create">
               <Button variant="brand" size="lg">
-                Start a card — free
+                Start a card
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                  Free
+                </span>
               </Button>
             </Link>
             <Link href="/auth/sign-up">
@@ -241,9 +287,7 @@ export default function HomePage() {
       <footer className="border-t border-border py-10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
           <Logo />
-          <p className="text-sm text-muted-foreground">
-            Create beautiful greeting cards with AI
-          </p>
+          <p className="text-sm text-muted-foreground">Cards worth signing.</p>
         </div>
       </footer>
     </div>

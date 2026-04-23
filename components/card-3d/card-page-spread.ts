@@ -35,9 +35,7 @@ export function computeNaturalPageSpread(
     hasLegacyUnindexedContribution ? messagePageLowerBound + 1 : 0,
     1,
   )
-  let totalPages = coverOnly
-    ? 1
-    : lastContentPage + 1 + extraPages
+  let totalPages = coverOnly ? 1 : lastContentPage + 1 + extraPages
 
   let validMessagePage = coverOnly
     ? -1

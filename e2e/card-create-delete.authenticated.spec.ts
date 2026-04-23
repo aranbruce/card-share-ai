@@ -1,39 +1,68 @@
 import { expect, test } from "@playwright/test"
 
+// 1x1 transparent GIF — avoids real image generation while keeping a valid data URL
+const STUB_IMAGE_URL =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+
 test.describe("card create and delete", () => {
   test("creates a card from the UI and deletes it from the dashboard", async ({
     page,
   }) => {
-    test.setTimeout(180_000)
+    test.setTimeout(30_000)
+
+    // Mock the slow AI routes so the test runs in seconds, not minutes.
+    // The card save (POST /api/cards) is NOT mocked so the card is real in DB.
+    await page.route("**/api/generate-card-copy", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cardCopy: {
+            headline: "Happy Birthday!",
+            message: "Wishing you a wonderful day full of joy and celebration.",
+            signoff: "With warmest wishes,",
+            imagePrompt: "Colorful birthday balloons and confetti",
+          },
+        }),
+      }),
+    )
+
+    await page.route("**/api/generate-image", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ imageUrl: STUB_IMAGE_URL }),
+      }),
+    )
 
     const recipient = `E2E ${Date.now()}`
     const sender = "E2E Sender"
 
     await page.goto("/dashboard")
-    await expect(page.getByRole("heading", { name: "My Cards" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "All cards" })).toBeVisible()
 
     await page
-      .getByRole("link", { name: /Create (New Card|Your First Card)/ })
+      .getByRole("link", { name: /\+ New card|Create your first card/i })
+      .first()
       .click()
     await expect(
-      page.getByRole("heading", { name: "Create a Card" }),
+      page.getByRole("heading", { name: "What kind of card?" }),
     ).toBeVisible()
 
     await page.getByRole("button", { name: /Birthday/i }).click()
+    // Step 2 heading is dynamic: "Tell us about who." before name is filled
     await expect(
-      page.getByRole("heading", { name: "Card Details" }),
+      page.getByRole("heading", { name: /Tell us/i }),
     ).toBeVisible()
 
-    await page.getByLabel(/From \(Your Name\)/).fill(sender)
-    await page.getByLabel(/To \(Recipient Name\)/).fill(recipient)
+    await page.getByRole("textbox", { name: "To" }).fill(recipient)
+    await page.getByRole("textbox", { name: "From" }).fill(sender)
 
-    await page.getByRole("button", { name: "Generate Card" }).click()
-    await expect(page.getByRole("heading", { name: "Your Card" })).toBeVisible({
-      timeout: 120_000,
-    })
+    await page.getByRole("button", { name: /Generate card/i }).click()
 
+    // Generation is instant with mocked routes — just wait for button to be enabled
     const writeMessage = page.getByRole("button", { name: "Write message" })
-    await expect(writeMessage).toBeEnabled({ timeout: 120_000 })
+    await expect(writeMessage).toBeEnabled()
 
     await Promise.all([
       page.waitForURL(/\/dashboard\/cards\/[^/?]+/),
@@ -41,20 +70,20 @@ test.describe("card create and delete", () => {
     ])
 
     await page.goto("/dashboard")
-    await expect(page.getByRole("heading", { name: "My Cards" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "All cards" })).toBeVisible()
 
     const cardRow = page
       .locator("div.group.relative")
       .filter({ hasText: recipient })
-    await expect(
-      cardRow.getByRole("heading", { name: `For ${recipient}` }),
-    ).toBeVisible()
+    await expect(cardRow.getByText(`For ${recipient}`)).toBeVisible()
 
-    page.once("dialog", (d) => d.accept())
+    // Hover to reveal the delete button (it's opacity-0 until hovered)
+    await cardRow.hover()
+    await cardRow.getByRole("button", { name: "Delete card" }).click()
+
+    // Confirm via the inline overlay (not a browser dialog)
     await cardRow.getByRole("button", { name: "Delete" }).click()
 
-    await expect(
-      page.getByRole("heading", { name: `For ${recipient}` }),
-    ).toHaveCount(0)
+    await expect(page.getByText(`For ${recipient}`)).toHaveCount(0)
   })
 })

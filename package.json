@@ -16,10 +16,7 @@
     "e2e:headed": "playwright test --headed",
     "e2e:install": "playwright install --with-deps chromium",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "format:fix": "prettier --write . && eslint . --fix",
     "fix": "prettier --write . && eslint . --fix"
   },
   "dependencies": {

@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Sparkles, ImagePlus, X, ArrowUp, RotateCcw, RotateCw } from "lucide-react"
+import {
+  Sparkles,
+  ImagePlus,
+  X,
+  ArrowUp,
+  RotateCcw,
+  RotateCw,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
@@ -80,7 +87,9 @@ export function NotePanel({
 
       {/* AI refine */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-muted-foreground">Refine with AI</p>
+        <p className="text-xs font-medium text-muted-foreground">
+          Refine with AI
+        </p>
         <div className="flex flex-wrap gap-2">
           {refineOpen ? (
             <div className="flex w-full gap-2">
@@ -126,7 +135,11 @@ export function NotePanel({
                 Shorten
               </button>
               <button
-                onClick={() => void onRegenerate("Make this message warmer and more personal")}
+                onClick={() =>
+                  void onRegenerate(
+                    "Make this message warmer and more personal",
+                  )
+                }
                 disabled={isRegenerating}
                 className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
               >
@@ -149,7 +162,9 @@ export function NotePanel({
               style={{
                 backgroundColor: color,
                 borderColor:
-                  values.textColor === color ? "hsl(var(--brand))" : "transparent",
+                  values.textColor === color
+                    ? "hsl(var(--brand))"
+                    : "transparent",
                 boxShadow:
                   values.textColor === color
                     ? "0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--brand))"
@@ -165,12 +180,19 @@ export function NotePanel({
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium text-muted-foreground">
           GIF{" "}
-          <span className="font-normal text-muted-foreground/60">(optional)</span>
+          <span className="font-normal text-muted-foreground/60">
+            (optional)
+          </span>
         </p>
         {values.giphyUrl ? (
           <div className="flex items-center gap-3">
             <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-border">
-              <Image src={values.giphyUrl} alt="Attached GIF" fill className="object-cover" />
+              <Image
+                src={values.giphyUrl}
+                alt="Attached GIF"
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="flex gap-2">
               <button
@@ -254,20 +276,22 @@ export function NotePanel({
         <div className="flex flex-col gap-2">
           <p className="text-xs font-medium text-muted-foreground">Page</p>
           <div className="flex flex-wrap gap-1.5">
-            {Array.from({ length: totalInnerPages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => onPageChange(pageNum)}
-                className={[
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                  (values.pageIndex ?? 1) === pageNum
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                ].join(" ")}
-              >
-                {pageNum}
-              </button>
-            ))}
+            {Array.from({ length: totalInnerPages }, (_, i) => i + 1).map(
+              (pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => onPageChange(pageNum)}
+                  className={[
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    (values.pageIndex ?? 1) === pageNum
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                  ].join(" ")}
+                >
+                  {pageNum}
+                </button>
+              ),
+            )}
           </div>
         </div>
       )}

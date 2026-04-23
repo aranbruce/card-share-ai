@@ -4,10 +4,7 @@ import type { Card3DProps } from "./types"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import { useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
-import {
-  InlineEdit,
-  type InlineEditRegenerateHandle,
-} from "./inline-edit"
+import { InlineEdit, type InlineEditRegenerateHandle } from "./inline-edit"
 
 export function ComposeCanvasEmptyHint({
   variant,

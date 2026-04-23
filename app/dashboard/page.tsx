@@ -8,7 +8,7 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { Spinner } from "@/components/ui/spinner"
 import Image from "next/image"
-import { Inbox } from "lucide-react"
+import { Inbox, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 
 interface CardItem {
@@ -228,6 +228,8 @@ export default function DashboardPage() {
   const [error, setError] = useState("")
   const [user, setUser] = useState<User | null>(null)
   const [activeFilter, setActiveFilter] = useState<string>("all")
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -260,6 +262,20 @@ export default function DashboardPage() {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push("/")
+  }
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/cards/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to delete card")
+      setCards((prev) => prev.filter((c) => c.id !== id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete card")
+    } finally {
+      setDeletingId(null)
+      setConfirmDeleteId(null)
+    }
   }
 
   // Derived
@@ -300,7 +316,7 @@ export default function DashboardPage() {
       {/* ── Body: sidebar + main ── */}
       <div className="flex flex-1">
         {/* ── Left sidebar ── */}
-        <aside className="relative hidden w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
+        <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
           <div className="flex-1 overflow-y-auto px-5 py-7">
             {/* Nav items */}
             {[
@@ -423,7 +439,7 @@ export default function DashboardPage() {
               </h2>
               <p className="mx-auto mb-8 max-w-xs text-sm leading-relaxed text-muted-foreground">
                 {activeFilter === "all"
-                  ? "Create your first greeting card — it only takes a sentence."
+                  ? "Create your first greeting card. It only takes a sentence."
                   : `You don't have any ${TYPE_LABEL[activeFilter]?.toLowerCase() ?? activeFilter} cards yet.`}
               </p>
               <Link href="/create">
@@ -439,68 +455,117 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
               {filteredCards.map((card, index) => {
                 const hue = TYPE_HUE[card.card_type] ?? 40
+                const isConfirming = confirmDeleteId === card.id
+                const isDeleting = deletingId === card.id
                 return (
-                  <Link
-                    key={card.id}
-                    href={`/dashboard/cards/${card.id}`}
-                    className="group block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
-                  >
-                    {/* Image */}
-                    <div
-                      className="relative w-full overflow-hidden bg-secondary"
-                      style={{ aspectRatio: "4/5" }}
+                  <div key={card.id} className="group relative">
+                    <Link
+                      href={`/dashboard/cards/${card.id}`}
+                      className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
                     >
-                      {card.image_url ? (
-                        <Image
-                          src={card.image_url}
-                          alt={`${card.recipient_name}'s card`}
-                          fill
-                          loading={index === 0 ? "eager" : "lazy"}
-                          priority={index === 0}
-                          className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                        />
-                      ) : (
-                        <div
-                          className="h-full w-full"
-                          style={{
-                            background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
-                          }}
-                        />
-                      )}
+                      {/* Image */}
+                      <div
+                        className="relative w-full overflow-hidden bg-secondary"
+                        style={{ aspectRatio: "4/5" }}
+                      >
+                        {card.image_url ? (
+                          <Image
+                            src={card.image_url}
+                            alt={`${card.recipient_name}'s card`}
+                            fill
+                            loading={index === 0 ? "eager" : "lazy"}
+                            priority={index === 0}
+                            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                          />
+                        ) : (
+                          <div
+                            className="h-full w-full"
+                            style={{
+                              background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
+                            }}
+                          />
+                        )}
 
-                      {/* Type badge — top left */}
-                      <div className="absolute top-3.5 left-3.5">
-                        <span className="inline-flex items-center rounded-full bg-white/92 px-2.5 py-1 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur-sm">
-                          {TYPE_LABEL[card.card_type] ??
-                            card.card_type.replace("_", " ")}
-                        </span>
+                        {/* Type badge — top left */}
+                        <div className="absolute top-3.5 left-3.5">
+                          <span className="inline-flex items-center rounded-full bg-white/92 px-2.5 py-1 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur-sm">
+                            {TYPE_LABEL[card.card_type] ??
+                              card.card_type.replace("_", " ")}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Info */}
-                    <div className="p-[18px]">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-[17px] font-medium tracking-[-0.01em]">
-                          For {card.recipient_name}
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {new Date(card.created_at).toLocaleDateString("en", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-[13px] text-muted-foreground">
-                        From {card.sender_name}
-                      </p>
+                      {/* Info */}
+                      <div className="p-[18px]">
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-[17px] font-medium tracking-[-0.01em]">
+                            For {card.recipient_name}
+                          </span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {new Date(card.created_at).toLocaleDateString(
+                              "en",
+                              {
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[13px] text-muted-foreground">
+                          From {card.sender_name}
+                        </p>
 
-                      <div className="mt-3.5 flex w-full items-center justify-end gap-3">
-                        <span className="text-[12.5px] text-muted-foreground">
-                          View card
-                        </span>
+                        <div className="mt-3.5 flex w-full items-center justify-end gap-3">
+                          <span className="text-[12.5px] text-muted-foreground">
+                            View card
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+
+                    {/* Delete button — visible on hover */}
+                    {!isConfirming && (
+                      <button
+                        onClick={() => setConfirmDeleteId(card.id)}
+                        className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive"
+                        aria-label="Delete card"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+
+                    {/* Delete confirmation overlay */}
+                    {isConfirming && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/90 backdrop-blur-sm">
+                        <div className="text-center">
+                          <p className="mb-4 text-sm font-medium">
+                            Delete this card?
+                          </p>
+                          <div className="flex justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={isDeleting}
+                              onClick={() => handleDelete(card.id)}
+                            >
+                              {isDeleting ? (
+                                <Spinner className="h-4 w-4" />
+                              ) : (
+                                "Delete"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>

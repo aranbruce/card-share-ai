@@ -8,6 +8,7 @@ const CARD_TYPES = [
     id: "birthday",
     label: "Birthday",
     hue: 18,
+    emoji: "🎂",
     desc: "Warm, celebratory copy. Often lands best with a signature collection.",
     tag: "Most popular",
   },
@@ -15,6 +16,7 @@ const CARD_TYPES = [
     id: "thank_you",
     label: "Thank You",
     hue: 40,
+    emoji: "🙏",
     desc: "Sincere without being saccharine. Great one-sender or group.",
     tag: "Heartfelt",
   },
@@ -22,13 +24,15 @@ const CARD_TYPES = [
     id: "congratulations",
     label: "Congratulations",
     hue: 70,
-    desc: "Promotion, engagement, new apartment — energetic and genuine.",
+    emoji: "🎉",
+    desc: "For promotions, engagements, and new beginnings. Energetic and genuine.",
     tag: "Celebratory",
   },
   {
     id: "holiday",
     label: "Holiday",
     hue: 150,
+    emoji: "🎄",
     desc: "For the annual list. Each copy can be personalized by name.",
     tag: "Seasonal",
   },
@@ -36,6 +40,7 @@ const CARD_TYPES = [
     id: "custom",
     label: "Custom",
     hue: 230,
+    emoji: "✏️",
     desc: "Describe it in one sentence. We figure out the tone.",
     tag: "Flexible",
   },
@@ -77,7 +82,7 @@ export function CardTypeSelector({
           What kind of card?
         </h2>
         <p className="mt-3 max-w-md text-base text-muted-foreground">
-          Pick an occasion to set the tone. Everything is editable — this just
+          Pick an occasion to set the tone. Everything is editable. This just
           gives the AI a starting point.
         </p>
       </div>
@@ -91,9 +96,11 @@ export function CardTypeSelector({
           >
             {/* Colour swatch */}
             <div
-              className="mb-5 h-12 w-12 rounded-xl"
+              className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
               style={{ background: `oklch(0.88 0.1 ${cardType.hue})` }}
-            />
+            >
+              {cardType.emoji}
+            </div>
             <div className="mb-1 flex items-center justify-between gap-2">
               <h3 className="text-[17px] font-semibold tracking-[-0.01em]">
                 {cardType.label}
