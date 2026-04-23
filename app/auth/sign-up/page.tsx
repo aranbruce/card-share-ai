@@ -27,11 +27,10 @@ function SignUpForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [hasPendingCard, setHasPendingCard] = useState(false)
-
-  useEffect(() => {
-    setHasPendingCard(checkHasPendingCard())
-  }, [])
+  const [hasPendingCard] = useState(() => {
+    if (typeof window === "undefined") return false
+    return checkHasPendingCard()
+  })
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
