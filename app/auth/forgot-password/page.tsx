@@ -109,6 +109,7 @@ export default function ForgotPassword() {
         <Button
           type="submit"
           size="lg"
+          variant="brand"
           fullWidth
           className="mt-4"
           disabled={loading}

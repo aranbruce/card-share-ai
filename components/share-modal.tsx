@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { apiPatch } from "@/lib/api-client"
 
 interface ShareModalProps {
   cardId: string
@@ -55,14 +56,8 @@ export function ShareModal({
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()
     try {
-      const res = await fetch(`/api/cards/${cardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sent_at: sentAt }),
-      })
-      if (res.ok) {
-        onSentAtRecorded?.(sentAt)
-      }
+      await apiPatch(`/api/cards/${cardId}`, { sent_at: sentAt })
+      onSentAtRecorded?.(sentAt)
     } catch (err) {
       console.error("Failed to record sent_at", err)
     }
@@ -102,14 +97,9 @@ export function ShareModal({
     setSavingEmail(true)
 
     try {
-      const response = await fetch(`/api/cards/${cardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient_email: recipientEmail }),
+      await apiPatch(`/api/cards/${cardId}`, {
+        recipient_email: recipientEmail,
       })
-
-      if (!response.ok) throw new Error("Failed to save email")
-
       onEmailUpdate?.(recipientEmail)
     } catch {
       setEmailError("Failed to save email")
@@ -134,13 +124,9 @@ export function ShareModal({
     try {
       // First save the email to the card
       const sentAt = new Date().toISOString()
-      await fetch(`/api/cards/${cardId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipient_email: recipientEmail,
-          sent_at: sentAt,
-        }),
+      await apiPatch(`/api/cards/${cardId}`, {
+        recipient_email: recipientEmail,
+        sent_at: sentAt,
       })
 
       onEmailUpdate?.(recipientEmail)
@@ -213,6 +199,9 @@ export function ShareModal({
             <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <MailIcon className="size-4" />
               Send via Email
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                Coming soon
+              </span>
             </h4>
 
             {emailSent ? (

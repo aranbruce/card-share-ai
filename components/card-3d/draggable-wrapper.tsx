@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -190,41 +191,44 @@ export function DraggableWrapper({
     return () => ro.disconnect()
   }, [hasFooter, position.x, position.y, size.width, CANVAS_PADDING])
 
-  const handleMouseDown = (e: ReactMouseEvent, type: "drag" | "resize") => {
-    if (!editable) return
-    e.preventDefault()
-    e.stopPropagation()
+  const handleMouseDown = useCallback(
+    (e: ReactMouseEvent, type: "drag" | "resize") => {
+      if (!editable) return
+      e.preventDefault()
+      e.stopPropagation()
 
-    let currentPosX = position.x
-    let currentPosY = position.y
-    if (
-      (currentPosX === null || currentPosY === null) &&
-      containerRef.current
-    ) {
-      const bounds = getDraggableBoundsParent(containerRef.current)
-      if (bounds) {
-        const boundsRect = bounds.getBoundingClientRect()
-        const selfRect = containerRef.current.getBoundingClientRect()
-        currentPosX = selfRect.left - boundsRect.left
-        currentPosY = selfRect.top - boundsRect.top
-        setPosition({ x: currentPosX, y: currentPosY })
-      } else {
-        currentPosX = 0
-        currentPosY = 0
+      let currentPosX = position.x
+      let currentPosY = position.y
+      if (
+        (currentPosX === null || currentPosY === null) &&
+        containerRef.current
+      ) {
+        const bounds = getDraggableBoundsParent(containerRef.current)
+        if (bounds) {
+          const boundsRect = bounds.getBoundingClientRect()
+          const selfRect = containerRef.current.getBoundingClientRect()
+          currentPosX = selfRect.left - boundsRect.left
+          currentPosY = selfRect.top - boundsRect.top
+          setPosition({ x: currentPosX, y: currentPosY })
+        } else {
+          currentPosX = 0
+          currentPosY = 0
+        }
       }
-    }
 
-    startPos.current = {
-      x: e.clientX,
-      y: e.clientY,
-      posX: currentPosX ?? 0,
-      posY: currentPosY ?? 0,
-      width: size.width,
-    }
+      startPos.current = {
+        x: e.clientX,
+        y: e.clientY,
+        posX: currentPosX ?? 0,
+        posY: currentPosY ?? 0,
+        width: size.width,
+      }
 
-    if (type === "drag") setIsDragging(true)
-    if (type === "resize") setIsResizing(true)
-  }
+      if (type === "drag") setIsDragging(true)
+      if (type === "resize") setIsResizing(true)
+    },
+    [editable, position.x, position.y, size.width],
+  )
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

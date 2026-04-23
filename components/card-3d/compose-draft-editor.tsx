@@ -1,6 +1,6 @@
 "use client"
 
-import type { Card3DProps } from "./types"
+import type { Card3DComposeDraftProps } from "./types"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import { useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
@@ -36,11 +36,13 @@ export function ComposeDraftEditor({
   composeDraftRegenerating,
   onFocusChange,
 }: {
-  composeDraft: NonNullable<Card3DProps["composeDraft"]>
+  composeDraft: NonNullable<Card3DComposeDraftProps["composeDraft"]>
   messageFontSize: number
   composeError: string | null
-  onComposeDraftChange: NonNullable<Card3DProps["onComposeDraftChange"]>
-  onComposeDraftRegenerateMessage?: Card3DProps["onComposeDraftRegenerateMessage"]
+  onComposeDraftChange: NonNullable<
+    Card3DComposeDraftProps["onComposeDraftChange"]
+  >
+  onComposeDraftRegenerateMessage?: Card3DComposeDraftProps["onComposeDraftRegenerateMessage"]
   composeDraftRegenerating: boolean
   onFocusChange?: (focused: boolean) => void
 }) {

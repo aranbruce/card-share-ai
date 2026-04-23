@@ -14,57 +14,45 @@ import {
   type OAuthProviderId,
 } from "@/lib/oauth-auth"
 import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
+import {
+  hasPendingCard as checkHasPendingCard,
+  loadPendingCard,
+  clearPendingCard,
+} from "@/lib/pending-card-storage"
+import { apiPost } from "@/lib/api-client"
 
 function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [successMessage, setSuccessMessage] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [hasPendingCard, setHasPendingCard] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Check if there's a pending card
-  useEffect(() => {
-    const pendingCard = localStorage.getItem("pendingCard")
-    setHasPendingCard(!!pendingCard)
-  }, [])
+  const urlError = searchParams.get("error")
+  const urlMessage = searchParams.get("message")
 
-  useEffect(() => {
-    const urlError = searchParams.get("error")
-    const urlMessage = searchParams.get("message")
-    if (urlError) {
-      setSuccessMessage("")
-      setError(
-        urlError === "auth_callback_failed"
-          ? "Sign-in link expired or could not be completed. Request a new reset email or try again."
-          : urlError,
-      )
-    } else if (urlMessage) {
-      setError("")
-      setSuccessMessage(urlMessage)
-    }
-  }, [searchParams])
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState(
+    urlError === "auth_callback_failed"
+      ? "Sign-in link expired or could not be completed. Request a new reset email or try again."
+      : (urlError ?? ""),
+  )
+  const successMessage = !urlError && urlMessage ? urlMessage : ""
+  const [loading, setLoading] = useState(false)
+  const [hasPendingCard] = useState(() => {
+    if (typeof window === "undefined") return false
+    return checkHasPendingCard()
+  })
 
   const savePendingCard = useCallback(async () => {
-    const pendingCardData = localStorage.getItem("pendingCard")
-    if (!pendingCardData) return null
-
+    const cardData = loadPendingCard()
+    if (!cardData) return null
     try {
-      const cardData = JSON.parse(pendingCardData)
-      const response = await fetch("/api/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cardData),
-      })
-
-      if (!response.ok) throw new Error("Failed to save card")
-
-      const { card } = await response.json()
-      localStorage.removeItem("pendingCard")
-      return card.id || card
+      const { card } = await apiPost<{ card: { id: string } }>(
+        "/api/cards",
+        cardData,
+      )
+      clearPendingCard()
+      return card.id
     } catch (err) {
       console.error("Error saving pending card:", err)
       return null
