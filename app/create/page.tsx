@@ -9,7 +9,7 @@ import { AuthGateModal } from "@/components/auth-gate-modal"
 import { Card3D } from "@/components/card-3d"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { Logo } from "@/components/logo"
+import { AppHeader } from "@/components/app-header"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -322,26 +322,27 @@ export default function CreateCardPage() {
     <div className="min-h-screen bg-background">
       {/* Header — shown for select-type and preview, hidden in studio (which has its own back link) */}
       {step !== "details" && (
-        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
-          <Logo />
-          {!isGuest && (
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut()
-                router.push("/")
-              }}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Sign out
-            </button>
-          )}
-        </header>
+        <AppHeader
+          right={
+            !isGuest ? (
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  router.push("/")
+                }}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Sign out
+              </button>
+            ) : undefined
+          }
+        />
       )}
 
       {/* Select type — constrained width */}
       {step === "select-type" && (
         <div className="mx-auto max-w-4xl p-6 md:p-10">
-          <CardTypeSelector onSelect={handleCardTypeSelect} />
+          <CardTypeSelector onSelect={handleCardTypeSelect} isGuest={isGuest} />
         </div>
       )}
 

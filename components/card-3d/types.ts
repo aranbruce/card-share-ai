@@ -18,29 +18,20 @@ export interface Card3DProps {
   onAddPage?: () => void | Promise<void>
   extraPages?: number
   onRegenerateHeadline?: (prompt: string) => Promise<void>
-  onRegenerateMessage?: (prompt: string) => Promise<void>
   /** Second arg is the current cover image URL (data or https) for refinement. */
   onRegenerateImage?: (prompt: string, sourceImageUrl?: string) => Promise<void>
   isRegeneratingHeadline?: boolean
-  isRegeneratingMessage?: boolean
   isRegeneratingImage?: boolean
   messageFontSize?: number
-  onMessageFontSizeChange?: (size: number) => void
   /** Center inner message text color (preview / when no contribution row). */
   messageTextColor?: string | null
-  onMessageTextColorChange?: (hex: string | null) => void
   messagePageIndex?: number
-  onMessagePageIndexChange?: (page: number) => void
   /** Initial spread page when the card mounts (0 = cover). */
   initialPage?: number
   /** Only the cover page (no inner message / pagination) — e.g. create flow before save. */
   coverOnly?: boolean
   /** Hide the inline sparkle regenerate button on the cover image (use when controls live in a sidebar). */
   hideImageRegenerateButton?: boolean
-  /** Suppress the inline MessageFormattingToolbar footer (use when controls live in a sidebar). */
-  suppressFormattingToolbar?: boolean
-  /** Suppress the inline compose-draft toolbar (use when controls live in a sidebar). */
-  suppressComposeDraftToolbar?: boolean
   /** Suppress the submit/cancel buttons rendered below the card for compose draft. */
   suppressComposeActions?: boolean
   /** Fire when an editable contribution gains or loses focus (null = blur). */
@@ -76,13 +67,7 @@ export interface Card3DProps {
       rotationDegrees?: number | null
     },
   ) => void
-  onContributionRegenerateMessage?: (
-    contributionId: string,
-    prompt: string,
-  ) => Promise<void>
   contributionRegeneratingId?: string | null
-  /** Extra blank page slot for new canvas notes (contribute flow). */
-  composePageBump?: number
   composeDraft?: CardComposeDraft | null
   onComposeDraftChange?: (patch: Partial<CardComposeDraft>) => void
   /** Click on the card canvas to place a new note (offset matches the click overlay / placement area). */

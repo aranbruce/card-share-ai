@@ -48,8 +48,6 @@ export type CardOwnerStudioProps = {
   reloadNonce?: number
   /** Hide the inline image regenerate button on the cover (use when the control lives in a sidebar). */
   hideImageRegenerateButton?: boolean
-  /** Suppress the inline formatting toolbar (use when controls live in a sidebar). */
-  suppressFormattingToolbar?: boolean
   /** Fired when the active contribution formatting state changes (null = no note selected). */
   onActiveContributionChange?: (state: ActiveContributionFormattingState | null) => void
 }
@@ -59,7 +57,6 @@ export function CardOwnerStudio({
   initialCardPage = 0,
   reloadNonce,
   hideImageRegenerateButton = false,
-  suppressFormattingToolbar = false,
   onActiveContributionChange,
 }: CardOwnerStudioProps) {
   const [card, setCard] = useState<OwnerCard | null>(null)
@@ -714,8 +711,6 @@ export function CardOwnerStudio({
         isRegeneratingHeadline={isRegeneratingHeadline}
         isRegeneratingImage={isRegeneratingImage}
         hideImageRegenerateButton={hideImageRegenerateButton}
-        suppressFormattingToolbar={suppressFormattingToolbar}
-        suppressComposeDraftToolbar={suppressFormattingToolbar}
         suppressComposeActions
         onComposeCanvasPlace={showCompose ? handleComposeCanvasPlace : undefined}
         onEditingContributionChange={(id) => {
@@ -729,7 +724,6 @@ export function CardOwnerStudio({
         onContributionEdit={handleContributionEdit}
         onContributionGifChange={handleContributionGifChange}
         onContributionLayoutChange={handleContributionLayoutChange}
-        onContributionRegenerateMessage={handleContributionRegenerateMessage}
         contributionRegeneratingId={regeneratingContributionId}
       />
       <GiphyPicker

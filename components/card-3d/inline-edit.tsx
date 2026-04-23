@@ -501,31 +501,3 @@ export const InlineEdit = forwardRef<
     </div>
   )
 })
-
-export function ToolbarRegenerateButton({
-  isRegenerating,
-  onOpen,
-}: {
-  isRegenerating?: boolean
-  onOpen: () => void
-}) {
-  return (
-    <button
-      type="button"
-      data-regenerate-area
-      onClick={(e) => {
-        e.stopPropagation()
-        onOpen()
-      }}
-      disabled={isRegenerating}
-      className="shrink-0 rounded-full bg-primary p-2 text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50"
-      title="Rewrite with AI"
-    >
-      {isRegenerating ? (
-        <Spinner className="h-4 w-4" />
-      ) : (
-        <Sparkles className="h-4 w-4" />
-      )}
-    </button>
-  )
-}

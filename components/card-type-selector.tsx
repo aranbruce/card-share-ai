@@ -43,13 +43,15 @@ const CARD_TYPES = [
 
 export function CardTypeSelector({
   onSelect,
+  isGuest = false,
 }: {
   onSelect: (type: string) => void
+  isGuest?: boolean
 }) {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-10">
-        <Link href="/dashboard">
+        <Link href={isGuest ? "/" : "/dashboard"}>
           <Button variant="outline" size="default">
             <svg
               width="14"
@@ -63,7 +65,7 @@ export function CardTypeSelector({
             >
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
-            Back to dashboard
+            {isGuest ? "Back" : "Back to dashboard"}
           </Button>
         </Link>
       </div>

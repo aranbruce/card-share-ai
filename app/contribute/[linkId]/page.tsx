@@ -7,23 +7,11 @@ import { Card3D } from "@/components/card-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
-import {
-  randomPresetTextColor,
-  MESSAGE_TEXT_COLOR_PRESETS,
-} from "@/lib/message-text-color-presets"
+import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import type { Contribution } from "@/lib/card-body"
-import Image from "next/image"
 import Link from "next/link"
-import { Logo } from "@/components/logo"
-import {
-  Sparkles,
-  ImagePlus,
-  X,
-  ArrowUp,
-  RotateCcw,
-  RotateCw,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { AppHeader } from "@/components/app-header"
+import { NotePanel } from "@/components/contribute/note-panel"
 
 interface CardData {
   id: string
@@ -36,14 +24,6 @@ interface CardData {
   sent_at?: string | null
   extra_pages?: number
 }
-
-const FONT_SIZE_PRESETS = [
-  { px: 12, label: "Tiny" },
-  { px: 14, label: "Small" },
-  { px: 16, label: "Medium" },
-  { px: 20, label: "Large" },
-  { px: 24, label: "Huge" },
-] as const
 
 export default function ContributeCardPage() {
   const params = useParams()
@@ -92,8 +72,6 @@ export default function ContributeCardPage() {
   const [navigateToPage, setNavigateToPage] = useState<number | undefined>(
     undefined,
   )
-  const [refinePrompt, setRefinePrompt] = useState("")
-  const [refineOpen, setRefineOpen] = useState(false)
   const [composeGifPickerOpen, setComposeGifPickerOpen] = useState(false)
   const [contribGifPickerContributionId, setContribGifPickerContributionId] =
     useState<string | null>(null)
@@ -568,6 +546,7 @@ export default function ContributeCardPage() {
         }
         return next
       })
+      setEditingContributionId(contribution.id)
       setComposeDraft(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add message")
@@ -599,7 +578,14 @@ export default function ContributeCardPage() {
     [editingContributionId, contributionEditTokens, contributions],
   )
 
-  const totalInnerPages = 1 + (card?.extra_pages ?? 0)
+  const maxContribPage = contributions.reduce(
+    (max, c) =>
+      typeof c.page_index === "number" && c.page_index >= 1
+        ? Math.max(max, c.page_index)
+        : max,
+    0,
+  )
+  const totalInnerPages = Math.max(1 + (card?.extra_pages ?? 0), maxContribPage)
 
   if (loading) {
     return (
@@ -635,11 +621,7 @@ export default function ContributeCardPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* ── Top nav ── */}
-      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="flex w-full items-center justify-between px-6">
-          <Logo />
-        </div>
-      </header>
+      <AppHeader />
 
       {/* ── Body ── */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
@@ -679,11 +661,7 @@ export default function ContributeCardPage() {
               onContributionEdit={handleContributionEdit}
               onContributionGifChange={handleContributionGifChange}
               onContributionLayoutChange={handleContributionLayoutChange}
-              onContributionRegenerateMessage={
-                handleContributionRegenerateMessage
-              }
               contributionRegeneratingId={regeneratingContributionId}
-              composePageBump={canPlaceNewGuestMessage ? 1 : 0}
               composeDraft={composeDraft}
               onComposeDraftChange={(patch) =>
                 setComposeDraft((d) => (d ? { ...d, ...patch } : d))
@@ -712,9 +690,7 @@ export default function ContributeCardPage() {
               onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
               onComposeDraftGifChange={handleComposeDraftGifChange}
               composeDraftRegenerating={composeDraftRegenerating}
-              suppressComposeDraftToolbar
               suppressComposeActions
-              suppressFormattingToolbar
               onEditingContributionChange={(id) => {
                 if (id !== null) setEditingContributionId(id)
               }}
@@ -727,524 +703,73 @@ export default function ContributeCardPage() {
         <aside className="flex flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
           {canPlaceNewGuestMessage ? (
             /* ── Compose panel ── */
-            <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
-              <div>
-                <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
-                  Your note
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
-                  Write something real.
-                </h2>
-              </div>
+            <NotePanel
+              title="Write something real."
+              values={{
+                textColor: composeValues.textColor,
+                giphyUrl: composeValues.giphyUrl,
+                fontSize: composeValues.fontSize,
+                rotationDegrees: composeValues.rotationDegrees,
+                pageIndex: composeValues.pageIndex,
+              }}
+              isRegenerating={composeDraftRegenerating}
+              onRegenerate={handleComposeDraftRegenerate}
+              onTextColorChange={(color) => patchComposeValues({ textColor: color })}
+              onFontSizeChange={(px) => patchComposeValues({ fontSize: px })}
+              onRotationChange={(deg) => patchComposeValues({ rotationDegrees: deg })}
+              onPageChange={(pageNum) => {
+                patchComposeValues({ pageIndex: pageNum })
+                setNavigateToPage(pageNum)
+              }}
+              onOpenGifPicker={() => setComposeGifPickerOpen(true)}
+              onGifChange={handleComposeDraftGifChange}
+              totalInnerPages={totalInnerPages}
+              error={error && composeDraft ? error : undefined}
+              onSubmit={submitComposeDraft}
+              onCancel={cancelCompose}
+              submitting={submitting}
+            />
 
-              {error && composeDraft && (
-                <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
-
-              {/* AI refine */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Refine with AI
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {refineOpen ? (
-                    <div className="flex w-full gap-2">
-                      <input
-                        autoFocus
-                        className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
-                        placeholder="Describe the change…"
-                        value={refinePrompt}
-                        onChange={(e) => setRefinePrompt(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && refinePrompt.trim()) {
-                            void handleComposeDraftRegenerate(refinePrompt)
-                            setRefinePrompt("")
-                            setRefineOpen(false)
-                          }
-                          if (e.key === "Escape") setRefineOpen(false)
-                        }}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="shrink-0"
-                        onClick={() => setRefineOpen(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setRefineOpen(true)}
-                        disabled={composeDraftRegenerating}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        Improve
-                      </button>
-                      <button
-                        onClick={() =>
-                          void handleComposeDraftRegenerate(
-                            "Make this message shorter",
-                          )
-                        }
-                        disabled={composeDraftRegenerating}
-                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
-                      >
-                        Shorten
-                      </button>
-                      <button
-                        onClick={() =>
-                          void handleComposeDraftRegenerate(
-                            "Make this message warmer and more personal",
-                          )
-                        }
-                        disabled={composeDraftRegenerating}
-                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
-                      >
-                        Warmer
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Ink color */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Ink color
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {MESSAGE_TEXT_COLOR_PRESETS.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => patchComposeValues({ textColor: color })}
-                      className="h-7 w-7 rounded-full border-2 transition-all"
-                      style={{
-                        backgroundColor: color,
-                        borderColor:
-                          composeValues.textColor === color
-                            ? "hsl(var(--brand))"
-                            : "transparent",
-                        boxShadow:
-                          composeValues.textColor === color
-                            ? "0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--brand))"
-                            : undefined,
-                      }}
-                      aria-label={`Color ${color}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* GIF */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  GIF{" "}
-                  <span className="font-normal text-muted-foreground/60">
-                    (optional)
-                  </span>
-                </p>
-                {composeValues.giphyUrl ? (
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-border">
-                      <Image
-                        src={composeValues.giphyUrl}
-                        alt="Attached GIF"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setComposeGifPickerOpen(true)}
-                        className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        Change
-                      </button>
-                      <button
-                        onClick={() => handleComposeDraftGifChange(null)}
-                        className="text-xs text-destructive/70 transition-colors hover:text-destructive"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setComposeGifPickerOpen(true)}
-                    className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
-                  >
-                    <ImagePlus className="h-3.5 w-3.5" />
-                    Add GIF
-                  </button>
-                )}
-              </div>
-
-              {/* Font size */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Text size
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {FONT_SIZE_PRESETS.map(({ px, label }) => (
-                    <button
-                      key={px}
-                      onClick={() => patchComposeValues({ fontSize: px })}
-                      className={[
-                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                        (composeValues.fontSize ?? 16) === px
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                      ].join(" ")}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Rotation */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Rotation
-                </p>
-                <div className="inline-flex h-9 w-fit items-center rounded-xl border border-border bg-background">
-                  <button
-                    type="button"
-                    disabled={(composeValues.rotationDegrees ?? 0) <= -12}
-                    onClick={() =>
-                      patchComposeValues({
-                        rotationDegrees: Math.max(
-                          -12,
-                          (composeValues.rotationDegrees ?? 0) - 1,
-                        ),
-                      })
-                    }
-                    className="flex h-full items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                    title="Rotate counter-clockwise"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                  </button>
-                  <div className="h-4 w-px bg-border" />
-                  <span className="min-w-12 text-center font-mono text-xs text-foreground">
-                    {composeValues.rotationDegrees ?? 0}°
-                  </span>
-                  <div className="h-4 w-px bg-border" />
-                  <button
-                    type="button"
-                    disabled={(composeValues.rotationDegrees ?? 0) >= 12}
-                    onClick={() =>
-                      patchComposeValues({
-                        rotationDegrees: Math.min(
-                          12,
-                          (composeValues.rotationDegrees ?? 0) + 1,
-                        ),
-                      })
-                    }
-                    className="flex h-full items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
-                    title="Rotate clockwise"
-                  >
-                    <RotateCw className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Page selector */}
-              {totalInnerPages > 1 && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Page
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Array.from(
-                      { length: totalInnerPages },
-                      (_, i) => i + 1,
-                    ).map((pageNum) => (
-                      <button
-                        key={pageNum}
-                        onClick={() => {
-                          patchComposeValues({ pageIndex: pageNum })
-                          setNavigateToPage(pageNum)
-                        }}
-                        className={[
-                          "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                          (composeValues.pageIndex ?? 1) === pageNum
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                        ].join(" ")}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Submit / cancel */}
-              <div className="mt-auto flex gap-3 pt-4">
-                <Button
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={cancelCompose}
-                  disabled={submitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 bg-brand text-white hover:bg-brand/90"
-                  onClick={() => void submitComposeDraft()}
-                  disabled={submitting || composeDraftRegenerating}
-                >
-                  {submitting ? (
-                    <Spinner className="mr-2 h-4 w-4" />
-                  ) : (
-                    <ArrowUp className="mr-2 h-4 w-4" />
-                  )}
-                  Add my note
-                </Button>
-              </div>
-            </div>
           ) : editableContrib !== null ? (
-            /* ── Edit existing contribution panel ── */
-            <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
-              <div>
-                <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
-                  Your note
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
-                  Edit your note.
-                </h2>
-              </div>
-
-              {/* AI chips */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Refine with AI
-                </p>
-                <div className="flex flex-row flex-wrap gap-2">
-                  {refineOpen ? (
-                    <div className="flex w-full gap-2">
-                      <input
-                        autoFocus
-                        className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
-                        placeholder="Describe the change…"
-                        value={refinePrompt}
-                        onChange={(e) => setRefinePrompt(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && refinePrompt.trim()) {
-                            void handleContributionRegenerateMessage(
-                              editableContrib.id,
-                              refinePrompt,
-                            )
-                            setRefinePrompt("")
-                            setRefineOpen(false)
-                          }
-                          if (e.key === "Escape") setRefineOpen(false)
-                        }}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="shrink-0"
-                        onClick={() => setRefineOpen(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setRefineOpen(true)}
-                        disabled={
-                          regeneratingContributionId === editableContrib.id
-                        }
-                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        Improve
-                      </button>
-                      <button
-                        onClick={() =>
-                          void handleContributionRegenerateMessage(
-                            editableContrib.id,
-                            "Make this message shorter",
-                          )
-                        }
-                        disabled={
-                          regeneratingContributionId === editableContrib.id
-                        }
-                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
-                      >
-                        Shorten
-                      </button>
-                      <button
-                        onClick={() =>
-                          void handleContributionRegenerateMessage(
-                            editableContrib.id,
-                            "Make this message warmer and more personal",
-                          )
-                        }
-                        disabled={
-                          regeneratingContributionId === editableContrib.id
-                        }
-                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
-                      >
-                        Warmer
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Ink color */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Ink color
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {MESSAGE_TEXT_COLOR_PRESETS.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() =>
-                        changeActiveContributionLayout({ textColor: color })
-                      }
-                      className="h-7 w-7 rounded-full border-2 transition-all"
-                      style={{
-                        backgroundColor: color,
-                        borderColor:
-                          editableContrib.text_color === color
-                            ? "hsl(var(--brand))"
-                            : "transparent",
-                        boxShadow:
-                          editableContrib.text_color === color
-                            ? "0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--brand))"
-                            : undefined,
-                      }}
-                      aria-label={`Color ${color}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* GIF */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  GIF{" "}
-                  <span className="font-normal text-muted-foreground/60">
-                    (optional)
-                  </span>
-                </p>
-                {editableContrib.giphy_url ? (
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-border">
-                      <Image
-                        src={editableContrib.giphy_url}
-                        alt="Attached GIF"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          setContribGifPickerContributionId(editableContrib.id)
-                        }
-                        className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        Change
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleContributionGifChange(editableContrib.id, null)
-                        }
-                        className="text-xs text-destructive/70 transition-colors hover:text-destructive"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() =>
-                      setContribGifPickerContributionId(editableContrib.id)
-                    }
-                    className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
-                  >
-                    <ImagePlus className="h-3.5 w-3.5" />
-                    Add GIF
-                  </button>
-                )}
-              </div>
-
-              {/* Text size */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Text size
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {FONT_SIZE_PRESETS.map(({ px, label }) => (
-                    <button
-                      key={px}
-                      onClick={() =>
-                        changeActiveContributionLayout({ fontSize: px })
-                      }
-                      className={[
-                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                        (editableContrib.font_size ?? 16) === px
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                      ].join(" ")}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Page selector */}
-              {totalInnerPages > 1 && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Page
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Array.from(
-                      { length: totalInnerPages },
-                      (_, i) => i + 1,
-                    ).map((pageNum) => (
-                      <button
-                        key={pageNum}
-                        onClick={() =>
-                          changeActiveContributionLayout({
-                            pageIndex: pageNum,
-                          })
-                        }
-                        className={[
-                          "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                          (editableContrib.page_index ?? 1) === pageNum
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                        ].join(" ")}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotePanel
+              title="Edit your note."
+              values={{
+                textColor: editableContrib.text_color,
+                giphyUrl: editableContrib.giphy_url,
+                fontSize: editableContrib.font_size,
+                rotationDegrees: editableContrib.rotation_degrees,
+                pageIndex: editableContrib.page_index,
+              }}
+              isRegenerating={regeneratingContributionId === editableContrib.id}
+              onRegenerate={(prompt) =>
+                handleContributionRegenerateMessage(editableContrib.id, prompt)
+              }
+              onTextColorChange={(color) =>
+                changeActiveContributionLayout({ textColor: color })
+              }
+              onFontSizeChange={(px) =>
+                changeActiveContributionLayout({ fontSize: px })
+              }
+              onRotationChange={(deg) =>
+                changeActiveContributionLayout({ rotationDegrees: deg })
+              }
+              onPageChange={(pageNum) =>
+                changeActiveContributionLayout({ pageIndex: pageNum })
+              }
+              onOpenGifPicker={() =>
+                setContribGifPickerContributionId(editableContrib.id)
+              }
+              onGifChange={(url) =>
+                handleContributionGifChange(editableContrib.id, url)
+              }
+              totalInnerPages={totalInnerPages}
+            />
           ) : (
             /* ── Empty state ── */
             <div className="flex flex-1 items-center justify-center p-8">
               <div className="text-center">
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {canPlaceNewGuestMessage
-                    ? "Flip to the inside and click anywhere to place your note."
-                    : "Select your note on the card to edit it."}
+                  Flip to the inside and click anywhere to place your note.
                 </p>
               </div>
             </div>

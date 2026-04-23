@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
-import { Logo } from "@/components/logo"
+import { AppHeader } from "@/components/app-header"
 import { ShareModal } from "@/components/share-modal"
 import {
   CardOwnerStudio,
@@ -23,7 +23,6 @@ import {
   X,
 } from "lucide-react"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
-import { snapMessageFontSize } from "@/components/card-3d/message-formatting-toolbar"
 import {
   MIN_CONTRIBUTION_ROTATION_DEGREES,
   MAX_CONTRIBUTION_ROTATION_DEGREES,
@@ -138,22 +137,14 @@ function CardDetailInner() {
     )
   }
 
-  const snappedFontSize = activeContribution
-    ? snapMessageFontSize(activeContribution.fontSize)
-    : 16
+  const snappedFontSize = activeContribution?.fontSize ?? 16
   const snappedRotation = activeContribution
     ? Math.round(activeContribution.rotationDegrees ?? 0)
     : 0
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* ── Top nav ── */}
-      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="flex w-full items-center justify-between px-6">
-          <Logo />
-          <div className="w-[80px]" />
-        </div>
-      </header>
+      <AppHeader />
 
       {/* ── Body: editor + writing panel ── */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
@@ -202,7 +193,6 @@ function CardDetailInner() {
               cardId={cardId}
               initialCardPage={0}
               hideImageRegenerateButton
-              suppressFormattingToolbar
               onActiveContributionChange={setActiveContribution}
             />
           </div>

@@ -6,14 +6,8 @@ import { useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
 import {
   InlineEdit,
-  ToolbarRegenerateButton,
   type InlineEditRegenerateHandle,
 } from "./inline-edit"
-import {
-  MessageFormattingToolbar,
-  snapMessageFontSize,
-} from "./message-formatting-toolbar"
-import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 
 export function ComposeCanvasEmptyHint({
   variant,
@@ -43,10 +37,6 @@ export function ComposeDraftEditor({
   onComposeDraftChange,
   onComposeDraftRegenerateMessage,
   composeDraftRegenerating,
-  totalPages,
-  onSelectInnerPage,
-  onOpenGifPicker,
-  suppressComposeDraftToolbar = false,
   onFocusChange,
 }: {
   composeDraft: NonNullable<Card3DProps["composeDraft"]>
@@ -55,17 +45,9 @@ export function ComposeDraftEditor({
   onComposeDraftChange: NonNullable<Card3DProps["onComposeDraftChange"]>
   onComposeDraftRegenerateMessage?: Card3DProps["onComposeDraftRegenerateMessage"]
   composeDraftRegenerating: boolean
-  totalPages: number
-  onSelectInnerPage: (pageIndex: number) => void
-  onOpenGifPicker?: () => void
-  suppressComposeDraftToolbar?: boolean
   onFocusChange?: (focused: boolean) => void
 }) {
   const [isFocused, setIsFocused] = useState(false)
-  const [composeRegeneratePromptOpen, setComposeRegeneratePromptOpen] =
-    useState(false)
-  const [composeRegeneratePromptText, setComposeRegeneratePromptText] =
-    useState("")
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
 
   return (
@@ -98,67 +80,6 @@ export function ComposeDraftEditor({
           setIsFocused(false)
           onFocusChange?.(false)
         }}
-        footer={
-          !suppressComposeDraftToolbar && isFocused ? (
-            composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
-              <div data-compose-format-toolbar data-regenerate-area>
-                <RegeneratePromptBar
-                  className="w-full max-w-none"
-                  value={composeRegeneratePromptText}
-                  onValueChange={setComposeRegeneratePromptText}
-                  isRegenerating={composeDraftRegenerating}
-                  onSubmit={() =>
-                    void messageInlineRef.current?.submitRegenerateWithPrompt(
-                      composeRegeneratePromptText,
-                    )
-                  }
-                  onCancel={() =>
-                    messageInlineRef.current?.closeRegeneratePrompt()
-                  }
-                />
-              </div>
-            ) : (
-              <div data-compose-format-toolbar>
-                <MessageFormattingToolbar
-                  className="flex w-full max-w-none"
-                  fontSize={composeDraft.fontSize ?? messageFontSize}
-                  onFontSizeChange={(px) =>
-                    onComposeDraftChange({ fontSize: px })
-                  }
-                  textColor={composeDraft.textColor ?? null}
-                  onTextColorChange={(hex) =>
-                    onComposeDraftChange({ textColor: hex })
-                  }
-                  hasGif={Boolean(composeDraft.giphyUrl)}
-                  onGifClick={onOpenGifPicker}
-                  onGifClear={
-                    composeDraft.giphyUrl
-                      ? () => onComposeDraftChange({ giphyUrl: null })
-                      : undefined
-                  }
-                  rotationDegrees={composeDraft.rotationDegrees ?? null}
-                  onRotationDegreesChange={(deg) =>
-                    onComposeDraftChange({ rotationDegrees: deg })
-                  }
-                  showPage={totalPages > 1}
-                  pageValue={composeDraft.pageIndex}
-                  onPageChange={onSelectInnerPage}
-                  totalPages={totalPages}
-                  aiTweakSlot={
-                    onComposeDraftRegenerateMessage ? (
-                      <ToolbarRegenerateButton
-                        isRegenerating={composeDraftRegenerating}
-                        onOpen={() =>
-                          messageInlineRef.current?.openRegeneratePrompt()
-                        }
-                      />
-                    ) : undefined
-                  }
-                />
-              </div>
-            )
-          ) : null
-        }
       >
         <div className="space-y-3">
           {composeError ? (
@@ -183,25 +104,11 @@ export function ComposeDraftEditor({
                 : undefined
             }
             isRegenerating={composeDraftRegenerating}
-            regeneratePlacement={
-              onComposeDraftRegenerateMessage ? "toolbar" : "floating"
-            }
+            regeneratePlacement="floating"
             regenerateShimmerTone="paper"
-            onRegeneratePromptOpenChange={(open) => {
-              setComposeRegeneratePromptOpen(open)
-              if (!open) setComposeRegeneratePromptText("")
-            }}
-            toolbarRegeneratePrompt={
-              onComposeDraftRegenerateMessage
-                ? {
-                    value: composeRegeneratePromptText,
-                    onChange: setComposeRegeneratePromptText,
-                  }
-                : undefined
-            }
             className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
             style={{
-              fontSize: `${snapMessageFontSize(composeDraft.fontSize ?? messageFontSize)}px`,
+              fontSize: `${composeDraft.fontSize ?? messageFontSize}px`,
               ...(composeDraft.textColor
                 ? { color: composeDraft.textColor }
                 : {}),

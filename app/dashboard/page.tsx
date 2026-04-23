@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Logo } from "@/components/logo"
+import { AppHeader } from "@/components/app-header"
 import { Spinner } from "@/components/ui/spinner"
 import Image from "next/image"
 import { Inbox } from "lucide-react"
@@ -273,7 +273,6 @@ export default function DashboardPage() {
     return acc
   }, {})
 
-
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
@@ -285,10 +284,8 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* ── Top header ── */}
-      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="flex w-full items-center justify-between px-6">
-          <Logo />
+      <AppHeader
+        right={
           <Button
             variant="ghost"
             size="sm"
@@ -297,8 +294,8 @@ export default function DashboardPage() {
           >
             Sign out
           </Button>
-        </div>
-      </header>
+        }
+      />
 
       {/* ── Body: sidebar + main ── */}
       <div className="flex flex-1">
@@ -307,12 +304,42 @@ export default function DashboardPage() {
           <div className="flex-1 overflow-y-auto px-5 py-7">
             {/* Nav items */}
             {[
-              { key: "all", icon: "cards", label: "All cards", count: cards.length },
-              { key: "birthday", icon: "cake", label: "Birthday", count: typeCounts["birthday"] ?? 0 },
-              { key: "thank_you", icon: "heart", label: "Thank you", count: typeCounts["thank_you"] ?? 0 },
-              { key: "congratulations", icon: "trophy", label: "Congratulations", count: typeCounts["congratulations"] ?? 0 },
-              { key: "holiday", icon: "tree", label: "Holiday", count: typeCounts["holiday"] ?? 0 },
-              { key: "custom", icon: "wand", label: "Custom", count: typeCounts["custom"] ?? 0 },
+              {
+                key: "all",
+                icon: "cards",
+                label: "All cards",
+                count: cards.length,
+              },
+              {
+                key: "birthday",
+                icon: "cake",
+                label: "Birthday",
+                count: typeCounts["birthday"] ?? 0,
+              },
+              {
+                key: "thank_you",
+                icon: "heart",
+                label: "Thank you",
+                count: typeCounts["thank_you"] ?? 0,
+              },
+              {
+                key: "congratulations",
+                icon: "trophy",
+                label: "Congratulations",
+                count: typeCounts["congratulations"] ?? 0,
+              },
+              {
+                key: "holiday",
+                icon: "tree",
+                label: "Holiday",
+                count: typeCounts["holiday"] ?? 0,
+              },
+              {
+                key: "custom",
+                icon: "wand",
+                label: "Custom",
+                count: typeCounts["custom"] ?? 0,
+              },
             ].map((item) => {
               const isActive = activeFilter === item.key
               return (
@@ -467,20 +494,7 @@ export default function DashboardPage() {
                         From {card.sender_name}
                       </p>
 
-                      {/* Stacked avatar dots */}
-                      <div className="mt-3.5 flex items-center gap-3">
-                        <div className="flex">
-                          {[0, 1, 2, 3].map((k) => (
-                            <div
-                              key={k}
-                              className="h-[22px] w-[22px] rounded-full border-2 border-card"
-                              style={{
-                                marginLeft: k === 0 ? 0 : -6,
-                                background: `oklch(0.82 0.07 ${(hue + k * 45) % 360})`,
-                              }}
-                            />
-                          ))}
-                        </div>
+                      <div className="mt-3.5 flex w-full items-center justify-end gap-3">
                         <span className="text-[12.5px] text-muted-foreground">
                           View card
                         </span>

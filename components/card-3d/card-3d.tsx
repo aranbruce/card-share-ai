@@ -6,14 +6,8 @@ import type { Card3DProps } from "./types"
 import {
   RegenerateShimmerOverlay,
   InlineEdit,
-  ToolbarRegenerateButton,
   type InlineEditRegenerateHandle,
 } from "./inline-edit"
-import {
-  MessageFormattingToolbar,
-  snapMessageFontSize,
-} from "./message-formatting-toolbar"
-import { RegeneratePromptBar } from "./regenerate-prompt-bar"
 import {
   DraggableWrapper,
   CANVAS_EDGE_PADDING,
@@ -65,17 +59,12 @@ export function Card3D({
   onAddPage,
   extraPages = 0,
   onRegenerateHeadline,
-  onRegenerateMessage,
   onRegenerateImage,
   isRegeneratingHeadline = false,
-  isRegeneratingMessage = false,
   isRegeneratingImage = false,
   messageFontSize = 18,
-  onMessageFontSizeChange,
   messageTextColor,
-  onMessageTextColorChange,
   messagePageIndex = 1,
-  onMessagePageIndexChange,
   initialPage = 0,
   contributeOverlay,
   contributeSubmitNonce = 0,
@@ -83,9 +72,7 @@ export function Card3D({
   onContributionEdit,
   onContributionGifChange,
   onContributionLayoutChange,
-  onContributionRegenerateMessage,
   contributionRegeneratingId = null,
-  composePageBump = 0,
   composeDraft = null,
   onComposeDraftChange,
   onComposeDraftGifChange,
@@ -99,8 +86,6 @@ export function Card3D({
   coverOnly = false,
   hideEmptyCenterMessageBody = false,
   hideImageRegenerateButton = false,
-  suppressFormattingToolbar = false,
-  suppressComposeDraftToolbar = false,
   suppressComposeActions = false,
   onEditingContributionChange,
   navigateToPage,
@@ -118,16 +103,10 @@ export function Card3D({
   const [editingContributionId, setEditingContributionId] = useState<
     string | null
   >(null)
-  /** Inline “Describe the change” prompt replaces the footer toolbar for this scope while open. */
-  const [regeneratePromptScopeKey, setRegeneratePromptScopeKey] = useState<
-    string | null
-  >(null)
-  const [regeneratePromptDraft, setRegeneratePromptDraft] = useState("")
   const [gifPickerContributionId, setGifPickerContributionId] = useState<
     string | null
   >(null)
   const lastContributeSubmitNavNonce = useRef(0)
-  const mainMessageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
   const contributionInlineRegenRefs = useRef(
     new Map<string, InlineEditRegenerateHandle>(),
   )
@@ -171,9 +150,8 @@ export function Card3D({
         messagePageIndex,
         contributions,
         extraPages,
-        composePageBump,
       ),
-    [coverOnly, messagePageIndex, contributions, extraPages, composePageBump],
+    [coverOnly, messagePageIndex, contributions, extraPages],
   )
 
   const { totalPages, validMessagePage } = useMemo(
@@ -183,17 +161,9 @@ export function Card3D({
         committedSpread,
         messagePageIndex,
         extraPages,
-        composePageBump,
         coverOnly,
       ),
-    [
-      naturalPageSpread,
-      committedSpread,
-      messagePageIndex,
-      extraPages,
-      composePageBump,
-      coverOnly,
-    ],
+    [naturalPageSpread, committedSpread, messagePageIndex, extraPages, coverOnly],
   )
 
   useLayoutEffect(() => {
@@ -203,23 +173,18 @@ export function Card3D({
         return
       }
       setCommittedSpread((prev) => {
-        const next: CommittedSpreadSnapshot = {
-          totalPages,
-          extraPages,
-          composePageBump,
-        }
+        const next: CommittedSpreadSnapshot = { totalPages, extraPages }
         if (
           prev &&
           prev.totalPages === next.totalPages &&
-          prev.extraPages === next.extraPages &&
-          prev.composePageBump === next.composePageBump
+          prev.extraPages === next.extraPages
         ) {
           return prev
         }
         return next
       })
     })
-  }, [coverOnly, totalPages, extraPages, composePageBump])
+  }, [coverOnly, totalPages, extraPages])
 
   const effectiveContributionPage = (
     contrib: (typeof contributions)[number],
@@ -352,24 +317,6 @@ export function Card3D({
     [onComposeDraftChange, setCurrentPage],
   )
 
-  const handleComposeInnerPageSelect = useCallback(
-    (pageIndex: number) => {
-      handleComposeDraftPatch({ pageIndex })
-    },
-    [handleComposeDraftPatch],
-  )
-
-  const editingContributionOnCanvas = useMemo(() => {
-    if (!editingContributionId) return null
-    const c = contributions.find((x) => x.id === editingContributionId)
-    if (!c) return null
-    const page =
-      typeof c.page_index === "number" && c.page_index >= 0
-        ? c.page_index
-        : validMessagePage + 1
-    if (page !== currentPage) return null
-    return c
-  }, [contributions, editingContributionId, currentPage, validMessagePage])
 
   const gifPickerSelectedUrl = useMemo(
     () =>
@@ -383,18 +330,6 @@ export function Card3D({
       (contribution) => effectiveContributionPage(contribution) === pageIdx,
     )
 
-  const withContributionDefaults = (
-    contrib: (typeof contributions)[number],
-  ) => ({
-    x: typeof contrib.position_x === "number" ? contrib.position_x : 24,
-    y: typeof contrib.position_y === "number" ? contrib.position_y : 24,
-    widthPercent:
-      typeof contrib.width_percent === "number" ? contrib.width_percent : 75,
-    pageIndex: effectiveContributionPage(contrib),
-    fontSize: contrib.font_size ?? messageFontSize,
-    textColor: contrib.text_color ?? null,
-    rotationDegrees: contrib.rotation_degrees ?? null,
-  })
 
   const renderContributionsForPage = (pageIdx: number) => {
     const editableSet = new Set(editableContributionIds)
@@ -442,107 +377,6 @@ export function Card3D({
               setEditingContributionId((id) => (id === contrib.id ? null : id))
               onEditingContributionChange?.(null)
             }}
-            footer={
-              !suppressFormattingToolbar &&
-              onContributionLayoutChange &&
-              editingContributionId === contrib.id ? (
-                regeneratePromptScopeKey === contrib.id &&
-                onContributionRegenerateMessage ? (
-                  <div
-                    data-contribution-format-toolbar={contrib.id}
-                    data-regenerate-area
-                  >
-                    <RegeneratePromptBar
-                      className="w-full max-w-none"
-                      value={regeneratePromptDraft}
-                      onValueChange={setRegeneratePromptDraft}
-                      isRegenerating={contributionRegeneratingId === contrib.id}
-                      onSubmit={() =>
-                        void contributionInlineRegenRefs.current
-                          .get(contrib.id)
-                          ?.submitRegenerateWithPrompt(regeneratePromptDraft)
-                      }
-                      onCancel={() =>
-                        contributionInlineRegenRefs.current
-                          .get(contrib.id)
-                          ?.closeRegeneratePrompt()
-                      }
-                    />
-                  </div>
-                ) : (
-                  <div data-contribution-format-toolbar={contrib.id}>
-                    <MessageFormattingToolbar
-                      className="flex w-full max-w-none justify-between"
-                      fontSize={contrib.font_size ?? messageFontSize}
-                      onFontSizeChange={(newSize) =>
-                        onContributionLayoutChange(contrib.id, {
-                          ...withContributionDefaults(contrib),
-                          pageIndex: pageIdx,
-                          fontSize: newSize,
-                        })
-                      }
-                      textColor={contrib.text_color ?? null}
-                      onTextColorChange={(hex) =>
-                        onContributionLayoutChange(contrib.id, {
-                          ...withContributionDefaults(contrib),
-                          pageIndex: pageIdx,
-                          textColor: hex,
-                        })
-                      }
-                      hasGif={Boolean(contrib.giphy_url)}
-                      onGifClick={
-                        onContributionGifChange
-                          ? () => setGifPickerContributionId(contrib.id)
-                          : undefined
-                      }
-                      onGifClear={
-                        onContributionGifChange &&
-                        typeof contrib.message === "string" &&
-                        contrib.message.trim().length > 0
-                          ? () => onContributionGifChange(contrib.id, null)
-                          : undefined
-                      }
-                      rotationDegrees={contrib.rotation_degrees ?? null}
-                      onRotationDegreesChange={(deg) =>
-                        onContributionLayoutChange(contrib.id, {
-                          ...withContributionDefaults(contrib),
-                          pageIndex: pageIdx,
-                          rotationDegrees: deg,
-                        })
-                      }
-                      showPage={totalPages > 1}
-                      pageValue={
-                        typeof contrib.page_index === "number"
-                          ? contrib.page_index
-                          : pageIdx
-                      }
-                      onPageChange={(newPage) => {
-                        setCurrentPage(newPage)
-                        onContributionLayoutChange(contrib.id, {
-                          ...withContributionDefaults(contrib),
-                          pageIndex: newPage,
-                        })
-                      }}
-                      totalPages={totalPages}
-                      aiTweakSlot={
-                        onContributionRegenerateMessage ? (
-                          <ToolbarRegenerateButton
-                            isRegenerating={
-                              contributionRegeneratingId === contrib.id
-                            }
-                            onOpen={() =>
-                              contributionInlineRegenRefs.current
-                                .get(contrib.id)
-                                ?.openRegeneratePrompt()
-                            }
-                          />
-                        ) : undefined
-                      }
-                    />
-                  </div>
-                )
-              ) : null
-            }
           >
             <div
               className="space-y-3"
@@ -567,32 +401,11 @@ export function Card3D({
                 value={contrib.message ?? ""}
                 onChange={(v) => onContributionEdit!(contrib.id, v)}
                 editable
-                onRegenerate={
-                  onContributionRegenerateMessage
-                    ? (prompt) =>
-                        onContributionRegenerateMessage(contrib.id, prompt)
-                    : undefined
-                }
                 isRegenerating={contributionRegeneratingId === contrib.id}
-                regeneratePlacement={
-                  onContributionRegenerateMessage ? "toolbar" : "floating"
-                }
                 regenerateShimmerTone="paper"
-                onRegeneratePromptOpenChange={(open) => {
-                  setRegeneratePromptScopeKey(open ? contrib.id : null)
-                  if (!open) setRegeneratePromptDraft("")
-                }}
-                toolbarRegeneratePrompt={
-                  onContributionRegenerateMessage
-                    ? {
-                        value: regeneratePromptDraft,
-                        onChange: setRegeneratePromptDraft,
-                      }
-                    : undefined
-                }
                 className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
                 style={{
-                  fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
+                  fontSize: `${contrib.font_size ?? messageFontSize}px`,
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
                 }}
                 placeholder="Type your message…"
@@ -628,7 +441,7 @@ export function Card3D({
               <p
                 className="text-base leading-relaxed whitespace-pre-wrap text-foreground/90"
                 style={{
-                  fontSize: `${snapMessageFontSize(contrib.font_size ?? messageFontSize)}px`,
+                  fontSize: `${contrib.font_size ?? messageFontSize}px`,
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
                 }}
               >
@@ -856,99 +669,16 @@ export function Card3D({
                     <div className="pointer-events-none relative z-10 flex min-h-[360px] flex-col justify-center *:pointer-events-auto">
                       <DraggableWrapper
                         editable={editable}
-                        onFocusLeave={() => {
-                          mainMessageInlineRef.current?.closeRegeneratePrompt()
-                        }}
-                        footer={
-                          editable &&
-                          !editingContributionOnCanvas &&
-                          !(
-                            composeDraft &&
-                            composeDraft.pageIndex === currentPage
-                          ) ? (
-                            regeneratePromptScopeKey === "__main__" &&
-                            onRegenerateMessage ? (
-                              <div data-regenerate-area>
-                                <RegeneratePromptBar
-                                  className="w-full max-w-none"
-                                  value={regeneratePromptDraft}
-                                  onValueChange={setRegeneratePromptDraft}
-                                  isRegenerating={isRegeneratingMessage}
-                                  onSubmit={() =>
-                                    void mainMessageInlineRef.current?.submitRegenerateWithPrompt(
-                                      regeneratePromptDraft,
-                                    )
-                                  }
-                                  onCancel={() =>
-                                    mainMessageInlineRef.current?.closeRegeneratePrompt()
-                                  }
-                                />
-                              </div>
-                            ) : (
-                              <MessageFormattingToolbar
-                                className="flex w-full max-w-none"
-                                fontSize={messageFontSize}
-                                onFontSizeChange={(px) =>
-                                  onMessageFontSizeChange?.(px)
-                                }
-                                textColor={messageTextColor ?? null}
-                                onTextColorChange={
-                                  onMessageTextColorChange
-                                    ? (hex) => onMessageTextColorChange(hex)
-                                    : undefined
-                                }
-                                rotationDegrees={undefined}
-                                showPage={totalPages > 1}
-                                pageValue={validMessagePage}
-                                onPageChange={(newPage) => {
-                                  onMessagePageIndexChange?.(newPage)
-                                  setCurrentPage(newPage)
-                                }}
-                                totalPages={totalPages}
-                                aiTweakSlot={
-                                  onRegenerateMessage ? (
-                                    <ToolbarRegenerateButton
-                                      isRegenerating={isRegeneratingMessage}
-                                      onOpen={() =>
-                                        mainMessageInlineRef.current?.openRegeneratePrompt()
-                                      }
-                                    />
-                                  ) : undefined
-                                }
-                              />
-                            )
-                          ) : null
-                        }
                       >
                         <div className="space-y-3">
                           <InlineEdit
-                            ref={mainMessageInlineRef}
                             value={message}
                             onChange={onMessageChange}
                             editable={editable}
-                            onRegenerate={onRegenerateMessage}
-                            isRegenerating={isRegeneratingMessage}
-                            regeneratePlacement={
-                              onRegenerateMessage ? "toolbar" : "floating"
-                            }
                             regenerateShimmerTone="paper"
-                            onRegeneratePromptOpenChange={(open) => {
-                              setRegeneratePromptScopeKey(
-                                open ? "__main__" : null,
-                              )
-                              if (!open) setRegeneratePromptDraft("")
-                            }}
-                            toolbarRegeneratePrompt={
-                              onRegenerateMessage
-                                ? {
-                                    value: regeneratePromptDraft,
-                                    onChange: setRegeneratePromptDraft,
-                                  }
-                                : undefined
-                            }
                             className="min-h-[1.75em] leading-relaxed whitespace-pre-wrap text-foreground/90"
                             style={{
-                              fontSize: `${snapMessageFontSize(messageFontSize)}px`,
+                              fontSize: `${messageFontSize}px`,
                               ...(messageTextColor
                                 ? { color: messageTextColor }
                                 : {}),
@@ -978,19 +708,6 @@ export function Card3D({
                             onComposeDraftRegenerateMessage
                           }
                           composeDraftRegenerating={composeDraftRegenerating}
-                          totalPages={totalPages}
-                          onSelectInnerPage={handleComposeInnerPageSelect}
-                          onOpenGifPicker={
-                            onComposeDraftGifChange
-                              ? () =>
-                                  setGifPickerContributionId(
-                                    COMPOSE_DRAFT_GIF_TARGET,
-                                  )
-                              : undefined
-                          }
-                          suppressComposeDraftToolbar={
-                            suppressComposeDraftToolbar
-                          }
                         />
                       )}
                   </div>

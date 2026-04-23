@@ -3,7 +3,6 @@ import type { Card3DProps } from "./types"
 export type CommittedSpreadSnapshot = {
   totalPages: number
   extraPages: number
-  composePageBump: number
 }
 
 export type NaturalPageSpread = {
@@ -17,7 +16,6 @@ export function computeNaturalPageSpread(
   messagePageIndex: number,
   contributions: Card3DProps["contributions"],
   extraPages: number,
-  composePageBump: number,
 ): NaturalPageSpread {
   const rows = contributions ?? []
   const messagePageLowerBound = Math.max(1, messagePageIndex)
@@ -39,7 +37,7 @@ export function computeNaturalPageSpread(
   )
   let totalPages = coverOnly
     ? 1
-    : lastContentPage + 1 + extraPages + composePageBump
+    : lastContentPage + 1 + extraPages
 
   let validMessagePage = coverOnly
     ? -1
@@ -47,7 +45,7 @@ export function computeNaturalPageSpread(
 
   if (!coverOnly && hasLegacyUnindexedContribution) {
     lastContentPage = Math.max(lastContentPage, validMessagePage + 1)
-    totalPages = lastContentPage + 1 + extraPages + composePageBump
+    totalPages = lastContentPage + 1 + extraPages
     validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
   }
 
@@ -59,7 +57,6 @@ export function capSpreadToCommitted(
   committed: CommittedSpreadSnapshot | null,
   messagePageIndex: number,
   extraPages: number,
-  composePageBump: number,
   coverOnly: boolean,
 ): { totalPages: number; validMessagePage: number } {
   if (coverOnly) {
@@ -68,11 +65,7 @@ export function capSpreadToCommitted(
       validMessagePage: natural.validMessagePage,
     }
   }
-  if (
-    !committed ||
-    committed.extraPages !== extraPages ||
-    committed.composePageBump !== composePageBump
-  ) {
+  if (!committed || committed.extraPages !== extraPages) {
     return {
       totalPages: natural.totalPages,
       validMessagePage: natural.validMessagePage,
