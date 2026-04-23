@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card3D } from "@/components/card-3d"
-import type { CardComposeDraft } from "@/lib/card-compose-draft"
 import type { Contribution } from "@/lib/card-body"
-import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { Spinner } from "@/components/ui/spinner"
+import { GiphyPicker } from "@/components/card-3d/giphy-picker"
+import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 
 export type OwnerCard = {
   id: string
@@ -21,36 +21,59 @@ export type OwnerCard = {
   contributor_link_id?: string
 }
 
+export type ActiveContributionFormattingState = {
+  id: string
+  fontSize: number
+  textColor: string | null
+  rotationDegrees: number
+  pageIndex: number
+  hasGif: boolean
+  giphyUrl?: string | null
+  totalInnerPages: number
+  isRegeneratingMessage: boolean
+  onFontSizeChange: (px: number) => void
+  onTextColorChange: (hex: string | null) => void
+  onRotationChange: (deg: number) => void
+  onPageChange: (page: number) => void
+  onGifOpen: () => void
+  onGifClear?: () => void
+  onAiRefine: (prompt: string) => Promise<void>
+}
+
 export type CardOwnerStudioProps = {
   cardId: string
   /** 0 = cover; 1 = first inside spread (e.g. after creating a card). */
   initialCardPage?: number
-  /** Called after the owner’s first compose save updates `copy_message`. */
-  onOwnerComposeSaved?: () => void
+  /** Increment to trigger CardOwnerStudio to re-fetch card data from the server. */
+  reloadNonce?: number
+  /** Hide the inline image regenerate button on the cover (use when the control lives in a sidebar). */
+  hideImageRegenerateButton?: boolean
+  /** Suppress the inline formatting toolbar (use when controls live in a sidebar). */
+  suppressFormattingToolbar?: boolean
+  /** Fired when the active contribution formatting state changes (null = no note selected). */
+  onActiveContributionChange?: (state: ActiveContributionFormattingState | null) => void
 }
 
 export function CardOwnerStudio({
   cardId,
   initialCardPage = 0,
-  onOwnerComposeSaved,
+  reloadNonce,
+  hideImageRegenerateButton = false,
+  suppressFormattingToolbar = false,
+  onActiveContributionChange,
 }: CardOwnerStudioProps) {
   const [card, setCard] = useState<OwnerCard | null>(null)
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [composeError, setComposeError] = useState("")
-  const [submitNonce, setSubmitNonce] = useState(0)
-  const [composeDraft, setComposeDraft] = useState<CardComposeDraft | null>(
-    null,
-  )
-  const [composeDraftRegenerating, setComposeDraftRegenerating] =
-    useState(false)
   const [regeneratingContributionId, setRegeneratingContributionId] = useState<
     string | null
   >(null)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
+  const [editingContributionId, setEditingContributionId] = useState<string | null>(null)
+  const [contribGifPickerContributionId, setContribGifPickerContributionId] = useState<string | null>(null)
+  const [navigateToPage, setNavigateToPage] = useState<number | undefined>(undefined)
   const headlineSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   )
@@ -63,12 +86,6 @@ export function CardOwnerStudio({
   const ownerGifSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   )
-  const composeDraftRef = useRef<CardComposeDraft | null>(null)
-
-  useEffect(() => {
-    composeDraftRef.current = composeDraft
-  }, [composeDraft])
-
   useEffect(() => {
     return () => {
       if (headlineSaveTimerRef.current)
@@ -111,17 +128,49 @@ export function CardOwnerStudio({
     void load()
   }, [load])
 
+  const prevReloadNonceRef = useRef(reloadNonce ?? 0)
+  useEffect(() => {
+    const nonce = reloadNonce ?? 0
+    if (nonce !== prevReloadNonceRef.current) {
+      prevReloadNonceRef.current = nonce
+      void load()
+    }
+  }, [reloadNonce, load])
+
   const creatorRow = useMemo(
     () => contributions.find((c) => Boolean(c.is_creator)),
     [contributions],
   )
 
+  // Show compose draft mode when the creator note hasn't been placed yet (no position).
+  const showCompose = Boolean(creatorRow && creatorRow.position_x === null)
+
+  const [draftFormatting, setDraftFormatting] = useState<{
+    textColor: string | null
+    fontSize: number
+    rotationDegrees: number
+    pageIndex: number
+    giphyUrl: string | null
+  }>(() => ({
+    textColor: randomPresetTextColor(),
+    fontSize: 16,
+    rotationDegrees: 0,
+    pageIndex: 1,
+    giphyUrl: null,
+  }))
+  const [draftGifPickerOpen, setDraftGifPickerOpen] = useState(false)
+
   const editableContributionIds = useMemo(
-    () => (creatorRow ? [creatorRow.id] : []),
-    [creatorRow],
+    () => (creatorRow && !showCompose ? [creatorRow.id] : []),
+    [creatorRow, showCompose],
   )
 
-  const creatorMessageSaved = Boolean(creatorRow?.message?.trim())
+  // Keep the creator contribution always selected so the side panel is always active.
+  useEffect(() => {
+    if (creatorRow && !showCompose && !editingContributionId) {
+      setEditingContributionId(creatorRow.id)
+    }
+  }, [creatorRow, showCompose, editingContributionId])
 
   const saveContributionPatch = useCallback(
     async (
@@ -270,6 +319,44 @@ export function CardOwnerStudio({
     [creatorRow, saveContributionPatch],
   )
 
+  const changeActiveContributionLayout = useCallback(
+    (partial: {
+      fontSize?: number
+      textColor?: string | null
+      rotationDegrees?: number | null
+      pageIndex?: number
+    }) => {
+      const id = editingContributionId
+      if (!id) return
+      const contrib = contributions.find((c) => c.id === id)
+      if (!contrib) return
+      const x = typeof contrib.position_x === "number" ? contrib.position_x : 24
+      const y = typeof contrib.position_y === "number" ? contrib.position_y : 24
+      const widthPercent =
+        typeof contrib.width_percent === "number" ? contrib.width_percent : 75
+      const pageIndex =
+        partial.pageIndex ??
+        (typeof contrib.page_index === "number" ? contrib.page_index : 1)
+      handleContributionLayoutChange(id, {
+        x,
+        y,
+        widthPercent,
+        pageIndex,
+        ...(partial.fontSize !== undefined && { fontSize: partial.fontSize }),
+        ...(partial.textColor !== undefined && { textColor: partial.textColor }),
+        ...(partial.rotationDegrees !== undefined && {
+          rotationDegrees: partial.rotationDegrees,
+        }),
+      })
+    },
+    [editingContributionId, contributions, handleContributionLayoutChange],
+  )
+
+  const totalInnerPages = useMemo(
+    () => 1 + (card?.extra_pages ?? 0),
+    [card?.extra_pages],
+  )
+
   const handleContributionGifChange = useCallback(
     (contributionId: string, giphyUrl: string | null) => {
       setContributions((prev) =>
@@ -328,35 +415,132 @@ export function CardOwnerStudio({
     [card, creatorRow, contributions, saveContributionPatch],
   )
 
-  const handleComposeDraftRegenerate = useCallback(
-    async (prompt: string) => {
-      if (!card) return
-      setComposeDraftRegenerating(true)
-      try {
-        const response = await fetch("/api/regenerate-text", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            field: "contribution_message",
-            cardType: card.card_type || "custom",
-            recipientName: card.recipient_name,
-            senderName: card.sender_name,
-            currentValue: composeDraftRef.current?.message ?? "",
-            userPrompt: prompt,
-          }),
-        })
-        if (!response.ok) throw new Error("Failed to refine message")
-        const { text } = (await response.json()) as { text?: string }
-        const next = String(text ?? "").trim()
-        setComposeDraft((d) => (d ? { ...d, message: next } : d))
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setComposeDraftRegenerating(false)
+  const activeContributionFormattingState =
+    useMemo((): ActiveContributionFormattingState | null => {
+      if (!editingContributionId) return null
+      const contrib = contributions.find((c) => c.id === editingContributionId)
+      if (!contrib) return null
+      if (!editableContributionIds.includes(editingContributionId)) return null
+      return {
+        id: editingContributionId,
+        fontSize: contrib.font_size ?? 16,
+        textColor: contrib.text_color ?? null,
+        rotationDegrees: contrib.rotation_degrees ?? 0,
+        pageIndex:
+          typeof contrib.page_index === "number" ? contrib.page_index : 1,
+        hasGif: Boolean(contrib.giphy_url),
+        giphyUrl: contrib.giphy_url,
+        totalInnerPages,
+        isRegeneratingMessage:
+          regeneratingContributionId === editingContributionId,
+        onFontSizeChange: (px) => changeActiveContributionLayout({ fontSize: px }),
+        onTextColorChange: (hex) =>
+          changeActiveContributionLayout({ textColor: hex }),
+        onRotationChange: (deg) =>
+          changeActiveContributionLayout({ rotationDegrees: deg }),
+        onPageChange: (page) => {
+          setNavigateToPage(page)
+          changeActiveContributionLayout({ pageIndex: page })
+        },
+        onGifOpen: () =>
+          setContribGifPickerContributionId(editingContributionId),
+        onGifClear:
+          contrib.giphy_url &&
+          typeof contrib.message === "string" &&
+          contrib.message.trim().length > 0
+            ? () => handleContributionGifChange(editingContributionId, null)
+            : undefined,
+        onAiRefine: (prompt) =>
+          handleContributionRegenerateMessage(editingContributionId, prompt),
       }
+    }, [
+      editingContributionId,
+      contributions,
+      editableContributionIds,
+      totalInnerPages,
+      regeneratingContributionId,
+      changeActiveContributionLayout,
+      handleContributionGifChange,
+      handleContributionRegenerateMessage,
+    ])
+
+  const composeDraftFormattingState =
+    useMemo((): ActiveContributionFormattingState | null => {
+      if (!showCompose || !creatorRow) return null
+      return {
+        id: creatorRow.id,
+        fontSize: draftFormatting.fontSize,
+        textColor: draftFormatting.textColor,
+        rotationDegrees: draftFormatting.rotationDegrees,
+        pageIndex: draftFormatting.pageIndex,
+        hasGif: Boolean(draftFormatting.giphyUrl),
+        giphyUrl: draftFormatting.giphyUrl,
+        totalInnerPages,
+        isRegeneratingMessage: false,
+        onFontSizeChange: (px) =>
+          setDraftFormatting((p) => ({ ...p, fontSize: px })),
+        onTextColorChange: (hex) =>
+          setDraftFormatting((p) => ({ ...p, textColor: hex })),
+        onRotationChange: (deg) =>
+          setDraftFormatting((p) => ({ ...p, rotationDegrees: deg })),
+        onPageChange: (page) => {
+          setDraftFormatting((p) => ({ ...p, pageIndex: page }))
+          setNavigateToPage(page)
+        },
+        onGifOpen: () => setDraftGifPickerOpen(true),
+        onGifClear: draftFormatting.giphyUrl
+          ? () => setDraftFormatting((p) => ({ ...p, giphyUrl: null }))
+          : undefined,
+        onAiRefine: async () => {},
+      }
+    }, [showCompose, creatorRow, draftFormatting, totalInnerPages])
+
+  const handleComposeCanvasPlace = useCallback(
+    (pos: { x: number; y: number; pageIndex: number }) => {
+      if (!creatorRow) return
+      const widthPercent = 75
+      setContributions((prev) =>
+        prev.map((c) =>
+          c.id === creatorRow.id
+            ? {
+                ...c,
+                position_x: pos.x,
+                position_y: pos.y,
+                width_percent: widthPercent,
+                page_index: pos.pageIndex,
+                font_size: draftFormatting.fontSize,
+                text_color: draftFormatting.textColor,
+                rotation_degrees: draftFormatting.rotationDegrees,
+                giphy_url: draftFormatting.giphyUrl,
+              }
+            : c,
+        ),
+      )
+      setNavigateToPage(pos.pageIndex)
+      setEditingContributionId(creatorRow.id)
+      void saveContributionPatch(creatorRow.id, {
+        positionX: pos.x,
+        positionY: pos.y,
+        widthPercent,
+        pageIndex: pos.pageIndex,
+        fontSize: draftFormatting.fontSize,
+        textColor: draftFormatting.textColor,
+        rotationDegrees: draftFormatting.rotationDegrees,
+        giphyUrl: draftFormatting.giphyUrl ?? null,
+      })
     },
-    [card],
+    [creatorRow, draftFormatting, saveContributionPatch],
   )
+
+  useEffect(() => {
+    onActiveContributionChange?.(
+      composeDraftFormattingState ?? activeContributionFormattingState,
+    )
+  }, [
+    composeDraftFormattingState,
+    activeContributionFormattingState,
+    onActiveContributionChange,
+  ])
 
   const handleHeadlineChange = useCallback(
     (value: string) => {
@@ -452,145 +636,46 @@ export function CardOwnerStudio({
     }
   }, [card?.extra_pages, patchCardFields])
 
-  const cancelCompose = useCallback(() => {
-    setComposeDraft(null)
-    setComposeError("")
-  }, [])
-
-  const submitComposeDraft = useCallback(async () => {
-    const draft = composeDraftRef.current
-    if (!draft) return
-
-    setSubmitting(true)
-    setComposeError("")
-    const msg = draft.message.trim()
-    if (!msg && !draft.giphyUrl) {
-      setComposeError("Please add a message or GIF")
-      setSubmitting(false)
-      return
-    }
-
-    const hadCreatorMessage = creatorMessageSaved
-
-    try {
-      if (creatorRow) {
-        const res = await fetch(`/api/cards/${cardId}/contributions`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contributionId: creatorRow.id,
-            message: msg,
-            giphyUrl: draft.giphyUrl ?? null,
-            positionX: draft.x,
-            positionY: draft.y,
-            widthPercent: draft.widthPercent ?? 75,
-            pageIndex: draft.pageIndex,
-            fontSize: draft.fontSize,
-            ...(draft.textColor !== undefined
-              ? { textColor: draft.textColor }
-              : {}),
-            ...(draft.rotationDegrees !== undefined
-              ? { rotationDegrees: draft.rotationDegrees }
-              : {}),
-          }),
-        })
-        const payload = await res.json().catch(() => ({}))
-        if (!res.ok) {
-          throw new Error(
-            typeof payload.error === "string"
-              ? payload.error
-              : "Failed to save message",
-          )
-        }
-        const {
-          contribution: updated,
-          contributions: allContributions,
-          extra_pages,
-        } = payload as {
+  // Backward compat: pre-create an empty creator contribution for cards that were
+  // created before this flow existed (new cards already have one from the API).
+  const creatingCreatorContribRef = useRef(false)
+  useEffect(() => {
+    if (loading || creatorRow || !card || creatingCreatorContribRef.current) return
+    creatingCreatorContribRef.current = true
+    void fetch(`/api/cards/${cardId}/contributions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "",
+        positionX: 24,
+        positionY: 24,
+        widthPercent: 75,
+        pageIndex: 1,
+        fontSize: 16,
+      }),
+    })
+      .then((r) => r.json())
+      .then(
+        (res: {
+          error?: string
           contribution?: Contribution
           contributions?: Contribution[]
-          extra_pages?: number
-        }
-        if (updated) {
-          if (Array.isArray(allContributions)) {
-            setContributions(allContributions)
+        }) => {
+          if (res.error) console.error("[lazy creation]", res.error)
+          if (Array.isArray(res.contributions)) {
+            setContributions(res.contributions)
+          } else if (res.contribution) {
+            setContributions((prev) => [...prev, res.contribution!])
           } else {
-            setContributions((prev) =>
-              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c)),
-            )
+            creatingCreatorContribRef.current = false
           }
-          setSubmitNonce((n) => n + 1)
-          setCard((c) =>
-            c
-              ? {
-                  ...c,
-                  copy_message: updated.message ?? "",
-                  ...(typeof extra_pages === "number" && { extra_pages }),
-                }
-              : c,
-          )
-        }
-      } else {
-        const res = await fetch(`/api/cards/${cardId}/contributions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: msg,
-            giphyUrl: draft.giphyUrl ?? null,
-            positionX: draft.x,
-            positionY: draft.y,
-            widthPercent: draft.widthPercent ?? 75,
-            pageIndex: draft.pageIndex,
-            fontSize: draft.fontSize,
-            textColor: draft.textColor,
-            rotationDegrees: draft.rotationDegrees,
-          }),
-        })
-        const payload = await res.json().catch(() => ({}))
-        if (!res.ok) {
-          throw new Error(
-            typeof payload.error === "string"
-              ? payload.error
-              : "Failed to add message",
-          )
-        }
-        const {
-          contribution,
-          contributions: allContributions,
-          extra_pages,
-        } = payload as {
-          contribution?: Contribution
-          contributions?: Contribution[]
-          extra_pages?: number
-        }
-        if (contribution) {
-          if (Array.isArray(allContributions)) {
-            setContributions(allContributions)
-          } else {
-            setContributions((prev) => [...prev, contribution])
-          }
-          setSubmitNonce((n) => n + 1)
-          setCard((c) =>
-            c
-              ? {
-                  ...c,
-                  copy_message: contribution.message ?? "",
-                  ...(typeof extra_pages === "number" && { extra_pages }),
-                }
-              : c,
-          )
-        }
-      }
-      setComposeDraft(null)
-      if (!hadCreatorMessage) {
-        onOwnerComposeSaved?.()
-      }
-    } catch (e) {
-      setComposeError(e instanceof Error ? e.message : "Failed to add message")
-    } finally {
-      setSubmitting(false)
-    }
-  }, [cardId, creatorRow, creatorMessageSaved, onOwnerComposeSaved])
+        },
+      )
+      .catch((err: unknown) => {
+        console.error("[lazy creation] fetch error", err)
+        creatingCreatorContribRef.current = false
+      })
+  }, [loading, creatorRow, card, cardId])
 
   if (loading || !card) {
     return (
@@ -611,8 +696,6 @@ export function CardOwnerStudio({
     )
   }
 
-  const showCompose = !creatorRow
-
   return (
     <div className="w-full space-y-6">
       <Card3D
@@ -630,51 +713,47 @@ export function CardOwnerStudio({
         onRegenerateImage={handleRegenerateImage}
         isRegeneratingHeadline={isRegeneratingHeadline}
         isRegeneratingImage={isRegeneratingImage}
+        hideImageRegenerateButton={hideImageRegenerateButton}
+        suppressFormattingToolbar={suppressFormattingToolbar}
+        suppressComposeDraftToolbar={suppressFormattingToolbar}
+        suppressComposeActions
+        onComposeCanvasPlace={showCompose ? handleComposeCanvasPlace : undefined}
+        onEditingContributionChange={(id) => {
+          if (id !== null) setEditingContributionId(id)
+        }}
+        navigateToPage={navigateToPage}
         extraPages={card.extra_pages ?? 0}
         onAddPage={handleAddPage}
         initialPage={initialCardPage}
-        contributeSubmitNonce={submitNonce}
         editableContributionIds={editableContributionIds}
         onContributionEdit={handleContributionEdit}
         onContributionGifChange={handleContributionGifChange}
         onContributionLayoutChange={handleContributionLayoutChange}
         onContributionRegenerateMessage={handleContributionRegenerateMessage}
         contributionRegeneratingId={regeneratingContributionId}
-        composePageBump={showCompose ? 1 : 0}
-        composeDraft={showCompose ? composeDraft : null}
-        onComposeDraftChange={
-          showCompose
-            ? (patch) => setComposeDraft((d) => (d ? { ...d, ...patch } : d))
-            : undefined
+      />
+      <GiphyPicker
+        open={Boolean(contribGifPickerContributionId)}
+        onOpenChange={(open) => {
+          if (!open) setContribGifPickerContributionId(null)
+        }}
+        selectedUrl={
+          contributions.find((c) => c.id === contribGifPickerContributionId)
+            ?.giphy_url ?? null
         }
-        onComposeCanvasPlace={
-          showCompose
-            ? (pt) => {
-                setComposeDraft({
-                  message: "",
-                  giphyUrl: null,
-                  x: pt.x,
-                  y: pt.y,
-                  pageIndex: pt.pageIndex,
-                  textColor: randomPresetTextColor(),
-                  rotationDegrees: 0,
-                })
-              }
-            : undefined
-        }
-        onComposeSubmit={showCompose ? submitComposeDraft : undefined}
-        onComposeCancel={showCompose ? cancelCompose : undefined}
-        composeSubmitting={submitting}
-        composeError={showCompose && composeDraft ? composeError : null}
-        onComposeDraftRegenerateMessage={
-          showCompose ? handleComposeDraftRegenerate : undefined
-        }
-        onComposeDraftGifChange={
-          showCompose
-            ? (giphyUrl) => setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
-            : undefined
-        }
-        composeDraftRegenerating={composeDraftRegenerating}
+        onSelect={(url) => {
+          if (!contribGifPickerContributionId) return
+          handleContributionGifChange(contribGifPickerContributionId, url)
+        }}
+      />
+      <GiphyPicker
+        open={draftGifPickerOpen}
+        onOpenChange={(open) => setDraftGifPickerOpen(open)}
+        selectedUrl={draftFormatting.giphyUrl}
+        onSelect={(url) => {
+          setDraftFormatting((p) => ({ ...p, giphyUrl: url }))
+          setDraftGifPickerOpen(false)
+        }}
       />
     </div>
   )

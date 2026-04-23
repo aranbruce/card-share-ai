@@ -175,12 +175,23 @@ function SignUpForm() {
 
   return (
     <>
-      <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
-          Create Account
+      <div className="mb-8">
+        <h1 className="mb-1.5 text-3xl font-semibold tracking-[-0.025em]">
+          Create an account.
         </h1>
-        <p className="text-muted-foreground">
-          Sign up to start creating virtual greeting cards
+        <p className="text-sm text-muted-foreground">
+          Already have one?{" "}
+          <Link
+            href={
+              hasPendingCard
+                ? "/auth/login?redirect=/create&action=save"
+                : "/auth/login"
+            }
+            className="font-medium text-brand hover:underline"
+          >
+            Sign in
+          </Link>
+          .
         </p>
       </div>
 
@@ -261,6 +272,7 @@ function SignUpForm() {
 
         <Button
           type="submit"
+          variant="brand"
           size="lg"
           fullWidth
           className="mt-4"
@@ -269,24 +281,10 @@ function SignUpForm() {
           {loading
             ? "Creating account..."
             : hasPendingCard
-              ? "Sign Up & Save Card"
-              : "Sign Up"}
+              ? "Sign up & save card"
+              : "Create account"}
         </Button>
       </form>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link
-          href={
-            hasPendingCard
-              ? "/auth/login?redirect=/create&action=save"
-              : "/auth/login"
-          }
-          className="font-medium text-primary hover:underline"
-        >
-          Log in
-        </Link>
-      </p>
     </>
   )
 }

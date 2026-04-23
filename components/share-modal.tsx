@@ -158,7 +158,7 @@ export function ShareModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
+      <DialogContent className="overflow-hidden rounded-2xl p-0 sm:max-w-md">
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="text-2xl">Send Card</DialogTitle>
@@ -189,7 +189,7 @@ export function ShareModal({
               />
               <Button
                 size="icon"
-                variant="secondary"
+                variant="outline"
                 className="shrink-0"
                 onClick={() => copyToClipboard(viewLink, "view")}
               >
@@ -280,6 +280,7 @@ export function ShareModal({
                     )}
                   </Button>
                   <Button
+                    variant="brand"
                     className="flex-1"
                     onClick={handleSendEmail}
                     disabled={sending || !recipientEmail.trim()}

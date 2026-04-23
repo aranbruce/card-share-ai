@@ -178,12 +178,23 @@ function LoginForm() {
 
   return (
     <>
-      <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-extrabold tracking-tight">
-          Welcome Back
+      <div className="mb-8">
+        <h1 className="mb-1.5 text-3xl font-semibold tracking-[-0.025em]">
+          Welcome back.
         </h1>
-        <p className="text-muted-foreground">
-          Log in to manage your greeting cards
+        <p className="text-sm text-muted-foreground">
+          New here?{" "}
+          <Link
+            href={
+              hasPendingCard
+                ? "/auth/sign-up?redirect=/create&action=save"
+                : "/auth/sign-up"
+            }
+            className="font-medium text-brand hover:underline"
+          >
+            Create an account
+          </Link>
+          .
         </p>
       </div>
 
@@ -259,9 +270,9 @@ function LoginForm() {
             </label>
             <Link
               href="/auth/forgot-password"
-              className="text-xs text-primary hover:underline"
+              className="text-xs text-brand hover:underline"
             >
-              Forgot password?
+              Forgot?
             </Link>
           </div>
           <Input
@@ -278,32 +289,19 @@ function LoginForm() {
 
         <Button
           type="submit"
+          variant="brand"
           size="lg"
           fullWidth
           className="mt-4"
           disabled={loading}
         >
           {loading
-            ? "Logging in..."
+            ? "Signing in..."
             : hasPendingCard
-              ? "Log In & Save Card"
-              : "Log In"}
+              ? "Sign in & save card"
+              : "Sign in"}
         </Button>
       </form>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link
-          href={
-            hasPendingCard
-              ? "/auth/sign-up?redirect=/create&action=save"
-              : "/auth/sign-up"
-          }
-          className="font-medium text-primary hover:underline"
-        >
-          Sign up
-        </Link>
-      </p>
     </>
   )
 }

@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import Link from "next/link"
+import { Logo } from "@/components/logo"
 import { Spinner } from "@/components/ui/spinner"
 import Image from "next/image"
 import { Inbox } from "lucide-react"
-import { Logo } from "@/components/logo"
+import type { User } from "@supabase/supabase-js"
 
 interface CardItem {
   id: string
@@ -20,27 +20,227 @@ interface CardItem {
   created_at: string
 }
 
+const TYPE_LABEL: Record<string, string> = {
+  birthday: "Birthday",
+  thank_you: "Thank you",
+  congratulations: "Congrats",
+  holiday: "Holiday",
+  sympathy: "Sympathy",
+  custom: "Custom",
+}
+
+const TYPE_HUE: Record<string, number> = {
+  birthday: 18,
+  thank_you: 40,
+  congratulations: 70,
+  holiday: 150,
+  sympathy: 310,
+  custom: 230,
+}
+
+function initials(user: User): string {
+  const name =
+    (user.user_metadata?.full_name as string | undefined) ?? user.email ?? ""
+  const parts = name.split(/[\s@]+/).filter(Boolean)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
+
+function displayName(user: User): string {
+  return (
+    (user.user_metadata?.full_name as string | undefined) ??
+    user.email?.split("@")[0] ??
+    "You"
+  )
+}
+
+// ── Sidebar nav icon ──────────────────────────────────────────────────────────
+function NavIcon({ name }: { name: string }) {
+  if (name === "cards")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <line x1="2" y1="10" x2="22" y2="10" />
+      </svg>
+    )
+  if (name === "pen")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+      </svg>
+    )
+  if (name === "sparkle")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+      </svg>
+    )
+  if (name === "cake")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
+        <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1" />
+        <path d="M2 21h20" />
+        <path d="M7 8v3" />
+        <path d="M12 8v3" />
+        <path d="M17 8v3" />
+        <path d="M7 4h.01" />
+        <path d="M12 4h.01" />
+        <path d="M17 4h.01" />
+      </svg>
+    )
+  if (name === "heart")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+      </svg>
+    )
+  if (name === "trophy")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+        <path d="M4 22h16" />
+        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+      </svg>
+    )
+  if (name === "tree")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 3 4 15h16Z" />
+        <path d="M12 8 6 18h12Z" />
+        <path d="M10 22h4" />
+        <path d="M12 18v4" />
+      </svg>
+    )
+  if (name === "wand")
+    return (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M15 4V2" />
+        <path d="M15 16v-2" />
+        <path d="M8 9h2" />
+        <path d="M20 9h2" />
+        <path d="M17.8 11.8 19 13" />
+        <path d="M15 9h.01" />
+        <path d="M17.8 6.2 19 5" />
+        <path d="m3 21 9-9" />
+        <path d="M12.2 6.2 11 5" />
+      </svg>
+    )
+  // envelope
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  )
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const supabase = createClient()
   const [cards, setCards] = useState<CardItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [user, setUser] = useState<User | null>(null)
+  const [activeFilter, setActiveFilter] = useState<string>("all")
 
   useEffect(() => {
     const checkAuth = async () => {
       const {
-        data: { user },
+        data: { user: u },
       } = await supabase.auth.getUser()
-
-      if (!user) {
+      if (!u) {
         router.push("/auth/login")
         return
       }
-
+      setUser(u)
       loadCards()
     }
-
     checkAuth()
   }, [router, supabase])
 
@@ -48,7 +248,6 @@ export default function DashboardPage() {
     try {
       const response = await fetch("/api/cards")
       if (!response.ok) throw new Error("Failed to load cards")
-
       const { cards: cardData } = await response.json()
       setCards(cardData || [])
     } catch (err) {
@@ -63,167 +262,237 @@ export default function DashboardPage() {
     router.push("/")
   }
 
-  const handleDeleteCard = async (cardId: string) => {
-    if (!confirm("Are you sure you want to delete this card?")) return
+  // Derived
+  const filteredCards =
+    activeFilter === "all"
+      ? cards
+      : cards.filter((c) => c.card_type === activeFilter)
 
-    try {
-      const response = await fetch(`/api/cards/${cardId}`, {
-        method: "DELETE",
-      })
+  const typeCounts = cards.reduce<Record<string, number>>((acc, c) => {
+    acc[c.card_type] = (acc[c.card_type] || 0) + 1
+    return acc
+  }, {})
 
-      if (!response.ok) throw new Error("Failed to delete card")
-
-      setCards(cards.filter((c) => c.id !== cardId))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete card")
-    }
-  }
 
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-        <Spinner className="h-8 w-8 text-primary" />
-        <p className="animate-pulse text-sm font-medium text-muted-foreground">
-          Loading your cards...
-        </p>
+        <Spinner className="h-8 w-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading your cards…</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 flex h-16 items-center border-b border-border/40 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 md:px-8">
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* ── Top header ── */}
+      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="flex w-full items-center justify-between px-6">
           <Logo />
           <Button
             variant="ghost"
             size="sm"
-            className="font-medium text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground"
             onClick={handleLogout}
           >
-            Logout
+            Sign out
           </Button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 md:px-8 lg:py-12">
-        <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-              My Cards
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              Manage and view your generated greeting cards.
-            </p>
+      {/* ── Body: sidebar + main ── */}
+      <div className="flex flex-1">
+        {/* ── Left sidebar ── */}
+        <aside className="relative hidden w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
+          <div className="flex-1 overflow-y-auto px-5 py-7">
+            {/* Nav items */}
+            {[
+              { key: "all", icon: "cards", label: "All cards", count: cards.length },
+              { key: "birthday", icon: "cake", label: "Birthday", count: typeCounts["birthday"] ?? 0 },
+              { key: "thank_you", icon: "heart", label: "Thank you", count: typeCounts["thank_you"] ?? 0 },
+              { key: "congratulations", icon: "trophy", label: "Congratulations", count: typeCounts["congratulations"] ?? 0 },
+              { key: "holiday", icon: "tree", label: "Holiday", count: typeCounts["holiday"] ?? 0 },
+              { key: "custom", icon: "wand", label: "Custom", count: typeCounts["custom"] ?? 0 },
+            ].map((item) => {
+              const isActive = activeFilter === item.key
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveFilter(item.key)}
+                  className={`mb-0.5 flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-sm transition-colors ${
+                    isActive
+                      ? "border-border bg-card text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <NavIcon name={item.icon} />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="text-xs text-muted-foreground/60">
+                    {item.count || ""}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
-          {cards.length > 0 && (
-            <Link href="/create" className="w-full sm:w-auto">
-              <Button
-                size="lg"
-                fullWidth
-                className="font-semibold shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
-              >
-                Create New Card
-              </Button>
-            </Link>
-          )}
-        </div>
-
-        {error && (
-          <div className="mb-6 rounded border border-destructive/20 bg-destructive/10 p-4 text-destructive">
-            {error}
-          </div>
-        )}
-
-        {cards.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-4 py-24 text-center">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/50">
-              <Inbox className="h-8 w-8 text-muted-foreground" />
+          {/* User profile */}
+          {user && (
+            <div className="px-5 py-5">
+              <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
+                  {initials(user)}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] leading-tight font-medium">
+                    {displayName(user)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/60">
+                    Free plan
+                  </p>
+                </div>
+              </div>
             </div>
-            <h2 className="mb-3 text-2xl font-semibold tracking-tight">
-              No cards yet
-            </h2>
-            <p className="mx-auto mb-8 max-w-sm leading-relaxed text-muted-foreground">
-              You haven&apos;t created any greeting cards. Start creating your
-              first beautiful, AI-generated card today.
-            </p>
-            <Link href="/create">
-              <Button size="lg">Create Your First Card</Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {cards.map((card, index) => (
-              <div
-                key={card.id}
-                className="group relative flex h-full flex-col"
-              >
-                <Link
-                  href={`/dashboard/cards/${card.id}`}
-                  className="absolute inset-0 z-0 rounded-2xl"
-                  aria-label={`View card for ${card.recipient_name}`}
-                />
-                <Card className="pointer-events-none relative z-10 flex h-full flex-col overflow-hidden border-border/60 bg-background py-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
-                  <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-secondary">
-                    {card.image_url && (
-                      <Image
-                        src={card.image_url}
-                        alt={`${card.recipient_name}'s card`}
-                        fill
-                        loading={index === 0 ? "eager" : "lazy"}
-                        priority={index === 0}
-                        className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      />
-                    )}
+          )}
+        </aside>
 
-                    {/* Floating badge */}
-                    <div className="absolute top-4 left-4 z-20">
-                      <div className="inline-flex items-center rounded-full bg-black/60 px-3 py-1.5 text-[11px] font-bold tracking-wider text-white uppercase shadow-sm backdrop-blur-md">
-                        {card.card_type.replace("_", " ")}
+        {/* ── Main content ── */}
+        <main className="flex-1 overflow-y-auto px-6 py-9 md:px-10">
+          {/* Page header */}
+          <div className="mb-7 flex items-end justify-between">
+            <div>
+              <h1 className="text-[40px] leading-none font-semibold tracking-[-0.03em]">
+                {activeFilter === "all"
+                  ? "All cards"
+                  : (TYPE_LABEL[activeFilter] ?? activeFilter)}
+              </h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {filteredCards.length}{" "}
+                {filteredCards.length === 1 ? "card" : "cards"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <Link href="/create">
+                <Button variant="brand" size="default">
+                  + New card
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {filteredCards.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
+                <Inbox className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <h2 className="mb-2 text-xl font-semibold tracking-[-0.02em]">
+                {activeFilter === "all" ? "No cards yet" : "No cards here"}
+              </h2>
+              <p className="mx-auto mb-8 max-w-xs text-sm leading-relaxed text-muted-foreground">
+                {activeFilter === "all"
+                  ? "Create your first greeting card — it only takes a sentence."
+                  : `You don't have any ${TYPE_LABEL[activeFilter]?.toLowerCase() ?? activeFilter} cards yet.`}
+              </p>
+              <Link href="/create">
+                <Button variant="brand" size="lg">
+                  Create your first card
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* Cards grid */}
+          {filteredCards.length > 0 && (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+              {filteredCards.map((card, index) => {
+                const hue = TYPE_HUE[card.card_type] ?? 40
+                return (
+                  <Link
+                    key={card.id}
+                    href={`/dashboard/cards/${card.id}`}
+                    className="group block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
+                  >
+                    {/* Image */}
+                    <div
+                      className="relative w-full overflow-hidden bg-secondary"
+                      style={{ aspectRatio: "4/5" }}
+                    >
+                      {card.image_url ? (
+                        <Image
+                          src={card.image_url}
+                          alt={`${card.recipient_name}'s card`}
+                          fill
+                          loading={index === 0 ? "eager" : "lazy"}
+                          priority={index === 0}
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div
+                          className="h-full w-full"
+                          style={{
+                            background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
+                          }}
+                        />
+                      )}
+
+                      {/* Type badge — top left */}
+                      <div className="absolute top-3.5 left-3.5">
+                        <span className="inline-flex items-center rounded-full bg-white/92 px-2.5 py-1 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur-sm">
+                          {TYPE_LABEL[card.card_type] ??
+                            card.card_type.replace("_", " ")}
+                        </span>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex flex-1 flex-col justify-between p-6">
-                    <div className="mb-8">
-                      <h3 className="mb-1.5 text-xl font-bold tracking-tight text-foreground">
-                        For {card.recipient_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
+                    {/* Info */}
+                    <div className="p-[18px]">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-[17px] font-medium tracking-[-0.01em]">
+                          For {card.recipient_name}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {new Date(card.created_at).toLocaleDateString("en", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[13px] text-muted-foreground">
                         From {card.sender_name}
                       </p>
-                    </div>
 
-                    <div className="pointer-events-auto flex gap-3">
-                      <Button
-                        className="flex-1 font-semibold shadow-sm"
-                        type="button"
-                        size="lg"
-                        onClick={() =>
-                          router.push(`/dashboard/cards/${card.id}`)
-                        }
-                      >
-                        Open
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        type="button"
-                        size="lg"
-                        onClick={() => handleDeleteCard(card.id)}
-                      >
-                        Delete
-                      </Button>
+                      {/* Stacked avatar dots */}
+                      <div className="mt-3.5 flex items-center gap-3">
+                        <div className="flex">
+                          {[0, 1, 2, 3].map((k) => (
+                            <div
+                              key={k}
+                              className="h-[22px] w-[22px] rounded-full border-2 border-card"
+                              style={{
+                                marginLeft: k === 0 ? 0 : -6,
+                                background: `oklch(0.82 0.07 ${(hue + k * 45) % 360})`,
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[12.5px] text-muted-foreground">
+                          View card
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   )
 }

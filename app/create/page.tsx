@@ -5,9 +5,20 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { CardTypeSelector } from "@/components/card-type-selector"
 import { CardDetailsForm } from "@/components/card-details-form"
-import { CardPreview } from "@/components/card-preview"
 import { AuthGateModal } from "@/components/auth-gate-modal"
+import { Card3D } from "@/components/card-3d"
+import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import { Logo } from "@/components/logo"
+
+const TYPE_HUE: Record<string, number> = {
+  birthday: 18,
+  thank_you: 40,
+  congratulations: 70,
+  holiday: 150,
+  sympathy: 310,
+  custom: 230,
+}
 
 interface CardData {
   cardType: string
@@ -28,7 +39,7 @@ interface PendingCard {
   extraPages: number
 }
 
-type Step = "select-type" | "details" | "preview"
+type Step = "select-type" | "details"
 
 function formatInnerCardCopy(message: string, signoff: string) {
   const m = message.trim()
@@ -51,7 +62,6 @@ export default function CreateCardPage() {
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [error, setError] = useState("")
-  const [editMode, setEditMode] = useState(false)
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
 
@@ -89,8 +99,6 @@ export default function CreateCardPage() {
     })
     setIsGeneratingCopy(true)
     setIsGeneratingImage(true)
-    setStep("preview")
-    setEditMode(true)
 
     try {
       const copyResponse = await fetch("/api/generate-card-copy", {
@@ -144,7 +152,7 @@ export default function CreateCardPage() {
       setCardData((prev) => (prev ? { ...prev, imageUrl } : null))
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
-      setStep("details")
+      setCardData(null)
     } finally {
       setIsGeneratingCopy(false)
       setIsGeneratingImage(false)
@@ -305,67 +313,156 @@ export default function CreateCardPage() {
     )
   }
 
-  const handleBackTotype = () => {
+  const handleBackToType = () => {
     setStep("select-type")
     setSelectedType("")
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <header className="mb-8 flex items-center justify-center py-6">
-        <Logo />
-      </header>
-      <div className="mx-auto max-w-4xl">
-        {step === "select-type" && (
-          <CardTypeSelector onSelect={handleCardTypeSelect} />
-        )}
+    <div className="min-h-screen bg-background">
+      {/* Header — shown for select-type and preview, hidden in studio (which has its own back link) */}
+      {step !== "details" && (
+        <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur-sm">
+          <Logo />
+          {!isGuest && (
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut()
+                router.push("/")
+              }}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Sign out
+            </button>
+          )}
+        </header>
+      )}
 
-        {step === "details" && (
+      {/* Select type — constrained width */}
+      {step === "select-type" && (
+        <div className="mx-auto max-w-4xl p-6 md:p-10">
+          <CardTypeSelector onSelect={handleCardTypeSelect} />
+        </div>
+      )}
+
+      {/* Studio — full-width two-column layout */}
+      {step === "details" && (
+        <div className="grid min-h-[calc(100vh-0px)] grid-cols-1 lg:grid-cols-[420px_1fr]">
           <CardDetailsForm
             cardType={selectedType}
             onSubmit={handleDetailsSubmit}
             isLoading={isGeneratingCopy || isGeneratingImage}
-            onBack={handleBackTotype}
+            onBack={handleBackToType}
           />
-        )}
 
-        {step === "preview" && cardData && (
-          <CardPreview
-            imageUrl={cardData.imageUrl}
-            headline={cardData.headline}
-            message={cardData.message}
-            senderName={senderName}
-            recipientName={recipientName}
-            editMode={editMode}
-            isGeneratingImage={isGeneratingImage}
-            isGeneratingHeadline={isGeneratingCopy}
-            isGuest={isGuest}
-            coverOnly
-            onHeadlineChange={(value) =>
-              setCardData({ ...cardData, headline: value })
-            }
-            onRegenerateHeadline={handleRegenerateHeadline}
-            onRegenerateImage={handleRegenerateImage}
-            isRegeneratingHeadline={isRegeneratingHeadline}
-            isRegeneratingImage={isRegeneratingImage}
-            onSave={handleSaveCard}
-            isSaving={isSaving}
-          />
-        )}
+          {/* Right panel — live preview */}
+          <main className="flex items-center justify-center bg-background px-10 py-12">
+            <div className="w-full max-w-xl text-center">
+              <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
+                Live preview
+              </p>
 
-        {error && (
-          <div className="fixed right-4 bottom-4 max-w-sm rounded border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        )}
+              <div className="mx-auto mt-5 flex justify-center">
+                {cardData ? (
+                  <div className="flex w-full max-w-md flex-col items-center gap-4">
+                    <Card3D
+                      imageUrl={cardData.imageUrl}
+                      headline={cardData.headline}
+                      message={cardData.message}
+                      senderName={senderName}
+                      recipientName={recipientName}
+                      isGeneratingImage={isGeneratingImage}
+                      isGeneratingHeadline={isGeneratingCopy}
+                      editable
+                      coverOnly
+                      onHeadlineChange={(value) =>
+                        setCardData({ ...cardData, headline: value })
+                      }
+                      onRegenerateHeadline={handleRegenerateHeadline}
+                      onRegenerateImage={handleRegenerateImage}
+                      isRegeneratingHeadline={isRegeneratingHeadline}
+                      isRegeneratingImage={isRegeneratingImage}
+                    />
+                    <Button
+                      size="lg"
+                      fullWidth
+                      onClick={handleSaveCard}
+                      disabled={
+                        isSaving || isGeneratingImage || isGeneratingCopy
+                      }
+                    >
+                      {isSaving ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Write message"
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  /* Placeholder card — matches Card3D dimensions */
+                  <div
+                    className="relative w-full max-w-md overflow-hidden rounded-2xl shadow-xl"
+                    style={{ minHeight: 500 }}
+                  >
+                    <div
+                      className="flex h-full w-full flex-col items-center justify-center"
+                      style={{
+                        background: `linear-gradient(135deg, oklch(0.92 0.07 ${TYPE_HUE[selectedType] ?? 40}) 0%, oklch(0.82 0.12 ${(TYPE_HUE[selectedType] ?? 40) - 15}) 100%)`,
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-3 px-6 text-center">
+                        <div
+                          className="flex h-10 w-10 items-center justify-center rounded-xl opacity-60"
+                          style={{
+                            background: `oklch(0.7 0.14 ${TYPE_HUE[selectedType] ?? 40})`,
+                          }}
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                          </svg>
+                        </div>
+                        <p
+                          className="text-xs leading-relaxed opacity-70"
+                          style={{
+                            color: `oklch(0.25 0.06 ${TYPE_HUE[selectedType] ?? 40})`,
+                          }}
+                        >
+                          Fill in the details and hit Generate to see your card
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </main>
+        </div>
+      )}
 
-        <AuthGateModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onLogin={() => handleAuthRedirect("login")}
-          onSignUp={() => handleAuthRedirect("signup")}
-        />
-      </div>
+      {error && (
+        <div className="fixed right-4 bottom-4 max-w-sm rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      <AuthGateModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => handleAuthRedirect("login")}
+        onSignUp={() => handleAuthRedirect("signup")}
+      />
     </div>
   )
 }

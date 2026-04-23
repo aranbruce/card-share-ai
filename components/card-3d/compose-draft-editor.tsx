@@ -46,6 +46,8 @@ export function ComposeDraftEditor({
   totalPages,
   onSelectInnerPage,
   onOpenGifPicker,
+  suppressComposeDraftToolbar = false,
+  onFocusChange,
 }: {
   composeDraft: NonNullable<Card3DProps["composeDraft"]>
   messageFontSize: number
@@ -56,6 +58,8 @@ export function ComposeDraftEditor({
   totalPages: number
   onSelectInnerPage: (pageIndex: number) => void
   onOpenGifPicker?: () => void
+  suppressComposeDraftToolbar?: boolean
+  onFocusChange?: (focused: boolean) => void
 }) {
   const [isFocused, setIsFocused] = useState(false)
   const [composeRegeneratePromptOpen, setComposeRegeneratePromptOpen] =
@@ -65,7 +69,13 @@ export function ComposeDraftEditor({
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
 
   return (
-    <div className="absolute inset-0 z-20" onFocus={() => setIsFocused(true)}>
+    <div
+      className="absolute inset-0 z-20"
+      onFocus={() => {
+        setIsFocused(true)
+        onFocusChange?.(true)
+      }}
+    >
       <DraggableWrapper
         key={`compose-draft-p${composeDraft.pageIndex}`}
         editable
@@ -86,9 +96,10 @@ export function ComposeDraftEditor({
         onFocusLeave={() => {
           messageInlineRef.current?.closeRegeneratePrompt()
           setIsFocused(false)
+          onFocusChange?.(false)
         }}
         footer={
-          isFocused ? (
+          !suppressComposeDraftToolbar && isFocused ? (
             composeRegeneratePromptOpen && onComposeDraftRegenerateMessage ? (
               <div data-compose-format-toolbar data-regenerate-area>
                 <RegeneratePromptBar

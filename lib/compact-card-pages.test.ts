@@ -29,9 +29,26 @@ function buildClient({
   const appliedUpdates: { id: string; page_index: number }[] = []
   let contribCallCount = 0
 
+  type ChainResult = { data: unknown; error: unknown }
+  type TerminalChain = {
+    select: () => TerminalChain
+    eq: () => TerminalChain
+    order: () => TerminalChain
+    update: () => TerminalChain
+    gt: () => TerminalChain
+    single: () => Promise<ChainResult>
+    then: <TResult1 = ChainResult, TResult2 = never>(
+      res?: ((value: ChainResult) => TResult1 | PromiseLike<TResult1>) | null,
+      rej?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+    ) => Promise<TResult1 | TResult2>
+    catch: <TResult = never>(
+      rej?: ((reason: unknown) => TResult | PromiseLike<TResult>) | null,
+    ) => Promise<ChainResult | TResult>
+  }
+
   // Creates a chain whose final await resolves to `result`.
-  function terminalChain(result: Promise<{ data: unknown; error: unknown }>) {
-    const chain: ReturnType<typeof terminalChain> = {
+  function terminalChain(result: Promise<ChainResult>): TerminalChain {
+    const chain: TerminalChain = {
       select: () => chain,
       eq: () => chain,
       order: () => chain,
@@ -40,7 +57,7 @@ function buildClient({
       single: () => result,
       then: (res, rej) => result.then(res, rej),
       catch: (rej) => result.catch(rej),
-    } as unknown as ReturnType<typeof terminalChain>
+    }
     return chain
   }
 

@@ -7,10 +7,38 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 
+const OCCASIONS = [
+  { id: "birthday", label: "Birthday", hue: 18 },
+  { id: "thank_you", label: "Thank you", hue: 40 },
+  { id: "congrats", label: "Congrats", hue: 70 },
+  { id: "holiday", label: "Holiday", hue: 150 },
+  { id: "sympathy", label: "Sympathy", hue: 310 },
+  { id: "custom", label: "Custom", hue: 230 },
+]
+
+const FEATURES = [
+  {
+    n: "01",
+    title: "One link, everyone signs",
+    desc: "Each person places their note anywhere on the page. Drag, resize, rotate, add a GIF.",
+  },
+  {
+    n: "02",
+    title: "AI drafts first, you edit",
+    desc: "Regenerate any line, any cover, any time. The AI has a light touch — never saccharine.",
+  },
+  {
+    n: "03",
+    title: "Private until send",
+    desc: "No one sees the card until you decide it's full. Then it arrives, beautifully, in one email.",
+  },
+]
+
 export default function HomePage() {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
+  const [activeOccasion, setActiveOccasion] = useState("birthday")
 
   useEffect(() => {
     const checkUser = async () => {
@@ -36,209 +64,224 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/50 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-8">
-          <Logo />
-          <div className="flex gap-3">
-            <Link href="/auth/login">
-              <Button variant="outline">Login</Button>
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-[18px]">
+          <div className="flex items-center gap-8">
+            <Logo />
+            <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+              <Link
+                href="/create"
+                className="transition-colors hover:text-foreground"
+              >
+                Browse
+              </Link>
+              <span className="cursor-default transition-colors hover:text-foreground">
+                How it works
+              </span>
+              <span className="cursor-default transition-colors hover:text-foreground">
+                For teams
+              </span>
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/auth/login"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Sign in
             </Link>
-            <Link href="/auth/sign-up">
-              <Button>Sign Up</Button>
+            <Link href="/create">
+              <Button variant="brand" size="sm">
+                Start a card
+              </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="mx-auto max-w-6xl px-4 py-24 text-center md:px-8 md:py-32">
-        <div className="group relative mb-8 inline-flex items-center justify-center rounded-full border border-border/40 bg-secondary/50 px-4 py-1.5 text-sm font-medium text-secondary-foreground shadow-sm backdrop-blur-sm transition-colors hover:border-primary/20 hover:bg-secondary/80">
-          <span className="relative">No Sign Up Required to Start</span>
-        </div>
-        <h2 className="mb-6 text-5xl font-extrabold tracking-tight text-balance md:text-7xl">
-          Create Beautiful Greeting Cards with AI
-        </h2>
-        <p className="mx-auto mb-10 max-w-2xl text-xl leading-relaxed text-balance text-muted-foreground">
-          Generate personalized greeting cards with AI-powered text and images.
-          Invite friends and family to add messages before sending to the
-          recipient.
-        </p>
-
-        <div className="mb-20 flex flex-col justify-center gap-4 sm:flex-row">
-          <Link href="/create">
-            <Button fullWidth className="gap-2 pr-2.5 sm:w-auto" size="lg">
-              Create a Card
-              <span className="rounded-full border border-primary-foreground/10 bg-primary-foreground/15 px-2 py-0.5 text-xs font-semibold tracking-wide text-primary-foreground uppercase">
-                Free
-              </span>
-            </Button>
-          </Link>
-          <Link href="/auth/login">
-            <Button
-              variant="outline"
-              fullWidth
-              className="border-border/50 hover:bg-secondary/50 sm:w-auto"
-              size="lg"
-            >
-              I Have an Account
-            </Button>
-          </Link>
-        </div>
-
-        {/* How It Works */}
-        <div className="relative grid gap-8 py-12 text-left md:grid-cols-4">
-          <div className="relative z-10 p-2">
-            <div className="mb-3 text-sm font-bold tracking-wider text-muted-foreground uppercase">
-              STEP 01
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Choose a Card Type</h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Birthday, thank you, congratulations, or custom
-            </p>
+      {/* Hero */}
+      <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-20">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand" />
+            New — image regeneration with reference photos
           </div>
-          <div className="relative z-10 p-2">
-            <div className="mb-3 text-sm font-bold tracking-wider text-muted-foreground uppercase">
-              STEP 02
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">
-              AI Generates Your Card
-            </h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Unique image and personalized message created instantly
-            </p>
-          </div>
-          <div className="relative z-10 p-2">
-            <div className="mb-3 text-sm font-bold tracking-wider text-muted-foreground uppercase">
-              STEP 03
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Customize and Edit</h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Fine-tune the message or regenerate until it&apos;s perfect
-            </p>
-          </div>
-          <div className="relative z-10 p-2">
-            <div className="mb-3 text-sm font-bold tracking-wider text-muted-foreground uppercase">
-              STEP 04
-            </div>
-            <h3 className="mb-2 text-lg font-semibold">Share and Send</h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Invite others to add messages, then send to the recipient
-            </p>
-          </div>
-        </div>
-
-        {/* Features Grid */}
-        <div className="grid gap-8 py-20 md:grid-cols-3">
-          <div className="rounded-2xl border border-transparent p-8 transition-all duration-300 hover:-translate-y-1 hover:border-border/50 hover:bg-secondary/30 hover:shadow-sm">
-            <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5">
-              <svg
-                className="h-6 w-6 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-3 text-xl font-semibold">AI-Generated Images</h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Beautiful, unique card images generated by AI for every occasion
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-transparent p-8 transition-all duration-300 hover:-translate-y-1 hover:border-border/50 hover:bg-secondary/30 hover:shadow-sm">
-            <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5">
-              <svg
-                className="h-6 w-6 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-3 text-xl font-semibold">Personalized Copy</h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Smart AI generates heartfelt, customized messages for any card
-              type
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-transparent p-8 transition-all duration-300 hover:-translate-y-1 hover:border-border/50 hover:bg-secondary/30 hover:shadow-sm">
-            <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/5">
-              <svg
-                className="h-6 w-6 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-3 text-xl font-semibold">Group Contributions</h3>
-            <p className="leading-relaxed text-muted-foreground">
-              Share cards with friends and family to add their own messages
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="bg-secondary/30">
-        <div className="mx-auto max-w-4xl px-4 py-24 text-center md:px-8">
-          <h3 className="mb-6 text-4xl font-bold tracking-tight">
-            Ready to Create Your First Card?
-          </h3>
-          <p className="mb-10 text-xl leading-relaxed text-muted-foreground">
-            Start creating now — no account needed until you&apos;re ready to
-            save
+          <h1 className="mt-5 text-5xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance md:text-6xl lg:text-[80px] xl:text-[96px]">
+            Greeting cards,
+            <br />
+            <span className="text-muted-foreground">generated by AI,</span>
+            <br />
+            <span className="text-brand">signed by the group.</span>
+          </h1>
+          <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
+            Type one sentence. We design the cover, draft the note, and pass it
+            around for the whole team to sign — before it lands on the birthday
+            desk.
           </p>
-          <Link href="/create">
-            <Button size="lg">Start Creating Now</Button>
-          </Link>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/create">
+              <Button variant="brand" size="lg">
+                Start a card — free
+              </Button>
+            </Link>
+            <Link href="/auth/login">
+              <Button variant="outline" size="lg">
+                I have an account
+              </Button>
+            </Link>
+          </div>
+          <div className="mt-10 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.15em] text-muted-foreground/60 uppercase">
+            Trusted by teams at
+            <div className="flex gap-5 font-sans text-sm font-semibold tracking-tight text-muted-foreground">
+              <span>Notion</span>
+              <span>Linear</span>
+              <span>Vercel</span>
+              <span>Ramp</span>
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Demo panel */}
+        <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.14)] lg:block">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/60 uppercase">
+            <div className="flex gap-1.5">
+              <div className="h-2.5 w-2.5 rounded-full bg-border" />
+              <div className="h-2.5 w-2.5 rounded-full bg-border" />
+              <div className="h-2.5 w-2.5 rounded-full bg-border" />
+            </div>
+            Live preview
+          </div>
+          <div className="p-5">
+            <div className="rounded-xl bg-background p-3.5 text-sm leading-relaxed text-foreground">
+              <span className="text-muted-foreground">Describe the card.</span>
+              <br />
+              Mira turns 30 on Thursday — she&apos;s on the design team, loves
+              botanical illustration and long train rides.
+            </div>
+            {/* Card preview */}
+            <div className="mx-auto mt-6 mb-4 w-[200px]">
+              <div
+                className="relative w-full overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
+                style={{ aspectRatio: "3/4" }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.85 0.12 45) 0%, oklch(0.75 0.15 25) 60%, oklch(0.65 0.18 15) 100%)",
+                  }}
+                />
+                <div className="absolute inset-0 flex flex-col justify-end p-4">
+                  <div className="text-xs leading-snug font-medium text-white/90">
+                    Happy Birthday,
+                    <br />
+                    <span className="text-base font-semibold">Mira</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Try warmer",
+                "Bolder type",
+                "More botanical",
+                "Regenerate",
+              ].map((c) => (
+                <div
+                  key={c}
+                  className="cursor-pointer rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+                >
+                  {c}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Browse by occasion */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="flex gap-0 overflow-x-auto">
+            {OCCASIONS.map((o) => (
+              <button
+                key={o.id}
+                onClick={() => setActiveOccasion(o.id)}
+                className={`flex shrink-0 items-center gap-2.5 border-b-2 px-5 py-4 text-sm transition-colors ${
+                  activeOccasion === o.id
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span
+                  className="h-5 w-5 rounded-md"
+                  style={{
+                    background: `oklch(0.88 0.1 ${o.hue})`,
+                  }}
+                />
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Big statement */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+            Built for group cards
+          </p>
+          <h2 className="mt-4 max-w-3xl text-4xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-5xl lg:text-6xl">
+            The card used to take ten Slack messages. Now it takes one link.
+          </h2>
+          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+            {FEATURES.map((f) => (
+              <div key={f.n}>
+                <div className="font-mono text-sm text-muted-foreground/60">
+                  {f.n}
+                </div>
+                <h3 className="mt-2 text-lg font-semibold tracking-[-0.015em]">
+                  {f.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA section */}
+      <section className="border-t border-border bg-secondary/50">
+        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+          <h2 className="text-4xl font-semibold tracking-[-0.03em]">
+            Ready to create your first card?
+          </h2>
+          <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-muted-foreground">
+            Start creating now — no account needed until you&apos;re ready to
+            save.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link href="/create">
+              <Button variant="brand" size="lg">
+                Start a card — free
+              </Button>
+            </Link>
+            <Link href="/auth/sign-up">
+              <Button variant="outline" size="lg">
+                Create an account
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 py-12">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-8">
-          <div className="flex items-center gap-2 text-foreground opacity-80">
-            <div className="rounded-full bg-primary p-1 text-primary-foreground">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-                <path d="M20 3v4" />
-                <path d="M22 5h-4" />
-                <path d="M4 17v2" />
-                <path d="M5 18H3" />
-              </svg>
-            </div>
-            <p className="text-sm font-bold tracking-wide">CardsAI</p>
-          </div>
+      <footer className="border-t border-border py-10">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
+          <Logo />
           <p className="text-sm text-muted-foreground">
             Create beautiful greeting cards with AI
           </p>

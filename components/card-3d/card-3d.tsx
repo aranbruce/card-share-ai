@@ -98,9 +98,20 @@ export function Card3D({
   composeDraftRegenerating = false,
   coverOnly = false,
   hideEmptyCenterMessageBody = false,
+  hideImageRegenerateButton = false,
+  suppressFormattingToolbar = false,
+  suppressComposeDraftToolbar = false,
+  suppressComposeActions = false,
+  onEditingContributionChange,
+  navigateToPage,
 }: Card3DProps) {
   void senderName
   const [currentPage, setCurrentPage] = useState(coverOnly ? 0 : initialPage)
+  const [prevNavigateToPage, setPrevNavigateToPage] = useState(navigateToPage)
+  if (navigateToPage !== prevNavigateToPage) {
+    setPrevNavigateToPage(navigateToPage)
+    if (navigateToPage !== undefined) setCurrentPage(navigateToPage)
+  }
   const [showImagePrompt, setShowImagePrompt] = useState(false)
   const [imagePromptText, setImagePromptText] = useState("")
   const imagePromptRef = useRef<HTMLInputElement>(null)
@@ -125,7 +136,6 @@ export function Card3D({
     null,
   )
   const prevTotalPagesForAddRef = useRef<number | null>(null)
-
   const startAddPageWait = useCallback(() => {
     addPagePendingRef.current = true
     if (addPageSafetyTimerRef.current) {
@@ -370,7 +380,7 @@ export function Card3D({
 
   const getContributionsForPage = (pageIdx: number) =>
     contributions.filter(
-      (contrib) => effectiveContributionPage(contrib) === pageIdx,
+      (contribution) => effectiveContributionPage(contribution) === pageIdx,
     )
 
   const withContributionDefaults = (
@@ -388,12 +398,12 @@ export function Card3D({
 
   const renderContributionsForPage = (pageIdx: number) => {
     const editableSet = new Set(editableContributionIds)
-    const pageContribs = [...getContributionsForPage(pageIdx)].sort((a, b) => {
+    const pageContributions = [...getContributionsForPage(pageIdx)].sort((a, b) => {
       const aEditable = editableSet.has(a.id) ? 1 : 0
       const bEditable = editableSet.has(b.id) ? 1 : 0
       return aEditable - bEditable
     })
-    return pageContribs.map((contrib) => {
+    return pageContributions.map((contrib) => {
       const canCanvasEdit =
         Boolean(onContributionEdit) &&
         editableContributionIds.includes(contrib.id)
@@ -430,8 +440,10 @@ export function Card3D({
                 .get(contrib.id)
                 ?.closeRegeneratePrompt()
               setEditingContributionId((id) => (id === contrib.id ? null : id))
+              onEditingContributionChange?.(null)
             }}
             footer={
+              !suppressFormattingToolbar &&
               onContributionLayoutChange &&
               editingContributionId === contrib.id ? (
                 regeneratePromptScopeKey === contrib.id &&
@@ -534,7 +546,10 @@ export function Card3D({
           >
             <div
               className="space-y-3"
-              onFocus={() => setEditingContributionId(contrib.id)}
+              onFocus={() => {
+                setEditingContributionId(contrib.id)
+                onEditingContributionChange?.(contrib.id)
+              }}
             >
               {contrib.giphy_url ? (
                 <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
@@ -627,7 +642,7 @@ export function Card3D({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex w-full flex-col items-center gap-4">
       <div className="relative w-full max-w-md">
         {contributeOverlay ? (
           <div className="pointer-events-none absolute inset-0 z-30 flex flex-col">
@@ -689,23 +704,26 @@ export function Card3D({
                         />
                       ) : null}
 
-                      {editable && onRegenerateImage && !showImagePrompt && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setShowImagePrompt(true)
-                          }}
-                          disabled={isRegeneratingImage || isGeneratingImage}
-                          className="absolute top-4 right-4 z-30 rounded-full bg-primary p-2 text-primary-foreground opacity-100 shadow-md transition-all hover:bg-primary/90 disabled:opacity-50 md:opacity-0 md:group-hover/image:opacity-100"
-                          title="Regenerate image with AI"
-                        >
-                          {isRegeneratingImage || isGeneratingImage ? (
-                            <Spinner className="h-4 w-4" />
-                          ) : (
-                            <Sparkles className="h-4 w-4" />
-                          )}
-                        </button>
-                      )}
+                      {editable &&
+                        onRegenerateImage &&
+                        !showImagePrompt &&
+                        !hideImageRegenerateButton && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowImagePrompt(true)
+                            }}
+                            disabled={isRegeneratingImage || isGeneratingImage}
+                            className="absolute top-4 right-4 z-30 rounded-full bg-primary p-2 text-primary-foreground opacity-100 shadow-md transition-all hover:bg-primary/90 disabled:opacity-50 md:opacity-0 md:group-hover/image:opacity-100"
+                            title="Regenerate image with AI"
+                          >
+                            {isRegeneratingImage || isGeneratingImage ? (
+                              <Spinner className="h-4 w-4" />
+                            ) : (
+                              <Sparkles className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
 
                       {showImagePrompt && (
                         <div
@@ -970,6 +988,9 @@ export function Card3D({
                                   )
                               : undefined
                           }
+                          suppressComposeDraftToolbar={
+                            suppressComposeDraftToolbar
+                          }
                         />
                       )}
                   </div>
@@ -1039,7 +1060,8 @@ export function Card3D({
         </div>
       ) : null}
 
-      {composeDraft &&
+      {!suppressComposeActions &&
+        composeDraft &&
         composeDraft.pageIndex === currentPage &&
         onComposeSubmit && (
           <div className="flex flex-wrap items-center justify-center gap-3 pt-6 pb-2">

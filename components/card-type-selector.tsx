@@ -4,11 +4,41 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 const CARD_TYPES = [
-  { id: "birthday", label: "Birthday", icon: "🎂" },
-  { id: "thank_you", label: "Thank You", icon: "🙏" },
-  { id: "congratulations", label: "Congratulations", icon: "🎉" },
-  { id: "holiday", label: "Holiday", icon: "🎄" },
-  { id: "custom", label: "Custom", icon: "✨" },
+  {
+    id: "birthday",
+    label: "Birthday",
+    hue: 18,
+    desc: "Warm, celebratory copy. Often lands best with a signature collection.",
+    tag: "Most popular",
+  },
+  {
+    id: "thank_you",
+    label: "Thank You",
+    hue: 40,
+    desc: "Sincere without being saccharine. Great one-sender or group.",
+    tag: "Heartfelt",
+  },
+  {
+    id: "congratulations",
+    label: "Congratulations",
+    hue: 70,
+    desc: "Promotion, engagement, new apartment — energetic and genuine.",
+    tag: "Celebratory",
+  },
+  {
+    id: "holiday",
+    label: "Holiday",
+    hue: 150,
+    desc: "For the annual list. Each copy can be personalized by name.",
+    tag: "Seasonal",
+  },
+  {
+    id: "custom",
+    label: "Custom",
+    hue: 230,
+    desc: "Describe it in one sentence. We figure out the tone.",
+    tag: "Flexible",
+  },
 ]
 
 export function CardTypeSelector({
@@ -17,44 +47,64 @@ export function CardTypeSelector({
   onSelect: (type: string) => void
 }) {
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
-      <div className="mb-10 text-center">
-        <h2 className="mb-3 text-3xl font-extrabold tracking-tight">
-          Create a Card
+    <div className="mx-auto max-w-4xl">
+      <div className="mb-10">
+        <Link href="/dashboard">
+          <Button variant="outline" size="default">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M12 5l-7 7 7 7" />
+            </svg>
+            Back to dashboard
+          </Button>
+        </Link>
+      </div>
+      <div className="mb-10">
+        <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground uppercase">
+          Step 1 / 3
+        </p>
+        <h2 className="mt-2.5 text-4xl font-semibold tracking-[-0.03em] md:text-5xl">
+          What kind of card?
         </h2>
-        <p className="text-lg text-muted-foreground">
-          Choose what kind of card you&apos;d like to create
+        <p className="mt-3 max-w-md text-base text-muted-foreground">
+          Pick an occasion to set the tone. Everything is editable — this just
+          gives the AI a starting point.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CARD_TYPES.map((cardType) => (
           <button
             key={cardType.id}
             onClick={() => onSelect(cardType.id)}
-            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-secondary/20 p-8 text-center transition-all duration-300 hover:-translate-y-1 hover:border-border/60 hover:bg-secondary/40 hover:shadow-sm"
+            className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card p-6 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-md"
           >
-            <div className="mb-5 text-5xl transition-transform duration-300 group-hover:scale-110">
-              {cardType.icon}
+            {/* Colour swatch */}
+            <div
+              className="mb-5 h-12 w-12 rounded-xl"
+              style={{ background: `oklch(0.88 0.1 ${cardType.hue})` }}
+            />
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <h3 className="text-[17px] font-semibold tracking-[-0.01em]">
+                {cardType.label}
+              </h3>
+              <span className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                {cardType.tag}
+              </span>
             </div>
-            <h3 className="text-lg font-semibold">{cardType.label}</h3>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Create a personalized {cardType.label.toLowerCase()} card
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {cardType.desc}
             </p>
           </button>
         ))}
-      </div>
-
-      <div className="pt-8 text-center">
-        <Link href="/dashboard">
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-border/50 hover:bg-secondary/50"
-          >
-            Back to Dashboard
-          </Button>
-        </Link>
       </div>
     </div>
   )

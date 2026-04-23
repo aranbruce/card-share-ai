@@ -2,14 +2,28 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
-import { Card } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { Card3D } from "@/components/card-3d"
+import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
-import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import {
+  randomPresetTextColor,
+  MESSAGE_TEXT_COLOR_PRESETS,
+} from "@/lib/message-text-color-presets"
 import type { Contribution } from "@/lib/card-body"
+import Image from "next/image"
+import Link from "next/link"
 import { Logo } from "@/components/logo"
+import {
+  Sparkles,
+  ImagePlus,
+  X,
+  ArrowUp,
+  RotateCcw,
+  RotateCw,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface CardData {
   id: string
@@ -22,6 +36,14 @@ interface CardData {
   sent_at?: string | null
   extra_pages?: number
 }
+
+const FONT_SIZE_PRESETS = [
+  { px: 12, label: "Tiny" },
+  { px: 14, label: "Small" },
+  { px: 16, label: "Base" },
+  { px: 20, label: "Large" },
+  { px: 24, label: "Huge" },
+] as const
 
 export default function ContributeCardPage() {
   const params = useParams()
@@ -38,10 +60,21 @@ export default function ContributeCardPage() {
   )
   const [composeDraftRegenerating, setComposeDraftRegenerating] =
     useState(false)
-  /** contributionId → editToken (from POST only; never exposed via GET) */
   const [contributionEditTokens, setContributionEditTokens] = useState<
     Record<string, string>
   >({})
+  // Panel-only compose state — used before the user clicks to place the note
+  // on the canvas. Once placed, composeDraft holds the full values.
+  const [preComposeDraft, setPreComposeDraft] = useState(() => ({
+    message: "",
+    giphyUrl: null as string | null,
+    textColor: randomPresetTextColor(),
+    fontSize: undefined as number | undefined,
+    rotationDegrees: 0,
+    pageIndex: 1,
+  }))
+  const preComposeDraftRef = useRef(preComposeDraft)
+
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
@@ -52,18 +85,59 @@ export default function ContributeCardPage() {
     string | null
   >(null)
 
+  // Panel state
+  const [editingContributionId, setEditingContributionId] = useState<
+    string | null
+  >(null)
+  const [navigateToPage, setNavigateToPage] = useState<number | undefined>(
+    undefined,
+  )
+  const [refinePrompt, setRefinePrompt] = useState("")
+  const [refineOpen, setRefineOpen] = useState(false)
+  const [composeGifPickerOpen, setComposeGifPickerOpen] = useState(false)
+  const [contribGifPickerContributionId, setContribGifPickerContributionId] =
+    useState<string | null>(null)
+
+  useEffect(() => {
+    preComposeDraftRef.current = preComposeDraft
+  }, [preComposeDraft])
+
   useEffect(() => {
     composeDraftRef.current = composeDraft
   }, [composeDraft])
 
+  // Auto-select the user's existing contribution so the panel is immediately
+  // active when they return to a card they've already signed.
   useEffect(() => {
+    const tokenIds = Object.keys(contributionEditTokens)
+    if (tokenIds.length === 0 || editingContributionId) return
+    const match = contributions.find((c) => tokenIds.includes(c.id))
+    if (match) setEditingContributionId(match.id)
+  }, [contributionEditTokens, contributions, editingContributionId])
+
+  // Unified compose values — panel always reads from here regardless of placement
+  const composeValues = composeDraft ?? preComposeDraft
+
+  const patchComposeValues = useCallback(
+    (patch: Partial<typeof preComposeDraft>) => {
+      if (composeDraftRef.current !== null) {
+        setComposeDraft((d) => (d ? { ...d, ...patch } : null))
+      } else {
+        setPreComposeDraft((d) => ({ ...d, ...patch }))
+      }
+    },
+    [],
+  )
+
+  useEffect(() => {
+    const gifTimers = gifSaveTimersRef.current
     return () => {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current)
         saveTimerRef.current = null
       }
-      gifSaveTimersRef.current.forEach(clearTimeout)
-      gifSaveTimersRef.current.clear()
+      gifTimers.forEach(clearTimeout)
+      gifTimers.clear()
     }
   }, [linkId])
 
@@ -94,17 +168,16 @@ export default function ContributeCardPage() {
       try {
         const response = await fetch(`/api/contribute/${linkId}`)
         if (!response.ok) throw new Error("Card not found")
-
-        const { card: cardData, contributions } = await response.json()
+        const { card: cardData, contributions: contribData } =
+          await response.json()
         setCard(cardData)
-        setContributions(contributions)
+        setContributions(contribData)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load card")
       } finally {
         setLoading(false)
       }
     }
-
     loadCard()
   }, [linkId])
 
@@ -276,6 +349,42 @@ export default function ContributeCardPage() {
     [contributionEditTokens, saveContributionPatch],
   )
 
+  const changeActiveContributionLayout = useCallback(
+    (patch: {
+      fontSize?: number
+      textColor?: string | null
+      rotationDegrees?: number | null
+      pageIndex?: number
+    }) => {
+      if (!editingContributionId) return
+      const contrib = contributions.find((c) => c.id === editingContributionId)
+      if (!contrib) return
+      handleContributionLayoutChange(editingContributionId, {
+        x: contrib.position_x ?? 10,
+        y: contrib.position_y ?? 10,
+        widthPercent: contrib.width_percent ?? 75,
+        pageIndex:
+          patch.pageIndex !== undefined
+            ? patch.pageIndex
+            : (contrib.page_index ?? 1),
+        fontSize:
+          patch.fontSize !== undefined
+            ? patch.fontSize
+            : (contrib.font_size ?? undefined),
+        textColor:
+          patch.textColor !== undefined ? patch.textColor : contrib.text_color,
+        rotationDegrees:
+          patch.rotationDegrees !== undefined
+            ? patch.rotationDegrees
+            : contrib.rotation_degrees,
+      })
+      if (patch.pageIndex !== undefined) {
+        setNavigateToPage(patch.pageIndex)
+      }
+    },
+    [editingContributionId, contributions, handleContributionLayoutChange],
+  )
+
   const handleContributionRegenerateMessage = useCallback(
     async (contributionId: string, prompt: string) => {
       if (!card) return
@@ -318,7 +427,8 @@ export default function ContributeCardPage() {
   const handleComposeDraftRegenerate = useCallback(
     async (prompt: string) => {
       if (!card) return
-      const current = composeDraftRef.current?.message ?? ""
+      const current =
+        composeDraftRef.current?.message ?? preComposeDraftRef.current.message
       setComposeDraftRegenerating(true)
       try {
         const response = await fetch("/api/regenerate-text", {
@@ -336,28 +446,44 @@ export default function ContributeCardPage() {
         if (!response.ok) throw new Error("Failed to refine message")
         const { text } = (await response.json()) as { text?: string }
         const next = String(text ?? "").trim()
-        setComposeDraft((d) => (d ? { ...d, message: next } : d))
+        patchComposeValues({ message: next })
       } catch (e) {
         console.error(e)
       } finally {
         setComposeDraftRegenerating(false)
       }
     },
-    [card],
+    [card, patchComposeValues],
   )
 
-  const handleComposeDraftGifChange = useCallback((giphyUrl: string | null) => {
-    setComposeDraft((d) => (d ? { ...d, giphyUrl } : d))
-  }, [])
+  const handleComposeDraftGifChange = useCallback(
+    (giphyUrl: string | null) => {
+      patchComposeValues({ giphyUrl })
+    },
+    [patchComposeValues],
+  )
 
   const cancelCompose = useCallback(() => {
     setComposeDraft(null)
+    setPreComposeDraft((d) => ({ ...d, message: "", giphyUrl: null }))
     setError("")
   }, [])
 
   const submitComposeDraft = useCallback(async () => {
-    const draft = composeDraftRef.current
-    if (!draft) return
+    // Use the placed canvas draft, or fall back to pre-compose values at a
+    // default position if the user never clicked to place the note.
+    const placed = composeDraftRef.current
+    const pre = preComposeDraftRef.current
+    const draft: CardComposeDraft = placed ?? {
+      message: pre.message,
+      giphyUrl: pre.giphyUrl,
+      textColor: pre.textColor,
+      fontSize: pre.fontSize,
+      rotationDegrees: pre.rotationDegrees,
+      x: 10,
+      y: 15,
+      pageIndex: 1,
+    }
 
     setSubmitting(true)
     setError("")
@@ -458,103 +584,703 @@ export default function ContributeCardPage() {
     [contributions, card],
   )
 
-  /** One note per device/session: tokens are only set after a successful POST. */
   const canPlaceNewGuestMessage = useMemo(
     () => Object.keys(contributionEditTokens).length === 0,
     [contributionEditTokens],
   )
 
+  const editableContrib = useMemo(
+    () =>
+      editingContributionId &&
+      contributionEditTokens[editingContributionId] &&
+      contributions.find((c) => c.id === editingContributionId)
+        ? contributions.find((c) => c.id === editingContributionId)!
+        : null,
+    [editingContributionId, contributionEditTokens, contributions],
+  )
+
+  const totalInnerPages = 1 + (card?.extra_pages ?? 0)
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Spinner className="h-8 w-8" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+        <Spinner className="h-8 w-8 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">Loading card…</p>
       </div>
     )
   }
 
   if (!card) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md p-8 text-center">
-          <h1 className="mb-2 text-2xl font-bold">Card Not Found</h1>
-          <p className="text-muted-foreground">
-            The card you&apos;re looking for doesn&apos;t exist or has been
-            sent.
-          </p>
-        </Card>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-4">
+        <p className="text-xl font-semibold tracking-[-0.02em]">
+          Card not found
+        </p>
+        <Link
+          href="/"
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          ← Go home
+        </Link>
       </div>
     )
   }
 
-  return (
-    <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
-        <Logo />
-      </header>
-      <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
-        <div className="mx-auto max-w-lg space-y-6">
-          <div className="text-center">
-            <h1 className="mb-2 text-3xl font-bold">
-              {card.sent_at ? "Sign this card" : "You're Invited!"}
-            </h1>
-            <p className="text-sm text-muted-foreground md:text-base">
-              {card.sent_at
-                ? "The card may already be with the recipient — you can still add or edit your note from this device using the link you used before."
-                : canPlaceNewGuestMessage
-                  ? "Flip to the friends & family page and click where you want your note. Then type your message; drag and resize like when creating the card."
-                  : "Flip to the friends & family page to find your note. You can edit the text, drag it, and resize it from this device."}
-            </p>
-          </div>
+  const instructionLine = card.sent_at
+    ? "The card may already be with the recipient — you can still edit your note from this device."
+    : canPlaceNewGuestMessage
+      ? "Flip to the inside and click anywhere to place your note."
+      : "Flip to the inside to find and edit your note."
 
-          <Card3D
-            imageUrl={card.image_url}
-            headline={card.copy_headline}
-            message={bodyMessage}
-            senderName={card.sender_name || "Someone special"}
-            recipientName={card.recipient_name || "You"}
-            contributions={displayContributions}
-            extraPages={card.extra_pages || 0}
-            onAddPage={handleAddPage}
-            hideEmptyCenterMessageBody={true}
-            contributeSubmitNonce={submitNonce}
-            editableContributionIds={Object.keys(contributionEditTokens)}
-            onContributionEdit={handleContributionEdit}
-            onContributionGifChange={handleContributionGifChange}
-            onContributionLayoutChange={handleContributionLayoutChange}
-            onContributionRegenerateMessage={
-              handleContributionRegenerateMessage
-            }
-            contributionRegeneratingId={regeneratingContributionId}
-            composePageBump={canPlaceNewGuestMessage ? 1 : 0}
-            composeDraft={composeDraft}
-            onComposeDraftChange={(patch) =>
-              setComposeDraft((d) => (d ? { ...d, ...patch } : d))
-            }
-            onComposeCanvasPlace={
-              canPlaceNewGuestMessage
-                ? (pt) => {
-                    setComposeDraft({
-                      message: "",
-                      giphyUrl: null,
-                      x: pt.x,
-                      y: pt.y,
-                      pageIndex: pt.pageIndex,
-                      textColor: randomPresetTextColor(),
-                      rotationDegrees: 0,
-                    })
-                  }
-                : undefined
-            }
-            onComposeSubmit={submitComposeDraft}
-            onComposeCancel={cancelCompose}
-            composeSubmitting={submitting}
-            composeError={composeDraft ? error : null}
-            onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
-            onComposeDraftGifChange={handleComposeDraftGifChange}
-            composeDraftRegenerating={composeDraftRegenerating}
-          />
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* ── Top nav ── */}
+      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="flex w-full items-center justify-between px-6">
+          <Logo />
         </div>
-      </main>
+      </header>
+
+      {/* ── Body ── */}
+      <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
+        {/* ── Left: card ── */}
+        <section className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14">
+          <div className="w-full max-w-xl space-y-8">
+            {/* Page heading */}
+            <div>
+              <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
+                {card.sent_at
+                  ? "Sign the card"
+                  : `From ${card.sender_name || "someone special"}`}
+              </p>
+              <h1 className="mt-1.5 text-[34px] leading-none font-semibold tracking-[-0.03em]">
+                {card.sent_at
+                  ? "Add your note."
+                  : `Sign ${card.recipient_name}'s card.`}
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {instructionLine}
+              </p>
+            </div>
+
+            {/* Card */}
+            <Card3D
+              imageUrl={card.image_url}
+              headline={card.copy_headline}
+              message={bodyMessage}
+              senderName={card.sender_name || "Someone special"}
+              recipientName={card.recipient_name || "You"}
+              contributions={displayContributions}
+              extraPages={card.extra_pages || 0}
+              onAddPage={handleAddPage}
+              hideEmptyCenterMessageBody
+              contributeSubmitNonce={submitNonce}
+              editableContributionIds={Object.keys(contributionEditTokens)}
+              onContributionEdit={handleContributionEdit}
+              onContributionGifChange={handleContributionGifChange}
+              onContributionLayoutChange={handleContributionLayoutChange}
+              onContributionRegenerateMessage={
+                handleContributionRegenerateMessage
+              }
+              contributionRegeneratingId={regeneratingContributionId}
+              composePageBump={canPlaceNewGuestMessage ? 1 : 0}
+              composeDraft={composeDraft}
+              onComposeDraftChange={(patch) =>
+                setComposeDraft((d) => (d ? { ...d, ...patch } : d))
+              }
+              onComposeCanvasPlace={
+                canPlaceNewGuestMessage
+                  ? (pt) => {
+                      const pre = preComposeDraftRef.current
+                      setComposeDraft({
+                        message: pre.message,
+                        giphyUrl: pre.giphyUrl,
+                        textColor: pre.textColor,
+                        fontSize: pre.fontSize,
+                        rotationDegrees: pre.rotationDegrees,
+                        x: pt.x,
+                        y: pt.y,
+                        pageIndex: pt.pageIndex,
+                      })
+                    }
+                  : undefined
+              }
+              onComposeSubmit={submitComposeDraft}
+              onComposeCancel={cancelCompose}
+              composeSubmitting={submitting}
+              composeError={null}
+              onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
+              onComposeDraftGifChange={handleComposeDraftGifChange}
+              composeDraftRegenerating={composeDraftRegenerating}
+              suppressComposeDraftToolbar
+              suppressComposeActions
+              suppressFormattingToolbar
+              onEditingContributionChange={(id) => {
+                if (id !== null) setEditingContributionId(id)
+              }}
+              navigateToPage={navigateToPage}
+            />
+          </div>
+        </section>
+
+        {/* ── Right: writing panel ── */}
+        <aside className="flex flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
+          {canPlaceNewGuestMessage ? (
+            /* ── Compose panel ── */
+            <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
+              <div>
+                <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
+                  Your note
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
+                  Write something real.
+                </h2>
+              </div>
+
+              {error && composeDraft && (
+                <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+
+              {/* AI refine */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Refine with AI
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {refineOpen ? (
+                    <div className="flex w-full gap-2">
+                      <input
+                        autoFocus
+                        className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                        placeholder="Describe the change…"
+                        value={refinePrompt}
+                        onChange={(e) => setRefinePrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && refinePrompt.trim()) {
+                            void handleComposeDraftRegenerate(refinePrompt)
+                            setRefinePrompt("")
+                            setRefineOpen(false)
+                          }
+                          if (e.key === "Escape") setRefineOpen(false)
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="shrink-0"
+                        onClick={() => setRefineOpen(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setRefineOpen(true)}
+                        disabled={composeDraftRegenerating}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Improve with AI
+                      </button>
+                      <button
+                        onClick={() =>
+                          void handleComposeDraftRegenerate(
+                            "Make this message shorter",
+                          )
+                        }
+                        disabled={composeDraftRegenerating}
+                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      >
+                        Shorten
+                      </button>
+                      <button
+                        onClick={() =>
+                          void handleComposeDraftRegenerate(
+                            "Make this message warmer and more personal",
+                          )
+                        }
+                        disabled={composeDraftRegenerating}
+                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      >
+                        Warmer
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Ink color */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Ink color
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {MESSAGE_TEXT_COLOR_PRESETS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => patchComposeValues({ textColor: color })}
+                      className="h-7 w-7 rounded-full border-2 transition-all"
+                      style={{
+                        backgroundColor: color,
+                        borderColor:
+                          composeValues.textColor === color
+                            ? "hsl(var(--brand))"
+                            : "transparent",
+                        boxShadow:
+                          composeValues.textColor === color
+                            ? "0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--brand))"
+                            : undefined,
+                      }}
+                      aria-label={`Color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* GIF */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  GIF{" "}
+                  <span className="font-normal text-muted-foreground/60">
+                    (optional)
+                  </span>
+                </p>
+                {composeValues.giphyUrl ? (
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-border">
+                      <Image
+                        src={composeValues.giphyUrl}
+                        alt="Attached GIF"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setComposeGifPickerOpen(true)}
+                        className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        Change
+                      </button>
+                      <button
+                        onClick={() => handleComposeDraftGifChange(null)}
+                        className="text-xs text-destructive/70 transition-colors hover:text-destructive"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setComposeGifPickerOpen(true)}
+                    className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    Add GIF
+                  </button>
+                )}
+              </div>
+
+              {/* Font size */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Text size
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {FONT_SIZE_PRESETS.map(({ px, label }) => (
+                    <button
+                      key={px}
+                      onClick={() => patchComposeValues({ fontSize: px })}
+                      className={[
+                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                        (composeValues.fontSize ?? 16) === px
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Rotation */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Rotation
+                </p>
+                <div className="inline-flex h-9 w-fit items-center rounded-xl border border-border bg-background">
+                  <button
+                    type="button"
+                    disabled={(composeValues.rotationDegrees ?? 0) <= -12}
+                    onClick={() =>
+                      patchComposeValues({
+                        rotationDegrees: Math.max(
+                          -12,
+                          (composeValues.rotationDegrees ?? 0) - 1,
+                        ),
+                      })
+                    }
+                    className="flex h-full items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                    title="Rotate counter-clockwise"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="h-4 w-px bg-border" />
+                  <span className="min-w-12 text-center font-mono text-xs text-foreground">
+                    {composeValues.rotationDegrees ?? 0}°
+                  </span>
+                  <div className="h-4 w-px bg-border" />
+                  <button
+                    type="button"
+                    disabled={(composeValues.rotationDegrees ?? 0) >= 12}
+                    onClick={() =>
+                      patchComposeValues({
+                        rotationDegrees: Math.min(
+                          12,
+                          (composeValues.rotationDegrees ?? 0) + 1,
+                        ),
+                      })
+                    }
+                    className="flex h-full items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                    title="Rotate clockwise"
+                  >
+                    <RotateCw className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Page selector */}
+              {totalInnerPages > 1 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Page
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(
+                      { length: totalInnerPages },
+                      (_, i) => i + 1,
+                    ).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => {
+                          patchComposeValues({ pageIndex: pageNum })
+                          setNavigateToPage(pageNum)
+                        }}
+                        className={[
+                          "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                          (composeValues.pageIndex ?? 1) === pageNum
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                        ].join(" ")}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Submit / cancel */}
+              <div className="mt-auto flex gap-3 pt-4">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={cancelCompose}
+                  disabled={submitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-brand text-white hover:bg-brand/90"
+                  onClick={() => void submitComposeDraft()}
+                  disabled={submitting || composeDraftRegenerating}
+                >
+                  {submitting ? (
+                    <Spinner className="mr-2 h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="mr-2 h-4 w-4" />
+                  )}
+                  Add my note
+                </Button>
+              </div>
+            </div>
+          ) : editableContrib !== null ? (
+            /* ── Edit existing contribution panel ── */
+            <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
+              <div>
+                <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
+                  Your note
+                </p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
+                  Edit your note.
+                </h2>
+              </div>
+
+              {/* AI chips */}
+              <div className="flex flex-row gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Refine with AI
+                </p>
+                <div className="flex flex-col flex-wrap gap-2">
+                  {refineOpen ? (
+                    <div className="flex w-full gap-2">
+                      <input
+                        autoFocus
+                        className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                        placeholder="Describe the change…"
+                        value={refinePrompt}
+                        onChange={(e) => setRefinePrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && refinePrompt.trim()) {
+                            void handleContributionRegenerateMessage(
+                              editableContrib.id,
+                              refinePrompt,
+                            )
+                            setRefinePrompt("")
+                            setRefineOpen(false)
+                          }
+                          if (e.key === "Escape") setRefineOpen(false)
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="shrink-0"
+                        onClick={() => setRefineOpen(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setRefineOpen(true)}
+                        disabled={
+                          regeneratingContributionId === editableContrib.id
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Improve with AI
+                      </button>
+                      <button
+                        onClick={() =>
+                          void handleContributionRegenerateMessage(
+                            editableContrib.id,
+                            "Make this message shorter",
+                          )
+                        }
+                        disabled={
+                          regeneratingContributionId === editableContrib.id
+                        }
+                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      >
+                        Shorten
+                      </button>
+                      <button
+                        onClick={() =>
+                          void handleContributionRegenerateMessage(
+                            editableContrib.id,
+                            "Make this message warmer and more personal",
+                          )
+                        }
+                        disabled={
+                          regeneratingContributionId === editableContrib.id
+                        }
+                        className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      >
+                        Warmer
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Ink color */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Ink color
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {MESSAGE_TEXT_COLOR_PRESETS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() =>
+                        changeActiveContributionLayout({ textColor: color })
+                      }
+                      className="h-7 w-7 rounded-full border-2 transition-all"
+                      style={{
+                        backgroundColor: color,
+                        borderColor:
+                          editableContrib.text_color === color
+                            ? "hsl(var(--brand))"
+                            : "transparent",
+                        boxShadow:
+                          editableContrib.text_color === color
+                            ? "0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--brand))"
+                            : undefined,
+                      }}
+                      aria-label={`Color ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* GIF */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  GIF{" "}
+                  <span className="font-normal text-muted-foreground/60">
+                    (optional)
+                  </span>
+                </p>
+                {editableContrib.giphy_url ? (
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-16 w-24 overflow-hidden rounded-lg border border-border">
+                      <Image
+                        src={editableContrib.giphy_url}
+                        alt="Attached GIF"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          setContribGifPickerContributionId(editableContrib.id)
+                        }
+                        className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        Change
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleContributionGifChange(editableContrib.id, null)
+                        }
+                        className="text-xs text-destructive/70 transition-colors hover:text-destructive"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() =>
+                      setContribGifPickerContributionId(editableContrib.id)
+                    }
+                    className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                    Add GIF
+                  </button>
+                )}
+              </div>
+
+              {/* Text size */}
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Text size
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {FONT_SIZE_PRESETS.map(({ px, label }) => (
+                    <button
+                      key={px}
+                      onClick={() =>
+                        changeActiveContributionLayout({ fontSize: px })
+                      }
+                      className={[
+                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                        (editableContrib.font_size ?? 16) === px
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Page selector */}
+              {totalInnerPages > 1 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Page
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(
+                      { length: totalInnerPages },
+                      (_, i) => i + 1,
+                    ).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() =>
+                          changeActiveContributionLayout({
+                            pageIndex: pageNum,
+                          })
+                        }
+                        className={[
+                          "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                          (editableContrib.page_index ?? 1) === pageNum
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                        ].join(" ")}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* ── Empty state ── */
+            <div className="flex flex-1 items-center justify-center p-8">
+              <div className="text-center">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {canPlaceNewGuestMessage
+                    ? "Flip to the inside and click anywhere to place your note."
+                    : "Select your note on the card to edit it."}
+                </p>
+              </div>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {/* GIF pickers */}
+      <GiphyPicker
+        open={composeGifPickerOpen}
+        onOpenChange={setComposeGifPickerOpen}
+        selectedUrl={composeValues.giphyUrl ?? null}
+        onSelect={(url) => {
+          handleComposeDraftGifChange(url)
+          setComposeGifPickerOpen(false)
+        }}
+      />
+      <GiphyPicker
+        open={Boolean(contribGifPickerContributionId)}
+        onOpenChange={(open) => {
+          if (!open) setContribGifPickerContributionId(null)
+        }}
+        selectedUrl={
+          contribGifPickerContributionId
+            ? (contributions.find(
+                (c) => c.id === contribGifPickerContributionId,
+              )?.giphy_url ?? null)
+            : null
+        }
+        onSelect={(url) => {
+          if (contribGifPickerContributionId) {
+            handleContributionGifChange(contribGifPickerContributionId, url)
+          }
+          setContribGifPickerContributionId(null)
+        }}
+      />
     </div>
   )
 }

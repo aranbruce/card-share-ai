@@ -35,6 +35,18 @@ export interface Card3DProps {
   initialPage?: number
   /** Only the cover page (no inner message / pagination) — e.g. create flow before save. */
   coverOnly?: boolean
+  /** Hide the inline sparkle regenerate button on the cover image (use when controls live in a sidebar). */
+  hideImageRegenerateButton?: boolean
+  /** Suppress the inline MessageFormattingToolbar footer (use when controls live in a sidebar). */
+  suppressFormattingToolbar?: boolean
+  /** Suppress the inline compose-draft toolbar (use when controls live in a sidebar). */
+  suppressComposeDraftToolbar?: boolean
+  /** Suppress the submit/cancel buttons rendered below the card for compose draft. */
+  suppressComposeActions?: boolean
+  /** Fire when an editable contribution gains or loses focus (null = blur). */
+  onEditingContributionChange?: (id: string | null) => void
+  /** Imperatively navigate to this page index (0 = cover). Effect fires when the value changes. */
+  navigateToPage?: number
   /**
    * Hide the legacy centered “card body” editor when it would be empty and unused
    * (canvas notes / compose flow only). Keeps the cover editable via `editable`.

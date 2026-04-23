@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
     // Generate a unique link ID for contributions
     const linkId = uuidv4()
 
-    // Inner message is added post-create (owner studio / same flow as contributors).
-    const msg = ""
     const { data, error } = await supabase
       .from("cards")
       .insert({
@@ -38,7 +36,7 @@ export async function POST(request: NextRequest) {
         recipient_email: recipientEmail || "",
         sender_name: senderName,
         copy_headline: copyHeadline,
-        copy_message: msg,
+        copy_message: "",
         image_url: imageUrl,
         image_prompt: imagePrompt,
         contributor_link_id: linkId,
@@ -56,6 +54,26 @@ export async function POST(request: NextRequest) {
         { error: error?.message ?? "Failed to create card" },
         { status: 400 },
       )
+    }
+
+    // Pre-create an empty creator contribution so the owner studio is ready immediately.
+    const { error: contribError } = await supabase
+      .from("card_contributions")
+      .insert({
+        card_id: data.id,
+        is_creator: true,
+        message: null,
+        position_x: null,
+        position_y: null,
+        width_percent: null,
+        page_index: null,
+        font_size: 16,
+        text_color: null,
+        rotation_degrees: 0,
+      })
+    if (contribError) {
+      console.error("Failed to pre-create creator contribution:", contribError)
+      // Non-fatal — the studio will create it lazily if missing.
     }
 
     return NextResponse.json({

@@ -93,13 +93,6 @@ export async function POST(
         { status: 400 },
       )
     }
-    if (!msg && !giphy_url) {
-      return NextResponse.json(
-        { error: "Message or GIF is required" },
-        { status: 400 },
-      )
-    }
-
     let text_color: string | null
     if (textColorRaw === undefined) {
       text_color = randomPresetTextColor()
@@ -141,6 +134,7 @@ export async function POST(
       .single()
 
     if (insertError || !contribution) {
+      console.error("[owner POST contributions] insertError:", insertError)
       return NextResponse.json(
         { error: insertError?.message ?? "Failed to create contribution" },
         { status: 400 },
@@ -329,21 +323,6 @@ export async function PATCH(
       }
       updates.rotation_degrees = rotation
     }
-    const nextMessage =
-      updates.message !== undefined
-        ? (updates.message ?? "").trim()
-        : typeof row.message === "string"
-          ? row.message.trim()
-          : row.message
-    const nextGiphy =
-      updates.giphy_url !== undefined ? updates.giphy_url : row.giphy_url
-    if (!nextMessage && !nextGiphy) {
-      return NextResponse.json(
-        { error: "Message or GIF is required" },
-        { status: 400 },
-      )
-    }
-
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
         {

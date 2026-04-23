@@ -1,9 +1,18 @@
 import type { Metadata } from "next"
-import { Geist } from "next/font/google"
+import { Inter_Tight, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-const geistSans = Geist({ subsets: ["latin"] })
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter-tight",
+})
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-jetbrains-mono",
+})
 
 export const metadata: Metadata = {
   title: "Cards AI",
@@ -34,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.className} font-sans antialiased`}>
+      <body className={`${interTight.variable} ${jetBrainsMono.variable} font-sans antialiased`} style={{ fontFamily: "var(--font-inter-tight), system-ui, sans-serif" }}>
         {children}
         {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
