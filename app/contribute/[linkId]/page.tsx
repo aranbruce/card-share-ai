@@ -40,7 +40,7 @@ interface CardData {
 const FONT_SIZE_PRESETS = [
   { px: 12, label: "Tiny" },
   { px: 14, label: "Small" },
-  { px: 16, label: "Base" },
+  { px: 16, label: "Medium" },
   { px: 20, label: "Large" },
   { px: 24, label: "Huge" },
 ] as const
@@ -783,7 +783,7 @@ export default function ContributeCardPage() {
                         className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
                       >
                         <Sparkles className="h-3 w-3" />
-                        Improve with AI
+                        Improve
                       </button>
                       <button
                         onClick={() =>
@@ -1021,11 +1021,11 @@ export default function ContributeCardPage() {
               </div>
 
               {/* AI chips */}
-              <div className="flex flex-row gap-2">
+              <div className="flex flex-col gap-2">
                 <p className="text-xs font-medium text-muted-foreground">
                   Refine with AI
                 </p>
-                <div className="flex flex-col flex-wrap gap-2">
+                <div className="flex flex-row flex-wrap gap-2">
                   {refineOpen ? (
                     <div className="flex w-full gap-2">
                       <input
@@ -1065,7 +1065,7 @@ export default function ContributeCardPage() {
                         className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
                       >
                         <Sparkles className="h-3 w-3" />
-                        Improve with AI
+                        Improve
                       </button>
                       <button
                         onClick={() =>
