@@ -14,10 +14,7 @@ export class ApiError extends Error {
  * - Throws ApiError on non-2xx responses
  * - Throws on JSON parse failure instead of returning empty object
  */
-export async function apiFetch<T>(
-  url: string,
-  init?: RequestInit,
-): Promise<T> {
+export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     credentials: "same-origin",
     ...init,

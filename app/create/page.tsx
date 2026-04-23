@@ -10,10 +10,7 @@ import { Card3D } from "@/components/card-3d"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { AppHeader } from "@/components/app-header"
-import {
-  savePendingCard,
-  type PendingCard,
-} from "@/lib/pending-card-storage"
+import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Sparkles, X } from "lucide-react"
 
 const TYPE_HUE: Record<string, number> = {
@@ -32,7 +29,6 @@ interface CardData {
   imageUrl: string
   imagePrompt: string
 }
-
 
 type Step = "select-type" | "details"
 

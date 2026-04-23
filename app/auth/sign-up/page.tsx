@@ -27,15 +27,10 @@ function SignUpForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [hasPendingCard, setHasPendingCard] = useState(false)
+  const [hasPendingCard] = useState(() => checkHasPendingCard())
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
-
-  // Check if there's a pending card
-  useEffect(() => {
-    setHasPendingCard(checkHasPendingCard())
-  }, [])
 
   const savePendingCard = useCallback(async () => {
     const cardData = loadPendingCard()

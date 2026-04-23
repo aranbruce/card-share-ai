@@ -144,10 +144,8 @@ export function useContributions({
       if (!editingContributionId) return
       const contrib = contributions.find((c) => c.id === editingContributionId)
       if (!contrib) return
-      const x =
-        typeof contrib.position_x === "number" ? contrib.position_x : 24
-      const y =
-        typeof contrib.position_y === "number" ? contrib.position_y : 24
+      const x = typeof contrib.position_x === "number" ? contrib.position_x : 24
+      const y = typeof contrib.position_y === "number" ? contrib.position_y : 24
       const widthPercent =
         typeof contrib.width_percent === "number" ? contrib.width_percent : 75
       const pageIndex =
@@ -186,12 +184,7 @@ export function useContributions({
         })
       })
     },
-    [
-      creatorRow,
-      scheduleGifSave,
-      saveContributionPatch,
-      setContributions,
-    ],
+    [creatorRow, scheduleGifSave, saveContributionPatch, setContributions],
   )
 
   const handleContributionRegenerateMessage = useCallback(

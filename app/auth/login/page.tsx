@@ -22,36 +22,23 @@ import {
 import { apiPost } from "@/lib/api-client"
 
 function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [successMessage, setSuccessMessage] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [hasPendingCard, setHasPendingCard] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  // Check if there's a pending card
-  useEffect(() => {
-    setHasPendingCard(checkHasPendingCard())
-  }, [])
+  const urlError = searchParams.get("error")
+  const urlMessage = searchParams.get("message")
 
-  useEffect(() => {
-    const urlError = searchParams.get("error")
-    const urlMessage = searchParams.get("message")
-    if (urlError) {
-      setSuccessMessage("")
-      setError(
-        urlError === "auth_callback_failed"
-          ? "Sign-in link expired or could not be completed. Request a new reset email or try again."
-          : urlError,
-      )
-    } else if (urlMessage) {
-      setError("")
-      setSuccessMessage(urlMessage)
-    }
-  }, [searchParams])
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState(
+    urlError === "auth_callback_failed"
+      ? "Sign-in link expired or could not be completed. Request a new reset email or try again."
+      : (urlError ?? ""),
+  )
+  const successMessage = !urlError && urlMessage ? urlMessage : ""
+  const [loading, setLoading] = useState(false)
+  const [hasPendingCard] = useState(() => checkHasPendingCard())
 
   const savePendingCard = useCallback(async () => {
     const cardData = loadPendingCard()

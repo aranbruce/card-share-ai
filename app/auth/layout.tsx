@@ -15,7 +15,7 @@ export default function AuthLayout({
         {/* Floating card previews */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
-            className="absolute top-32 right-[-60px] w-[260px] rotate-6 overflow-hidden rounded-2xl shadow-2xl"
+            className="absolute top-1/4 right-1/10 w-[260px] rotate-6 overflow-hidden rounded-2xl shadow-2xl"
             style={{ aspectRatio: "3/4" }}
           >
             <div
@@ -27,7 +27,7 @@ export default function AuthLayout({
             />
           </div>
           <div
-            className="absolute top-[260px] right-[200px] w-[200px] -rotate-10 overflow-hidden rounded-2xl opacity-90 shadow-2xl"
+            className="absolute top-3/6 right-4/10 w-[200px] -rotate-10 overflow-hidden rounded-2xl opacity-90 shadow-2xl"
             style={{ aspectRatio: "3/4" }}
           >
             <div

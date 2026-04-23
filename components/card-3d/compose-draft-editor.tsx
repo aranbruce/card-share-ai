@@ -39,7 +39,9 @@ export function ComposeDraftEditor({
   composeDraft: NonNullable<Card3DComposeDraftProps["composeDraft"]>
   messageFontSize: number
   composeError: string | null
-  onComposeDraftChange: NonNullable<Card3DComposeDraftProps["onComposeDraftChange"]>
+  onComposeDraftChange: NonNullable<
+    Card3DComposeDraftProps["onComposeDraftChange"]
+  >
   onComposeDraftRegenerateMessage?: Card3DComposeDraftProps["onComposeDraftRegenerateMessage"]
   composeDraftRegenerating: boolean
   onFocusChange?: (focused: boolean) => void

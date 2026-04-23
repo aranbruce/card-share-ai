@@ -364,7 +364,7 @@ export const CardOwnerStudio = forwardRef<
         setIsRegeneratingHeadline(false)
       }
     },
-    [card, patchCardFields, onCardDataChange],
+    [card, patchCardFields, setCard, onCardDataChange],
   )
 
   const handleRegenerateImage = useCallback(
@@ -397,7 +397,7 @@ export const CardOwnerStudio = forwardRef<
         setIsRegeneratingImage(false)
       }
     },
-    [card, patchCardFields, onCardDataChange],
+    [card, patchCardFields, setCard, onCardDataChange],
   )
 
   useImperativeHandle(
