@@ -68,10 +68,10 @@ export default function HomePage() {
   useEffect(() => {
     const checkUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser()
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (user) {
+      if (session) {
         router.replace("/dashboard")
         return
       }
