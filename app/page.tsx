@@ -148,7 +148,7 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-20">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-20 md:px-15 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-20">
         <div>
           <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance md:text-5xl lg:text-[80px] xl:text-[96px]">
             Greeting cards,
@@ -260,12 +260,12 @@ export default function HomePage() {
       </section>
 
       {/* Big statement */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-7xl px-6 py-20">
+      <section className="border-t border-border px-6 md:px-15">
+        <div className="mx-auto max-w-7xl py-20">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Built for group cards
           </p>
-          <h2 className="mt-4 max-w-3xl text-4xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-5xl lg:text-6xl">
+          <h2 className="mt-4 max-w-3xl text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             The card used to take ten follow-ups. Now it takes one link.
           </h2>
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -287,8 +287,8 @@ export default function HomePage() {
       </section>
 
       {/* CTA section */}
-      <section className="border-t border-border bg-secondary/50">
-        <div className="mx-auto max-w-4xl px-6 py-24 text-center">
+      <section className="border-t border-border bg-secondary/50 px-6 md:px-15">
+        <div className="mx-auto max-w-4xl py-24 text-center">
           <h2 className="text-4xl font-semibold tracking-[-0.03em]">
             Start the card. We&apos;ll handle the rest.
           </h2>
