@@ -1,6 +1,14 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { Card3D } from "@/components/card-3d"
 import type { Contribution } from "@/lib/card-body"
 import { Spinner } from "@/components/ui/spinner"
@@ -40,27 +48,46 @@ export type ActiveContributionFormattingState = {
   onAiRefine: (prompt: string) => Promise<void>
 }
 
+export type CardOwnerStudioHandle = {
+  regenerateImage: (prompt: string) => Promise<void>
+  regenerateHeadline: (prompt: string) => Promise<void>
+}
+
 export type CardOwnerStudioProps = {
   cardId: string
   /** 0 = cover; 1 = first inside spread (e.g. after creating a card). */
   initialCardPage?: number
   /** Increment to trigger CardOwnerStudio to re-fetch card data from the server. */
   reloadNonce?: number
-  /** Hide the inline image regenerate button on the cover (use when the control lives in a sidebar). */
-  hideImageRegenerateButton?: boolean
   /** Fired when the active contribution formatting state changes (null = no note selected). */
   onActiveContributionChange?: (
     state: ActiveContributionFormattingState | null,
   ) => void
+  /** Called when image regeneration starts or finishes. */
+  onRegeneratingImageChange?: (v: boolean) => void
+  /** Called when headline regeneration starts or finishes. */
+  onRegeneratingHeadlineChange?: (v: boolean) => void
+  /** Called when the card's headline, image URL, or image prompt changes (after a successful regeneration). */
+  onCardDataChange?: (
+    updates: Partial<Pick<OwnerCard, "copy_headline" | "image_url" | "image_prompt">>,
+  ) => void
 }
 
-export function CardOwnerStudio({
-  cardId,
-  initialCardPage = 0,
-  reloadNonce,
-  hideImageRegenerateButton = false,
-  onActiveContributionChange,
-}: CardOwnerStudioProps) {
+export const CardOwnerStudio = forwardRef<
+  CardOwnerStudioHandle,
+  CardOwnerStudioProps
+>(function CardOwnerStudio(
+  {
+    cardId,
+    initialCardPage = 0,
+    reloadNonce,
+    onActiveContributionChange,
+    onRegeneratingImageChange,
+    onRegeneratingHeadlineChange,
+    onCardDataChange,
+  }: CardOwnerStudioProps,
+  ref,
+) {
   const [card, setCard] = useState<OwnerCard | null>(null)
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [loading, setLoading] = useState(true)
@@ -584,13 +611,14 @@ export function CardOwnerStudio({
         const next = String(text ?? "").trim()
         setCard((c) => (c ? { ...c, copy_headline: next } : c))
         await patchCardFields({ copy_headline: next })
+        onCardDataChange?.({ copy_headline: next })
       } catch (e) {
         console.error(e)
       } finally {
         setIsRegeneratingHeadline(false)
       }
     },
-    [card, patchCardFields],
+    [card, patchCardFields, onCardDataChange],
   )
 
   const handleRegenerateImage = useCallback(
@@ -618,6 +646,7 @@ export function CardOwnerStudio({
             image_url: imageUrl,
             image_prompt: newPrompt,
           })
+          onCardDataChange?.({ image_url: imageUrl, image_prompt: newPrompt })
         }
       } catch (e) {
         console.error(e)
@@ -625,8 +654,25 @@ export function CardOwnerStudio({
         setIsRegeneratingImage(false)
       }
     },
-    [card, patchCardFields],
+    [card, patchCardFields, onCardDataChange],
   )
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      regenerateImage: (prompt) => handleRegenerateImage(prompt),
+      regenerateHeadline: handleRegenerateHeadline,
+    }),
+    [handleRegenerateImage, handleRegenerateHeadline],
+  )
+
+  useEffect(() => {
+    onRegeneratingImageChange?.(isRegeneratingImage)
+  }, [isRegeneratingImage, onRegeneratingImageChange])
+
+  useEffect(() => {
+    onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
+  }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
   const addExtraPageInFlightRef = useRef(false)
 
@@ -717,11 +763,8 @@ export function CardOwnerStudio({
         contributions={contributions}
         editable
         onHeadlineChange={handleHeadlineChange}
-        onRegenerateHeadline={handleRegenerateHeadline}
-        onRegenerateImage={handleRegenerateImage}
         isRegeneratingHeadline={isRegeneratingHeadline}
         isRegeneratingImage={isRegeneratingImage}
-        hideImageRegenerateButton={hideImageRegenerateButton}
         suppressComposeActions
         onComposeCanvasPlace={
           showCompose ? handleComposeCanvasPlace : undefined
@@ -764,4 +807,4 @@ export function CardOwnerStudio({
       />
     </div>
   )
-}
+})

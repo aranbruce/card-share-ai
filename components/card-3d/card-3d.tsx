@@ -22,14 +22,11 @@ import {
   capSpreadToCommitted,
   type CommittedSpreadSnapshot,
 } from "./card-page-spread"
-import {
-  looksLikeDataUrl,
-  sourceImageUrlForRefineRequest,
-} from "@/lib/source-image-limits"
+import { looksLikeDataUrl } from "@/lib/source-image-limits"
 import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
-import { ArrowLeft, ArrowRight, Sparkles, X, ArrowUp } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import {
   useState,
   useRef,
@@ -58,8 +55,6 @@ export function Card3D({
   onMessageChange,
   onAddPage,
   extraPages = 0,
-  onRegenerateHeadline,
-  onRegenerateImage,
   isRegeneratingHeadline = false,
   isRegeneratingImage = false,
   messageFontSize = 18,
@@ -85,7 +80,6 @@ export function Card3D({
   composeDraftRegenerating = false,
   coverOnly = false,
   hideEmptyCenterMessageBody = false,
-  hideImageRegenerateButton = false,
   suppressComposeActions = false,
   onEditingContributionChange,
   navigateToPage,
@@ -97,9 +91,6 @@ export function Card3D({
     setPrevNavigateToPage(navigateToPage)
     if (navigateToPage !== undefined) setCurrentPage(navigateToPage)
   }
-  const [showImagePrompt, setShowImagePrompt] = useState(false)
-  const [imagePromptText, setImagePromptText] = useState("")
-  const imagePromptRef = useRef<HTMLInputElement>(null)
   const [editingContributionId, setEditingContributionId] = useState<
     string | null
   >(null)
@@ -133,12 +124,6 @@ export function Card3D({
       addPageSafetyTimerRef.current = null
     }
   }, [])
-
-  useEffect(() => {
-    if (showImagePrompt && imagePromptRef.current) {
-      imagePromptRef.current.focus()
-    }
-  }, [showImagePrompt])
 
   const [committedSpread, setCommittedSpread] =
     useState<CommittedSpreadSnapshot | null>(null)
@@ -392,7 +377,7 @@ export function Card3D({
               }}
             >
               {contrib.giphy_url ? (
-                <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
+                <div className="flex w-full justify-center overflow-hidden rounded-md">
                   <GiphyCanvasGif src={contrib.giphy_url} alt="Attached GIF" />
                 </div>
               ) : null}
@@ -439,7 +424,7 @@ export function Card3D({
         >
           <div className="space-y-3">
             {contrib.giphy_url ? (
-              <div className="flex w-full justify-center overflow-hidden rounded-md border border-border/50 bg-muted/50 py-1">
+              <div className="flex w-full justify-center overflow-hidden rounded-md">
                 <GiphyCanvasGif src={contrib.giphy_url} alt="Attached GIF" />
               </div>
             ) : null}
@@ -461,7 +446,7 @@ export function Card3D({
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
+    <div className="flex w-full flex-col items-center gap-12">
       <div className="relative w-full max-w-md">
         {contributeOverlay ? (
           <div className="pointer-events-none absolute inset-0 z-30 flex flex-col">
@@ -523,110 +508,14 @@ export function Card3D({
                         />
                       ) : null}
 
-                      {editable &&
-                        onRegenerateImage &&
-                        !showImagePrompt &&
-                        !hideImageRegenerateButton && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setShowImagePrompt(true)
-                            }}
-                            disabled={isRegeneratingImage || isGeneratingImage}
-                            className="absolute top-4 right-4 z-30 rounded-full bg-primary p-2 text-primary-foreground opacity-100 shadow-md transition-all hover:bg-primary/90 disabled:opacity-50 md:opacity-0 md:group-hover/image:opacity-100"
-                            title="Regenerate image with AI"
-                          >
-                            {isRegeneratingImage || isGeneratingImage ? (
-                              <Spinner className="h-4 w-4" />
-                            ) : (
-                              <Sparkles className="h-4 w-4" />
-                            )}
-                          </button>
-                        )}
-
-                      {showImagePrompt && (
-                        <div
-                          className="absolute top-4 right-4 left-4 z-50"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-lg">
-                            <input
-                              ref={imagePromptRef}
-                              type="text"
-                              value={imagePromptText}
-                              onChange={(e) =>
-                                setImagePromptText(e.target.value)
-                              }
-                              onKeyDown={(e) => {
-                                if (
-                                  e.key === "Enter" &&
-                                  imagePromptText.trim()
-                                ) {
-                                  void onRegenerateImage?.(
-                                    imagePromptText.trim(),
-                                    sourceImageUrlForRefineRequest(
-                                      imageUrl || undefined,
-                                    ),
-                                  )
-                                  setImagePromptText("")
-                                  setShowImagePrompt(false)
-                                }
-                                if (e.key === "Escape") {
-                                  setShowImagePrompt(false)
-                                  setImagePromptText("")
-                                }
-                              }}
-                              placeholder="Describe the image you want..."
-                              className="min-w-0 flex-1 border-none bg-transparent px-2 py-1 text-base text-foreground outline-none sm:text-sm"
-                              disabled={isRegeneratingImage}
-                            />
-                            <button
-                              onClick={() => {
-                                if (imagePromptText.trim()) {
-                                  void onRegenerateImage?.(
-                                    imagePromptText.trim(),
-                                    sourceImageUrlForRefineRequest(
-                                      imageUrl || undefined,
-                                    ),
-                                  )
-                                  setImagePromptText("")
-                                  setShowImagePrompt(false)
-                                }
-                              }}
-                              disabled={
-                                isRegeneratingImage || !imagePromptText.trim()
-                              }
-                              className="rounded-full bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                              title="Generate"
-                            >
-                              {isRegeneratingImage ? (
-                                <Spinner className="h-4 w-4" />
-                              ) : (
-                                <ArrowUp className="h-4 w-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowImagePrompt(false)
-                                setImagePromptText("")
-                              }}
-                              className="rounded-full p-1.5 transition-colors hover:bg-muted"
-                              title="Cancel"
-                            >
-                              <X className="h-4 w-4 text-muted-foreground" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ) : null}
 
-                  <div className="absolute right-0 bottom-0 left-0 p-6 text-white">
+                  <div className="absolute right-0 bottom-0 left-0 p-6 text-center text-white">
                     <InlineEdit
                       value={headline}
                       onChange={onHeadlineChange}
                       editable={editable}
-                      onRegenerate={onRegenerateHeadline}
                       isRegenerating={isRegeneratingHeadline}
                       isGenerating={isGeneratingHeadline}
                       regenerateShimmerTone="cover"

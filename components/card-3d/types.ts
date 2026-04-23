@@ -17,9 +17,6 @@ export interface Card3DProps {
   onMessageChange?: (value: string) => void
   onAddPage?: () => void | Promise<void>
   extraPages?: number
-  onRegenerateHeadline?: (prompt: string) => Promise<void>
-  /** Second arg is the current cover image URL (data or https) for refinement. */
-  onRegenerateImage?: (prompt: string, sourceImageUrl?: string) => Promise<void>
   isRegeneratingHeadline?: boolean
   isRegeneratingImage?: boolean
   messageFontSize?: number
@@ -30,8 +27,6 @@ export interface Card3DProps {
   initialPage?: number
   /** Only the cover page (no inner message / pagination) — e.g. create flow before save. */
   coverOnly?: boolean
-  /** Hide the inline sparkle regenerate button on the cover image (use when controls live in a sidebar). */
-  hideImageRegenerateButton?: boolean
   /** Suppress the submit/cancel buttons rendered below the card for compose draft. */
   suppressComposeActions?: boolean
   /** Fire when an editable contribution gains or loses focus (null = blur). */

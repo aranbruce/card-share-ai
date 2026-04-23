@@ -10,6 +10,7 @@ import { Card3D } from "@/components/card-3d"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { AppHeader } from "@/components/app-header"
+import { Sparkles, X } from "lucide-react"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -61,6 +62,9 @@ export default function CreateCardPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
+  const [openAiPanel, setOpenAiPanel] = useState<"image" | "title" | null>(null)
+  const [imagePrompt, setImagePrompt] = useState("")
+  const [titlePrompt, setTitlePrompt] = useState("")
   const [error, setError] = useState("")
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -365,7 +369,91 @@ export default function CreateCardPage() {
 
               <div className="mx-auto mt-5 flex justify-center">
                 {cardData ? (
-                  <div className="flex w-full max-w-md flex-col items-center gap-4">
+                  <div className="flex w-full max-w-md flex-col gap-12">
+                    {openAiPanel === null ? (
+                      <div className="flex justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setOpenAiPanel("image")}
+                          disabled={isRegeneratingImage || isGeneratingImage}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                        >
+                          {isRegeneratingImage ? (
+                            <Spinner className="h-3 w-3" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          Edit image
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOpenAiPanel("title")}
+                          disabled={isRegeneratingHeadline || isGeneratingCopy}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                        >
+                          {isRegeneratingHeadline ? (
+                            <Spinner className="h-3 w-3" />
+                          ) : (
+                            <Sparkles className="h-3 w-3" />
+                          )}
+                          Edit title
+                        </button>
+                      </div>
+                    ) : openAiPanel === "image" ? (
+                      <div className="flex gap-2">
+                        <input
+                          autoFocus
+                          className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                          placeholder="Describe the image change…"
+                          value={imagePrompt}
+                          onChange={(e) => setImagePrompt(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && imagePrompt.trim()) {
+                              void handleRegenerateImage(imagePrompt)
+                              setOpenAiPanel(null)
+                              setImagePrompt("")
+                            }
+                            if (e.key === "Escape") setOpenAiPanel(null)
+                          }}
+                          disabled={isRegeneratingImage}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="shrink-0"
+                          onClick={() => setOpenAiPanel(null)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          autoFocus
+                          className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                          placeholder="Describe the title change…"
+                          value={titlePrompt}
+                          onChange={(e) => setTitlePrompt(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && titlePrompt.trim()) {
+                              void handleRegenerateHeadline(titlePrompt)
+                              setOpenAiPanel(null)
+                              setTitlePrompt("")
+                            }
+                            if (e.key === "Escape") setOpenAiPanel(null)
+                          }}
+                          disabled={isRegeneratingHeadline}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="shrink-0"
+                          onClick={() => setOpenAiPanel(null)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                     <Card3D
                       imageUrl={cardData.imageUrl}
                       headline={cardData.headline}
@@ -379,8 +467,6 @@ export default function CreateCardPage() {
                       onHeadlineChange={(value) =>
                         setCardData({ ...cardData, headline: value })
                       }
-                      onRegenerateHeadline={handleRegenerateHeadline}
-                      onRegenerateImage={handleRegenerateImage}
                       isRegeneratingHeadline={isRegeneratingHeadline}
                       isRegeneratingImage={isRegeneratingImage}
                     />

@@ -629,7 +629,7 @@ export default function ContributeCardPage() {
         <section className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14">
           <div className="w-full max-w-xl space-y-8">
             {/* Page heading */}
-            <div>
+            <div className="text-center">
               <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
                 {card.sent_at
                   ? "Sign the card"
@@ -700,7 +700,7 @@ export default function ContributeCardPage() {
         </section>
 
         {/* ── Right: writing panel ── */}
-        <aside className="flex flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
+        <aside className="flex h-[calc(100dvh-56px)] flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
           {canPlaceNewGuestMessage ? (
             /* ── Compose panel ── */
             <NotePanel

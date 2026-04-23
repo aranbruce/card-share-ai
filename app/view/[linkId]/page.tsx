@@ -59,11 +59,6 @@ export default function PublicCardPage() {
     [contributions, card?.copy_message],
   )
 
-  const guestMessageCount = useMemo(
-    () => contributions.filter((c) => !c.is_creator).length,
-    [contributions],
-  )
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
@@ -93,20 +88,11 @@ export default function PublicCardPage() {
       <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
         <div className="mx-auto max-w-2xl">
           <section className="mb-8 text-center">
-            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.15em] text-brand">
+            <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               A card arrived for you
             </p>
-            <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight md:text-5xl">
+            <h1 className="text-4xl leading-[1.05] font-semibold tracking-tight md:text-5xl">
               {card.recipient_name}
-              {guestMessageCount > 0 && (
-                <>
-                  {" "}
-                  <span className="text-muted-foreground">
-                    — {guestMessageCount}{" "}
-                    {guestMessageCount === 1 ? "person" : "people"} signed this.
-                  </span>
-                </>
-              )}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">
               Sent by {card.sender_name || "Someone special"} · received today
@@ -134,7 +120,9 @@ export default function PublicCardPage() {
           </div>
 
           <div className="mt-12 text-center">
-            <p className="text-xs text-muted-foreground">Created with CardsAI</p>
+            <p className="text-xs text-muted-foreground">
+              Created with CardsAI
+            </p>
           </div>
         </div>
       </main>
