@@ -10,32 +10,22 @@ import { Logo } from "@/components/logo"
 const DEMO_STATES = {
   default: {
     imageUrl: "/demo/card-default.png",
-    greeting: "Happy Birthday,",
-    name: "Mira",
     message: "Here's to making 30 look completely effortless.",
   },
   Warmer: {
     imageUrl: "/demo/card-warmer.png",
-    greeting: "Warmest wishes,",
-    name: "Mira",
     message: "May your 30th be as radiant and wonderful as you are.",
   },
   Sassier: {
     imageUrl: "/demo/card-sassier.png",
-    greeting: "30 never looked so good -",
-    name: "Mira",
     message: "Let's be honest, you've always been the coolest one in the room.",
   },
   Shorter: {
     imageUrl: "/demo/card-shorter.png",
-    greeting: "Happy 30th,",
-    name: "Mira",
     message: "Make it a good one.",
   },
   Friendlier: {
     imageUrl: "/demo/card-friendlier.png",
-    greeting: "Hip hip hooray!",
-    name: "Mira",
     message: "So glad you're on our team - today is all yours!",
   },
 } as const
@@ -196,13 +186,7 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end p-4">
-                  <p className="text-[10px] leading-snug text-white/80">
-                    {demo.greeting}
-                  </p>
-                  <p className="text-sm font-semibold text-white">
-                    {demo.name}
-                  </p>
-                  <p className="mt-1 text-[9px] leading-relaxed text-white/70">
+                  <p className="text-sm font-semibold text-white/90">
                     {demo.message}
                   </p>
                 </div>
