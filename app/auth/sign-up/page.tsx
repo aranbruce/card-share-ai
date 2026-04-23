@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { isAuthSessionMissingError } from "@supabase/supabase-js"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -68,11 +69,13 @@ function SignUpForm() {
       if (cancelled) return
 
       if (userError || !user) {
-        setError(
-          userError?.message ??
-            `Could not complete ${oauthProviderLabel(oauthParam)} sign up.`,
-        )
         setLoading(false)
+        if (!isAuthSessionMissingError(userError)) {
+          setError(
+            userError?.message ??
+              `Could not complete ${oauthProviderLabel(oauthParam)} sign up.`,
+          )
+        }
         return
       }
 

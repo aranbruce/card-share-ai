@@ -31,9 +31,6 @@ type Card3DHeadlineEditProps = {
   editable?: boolean
   onHeadlineChange?: (value: string) => void
   onMessageChange?: (value: string) => void
-  onRegenerateHeadline?: (prompt: string) => Promise<void>
-  /** Second arg is the current cover image URL (data or https) for refinement. */
-  onRegenerateImage?: (prompt: string, sourceImageUrl?: string) => Promise<void>
   isRegeneratingHeadline?: boolean
   isRegeneratingImage?: boolean
   /** Cover headline still loading (e.g. initial AI copy). */
@@ -45,8 +42,6 @@ type Card3DHeadlineEditProps = {
   messagePageIndex?: number
   /** Only the cover page (no inner message / pagination) — e.g. create flow before save. */
   coverOnly?: boolean
-  /** Hide the inline sparkle regenerate button on the cover image (use when controls live in a sidebar). */
-  hideImageRegenerateButton?: boolean
 }
 
 // ── Contribution overlay editing ─────────────────────────────────────────────
