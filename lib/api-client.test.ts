@@ -41,17 +41,17 @@ describe("apiFetch", () => {
 
   it("parses error body { error } into ApiError message", async () => {
     vi.stubGlobal("fetch", makeFetchMock(422, { error: "Validation failed" }, { ok: false }))
-    const err = await apiFetch("/api/test").catch((e) => e)
+    const err = await apiFetch("/api/test").catch((e: unknown) => e)
     expect(err).toBeInstanceOf(ApiError)
-    expect(err.message).toBe("Validation failed")
-    expect(err.status).toBe(422)
+    expect((err as ApiError).message).toBe("Validation failed")
+    expect((err as ApiError).status).toBe(422)
   })
 
   it("uses fallback message when error body has no { error } field", async () => {
     vi.stubGlobal("fetch", makeFetchMock(500, { detail: "oops" }, { ok: false }))
-    const err = await apiFetch("/api/test").catch((e) => e)
+    const err = await apiFetch("/api/test").catch((e: unknown) => e)
     expect(err).toBeInstanceOf(ApiError)
-    expect(err.message).toMatch("500")
+    expect((err as ApiError).message).toMatch("500")
   })
 
   it("uses fallback message when error body JSON is unparseable", async () => {
@@ -60,9 +60,9 @@ describe("apiFetch", () => {
       status: 503,
       json: vi.fn().mockRejectedValue(new SyntaxError("bad json")),
     }))
-    const err = await apiFetch("/api/test").catch((e) => e)
+    const err = await apiFetch("/api/test").catch((e: unknown) => e)
     expect(err).toBeInstanceOf(ApiError)
-    expect(err.status).toBe(503)
+    expect((err as ApiError).status).toBe(503)
   })
 
   it("sets Content-Type header when a body is present", async () => {

@@ -38,7 +38,11 @@ function LoginForm() {
   )
   const successMessage = !urlError && urlMessage ? urlMessage : ""
   const [loading, setLoading] = useState(false)
-  const [hasPendingCard] = useState(() => checkHasPendingCard())
+  const [hasPendingCard, setHasPendingCard] = useState(false)
+
+  useEffect(() => {
+    setHasPendingCard(checkHasPendingCard())
+  }, [])
 
   const savePendingCard = useCallback(async () => {
     const cardData = loadPendingCard()
