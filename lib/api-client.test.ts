@@ -69,13 +69,19 @@ describe("apiFetch", () => {
   it("sets Content-Type header when a body is present", async () => {
     await apiFetch("/api/test", { method: "POST", body: JSON.stringify({ x: 1 }) })
     const [, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(init.headers).toMatchObject({ "Content-Type": "application/json" })
+    expect((init.headers as Headers).get("Content-Type")).toBe("application/json")
   })
 
   it("does not set Content-Type when no body", async () => {
     await apiFetch("/api/test")
     const [, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(init.headers?.["Content-Type"]).toBeUndefined()
+    expect((init.headers as Headers).get("Content-Type")).toBeNull()
+  })
+
+  it("enforces credentials: same-origin even when caller provides different credentials", async () => {
+    await apiFetch("/api/test", { credentials: "omit" })
+    const [, init] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(init.credentials).toBe("same-origin")
   })
 })
 

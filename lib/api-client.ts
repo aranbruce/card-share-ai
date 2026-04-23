@@ -15,13 +15,15 @@ export class ApiError extends Error {
  * - Throws on JSON parse failure instead of returning empty object
  */
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers)
+  if (init?.body) {
+    headers.set("Content-Type", "application/json")
+  }
+
   const res = await fetch(url, {
-    credentials: "same-origin",
     ...init,
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
+    credentials: "same-origin",
+    headers,
   })
 
   if (!res.ok) {
