@@ -10,6 +10,10 @@ import { Card3D } from "@/components/card-3d"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { AppHeader } from "@/components/app-header"
+import {
+  savePendingCard,
+  type PendingCard,
+} from "@/lib/pending-card-storage"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -28,16 +32,6 @@ interface CardData {
   imagePrompt: string
 }
 
-interface PendingCard {
-  cardType: string
-  recipientName: string
-  senderName: string
-  copyHeadline: string
-  copyMessage: string
-  imageUrl: string
-  imagePrompt: string
-  extraPages: number
-}
 
 type Step = "select-type" | "details"
 
@@ -249,7 +243,7 @@ export default function CreateCardPage() {
       extraPages: 0,
     }
 
-    localStorage.setItem("pendingCard", JSON.stringify(pendingCard))
+    savePendingCard(pendingCard)
   }
 
   const handleSaveCard = async () => {

@@ -1,0 +1,51 @@
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
+import type { Contribution } from "@/lib/card-body"
+import type { OwnerCard } from "@/components/card-owner-studio"
+import { ApiError, apiFetch } from "@/lib/api-client"
+
+export function useCardData(cardId: string, reloadNonce?: number) {
+  const [card, setCard] = useState<OwnerCard | null>(null)
+  const [contributions, setContributions] = useState<Contribution[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const { card: c, contributions: list } = await apiFetch<{
+        card: OwnerCard
+        contributions?: Contribution[]
+      }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
+      setCard(c)
+      setContributions(list ?? [])
+    } catch (e) {
+      const message =
+        e instanceof ApiError && e.status === 401
+          ? "You need to be signed in to open this card."
+          : e instanceof Error
+            ? e.message
+            : "Failed to load"
+      setError(message)
+    } finally {
+      setLoading(false)
+    }
+  }, [cardId])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const prevReloadNonceRef = useRef(reloadNonce ?? 0)
+  useEffect(() => {
+    const nonce = reloadNonce ?? 0
+    if (nonce !== prevReloadNonceRef.current) {
+      prevReloadNonceRef.current = nonce
+      void load()
+    }
+  }, [reloadNonce, load])
+
+  return { card, setCard, contributions, setContributions, loading, error }
+}

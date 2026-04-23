@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner"
 import Image from "next/image"
 import { Inbox, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
+import { apiFetch, apiDelete } from "@/lib/api-client"
 
 interface CardItem {
   id: string
@@ -248,10 +249,10 @@ export default function DashboardPage() {
 
   const loadCards = async () => {
     try {
-      const response = await fetch("/api/cards")
-      if (!response.ok) throw new Error("Failed to load cards")
-      const { cards: cardData } = await response.json()
-      setCards(cardData || [])
+      const { cards: cardData } = await apiFetch<{ cards: CardItem[] }>(
+        "/api/cards",
+      )
+      setCards(cardData ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load cards")
     } finally {
@@ -267,8 +268,7 @@ export default function DashboardPage() {
   const handleDelete = async (id: string) => {
     setDeletingId(id)
     try {
-      const res = await fetch(`/api/cards/${id}`, { method: "DELETE" })
-      if (!res.ok) throw new Error("Failed to delete card")
+      await apiDelete(`/api/cards/${id}`)
       setCards((prev) => prev.filter((c) => c.id !== id))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete card")

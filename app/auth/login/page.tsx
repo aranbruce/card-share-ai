@@ -13,6 +13,12 @@ import {
   type OAuthProviderId,
 } from "@/lib/oauth-auth"
 import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
+import {
+  hasPendingCard as checkHasPendingCard,
+  loadPendingCard,
+  clearPendingCard,
+} from "@/lib/pending-card-storage"
+import { apiPost } from "@/lib/api-client"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
@@ -27,8 +33,7 @@ function LoginForm() {
 
   // Check if there's a pending card
   useEffect(() => {
-    const pendingCard = localStorage.getItem("pendingCard")
-    setHasPendingCard(!!pendingCard)
+    setHasPendingCard(checkHasPendingCard())
   }, [])
 
   useEffect(() => {
@@ -48,22 +53,15 @@ function LoginForm() {
   }, [searchParams])
 
   const savePendingCard = useCallback(async () => {
-    const pendingCardData = localStorage.getItem("pendingCard")
-    if (!pendingCardData) return null
-
+    const cardData = loadPendingCard()
+    if (!cardData) return null
     try {
-      const cardData = JSON.parse(pendingCardData)
-      const response = await fetch("/api/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cardData),
-      })
-
-      if (!response.ok) throw new Error("Failed to save card")
-
-      const { card } = await response.json()
-      localStorage.removeItem("pendingCard")
-      return card.id || card
+      const { card } = await apiPost<{ card: { id: string } }>(
+        "/api/cards",
+        cardData,
+      )
+      clearPendingCard()
+      return card.id
     } catch (err) {
       console.error("Error saving pending card:", err)
       return null
