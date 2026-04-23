@@ -53,7 +53,36 @@ export default function HomePage() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("default")
-  const demo = DEMO_STATES[demoKey]
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showShimmer, setShowShimmer] = useState(false)
+  const [displayedImageUrl, setDisplayedImageUrl] = useState(DEMO_STATES.default.imageUrl)
+  const [displayedMessage, setDisplayedMessage] = useState(DEMO_STATES.default.message)
+
+  const handleVariantClick = (key: keyof typeof DEMO_STATES) => {
+    if (isGenerating || key === demoKey) return
+    setDemoKey(key)
+    setIsGenerating(true)
+    setShowShimmer(true)
+    setDisplayedMessage("")
+
+    setTimeout(() => {
+      setDisplayedImageUrl(DEMO_STATES[key].imageUrl)
+      setShowShimmer(false)
+
+      const newMessage = DEMO_STATES[key].message
+      let i = 0
+      const type = () => {
+        i++
+        setDisplayedMessage(newMessage.slice(0, i))
+        if (i < newMessage.length) {
+          setTimeout(type, 25)
+        } else {
+          setIsGenerating(false)
+        }
+      }
+      setTimeout(type, 300)
+    }, 700)
+  }
 
   useEffect(() => {
     const checkUser = async () => {
@@ -179,15 +208,25 @@ export default function HomePage() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  key={demo.imageUrl}
-                  src={demo.imageUrl}
+                  src={displayedImageUrl}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover"
                 />
+                {/* Shimmer overlay during generation */}
+                <div
+                  className={`absolute inset-0 z-10 transition-opacity duration-500 ${
+                    showShimmer ? "opacity-100" : "opacity-0 pointer-events-none"
+                  }`}
+                >
+                  <div className="h-full w-full animate-pulse bg-stone-200" />
+                </div>
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end p-4">
-                  <p className="text-sm font-semibold text-white/90">
-                    {demo.message}
+                  <p className="min-h-10 text-sm font-semibold text-white/90">
+                    {displayedMessage}
+                    {isGenerating && (
+                      <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-white/70" />
+                    )}
                   </p>
                 </div>
               </div>
@@ -197,8 +236,9 @@ export default function HomePage() {
                 (c) => (
                   <button
                     key={c}
-                    onClick={() => setDemoKey(c)}
-                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    onClick={() => handleVariantClick(c)}
+                    disabled={isGenerating}
+                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                       demoKey === c
                         ? "border-foreground/30 bg-foreground/5 text-foreground"
                         : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground"
