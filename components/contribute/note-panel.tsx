@@ -83,7 +83,9 @@ export function NotePanel({
       </div>
 
       {error && (
-        <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {/* AI refine */}
@@ -215,7 +217,10 @@ export function NotePanel({
             </div>
           </div>
         ) : (
-          <ChipButton onClick={onOpenGifPicker} className="gap-2 self-start text-xs">
+          <ChipButton
+            onClick={onOpenGifPicker}
+            className="gap-2 self-start text-xs"
+          >
             <ImagePlus className="h-3.5 w-3.5" />
             Add GIF
           </ChipButton>

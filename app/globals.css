@@ -207,6 +207,6 @@
     letter-spacing: -0.01em;
   }
   :focus-visible {
-    @apply outline-none rounded-sm ring-[3px] ring-ring/50;
+    @apply rounded-sm ring-[3px] ring-ring/50 outline-none;
   }
 }

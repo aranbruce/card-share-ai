@@ -85,7 +85,9 @@ export default function ForgotPassword() {
 
       <form onSubmit={handleResetRequest} className="space-y-4">
         {error && (
-          <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         <div>

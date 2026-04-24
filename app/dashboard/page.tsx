@@ -423,7 +423,9 @@ export default function DashboardPage() {
           </div>
 
           {error && (
-            <Alert variant="destructive" className="mb-6"><AlertDescription>{error}</AlertDescription></Alert>
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* Empty state */}
@@ -526,7 +528,7 @@ export default function DashboardPage() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => setConfirmDeleteId(card.id)}
-                        className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-destructive"
+                        className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
                         aria-label="Delete card"
                       >
                         <Trash2 className="h-4 w-4" />

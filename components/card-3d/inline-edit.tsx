@@ -447,7 +447,11 @@ export const InlineEdit = forwardRef<
           className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full p-2.5 opacity-100 shadow-lg transition-all hover:scale-110 md:-right-12 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
           title="Rewrite with AI"
         >
-          {isRegenerating ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+          {isRegenerating ? (
+            <Spinner className="h-4 w-4" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
         </Button>
       )}
 
@@ -481,7 +485,11 @@ export const InlineEdit = forwardRef<
               className="rounded-full"
               title="Generate"
             >
-              {isRegenerating ? <Spinner className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+              {isRegenerating ? (
+                <Spinner className="h-4 w-4" />
+              ) : (
+                <ArrowUp className="h-4 w-4" />
+              )}
             </Button>
             <Button
               variant="ghost"

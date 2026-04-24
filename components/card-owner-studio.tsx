@@ -487,7 +487,9 @@ export const CardOwnerStudio = forwardRef<
 
   if (error) {
     return (
-      <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     )
   }
 

@@ -181,7 +181,9 @@ export function GiphyPicker({
               <Spinner className="h-6 w-6" />
             </div>
           ) : error ? (
-            <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           ) : gifs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No GIFs found.</p>
           ) : (

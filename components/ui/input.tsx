@@ -8,14 +8,14 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "border-input focus-visible:border-ring dark:bg-input/30",
+        default: "border-input focus-visible:border-ring dark:bg-input/30",
         /** Auth / marketing forms: taller field with soft secondary fill */
         auth: "h-12 border-border/50 bg-secondary/20 focus-visible:border-ring focus-visible:ring-1 dark:bg-secondary/20",
         /** Card builder and similar: tall field on subtle background */
         soft: "h-12 border-border/50 bg-background/50 focus-visible:border-ring focus-visible:ring-1 dark:bg-background/50",
         /** Display-only fields (read-only URLs etc): no focus ring, muted appearance */
-        readonly: "cursor-default bg-muted/50 font-medium text-muted-foreground focus-visible:ring-0",
+        readonly:
+          "cursor-default bg-muted/50 font-medium text-muted-foreground focus-visible:ring-0",
       },
     },
     defaultVariants: {

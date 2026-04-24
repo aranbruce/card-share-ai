@@ -83,7 +83,9 @@ export function ComposeDraftEditor({
       >
         <div className="space-y-3">
           {composeError ? (
-            <Alert variant="destructive"><AlertDescription>{composeError}</AlertDescription></Alert>
+            <Alert variant="destructive">
+              <AlertDescription>{composeError}</AlertDescription>
+            </Alert>
           ) : null}
           {composeDraft.giphyUrl ? (
             <div className="flex w-full justify-center overflow-hidden rounded-md">

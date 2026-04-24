@@ -168,11 +168,7 @@ export function ShareModal({
               Direct Link
             </h4>
             <div className="flex gap-2">
-              <Input
-                value={viewLink}
-                readOnly
-                variant="readonly"
-              />
+              <Input value={viewLink} readOnly variant="readonly" />
               <Button
                 size="icon"
                 variant="outline"
