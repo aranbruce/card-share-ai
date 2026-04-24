@@ -626,7 +626,7 @@ export default function ContributeCardPage() {
       {/* ── Body ── */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* ── Left: card ── */}
-        <section className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14">
+        <main className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
           <div className="w-full max-w-xl space-y-8">
             {/* Page heading */}
             <div className="text-center">
@@ -697,10 +697,10 @@ export default function ContributeCardPage() {
               navigateToPage={navigateToPage}
             />
           </div>
-        </section>
+        </main>
 
         {/* ── Right: writing panel ── */}
-        <aside className="flex h-[calc(100dvh-56px)] flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
+        <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
           {canPlaceNewGuestMessage ? (
             /* ── Compose panel ── */
             <NotePanel

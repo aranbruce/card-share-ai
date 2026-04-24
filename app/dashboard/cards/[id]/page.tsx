@@ -192,7 +192,7 @@ function CardDetailInner() {
       {/* ── Body: editor + writing panel ── */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* LEFT — editor stage */}
-        <main className="flex flex-col gap-7 bg-background px-10 py-10 md:px-12">
+        <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
           <Link
             href="/dashboard"
             className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -236,7 +236,7 @@ function CardDetailInner() {
                 <ChipButton
                   onClick={() => setOpenAiPanel("image")}
                   disabled={isRegeneratingImage}
-                  className="gap-1.5 text-xs"
+                  className="text-xs"
                 >
                   {isRegeneratingImage ? (
                     <Spinner className="h-3 w-3" />
@@ -248,7 +248,7 @@ function CardDetailInner() {
                 <ChipButton
                   onClick={() => setOpenAiPanel("title")}
                   disabled={isRegeneratingHeadline}
-                  className="gap-1.5 text-xs"
+                  className="text-xs"
                 >
                   {isRegeneratingHeadline ? (
                     <Spinner className="h-3 w-3" />
@@ -327,7 +327,7 @@ function CardDetailInner() {
         </main>
 
         {/* RIGHT — note formatting panel */}
-        <aside className="flex flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
+        <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
           <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 lg:p-7">
             <div>
               <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">

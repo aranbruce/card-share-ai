@@ -372,7 +372,7 @@ export default function CreateCardPage() {
                         <ChipButton
                           onClick={() => setOpenAiPanel("image")}
                           disabled={isRegeneratingImage || isGeneratingImage}
-                          className="gap-1.5 text-xs"
+                          className="text-xs"
                         >
                           {isRegeneratingImage ? (
                             <Spinner className="h-3 w-3" />
@@ -384,7 +384,7 @@ export default function CreateCardPage() {
                         <ChipButton
                           onClick={() => setOpenAiPanel("title")}
                           disabled={isRegeneratingHeadline || isGeneratingCopy}
-                          className="gap-1.5 text-xs"
+                          className="text-xs"
                         >
                           {isRegeneratingHeadline ? (
                             <Spinner className="h-3 w-3" />
