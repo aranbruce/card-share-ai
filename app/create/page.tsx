@@ -10,6 +10,7 @@ import { Card3D } from "@/components/card-3d"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
@@ -365,7 +366,18 @@ export default function CreateCardPage() {
               </p>
 
               <div className="mx-auto mt-5 flex justify-center">
-                {cardData ? (
+                {cardData && isGeneratingCopy ? (
+                  <div className="w-full max-w-md">
+                    <div className="mb-12 flex justify-center gap-2">
+                      <Skeleton className="h-8 w-24 rounded-full" />
+                      <Skeleton className="h-8 w-24 rounded-full" />
+                    </div>
+                    <Skeleton
+                      className="w-full rounded-2xl shadow-xl"
+                      style={{ minHeight: 500 }}
+                    />
+                  </div>
+                ) : cardData ? (
                   <div className="flex w-full max-w-md flex-col gap-12">
                     {openAiPanel === null ? (
                       <div className="flex justify-center gap-2">

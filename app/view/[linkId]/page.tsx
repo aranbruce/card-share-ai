@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
-import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
 import { forCardDisplay, type Contribution } from "@/lib/card-body"
@@ -61,8 +61,26 @@ export default function PublicCardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-        <Spinner className="h-8 w-8" />
+      <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
+          <Logo />
+        </header>
+        <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
+          <div className="mx-auto max-w-2xl">
+            <section className="mb-8 space-y-3 text-center">
+              <Skeleton className="mx-auto h-3 w-40 rounded-sm" />
+              <Skeleton className="mx-auto h-12 w-56 rounded-md" />
+              <Skeleton className="mx-auto h-4 w-64 rounded-sm" />
+            </section>
+            <Skeleton
+              className="mx-auto w-full max-w-md rounded-2xl"
+              style={{ minHeight: "500px" }}
+            />
+            <div className="mt-8 flex justify-center">
+              <Skeleton className="h-12 w-52 rounded-xl" />
+            </div>
+          </div>
+        </main>
       </div>
     )
   }

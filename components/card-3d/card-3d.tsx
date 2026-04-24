@@ -475,7 +475,7 @@ export function Card3D({
               <div className="relative flex flex-1 flex-col">
                 <>
                   {isGeneratingImage && !imageUrl ? (
-                    <div className="relative min-h-[280px] w-full flex-1 overflow-hidden rounded-2xl bg-zinc-950/40">
+                    <div className="relative min-h-[280px] w-full flex-1 overflow-hidden rounded-2xl bg-border">
                       <RegenerateShimmerOverlay
                         tone="cover"
                         className="z-10 rounded-2xl"

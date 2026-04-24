@@ -15,8 +15,8 @@ import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { AppHeader } from "@/components/app-header"
 import { ShareModal } from "@/components/share-modal"
 import {
   CardOwnerStudio,
@@ -60,6 +60,75 @@ interface CardData {
   card_type?: string
   sent_at?: string | null
   contributor_link_id: string
+}
+
+function CardDetailSkeleton() {
+  return (
+    <>
+      <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
+        {/* LEFT */}
+        <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
+          <Link href="/dashboard">
+            <Button variant="outline" size="default">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M19 12H5M12 5l-7 7 7 7" />
+              </svg>
+              Dashboard
+            </Button>
+          </Link>
+          <div className="space-y-2 text-center">
+            <Skeleton className="mx-auto h-3 w-16 rounded-sm" />
+            <Skeleton className="mx-auto h-9 w-72 rounded-md" />
+          </div>
+          <div className="mx-auto flex w-full max-w-md flex-col gap-12">
+            <div className="flex justify-center gap-2">
+              <Skeleton className="h-8 w-24 rounded-full" />
+              <Skeleton className="h-8 w-24 rounded-full" />
+            </div>
+            <Skeleton
+              className="w-full rounded-2xl"
+              style={{ minHeight: "500px" }}
+            />
+          </div>
+        </main>
+
+        {/* RIGHT */}
+        <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
+          <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 lg:p-7">
+            <div className="space-y-1.5">
+              <Skeleton className="h-2.5 w-16 rounded-sm" />
+              <Skeleton className="h-7 w-40 rounded-md" />
+            </div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <Skeleton className="h-3 w-20 rounded-sm" />
+                <div className="flex gap-1.5">
+                  {Array.from({ length: 3 }).map((_, j) => (
+                    <Skeleton key={j} className="h-8 w-16 rounded-full" />
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div className="mt-auto flex flex-col gap-3 pt-6">
+              <div className="h-px bg-border" />
+              <Skeleton className="h-3 w-12 rounded-sm" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+          </div>
+        </aside>
+      </div>
+    </>
+  )
 }
 
 function CardDetailInner() {
@@ -159,17 +228,12 @@ function CardDetailInner() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-        <Spinner className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Loading card…</p>
-      </div>
-    )
+    return <CardDetailSkeleton />
   }
 
   if (!card) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-4">
+      <div className="flex flex-1 items-center justify-center gap-6 p-4">
         <p className="text-xl font-semibold tracking-[-0.02em]">
           Card not found
         </p>
@@ -186,9 +250,7 @@ function CardDetailInner() {
     : 0
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader />
-
+    <>
       {/* ── Body: editor + writing panel ── */}
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* LEFT — editor stage */}
@@ -643,20 +705,13 @@ function CardDetailInner() {
           setCard((prev) => (prev ? { ...prev, sent_at: sentAt } : null))
         }
       />
-    </div>
+    </>
   )
 }
 
 export default function CardDetailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-          <Spinner className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Loading card…</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<CardDetailSkeleton />}>
       <CardDetailInner />
     </Suspense>
   )

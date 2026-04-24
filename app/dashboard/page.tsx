@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { AppHeader } from "@/components/app-header"
 import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
 import Image from "next/image"
 import { Inbox, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
@@ -262,11 +262,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push("/")
-  }
-
   const handleDelete = async (id: string) => {
     setDeletingId(id)
     try {
@@ -293,286 +288,324 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-        <Spinner className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Loading your cards…</p>
+      <div className="flex flex-1">
+        <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
+          <div className="flex-1 space-y-1 px-5 py-7">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex w-full items-center gap-2.5 rounded-[10px] border border-transparent px-3 py-2.5"
+              >
+                <Skeleton className="h-4 w-4 shrink-0 rounded-sm" />
+                <Skeleton
+                  className="h-3.5 flex-1 rounded-sm"
+                  style={{ maxWidth: `${60 + (i % 3) * 15}%` }}
+                />
+                <Skeleton className="h-3 w-4 rounded-sm" />
+              </div>
+            ))}
+          </div>
+          <div className="px-5 py-5">
+            <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5">
+              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Skeleton className="h-3 w-24 rounded-sm" />
+                <Skeleton className="h-2.5 w-14 rounded-sm" />
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <main className="flex-1 overflow-y-auto px-6 py-9 *:mx-auto *:max-w-7xl md:px-10">
+          <div className="mb-7 flex items-end justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-36 rounded-md" />
+              <Skeleton className="h-4 w-16 rounded-sm" />
+            </div>
+            <Skeleton className="h-9 w-28 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <Skeleton
+                  className="w-full rounded-none"
+                  style={{ aspectRatio: "4/5" }}
+                />
+                <div className="space-y-2 p-[18px]">
+                  <div className="flex items-baseline justify-between">
+                    <Skeleton className="h-[17px] w-28 rounded-sm" />
+                    <Skeleton className="h-3 w-10 rounded-sm" />
+                  </div>
+                  <Skeleton className="h-3.5 w-20 rounded-sm" />
+                  <div className="mt-3.5 flex justify-end">
+                    <Skeleton className="h-3 w-14 rounded-sm" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <AppHeader
-        right={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-foreground"
-            onClick={handleLogout}
-          >
-            Sign out
-          </Button>
-        }
-      />
+    <div className="flex flex-1">
+      {/* ── Left sidebar ── */}
+      <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
+        <div className="flex-1 overflow-y-auto px-5 py-7">
+          {/* Nav items */}
+          {[
+            {
+              key: "all",
+              icon: "cards",
+              label: "All cards",
+              count: cards.length,
+            },
+            {
+              key: "birthday",
+              icon: "cake",
+              label: "Birthday",
+              count: typeCounts["birthday"] ?? 0,
+            },
+            {
+              key: "thank_you",
+              icon: "heart",
+              label: "Thank you",
+              count: typeCounts["thank_you"] ?? 0,
+            },
+            {
+              key: "congratulations",
+              icon: "trophy",
+              label: "Congratulations",
+              count: typeCounts["congratulations"] ?? 0,
+            },
+            {
+              key: "holiday",
+              icon: "tree",
+              label: "Holiday",
+              count: typeCounts["holiday"] ?? 0,
+            },
+            {
+              key: "custom",
+              icon: "wand",
+              label: "Custom",
+              count: typeCounts["custom"] ?? 0,
+            },
+          ].map((item) => {
+            const isActive = activeFilter === item.key
+            return (
+              <button
+                key={item.key}
+                onClick={() => setActiveFilter(item.key)}
+                className={`mb-0.5 flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-sm transition-colors ${
+                  isActive
+                    ? "border-border bg-card text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <NavIcon name={item.icon} />
+                <span className="flex-1 text-left">{item.label}</span>
+                <span className="text-xs text-muted-foreground/60">
+                  {item.count || ""}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
-      {/* ── Body: sidebar + main ── */}
-      <div className="flex flex-1">
-        {/* ── Left sidebar ── */}
-        <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
-          <div className="flex-1 overflow-y-auto px-5 py-7">
-            {/* Nav items */}
-            {[
-              {
-                key: "all",
-                icon: "cards",
-                label: "All cards",
-                count: cards.length,
-              },
-              {
-                key: "birthday",
-                icon: "cake",
-                label: "Birthday",
-                count: typeCounts["birthday"] ?? 0,
-              },
-              {
-                key: "thank_you",
-                icon: "heart",
-                label: "Thank you",
-                count: typeCounts["thank_you"] ?? 0,
-              },
-              {
-                key: "congratulations",
-                icon: "trophy",
-                label: "Congratulations",
-                count: typeCounts["congratulations"] ?? 0,
-              },
-              {
-                key: "holiday",
-                icon: "tree",
-                label: "Holiday",
-                count: typeCounts["holiday"] ?? 0,
-              },
-              {
-                key: "custom",
-                icon: "wand",
-                label: "Custom",
-                count: typeCounts["custom"] ?? 0,
-              },
-            ].map((item) => {
-              const isActive = activeFilter === item.key
+        {/* User profile */}
+        {user && (
+          <div className="px-5 py-5">
+            <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
+                {initials(user)}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[13px] leading-tight font-medium">
+                  {displayName(user)}
+                </p>
+                <p className="text-[11px] text-muted-foreground/60">
+                  Free plan
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {/* ── Main content ── */}
+      <main className="flex-1 overflow-y-auto px-6 py-9 *:mx-auto *:max-w-7xl md:px-10">
+        {/* Page header */}
+        <div className="mb-7 flex items-end justify-between">
+          <div>
+            <h1 className="text-[40px] leading-none font-semibold tracking-[-0.03em]">
+              {activeFilter === "all"
+                ? "All cards"
+                : (TYPE_LABEL[activeFilter] ?? activeFilter)}
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {filteredCards.length}{" "}
+              {filteredCards.length === 1 ? "card" : "cards"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Button asChild size="default">
+              <Link href="/create">+ New card</Link>
+            </Button>
+          </div>
+        </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Empty state */}
+        {filteredCards.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
+              <Inbox className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold tracking-[-0.02em]">
+              {activeFilter === "all" ? "No cards yet" : "No cards here"}
+            </h2>
+            <p className="mx-auto mb-8 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              {activeFilter === "all"
+                ? "Create your first greeting card. It only takes a sentence."
+                : `You don't have any ${TYPE_LABEL[activeFilter]?.toLowerCase() ?? activeFilter} cards yet.`}
+            </p>
+            <Button asChild size="lg">
+              <Link href="/create">Create your first card</Link>
+            </Button>
+          </div>
+        )}
+
+        {/* Cards grid */}
+        {filteredCards.length > 0 && (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+            {filteredCards.map((card, index) => {
+              const hue = TYPE_HUE[card.card_type] ?? 40
+              const isConfirming = confirmDeleteId === card.id
+              const isDeleting = deletingId === card.id
               return (
-                <button
-                  key={item.key}
-                  onClick={() => setActiveFilter(item.key)}
-                  className={`mb-0.5 flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border px-3 py-2.5 text-sm transition-colors ${
-                    isActive
-                      ? "border-border bg-card text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <NavIcon name={item.icon} />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  <span className="text-xs text-muted-foreground/60">
-                    {item.count || ""}
-                  </span>
-                </button>
+                <div key={card.id} className="group relative">
+                  <Link
+                    href={`/dashboard/cards/${card.id}`}
+                    className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
+                  >
+                    {/* Image */}
+                    <div
+                      className="relative w-full overflow-hidden bg-secondary"
+                      style={{ aspectRatio: "4/5" }}
+                    >
+                      {card.image_url ? (
+                        <Image
+                          src={card.image_url}
+                          alt={`${card.recipient_name}'s card`}
+                          fill
+                          loading={index === 0 ? "eager" : "lazy"}
+                          priority={index === 0}
+                          unoptimized={looksLikeDataUrl(card.image_url)}
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div
+                          className="h-full w-full"
+                          style={{
+                            background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
+                          }}
+                        />
+                      )}
+
+                      {/* Type badge — top left */}
+                      <div className="absolute top-3.5 left-3.5">
+                        <span className="inline-flex items-center rounded-full bg-white/92 px-2.5 py-1 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur-sm">
+                          {TYPE_LABEL[card.card_type] ??
+                            card.card_type.replace("_", " ")}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="p-[18px]">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-[17px] font-medium tracking-[-0.01em]">
+                          For {card.recipient_name}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {new Date(card.created_at).toLocaleDateString("en", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[13px] text-muted-foreground">
+                        From {card.sender_name}
+                      </p>
+
+                      <div className="mt-3.5 flex w-full items-center justify-end gap-3">
+                        <span className="text-[12.5px] text-muted-foreground">
+                          View card
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+
+                  {/* Delete button — visible on hover */}
+                  {!isConfirming && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setConfirmDeleteId(card.id)}
+                      className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                      aria-label="Delete card"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+
+                  {/* Delete confirmation overlay */}
+                  {isConfirming && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/90 backdrop-blur-sm">
+                      <div className="text-center">
+                        <p className="mb-4 text-sm font-medium">
+                          Delete this card?
+                        </p>
+                        <div className="flex justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={isDeleting}
+                            onClick={() => handleDelete(card.id)}
+                          >
+                            {isDeleting ? (
+                              <Spinner className="h-4 w-4" />
+                            ) : (
+                              "Delete"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
-
-          {/* User profile */}
-          {user && (
-            <div className="px-5 py-5">
-              <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
-                  {initials(user)}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-[13px] leading-tight font-medium">
-                    {displayName(user)}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/60">
-                    Free plan
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </aside>
-
-        {/* ── Main content ── */}
-        <main className="flex-1 overflow-y-auto px-6 py-9 md:px-10">
-          {/* Page header */}
-          <div className="mb-7 flex items-end justify-between">
-            <div>
-              <h1 className="text-[40px] leading-none font-semibold tracking-[-0.03em]">
-                {activeFilter === "all"
-                  ? "All cards"
-                  : (TYPE_LABEL[activeFilter] ?? activeFilter)}
-              </h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                {filteredCards.length}{" "}
-                {filteredCards.length === 1 ? "card" : "cards"}
-              </p>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <Button asChild size="default">
-                <Link href="/create">+ New card</Link>
-              </Button>
-            </div>
-          </div>
-
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Empty state */}
-          {filteredCards.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
-                <Inbox className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h2 className="mb-2 text-xl font-semibold tracking-[-0.02em]">
-                {activeFilter === "all" ? "No cards yet" : "No cards here"}
-              </h2>
-              <p className="mx-auto mb-8 max-w-xs text-sm leading-relaxed text-muted-foreground">
-                {activeFilter === "all"
-                  ? "Create your first greeting card. It only takes a sentence."
-                  : `You don't have any ${TYPE_LABEL[activeFilter]?.toLowerCase() ?? activeFilter} cards yet.`}
-              </p>
-              <Button asChild size="lg">
-                <Link href="/create">Create your first card</Link>
-              </Button>
-            </div>
-          )}
-
-          {/* Cards grid */}
-          {filteredCards.length > 0 && (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
-              {filteredCards.map((card, index) => {
-                const hue = TYPE_HUE[card.card_type] ?? 40
-                const isConfirming = confirmDeleteId === card.id
-                const isDeleting = deletingId === card.id
-                return (
-                  <div key={card.id} className="group relative">
-                    <Link
-                      href={`/dashboard/cards/${card.id}`}
-                      className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
-                    >
-                      {/* Image */}
-                      <div
-                        className="relative w-full overflow-hidden bg-secondary"
-                        style={{ aspectRatio: "4/5" }}
-                      >
-                        {card.image_url ? (
-                          <Image
-                            src={card.image_url}
-                            alt={`${card.recipient_name}'s card`}
-                            fill
-                            loading={index === 0 ? "eager" : "lazy"}
-                            priority={index === 0}
-                            unoptimized={looksLikeDataUrl(card.image_url)}
-                            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                          />
-                        ) : (
-                          <div
-                            className="h-full w-full"
-                            style={{
-                              background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
-                            }}
-                          />
-                        )}
-
-                        {/* Type badge — top left */}
-                        <div className="absolute top-3.5 left-3.5">
-                          <span className="inline-flex items-center rounded-full bg-white/92 px-2.5 py-1 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur-sm">
-                            {TYPE_LABEL[card.card_type] ??
-                              card.card_type.replace("_", " ")}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Info */}
-                      <div className="p-[18px]">
-                        <div className="flex items-baseline justify-between">
-                          <span className="text-[17px] font-medium tracking-[-0.01em]">
-                            For {card.recipient_name}
-                          </span>
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            {new Date(card.created_at).toLocaleDateString(
-                              "en",
-                              {
-                                month: "short",
-                                day: "numeric",
-                              },
-                            )}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[13px] text-muted-foreground">
-                          From {card.sender_name}
-                        </p>
-
-                        <div className="mt-3.5 flex w-full items-center justify-end gap-3">
-                          <span className="text-[12.5px] text-muted-foreground">
-                            View card
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-
-                    {/* Delete button — visible on hover */}
-                    {!isConfirming && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setConfirmDeleteId(card.id)}
-                        className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
-                        aria-label="Delete card"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-
-                    {/* Delete confirmation overlay */}
-                    {isConfirming && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/90 backdrop-blur-sm">
-                        <div className="text-center">
-                          <p className="mb-4 text-sm font-medium">
-                            Delete this card?
-                          </p>
-                          <div className="flex justify-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setConfirmDeleteId(null)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              disabled={isDeleting}
-                              onClick={() => handleDelete(card.id)}
-                            >
-                              {isDeleting ? (
-                                <Spinner className="h-4 w-4" />
-                              ) : (
-                                "Delete"
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </main>
-      </div>
+        )}
+      </main>
     </div>
   )
 }

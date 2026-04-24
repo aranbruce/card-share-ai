@@ -12,7 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card3D } from "@/components/card-3d"
 import type { Contribution } from "@/lib/card-body"
-import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { useCardData } from "@/hooks/use-card-data"
@@ -475,12 +475,17 @@ export const CardOwnerStudio = forwardRef<
   }, [loading, creatorRow, card, cardId, setContributions])
 
   if (loading || !card) {
+    if (loading) {
+      return (
+        <Skeleton
+          className="w-full rounded-2xl"
+          style={{ minHeight: "500px" }}
+        />
+      )
+    }
     return (
       <div className="flex min-h-[320px] items-center justify-center">
-        {loading ? <Spinner className="h-8 w-8" /> : null}
-        {!loading && !card ? (
-          <p className="text-sm text-muted-foreground">Card not found</p>
-        ) : null}
+        <p className="text-sm text-muted-foreground">Card not found</p>
       </div>
     )
   }

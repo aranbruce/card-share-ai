@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
-import { Spinner } from "@/components/ui/spinner"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Card3D } from "@/components/card-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
@@ -589,9 +589,35 @@ export default function ContributeCardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-        <Spinner className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">Loading card…</p>
+      <div className="flex min-h-screen flex-col bg-background">
+        <AppHeader />
+        <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
+          <main className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14">
+            <div className="w-full max-w-xl space-y-8">
+              <div className="space-y-2 text-center">
+                <Skeleton className="mx-auto h-3 w-32 rounded-sm" />
+                <Skeleton className="mx-auto h-9 w-64 rounded-md" />
+                <Skeleton className="mx-auto h-4 w-72 rounded-sm" />
+              </div>
+              <Skeleton
+                className="mx-auto w-full max-w-md rounded-2xl"
+                style={{ minHeight: "500px" }}
+              />
+            </div>
+          </main>
+          <aside className="flex flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
+            <div className="flex flex-1 flex-col gap-5 p-6">
+              <Skeleton className="h-6 w-40 rounded-md" />
+              <Skeleton className="h-32 w-full rounded-xl" />
+              <div className="flex items-center gap-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-8 rounded-lg" />
+                ))}
+              </div>
+              <Skeleton className="h-11 w-full rounded-lg" />
+            </div>
+          </aside>
+        </div>
       </div>
     )
   }
