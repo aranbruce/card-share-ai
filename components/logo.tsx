@@ -15,7 +15,7 @@ export function Logo({
       href="/"
       aria-label="Home"
       className={cn(
-        "flex shrink-0 items-center gap-2 self-start text-foreground transition-opacity hover:opacity-80",
+        "flex shrink-0 items-center gap-2 self-center text-foreground transition-opacity hover:opacity-80",
         className,
       )}
     >
