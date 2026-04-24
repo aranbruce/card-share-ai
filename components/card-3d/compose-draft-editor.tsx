@@ -1,6 +1,7 @@
 "use client"
 
 import type { Card3DComposeDraftProps } from "./types"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import { useRef, useState } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
@@ -82,9 +83,7 @@ export function ComposeDraftEditor({
       >
         <div className="space-y-3">
           {composeError ? (
-            <div className="rounded border border-destructive/20 bg-destructive/10 p-2.5 text-sm text-destructive">
-              {composeError}
-            </div>
+            <Alert variant="destructive"><AlertDescription>{composeError}</AlertDescription></Alert>
           ) : null}
           {composeDraft.giphyUrl ? (
             <div className="flex w-full justify-center overflow-hidden rounded-md">

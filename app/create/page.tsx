@@ -8,7 +8,9 @@ import { CardDetailsForm } from "@/components/card-details-form"
 import { AuthGateModal } from "@/components/auth-gate-modal"
 import { Card3D } from "@/components/card-3d"
 import { Button } from "@/components/ui/button"
+import { ChipButton } from "@/components/ui/chip-button"
 import { Spinner } from "@/components/ui/spinner"
+import { Input } from "@/components/ui/input"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Sparkles, X } from "lucide-react"
@@ -319,15 +321,17 @@ export default function CreateCardPage() {
         <AppHeader
           right={
             !isGuest ? (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
                 onClick={async () => {
                   await supabase.auth.signOut()
                   router.push("/")
                 }}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Sign out
-              </button>
+              </Button>
             ) : undefined
           }
         />
@@ -365,11 +369,10 @@ export default function CreateCardPage() {
                   <div className="flex w-full max-w-md flex-col gap-12">
                     {openAiPanel === null ? (
                       <div className="flex justify-center gap-2">
-                        <button
-                          type="button"
+                        <ChipButton
                           onClick={() => setOpenAiPanel("image")}
                           disabled={isRegeneratingImage || isGeneratingImage}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                          className="gap-1.5 text-xs"
                         >
                           {isRegeneratingImage ? (
                             <Spinner className="h-3 w-3" />
@@ -377,12 +380,11 @@ export default function CreateCardPage() {
                             <Sparkles className="h-3 w-3" />
                           )}
                           Edit image
-                        </button>
-                        <button
-                          type="button"
+                        </ChipButton>
+                        <ChipButton
                           onClick={() => setOpenAiPanel("title")}
                           disabled={isRegeneratingHeadline || isGeneratingCopy}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                          className="gap-1.5 text-xs"
                         >
                           {isRegeneratingHeadline ? (
                             <Spinner className="h-3 w-3" />
@@ -390,13 +392,13 @@ export default function CreateCardPage() {
                             <Sparkles className="h-3 w-3" />
                           )}
                           Edit title
-                        </button>
+                        </ChipButton>
                       </div>
                     ) : openAiPanel === "image" ? (
                       <div className="flex gap-2">
-                        <input
+                        <Input
                           autoFocus
-                          className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                          className="rounded-full focus-visible:ring-1"
                           placeholder="Describe the image change…"
                           value={imagePrompt}
                           onChange={(e) => setImagePrompt(e.target.value)}
@@ -421,9 +423,9 @@ export default function CreateCardPage() {
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <input
+                        <Input
                           autoFocus
-                          className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                          className="rounded-full focus-visible:ring-1"
                           placeholder="Describe the title change…"
                           value={titlePrompt}
                           onChange={(e) => setTitlePrompt(e.target.value)}

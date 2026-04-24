@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Dialog,
   DialogContent,
@@ -180,9 +181,7 @@ export function GiphyPicker({
               <Spinner className="h-6 w-6" />
             </div>
           ) : error ? (
-            <div className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
           ) : gifs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No GIFs found.</p>
           ) : (
@@ -204,7 +203,7 @@ export function GiphyPicker({
                     <button
                       key={gif.id}
                       type="button"
-                      className={`group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-lg border text-left transition focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${
+                      className={`group relative mb-3 w-full cursor-pointer break-inside-avoid overflow-hidden rounded-lg border text-left transition ${
                         isSelected
                           ? "border-primary ring-2 ring-primary/30"
                           : "border-border hover:border-primary/50"

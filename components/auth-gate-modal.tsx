@@ -27,7 +27,7 @@ export function AuthGateModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl">Save Your Card</DialogTitle>
+          <DialogTitle>Save Your Card</DialogTitle>
           <DialogDescription className="text-base">
             Sign in or create an account to save, download, and send your card.
           </DialogDescription>

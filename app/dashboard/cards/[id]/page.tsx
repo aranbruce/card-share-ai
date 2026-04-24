@@ -11,6 +11,9 @@ import {
 import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { ChipButton } from "@/components/ui/chip-button"
+import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
@@ -30,7 +33,6 @@ import {
   Sparkles,
   X,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
 import {
   MIN_CONTRIBUTION_ROTATION_DEGREES,
@@ -171,9 +173,9 @@ function CardDetailInner() {
         <p className="text-xl font-semibold tracking-[-0.02em]">
           Card not found
         </p>
-        <Link href="/dashboard">
-          <Button variant="outline">← Back to dashboard</Button>
-        </Link>
+        <Button asChild variant="outline">
+          <Link href="/dashboard">← Back to dashboard</Link>
+        </Button>
       </div>
     )
   }
@@ -222,20 +224,19 @@ function CardDetailInner() {
           </div>
 
           {error && (
-            <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* AI edit buttons + card — share max-w-md so input matches card width */}
           <div className="mx-auto flex w-full max-w-md flex-col gap-12">
             {openAiPanel === null ? (
               <div className="flex justify-center gap-2">
-                <button
-                  type="button"
+                <ChipButton
                   onClick={() => setOpenAiPanel("image")}
                   disabled={isRegeneratingImage}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                  className="gap-1.5 text-xs"
                 >
                   {isRegeneratingImage ? (
                     <Spinner className="h-3 w-3" />
@@ -243,12 +244,11 @@ function CardDetailInner() {
                     <Sparkles className="h-3 w-3" />
                   )}
                   Edit image
-                </button>
-                <button
-                  type="button"
+                </ChipButton>
+                <ChipButton
                   onClick={() => setOpenAiPanel("title")}
                   disabled={isRegeneratingHeadline}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                  className="gap-1.5 text-xs"
                 >
                   {isRegeneratingHeadline ? (
                     <Spinner className="h-3 w-3" />
@@ -256,13 +256,13 @@ function CardDetailInner() {
                     <Sparkles className="h-3 w-3" />
                   )}
                   Edit title
-                </button>
+                </ChipButton>
               </div>
             ) : openAiPanel === "image" ? (
               <div className="flex gap-2">
-                <input
+                <Input
                   autoFocus
-                  className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="rounded-full focus-visible:ring-1"
                   placeholder="Describe the image change…"
                   value={imagePrompt}
                   onChange={(e) => setImagePrompt(e.target.value)}
@@ -286,9 +286,9 @@ function CardDetailInner() {
               </div>
             ) : (
               <div className="flex gap-2">
-                <input
+                <Input
                   autoFocus
-                  className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                  className="rounded-full focus-visible:ring-1"
                   placeholder="Describe the title change…"
                   value={titlePrompt}
                   onChange={(e) => setTitlePrompt(e.target.value)}
@@ -346,9 +346,9 @@ function CardDetailInner() {
               <div className="flex flex-row flex-wrap gap-2">
                 {refineOpen ? (
                   <div className="flex w-full gap-2">
-                    <input
+                    <Input
                       autoFocus
-                      className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                      className="rounded-full focus-visible:ring-1"
                       placeholder="Describe the change…"
                       value={refinePrompt}
                       onChange={(e) => setRefinePrompt(e.target.value)}
@@ -371,20 +371,18 @@ function CardDetailInner() {
                   </div>
                 ) : (
                   <>
-                    <button
-                      type="button"
+                    <ChipButton
                       onClick={() => setRefineOpen(true)}
                       disabled={
                         isRefining ||
                         Boolean(activeContribution?.isRegeneratingMessage)
                       }
-                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      className="gap-1.5 text-xs"
                     >
                       <Sparkles className="h-3 w-3" />
                       Improve
-                    </button>
-                    <button
-                      type="button"
+                    </ChipButton>
+                    <ChipButton
                       onClick={() =>
                         void handleAiRefine("Make this message shorter")
                       }
@@ -392,12 +390,11 @@ function CardDetailInner() {
                         isRefining ||
                         Boolean(activeContribution?.isRegeneratingMessage)
                       }
-                      className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      className="text-xs"
                     >
                       Shorten
-                    </button>
-                    <button
-                      type="button"
+                    </ChipButton>
+                    <ChipButton
                       onClick={() =>
                         void handleAiRefine(
                           "Make this message warmer and more personal",
@@ -407,10 +404,10 @@ function CardDetailInner() {
                         isRefining ||
                         Boolean(activeContribution?.isRegeneratingMessage)
                       }
-                      className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                      className="text-xs"
                     >
                       Warmer
-                    </button>
+                    </ChipButton>
                   </>
                 )}
               </div>
@@ -427,7 +424,7 @@ function CardDetailInner() {
                     key={color}
                     type="button"
                     onClick={() => activeContribution?.onTextColorChange(color)}
-                    className="h-7 w-7 rounded-full border-2 transition-all"
+                    className="h-7 w-7 cursor-pointer rounded-full border-2 transition-all"
                     style={{
                       backgroundColor: color,
                       borderColor:
@@ -466,33 +463,34 @@ function CardDetailInner() {
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="-ml-2 text-muted-foreground"
                       onClick={() => activeContribution.onGifOpen()}
-                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                     >
                       Change
-                    </button>
+                    </Button>
                     {activeContribution.onGifClear && (
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-2 text-destructive/70 hover:text-destructive"
                         onClick={() => activeContribution.onGifClear?.()}
-                        className="text-xs text-destructive/70 transition-colors hover:text-destructive"
                       >
                         Remove
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
               ) : (
-                <button
-                  type="button"
+                <ChipButton
                   onClick={() => activeContribution?.onGifOpen()}
-                  className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
+                  className="gap-2 self-start text-xs"
                 >
                   <ImagePlus className="h-3.5 w-3.5" />
                   Add GIF
-                </button>
+                </ChipButton>
               )}
             </div>
 
@@ -503,19 +501,14 @@ function CardDetailInner() {
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {FONT_SIZE_PRESETS.map(({ px, label }) => (
-                  <button
+                  <ChipButton
                     key={px}
-                    type="button"
                     onClick={() => activeContribution?.onFontSizeChange(px)}
-                    className={cn(
-                      "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                      snappedFontSize === px
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                    )}
+                    active={snappedFontSize === px}
+                    className="py-1 text-xs"
                   >
                     {label}
-                  </button>
+                  </ChipButton>
                 ))}
               </div>
             </div>
@@ -539,7 +532,7 @@ function CardDetailInner() {
                       ),
                     )
                   }
-                  className="flex h-full items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                  className="flex h-full cursor-pointer items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   title="Rotate counter-clockwise"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
@@ -562,7 +555,7 @@ function CardDetailInner() {
                       ),
                     )
                   }
-                  className="flex h-full items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+                  className="flex h-full cursor-pointer items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
                   title="Rotate clockwise"
                 >
                   <RotateCw className="h-3.5 w-3.5" />
@@ -581,19 +574,14 @@ function CardDetailInner() {
                     { length: activeContribution.totalInnerPages },
                     (_, i) => i + 1,
                   ).map((page) => (
-                    <button
+                    <ChipButton
                       key={page}
-                      type="button"
                       onClick={() => activeContribution.onPageChange(page)}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                        activeContribution.pageIndex === page
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                      )}
+                      active={activeContribution.pageIndex === page}
+                      className="py-1 text-xs"
                     >
                       {page}
-                    </button>
+                    </ChipButton>
                   ))}
                 </div>
               </div>
@@ -624,7 +612,6 @@ function CardDetailInner() {
                     {copyLinkCopied ? "Link copied!" : "Copy share link"}
                   </Button>
                   <Button
-                    variant="brand"
                     size="default"
                     onClick={() => setShowShareModal(true)}
                     className="w-full"

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
@@ -415,18 +416,14 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center gap-2.5">
-              <Link href="/create">
-                <Button variant="brand" size="default">
-                  + New card
-                </Button>
-              </Link>
+              <Button asChild size="default">
+                <Link href="/create">+ New card</Link>
+              </Button>
             </div>
           </div>
 
           {error && (
-            <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <Alert variant="destructive" className="mb-6"><AlertDescription>{error}</AlertDescription></Alert>
           )}
 
           {/* Empty state */}
@@ -443,11 +440,9 @@ export default function DashboardPage() {
                   ? "Create your first greeting card. It only takes a sentence."
                   : `You don't have any ${TYPE_LABEL[activeFilter]?.toLowerCase() ?? activeFilter} cards yet.`}
               </p>
-              <Link href="/create">
-                <Button variant="brand" size="lg">
-                  Create your first card
-                </Button>
-              </Link>
+              <Button asChild size="lg">
+                <Link href="/create">Create your first card</Link>
+              </Button>
             </div>
           )}
 
@@ -527,13 +522,15 @@ export default function DashboardPage() {
 
                     {/* Delete button — visible on hover */}
                     {!isConfirming && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() => setConfirmDeleteId(card.id)}
-                        className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive"
+                        className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100 hover:text-destructive"
                         aria-label="Delete card"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
+                      </Button>
                     )}
 
                     {/* Delete confirmation overlay */}

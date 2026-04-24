@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -57,16 +58,15 @@ export default function ForgotPassword() {
           Click the link in the email to reset your password. The link will
           expire in 1 hour.
         </p>
-        <Link href="/auth/login">
-          <Button
-            variant="outline"
-            size="lg"
-            fullWidth
-            className="mt-4 border-border/50 hover:bg-secondary/50"
-          >
-            Back to Login
-          </Button>
-        </Link>
+        <Button
+          asChild
+          variant="outline"
+          size="lg"
+          fullWidth
+          className="mt-4 border-border/50 hover:bg-secondary/50"
+        >
+          <Link href="/auth/login">Back to Login</Link>
+        </Button>
       </>
     )
   }
@@ -85,9 +85,7 @@ export default function ForgotPassword() {
 
       <form onSubmit={handleResetRequest} className="space-y-4">
         {error && (
-          <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
         )}
 
         <div>
@@ -109,7 +107,6 @@ export default function ForgotPassword() {
         <Button
           type="submit"
           size="lg"
-          variant="brand"
           fullWidth
           className="mt-4"
           disabled={loading}

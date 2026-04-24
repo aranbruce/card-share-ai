@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -65,9 +66,7 @@ export default function ResetPassword() {
 
       <form onSubmit={handleResetPassword} className="space-y-4">
         {error && (
-          <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
         )}
 
         <div>

@@ -144,7 +144,7 @@ export function ShareModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="overflow-hidden rounded-2xl p-0 sm:max-w-md">
+      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
         <div className="p-6 pb-0">
           <DialogHeader>
             <DialogTitle className="text-2xl">Send Card</DialogTitle>
@@ -171,7 +171,7 @@ export function ShareModal({
               <Input
                 value={viewLink}
                 readOnly
-                className="bg-muted/50 font-medium text-muted-foreground focus-visible:ring-0"
+                variant="readonly"
               />
               <Button
                 size="icon"
@@ -215,7 +215,7 @@ export function ShareModal({
                   and send it manually.
                 </p>
                 <div className="flex gap-2">
-                  <Input value={viewLink} readOnly className="bg-background" />
+                  <Input value={viewLink} readOnly variant="readonly" />
                   <Button
                     size="icon"
                     variant="outline"
@@ -241,11 +241,7 @@ export function ShareModal({
                       setRecipientEmail(e.target.value)
                       setEmailError("")
                     }}
-                    className={
-                      emailError
-                        ? "border-destructive focus-visible:ring-destructive"
-                        : ""
-                    }
+                    aria-invalid={!!emailError}
                   />
                   {emailError && (
                     <p className="text-xs text-destructive">{emailError}</p>
@@ -269,7 +265,6 @@ export function ShareModal({
                     )}
                   </Button>
                   <Button
-                    variant="brand"
                     className="flex-1"
                     onClick={handleSendEmail}
                     disabled={sending || !recipientEmail.trim()}

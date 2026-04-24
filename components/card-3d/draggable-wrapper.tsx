@@ -393,7 +393,7 @@ export function DraggableWrapper({
               data-note-chrome
               aria-label="Move note"
               onMouseDown={(e) => handleMouseDown(e, "drag")}
-              className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Move className="h-3 w-3 text-muted-foreground" />
             </div>
@@ -404,7 +404,7 @@ export function DraggableWrapper({
               data-note-chrome
               aria-label="Resize note"
               onMouseDown={(e) => handleMouseDown(e, "resize")}
-              className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity outline-none group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Maximize2 className="h-3 w-3 text-muted-foreground" />
             </div>

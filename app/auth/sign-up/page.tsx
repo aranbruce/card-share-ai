@@ -232,9 +232,7 @@ function SignUpForm() {
 
       <form onSubmit={handleSignUp} className="space-y-4">
         {error && (
-          <div className="rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
         )}
 
         <div>
@@ -271,7 +269,6 @@ function SignUpForm() {
 
         <Button
           type="submit"
-          variant="brand"
           size="lg"
           fullWidth
           className="mt-4"

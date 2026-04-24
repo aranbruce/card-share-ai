@@ -1,5 +1,6 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { ArrowUp, X } from "lucide-react"
 import type { KeyboardEvent } from "react"
@@ -46,27 +47,25 @@ export function RegeneratePromptBar({
           disabled={isRegenerating}
           autoFocus
         />
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="icon-sm"
           onClick={() => void onSubmit()}
           disabled={isRegenerating || !value.trim()}
-          className="rounded-full bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+          className="rounded-full"
           title="Generate"
         >
-          {isRegenerating ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <ArrowUp className="h-4 w-4" />
-          )}
-        </button>
-        <button
-          type="button"
+          {isRegenerating ? <Spinner className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={onCancel}
-          className="rounded-full p-1.5 transition-colors hover:bg-muted"
+          className="rounded-full"
           title="Cancel"
         >
           <X className="h-4 w-4 text-muted-foreground" />
-        </button>
+        </Button>
       </div>
     </div>
   )

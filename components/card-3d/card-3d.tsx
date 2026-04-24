@@ -643,8 +643,9 @@ export function Card3D({
             {Array.from({ length: totalPages }).map((_, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => setCurrentPage(i)}
-                className={`h-2 w-2 rounded-full transition-colors ${
+                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
                   i === currentPage
                     ? "bg-primary"
                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"

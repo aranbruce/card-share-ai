@@ -10,7 +10,10 @@ import {
   RotateCcw,
   RotateCw,
 } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { ChipButton } from "@/components/ui/chip-button"
+import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
 
@@ -80,9 +83,7 @@ export function NotePanel({
       </div>
 
       {error && (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
       )}
 
       {/* AI refine */}
@@ -93,9 +94,9 @@ export function NotePanel({
         <div className="flex flex-wrap gap-2">
           {refineOpen ? (
             <div className="flex w-full gap-2">
-              <input
+              <Input
                 autoFocus
-                className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand/30"
+                className="rounded-full focus-visible:ring-1"
                 placeholder="Describe the change…"
                 value={refinePrompt}
                 onChange={(e) => setRefinePrompt(e.target.value)}
@@ -119,32 +120,32 @@ export function NotePanel({
             </div>
           ) : (
             <>
-              <button
+              <ChipButton
                 onClick={() => setRefineOpen(true)}
                 disabled={isRegenerating}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                className="gap-1.5 text-xs"
               >
                 <Sparkles className="h-3 w-3" />
                 Improve
-              </button>
-              <button
+              </ChipButton>
+              <ChipButton
                 onClick={() => void onRegenerate("Make this message shorter")}
                 disabled={isRegenerating}
-                className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                className="text-xs"
               >
                 Shorten
-              </button>
-              <button
+              </ChipButton>
+              <ChipButton
                 onClick={() =>
                   void onRegenerate(
                     "Make this message warmer and more personal",
                   )
                 }
                 disabled={isRegenerating}
-                className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground disabled:opacity-50"
+                className="text-xs"
               >
                 Warmer
-              </button>
+              </ChipButton>
             </>
           )}
         </div>
@@ -158,7 +159,7 @@ export function NotePanel({
             <button
               key={color}
               onClick={() => onTextColorChange(color)}
-              className="h-7 w-7 rounded-full border-2 transition-all"
+              className="h-7 w-7 cursor-pointer rounded-full border-2 transition-all"
               style={{
                 backgroundColor: color,
                 borderColor:
@@ -195,28 +196,29 @@ export function NotePanel({
               />
             </div>
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2 text-muted-foreground"
                 onClick={onOpenGifPicker}
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
                 Change
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2 text-destructive/70 hover:text-destructive"
                 onClick={() => onGifChange(null)}
-                className="text-xs text-destructive/70 transition-colors hover:text-destructive"
               >
                 Remove
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
-          <button
-            onClick={onOpenGifPicker}
-            className="inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-foreground/20 hover:text-foreground"
-          >
+          <ChipButton onClick={onOpenGifPicker} className="gap-2 self-start text-xs">
             <ImagePlus className="h-3.5 w-3.5" />
             Add GIF
-          </button>
+          </ChipButton>
         )}
       </div>
 
@@ -225,18 +227,14 @@ export function NotePanel({
         <p className="text-xs font-medium text-muted-foreground">Text size</p>
         <div className="flex flex-wrap gap-1.5">
           {FONT_SIZE_PRESETS.map(({ px, label }) => (
-            <button
+            <ChipButton
               key={px}
               onClick={() => onFontSizeChange(px)}
-              className={[
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                (values.fontSize ?? 16) === px
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-              ].join(" ")}
+              active={(values.fontSize ?? 16) === px}
+              className="py-1 text-xs"
             >
               {label}
-            </button>
+            </ChipButton>
           ))}
         </div>
       </div>
@@ -249,7 +247,7 @@ export function NotePanel({
             type="button"
             disabled={rotation <= -12}
             onClick={() => onRotationChange(Math.max(-12, rotation - 1))}
-            className="flex h-full items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+            className="flex h-full cursor-pointer items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
             title="Rotate counter-clockwise"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -263,7 +261,7 @@ export function NotePanel({
             type="button"
             disabled={rotation >= 12}
             onClick={() => onRotationChange(Math.min(12, rotation + 1))}
-            className="flex h-full items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+            className="flex h-full cursor-pointer items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
             title="Rotate clockwise"
           >
             <RotateCw className="h-3.5 w-3.5" />
@@ -278,18 +276,14 @@ export function NotePanel({
           <div className="flex flex-wrap gap-1.5">
             {Array.from({ length: totalInnerPages }, (_, i) => i + 1).map(
               (pageNum) => (
-                <button
+                <ChipButton
                   key={pageNum}
                   onClick={() => onPageChange(pageNum)}
-                  className={[
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    (values.pageIndex ?? 1) === pageNum
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground",
-                  ].join(" ")}
+                  active={(values.pageIndex ?? 1) === pageNum}
+                  className="py-1 text-xs"
                 >
                   {pageNum}
-                </button>
+                </ChipButton>
               ),
             )}
           </div>
@@ -308,7 +302,7 @@ export function NotePanel({
             Cancel
           </Button>
           <Button
-            className="flex-1 bg-brand text-white hover:bg-brand/90"
+            className="flex-1"
             onClick={() => void onSubmit()}
             disabled={submitting || isRegenerating}
           >

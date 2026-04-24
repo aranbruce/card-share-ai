@@ -56,8 +56,8 @@ export function CardTypeSelector({
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-10">
-        <Link href={isGuest ? "/" : "/dashboard"}>
-          <Button variant="outline" size="default">
+        <Button asChild variant="outline" size="default">
+          <Link href={isGuest ? "/" : "/dashboard"}>
             <svg
               width="14"
               height="14"
@@ -71,8 +71,8 @@ export function CardTypeSelector({
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
             {isGuest ? "Back" : "Back to dashboard"}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
       <div className="mb-10">
         <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground uppercase">

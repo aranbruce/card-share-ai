@@ -1,5 +1,6 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 import type {
@@ -437,19 +438,17 @@ export const InlineEdit = forwardRef<
       </div>
 
       {showFloatingRegenerate && (
-        <button
+        <Button
           data-regenerate-area
+          variant="primary"
+          size="icon"
           onClick={handleSparkleClick}
           disabled={isRegenerating}
-          className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full bg-primary p-2.5 text-primary-foreground opacity-100 shadow-lg transition-all hover:scale-110 hover:bg-primary/90 disabled:opacity-50 md:-right-12 md:opacity-0 md:group-hover:opacity-100"
+          className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full p-2.5 opacity-100 shadow-lg transition-all hover:scale-110 md:-right-12 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
           title="Rewrite with AI"
         >
-          {isRegenerating ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
-        </button>
+          {isRegenerating ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+        </Button>
       )}
 
       {showPromptInput && !toolbarExternal ? (
@@ -474,27 +473,25 @@ export const InlineEdit = forwardRef<
               className="min-w-0 flex-1 border-none bg-transparent px-2 py-1 text-base text-foreground outline-none sm:text-sm"
               disabled={isRegenerating}
             />
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="icon-sm"
               onClick={() => void handleRegenerate()}
               disabled={isRegenerating || !promptText.trim()}
-              className="rounded-full bg-primary p-1.5 text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="rounded-full"
               title="Generate"
             >
-              {isRegenerating ? (
-                <Spinner className="h-4 w-4" />
-              ) : (
-                <ArrowUp className="h-4 w-4" />
-              )}
-            </button>
-            <button
-              type="button"
+              {isRegenerating ? <Spinner className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
               onClick={closeRegeneratePrompt}
-              className="rounded-full p-1.5 transition-colors hover:bg-muted"
+              className="rounded-full"
               title="Cancel"
             >
               <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}

@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card3D } from "@/components/card-3d"
 import type { Contribution } from "@/lib/card-body"
 import { Spinner } from "@/components/ui/spinner"
@@ -486,9 +487,7 @@ export const CardOwnerStudio = forwardRef<
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-        {error}
-      </div>
+      <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
     )
   }
 

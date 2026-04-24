@@ -111,7 +111,7 @@ export default function PublicCardPage() {
           />
 
           <div className="mt-8 flex justify-center">
-            <Button variant="brand" size="xl" asChild>
+            <Button size="xl" asChild>
               <Link href="/auth/sign-up">
                 <Sparkles />
                 Create your own card

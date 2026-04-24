@@ -12,14 +12,12 @@ export default function AuthError() {
         </p>
 
         <div className="space-y-3">
-          <Link href="/auth/login" className="block">
-            <Button fullWidth variant="outline">
-              Back to Login
-            </Button>
-          </Link>
-          <Link href="/" className="block">
-            <Button fullWidth>Return Home</Button>
-          </Link>
+          <Button asChild fullWidth variant="outline">
+            <Link href="/auth/login">Back to Login</Link>
+          </Button>
+          <Button asChild fullWidth>
+            <Link href="/">Return Home</Link>
+          </Button>
         </div>
       </Card>
     </>

@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
@@ -67,10 +69,11 @@ export function CardDetailsForm({
   return (
     <aside className="flex flex-col border-r border-border bg-card px-7 py-8">
       {/* Back link */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onBack}
-        className="flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="-ml-2 self-start text-muted-foreground"
       >
         <svg
           width="14"
@@ -85,7 +88,7 @@ export function CardDetailsForm({
           <path d="M19 12H5M12 5l-7 7 7 7" />
         </svg>
         Back to occasions
-      </button>
+      </Button>
 
       {/* Heading */}
       <div className="mt-6">
@@ -106,9 +109,9 @@ export function CardDetailsForm({
       {/* Form */}
       <form onSubmit={handleSubmit} className="mt-7 flex flex-1 flex-col gap-4">
         {error && (
-          <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* To */}
@@ -174,19 +177,14 @@ export function CardDetailsForm({
           </div>
           <div className="flex flex-wrap gap-1.5">
             {TONES.map((t) => (
-              <button
+              <ChipButton
                 key={t}
-                type="button"
                 onClick={() => setTone(t)}
                 disabled={isLoading}
-                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                  tone === t
-                    ? "border-transparent bg-foreground text-background"
-                    : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-                }`}
+                active={tone === t}
               >
                 {t}
-              </button>
+              </ChipButton>
             ))}
           </div>
         </div>
@@ -226,7 +224,6 @@ export function CardDetailsForm({
               </Button>
               <Button
                 type="button"
-                variant="brand"
                 size="default"
                 className="flex-1"
                 disabled={isLoading || isContinuing}
@@ -245,7 +242,6 @@ export function CardDetailsForm({
           ) : (
             <Button
               type="submit"
-              variant="brand"
               size="default"
               className="flex-1"
               disabled={isLoading}

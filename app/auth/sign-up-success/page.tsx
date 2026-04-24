@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Link from "next/link"
@@ -13,19 +14,19 @@ export default function SignUpSuccess() {
           complete your account setup.
         </p>
 
-        <div className="mb-6 rounded border border-secondary bg-secondary/50 p-4 text-sm">
-          <p>
+        <Alert className="mb-6 text-left">
+          <AlertDescription>
             Didn&apos;t receive the email? Check your spam folder or{" "}
-            <button className="font-medium text-primary hover:underline">
+            <Button variant="link" className="h-auto p-0 text-sm font-medium">
               try again
-            </button>
+            </Button>
             .
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
 
-        <Link href="/" className="inline-block">
-          <Button variant="outline">Return Home</Button>
-        </Link>
+        <Button asChild variant="outline">
+          <Link href="/">Return Home</Link>
+        </Button>
       </Card>
     </>
   )

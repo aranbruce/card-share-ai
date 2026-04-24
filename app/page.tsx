@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { ChipButton } from "@/components/ui/chip-button"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 
@@ -138,11 +139,9 @@ export default function HomePage() {
             >
               Sign in
             </Link>
-            <Link href="/create">
-              <Button variant="brand" size="sm">
-                Start a card
-              </Button>
-            </Link>
+            <Button asChild size="sm">
+              <Link href="/create">Start a card</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -162,19 +161,17 @@ export default function HomePage() {
             desk.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/create">
-              <Button variant="brand" size="lg">
+            <Button asChild size="lg">
+              <Link href="/create">
                 Start a card
                 <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
                   Free
                 </span>
-              </Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button variant="outline" size="lg">
-                Sign in
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/auth/login">Sign in</Link>
+            </Button>
           </div>
           {/* <div className="mt-10 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.15em] text-muted-foreground/60 uppercase">
             Trusted by teams at
@@ -240,18 +237,15 @@ export default function HomePage() {
             <div className="flex flex-wrap gap-2">
               {(["Warmer", "Sassier", "Shorter", "Friendlier"] as const).map(
                 (c) => (
-                  <button
+                  <ChipButton
                     key={c}
                     onClick={() => handleVariantClick(c)}
                     disabled={isGenerating}
-                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                      demoKey === c
-                        ? "border-foreground/30 bg-foreground/5 text-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground"
-                    }`}
+                    active={demoKey === c}
+                    className="text-xs"
                   >
                     {c}
-                  </button>
+                  </ChipButton>
                 ),
               )}
             </div>
@@ -296,19 +290,17 @@ export default function HomePage() {
             No account needed. Just type one sentence and go.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/create">
-              <Button variant="brand" size="lg">
+            <Button asChild size="lg">
+              <Link href="/create">
                 Start a card
                 <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
                   Free
                 </span>
-              </Button>
-            </Link>
-            <Link href="/auth/sign-up">
-              <Button variant="outline" size="lg">
-                Create an account
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/auth/sign-up">Create an account</Link>
+            </Button>
           </div>
         </div>
       </section>
