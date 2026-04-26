@@ -10,7 +10,7 @@ export default function AuthLayout({
       {/* Left — dark brand panel */}
       <div className="relative hidden flex-col justify-between overflow-hidden bg-foreground p-14 lg:flex">
         {/* Logo */}
-        <Logo variant="dark" />
+        <Logo variant="dark" className="self-start" />
 
         {/* Floating card previews */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -46,8 +46,7 @@ export default function AuthLayout({
             One prompt, any card
           </p>
           <p className="mt-3 max-w-sm text-3xl leading-tight font-semibold tracking-[-0.025em] text-background">
-            Every birthday, send-off, and thank you you ever organized. Saved
-            for good.
+            Every card you&apos;ve ever organized. Saved for good.
           </p>
         </div>
       </div>
