@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import { CheckIcon, CopyIcon, LinkIcon, MailIcon, SendIcon } from "lucide-react"
 import {
@@ -45,13 +45,6 @@ export function ShareModal({
   const [savingEmail, setSavingEmail] = useState(false)
 
   const viewLink = `${typeof window !== "undefined" ? window.location.origin : ""}/view/${contributorLinkId}`
-
-  useEffect(() => {
-    if (!isOpen) {
-      setClipboardError("")
-      setCopied("")
-    }
-  }, [isOpen])
 
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()
@@ -143,7 +136,16 @@ export function ShareModal({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          setClipboardError("")
+          setCopied("")
+          onClose()
+        }
+      }}
+    >
       <DialogContent className="overflow-hidden p-0 sm:max-w-md">
         <div className="p-6 pb-0">
           <DialogHeader>

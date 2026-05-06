@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -234,22 +234,7 @@ export default function DashboardPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user: u },
-      } = await supabase.auth.getUser()
-      if (!u) {
-        router.push("/auth/login")
-        return
-      }
-      setUser(u)
-      loadCards()
-    }
-    checkAuth()
-  }, [router, supabase])
-
-  const loadCards = async () => {
+  const loadCards = useCallback(async () => {
     try {
       const { cards: cardData } = await apiFetch<{ cards: CardItem[] }>(
         "/api/cards",
@@ -260,7 +245,22 @@ export default function DashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { user: u },
+      } = await supabase.auth.getUser()
+      if (!u) {
+        router.push("/auth/login")
+        return
+      }
+      setUser(u)
+      await loadCards()
+    }
+    void checkAuth()
+  }, [router, supabase, loadCards])
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)

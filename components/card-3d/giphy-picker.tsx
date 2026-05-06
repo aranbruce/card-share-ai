@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -82,18 +82,19 @@ export function GiphyPicker({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [gifs, setGifs] = useState<GiphyGif[]>([])
-  const [selectedGifUrl, setSelectedGifUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (open) {
-      setSelectedGifUrl(selectedUrl ?? null)
-    } else {
-      setQuery("")
-      setSearchTerm("")
-      setGifs([])
-      setError(null)
-    }
-  }, [open, selectedUrl])
+  const handleDialogOpenChange = useCallback(
+    (next: boolean) => {
+      if (!next) {
+        setQuery("")
+        setSearchTerm("")
+        setGifs([])
+        setError(null)
+      }
+      onOpenChange(next)
+    },
+    [onOpenChange],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -146,7 +147,7 @@ export function GiphyPicker({
   )
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-h-[80vh] max-w-3xl overflow-hidden p-0">
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <DialogTitle>Choose a GIF</DialogTitle>
@@ -195,7 +196,7 @@ export function GiphyPicker({
             <div className="max-h-[min(55vh,28rem)] min-h-0 overflow-x-hidden overflow-y-auto pb-2 [scrollbar-gutter:stable]">
               <div className="columns-2 gap-x-3 [column-fill:balance] sm:columns-3">
                 {gifs.map((gif) => {
-                  const isSelected = selectedGifUrl === gif.gifUrl
+                  const isSelected = (selectedUrl ?? null) === gif.gifUrl
                   const hasPreviewDims =
                     typeof gif.previewWidth === "number" &&
                     gif.previewWidth > 0 &&
@@ -211,9 +212,8 @@ export function GiphyPicker({
                           : "border-border hover:border-primary/50"
                       }`}
                       onClick={() => {
-                        setSelectedGifUrl(gif.gifUrl)
                         onSelect(gif.gifUrl)
-                        onOpenChange(false)
+                        handleDialogOpenChange(false)
                       }}
                       title={gif.title}
                     >

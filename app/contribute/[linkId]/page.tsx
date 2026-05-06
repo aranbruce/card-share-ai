@@ -13,6 +13,34 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/contribute/note-panel"
 
+function readContributeTokensFromStorage(
+  linkId: string,
+): Record<string, string> {
+  if (typeof window === "undefined") return {}
+  try {
+    const raw = sessionStorage.getItem(`contribute_tokens_${linkId}`)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return {}
+    const next: Record<string, string> = {}
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof k === "string" && typeof v === "string" && v.trim()) {
+        next[k] = v
+      }
+    }
+    return next
+  } catch {
+    return {}
+  }
+}
+
+export default function ContributeCardPage() {
+  const params = useParams()
+  const linkId = params.linkId as string
+  return <ContributeCardPageInner key={linkId} linkId={linkId} />
+}
+
 interface CardData {
   id: string
   card_type: string
@@ -25,10 +53,7 @@ interface CardData {
   extra_pages?: number
 }
 
-export default function ContributeCardPage() {
-  const params = useParams()
-  const linkId = params.linkId as string
-
+function ContributeCardPageInner({ linkId }: { linkId: string }) {
   const [card, setCard] = useState<CardData | null>(null)
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [loading, setLoading] = useState(true)
@@ -42,7 +67,7 @@ export default function ContributeCardPage() {
     useState(false)
   const [contributionEditTokens, setContributionEditTokens] = useState<
     Record<string, string>
-  >({})
+  >(() => readContributeTokensFromStorage(linkId))
   // Panel-only compose state — used before the user clicks to place the note
   // on the canvas. Once placed, composeDraft holds the full values.
   const [preComposeDraft, setPreComposeDraft] = useState(() => ({
@@ -84,14 +109,14 @@ export default function ContributeCardPage() {
     composeDraftRef.current = composeDraft
   }, [composeDraft])
 
-  // Auto-select the user's existing contribution so the panel is immediately
-  // active when they return to a card they've already signed.
-  useEffect(() => {
+  const autoEditingContributionId = useMemo(() => {
     const tokenIds = Object.keys(contributionEditTokens)
-    if (tokenIds.length === 0 || editingContributionId) return
-    const match = contributions.find((c) => tokenIds.includes(c.id))
-    if (match) setEditingContributionId(match.id)
-  }, [contributionEditTokens, contributions, editingContributionId])
+    if (tokenIds.length === 0) return null
+    return contributions.find((c) => tokenIds.includes(c.id))?.id ?? null
+  }, [contributionEditTokens, contributions])
+
+  const editingContributionIdResolved =
+    editingContributionId ?? autoEditingContributionId
 
   // Unified compose values — panel always reads from here regardless of placement
   const composeValues = composeDraft ?? preComposeDraft
@@ -116,28 +141,6 @@ export default function ContributeCardPage() {
       }
       gifTimers.forEach(clearTimeout)
       gifTimers.clear()
-    }
-  }, [linkId])
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(`contribute_tokens_${linkId}`)
-      if (raw) {
-        const parsed = JSON.parse(raw) as unknown
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          const next: Record<string, string> = {}
-          for (const [k, v] of Object.entries(parsed)) {
-            if (typeof k === "string" && typeof v === "string" && v.trim()) {
-              next[k] = v
-            }
-          }
-          if (Object.keys(next).length > 0) {
-            setContributionEditTokens(next)
-          }
-        }
-      }
-    } catch {
-      /* ignore */
     }
   }, [linkId])
 
@@ -334,10 +337,12 @@ export default function ContributeCardPage() {
       rotationDegrees?: number | null
       pageIndex?: number
     }) => {
-      if (!editingContributionId) return
-      const contrib = contributions.find((c) => c.id === editingContributionId)
+      if (!editingContributionIdResolved) return
+      const contrib = contributions.find(
+        (c) => c.id === editingContributionIdResolved,
+      )
       if (!contrib) return
-      handleContributionLayoutChange(editingContributionId, {
+      handleContributionLayoutChange(editingContributionIdResolved, {
         x: contrib.position_x ?? 10,
         y: contrib.position_y ?? 10,
         widthPercent: contrib.width_percent ?? 75,
@@ -360,7 +365,11 @@ export default function ContributeCardPage() {
         setNavigateToPage(patch.pageIndex)
       }
     },
-    [editingContributionId, contributions, handleContributionLayoutChange],
+    [
+      editingContributionIdResolved,
+      contributions,
+      handleContributionLayoutChange,
+    ],
   )
 
   const handleContributionRegenerateMessage = useCallback(
@@ -570,12 +579,12 @@ export default function ContributeCardPage() {
 
   const editableContrib = useMemo(
     () =>
-      editingContributionId &&
-      contributionEditTokens[editingContributionId] &&
-      contributions.find((c) => c.id === editingContributionId)
-        ? contributions.find((c) => c.id === editingContributionId)!
+      editingContributionIdResolved &&
+      contributionEditTokens[editingContributionIdResolved] &&
+      contributions.find((c) => c.id === editingContributionIdResolved)
+        ? contributions.find((c) => c.id === editingContributionIdResolved)!
         : null,
-    [editingContributionId, contributionEditTokens, contributions],
+    [editingContributionIdResolved, contributionEditTokens, contributions],
   )
 
   const maxContribPage = contributions.reduce(
