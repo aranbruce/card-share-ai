@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { CardTypeSelector } from "@/components/card-type-selector"
@@ -14,7 +14,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
-import { Sparkles, X } from "lucide-react"
+import { Paperclip, Sparkles, X } from "lucide-react"
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -58,6 +60,10 @@ export default function CreateCardPage() {
   const [openAiPanel, setOpenAiPanel] = useState<"image" | "title" | null>(null)
   const [imagePrompt, setImagePrompt] = useState("")
   const [titlePrompt, setTitlePrompt] = useState("")
+  const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
+    string | null
+  >(null)
+  const editImageFileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState("")
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -83,6 +89,7 @@ export default function CreateCardPage() {
     senderName: string
     recipientName: string
     customMessage?: string
+    sourceImageUrl?: string
   }) => {
     setError("")
     setSenderName(details.senderName)
@@ -137,6 +144,9 @@ export default function CreateCardPage() {
         body: JSON.stringify({
           imagePrompt: cardCopy.imagePrompt,
           coverHeadline: cardCopy.headline,
+          ...(details.sourceImageUrl
+            ? { sourceImageUrl: details.sourceImageUrl }
+            : {}),
         }),
       })
 
@@ -347,7 +357,7 @@ export default function CreateCardPage() {
 
       {/* Studio — full-width two-column layout */}
       {step === "details" && (
-        <div className="grid min-h-[calc(100vh-0px)] grid-cols-1 lg:grid-cols-[420px_1fr]">
+        <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[420px_1fr]">
           <CardDetailsForm
             cardType={selectedType}
             onSubmit={handleDetailsSubmit}
@@ -380,7 +390,7 @@ export default function CreateCardPage() {
                 ) : cardData ? (
                   <div className="flex w-full max-w-md flex-col gap-12">
                     {openAiPanel === null ? (
-                      <div className="flex justify-center gap-2">
+                      <div className="flex h-9 items-center justify-center gap-2">
                         <ChipButton
                           onClick={() => setOpenAiPanel("image")}
                           disabled={isRegeneratingImage || isGeneratingImage}
@@ -407,37 +417,103 @@ export default function CreateCardPage() {
                         </ChipButton>
                       </div>
                     ) : openAiPanel === "image" ? (
-                      <div className="flex gap-2">
-                        <Input
-                          autoFocus
-                          className="rounded-full focus-visible:ring-1"
-                          placeholder="Describe the image change…"
-                          value={imagePrompt}
-                          onChange={(e) => setImagePrompt(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && imagePrompt.trim()) {
-                              void handleRegenerateImage(imagePrompt)
-                              setOpenAiPanel(null)
-                              setImagePrompt("")
+                      <div className="flex flex-col gap-2">
+                        <input
+                          ref={editImageFileRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (!file) return
+                            if (file.size > MAX_IMAGE_BYTES) {
+                              setError("Image must be under 5 MB")
+                              e.target.value = ""
+                              return
                             }
-                            if (e.key === "Escape") setOpenAiPanel(null)
+                            const reader = new FileReader()
+                            reader.onload = () =>
+                              setAttachedImageDataUrl(reader.result as string)
+                            reader.readAsDataURL(file)
                           }}
-                          disabled={isRegeneratingImage}
                         />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="shrink-0"
-                          onClick={() => setOpenAiPanel(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        {attachedImageDataUrl && (
+                          <div className="relative w-fit">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={attachedImageDataUrl}
+                              alt="Reference"
+                              className="max-h-48 max-w-full cursor-pointer rounded-xl"
+                              onClick={() => editImageFileRef.current?.click()}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setAttachedImageDataUrl(null)
+                                if (editImageFileRef.current)
+                                  editImageFileRef.current.value = ""
+                              }}
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                        <div className="relative w-full">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => editImageFileRef.current?.click()}
+                            disabled={isRegeneratingImage}
+                            className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                            title="Attach a photo"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                          <Input
+                            autoFocus
+                            className="rounded-full px-9 focus-visible:ring-1"
+                            placeholder="Describe the image change…"
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && imagePrompt.trim()) {
+                                void handleRegenerateImage(
+                                  imagePrompt,
+                                  attachedImageDataUrl ?? undefined,
+                                )
+                                setOpenAiPanel(null)
+                                setImagePrompt("")
+                                setAttachedImageDataUrl(null)
+                              }
+                              if (e.key === "Escape") {
+                                setOpenAiPanel(null)
+                                setAttachedImageDataUrl(null)
+                              }
+                            }}
+                            disabled={isRegeneratingImage}
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                            onClick={() => {
+                              setOpenAiPanel(null)
+                              setAttachedImageDataUrl(null)
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="relative">
                         <Input
                           autoFocus
-                          className="rounded-full focus-visible:ring-1"
+                          className="rounded-full pr-9 focus-visible:ring-1"
                           placeholder="Describe the title change…"
                           value={titlePrompt}
                           onChange={(e) => setTitlePrompt(e.target.value)}
@@ -454,10 +530,10 @@ export default function CreateCardPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="shrink-0"
+                          className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                           onClick={() => setOpenAiPanel(null)}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     )}
@@ -529,7 +605,7 @@ export default function CreateCardPage() {
       )}
 
       {error && (
-        <div className="fixed right-4 bottom-4 max-w-sm rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="fixed right-4 bottom-4 max-w-md rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}

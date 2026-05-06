@@ -508,6 +508,7 @@ export default function DashboardPage() {
                           src={card.image_url}
                           alt={`${card.recipient_name}'s card`}
                           fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                           loading={index === 0 ? "eager" : "lazy"}
                           priority={index === 0}
                           unoptimized={looksLikeDataUrl(card.image_url)}

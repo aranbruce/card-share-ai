@@ -54,7 +54,7 @@ export type ActiveContributionFormattingState = {
 }
 
 export type CardOwnerStudioHandle = {
-  regenerateImage: (prompt: string) => Promise<void>
+  regenerateImage: (prompt: string, sourceImageUrl?: string) => Promise<void>
   regenerateHeadline: (prompt: string) => Promise<void>
 }
 
@@ -404,7 +404,8 @@ export const CardOwnerStudio = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      regenerateImage: (prompt) => handleRegenerateImage(prompt),
+      regenerateImage: (prompt, sourceImageUrl) =>
+        handleRegenerateImage(prompt, sourceImageUrl),
       regenerateHeadline: handleRegenerateHeadline,
     }),
     [handleRegenerateImage, handleRegenerateHeadline],

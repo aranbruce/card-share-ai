@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
 } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -27,12 +28,15 @@ import {
   CheckCircle2,
   Copy,
   ImagePlus,
+  Paperclip,
   RotateCcw,
   RotateCw,
   Send,
   Sparkles,
   X,
 } from "lucide-react"
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
 import {
   MIN_CONTRIBUTION_ROTATION_DEGREES,
@@ -152,6 +156,10 @@ function CardDetailInner() {
   const [openAiPanel, setOpenAiPanel] = useState<"image" | "title" | null>(null)
   const [imagePrompt, setImagePrompt] = useState("")
   const [titlePrompt, setTitlePrompt] = useState("")
+  const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
+    string | null
+  >(null)
+  const editImageFileRef = useRef<HTMLInputElement>(null)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
 
@@ -203,10 +211,27 @@ function CardDetailInner() {
     [],
   )
 
-  const handleRegenerateImageFromSidebar = async (prompt: string) => {
+  const handleRegenerateImageFromSidebar = async (
+    prompt: string,
+    sourceImageUrl?: string,
+  ) => {
     if (!prompt.trim()) return
-    await studioRef.current?.regenerateImage(prompt)
+    await studioRef.current?.regenerateImage(prompt, sourceImageUrl)
     setImagePrompt("")
+    setAttachedImageDataUrl(null)
+  }
+
+  const handleEditImageFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("Image must be under 5 MB")
+      e.target.value = ""
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => setAttachedImageDataUrl(reader.result as string)
+    reader.readAsDataURL(file)
   }
 
   const handleRegenerateTitleFromSidebar = async (prompt: string) => {
@@ -285,16 +310,18 @@ function CardDetailInner() {
             </h1>
           </div>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          <div className="mx-auto flex w-full max-w-md flex-col gap-12">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+          </div>
 
           {/* AI edit buttons + card — share max-w-md so input matches card width */}
           <div className="mx-auto flex w-full max-w-md flex-col gap-12">
             {openAiPanel === null ? (
-              <div className="flex justify-center gap-2">
+              <div className="flex h-9 items-center justify-center gap-2">
                 <ChipButton
                   onClick={() => setOpenAiPanel("image")}
                   disabled={isRegeneratingImage}
@@ -321,36 +348,89 @@ function CardDetailInner() {
                 </ChipButton>
               </div>
             ) : openAiPanel === "image" ? (
-              <div className="flex gap-2">
-                <Input
-                  autoFocus
-                  className="rounded-full focus-visible:ring-1"
-                  placeholder="Describe the image change…"
-                  value={imagePrompt}
-                  onChange={(e) => setImagePrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && imagePrompt.trim()) {
-                      void handleRegenerateImageFromSidebar(imagePrompt)
-                      setOpenAiPanel(null)
-                    }
-                    if (e.key === "Escape") setOpenAiPanel(null)
-                  }}
-                  disabled={isRegeneratingImage}
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={editImageFileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleEditImageFileChange}
                 />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="shrink-0"
-                  onClick={() => setOpenAiPanel(null)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                {attachedImageDataUrl && (
+                  <div className="relative w-fit">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={attachedImageDataUrl}
+                      alt="Reference"
+                      className="max-h-48 max-w-full cursor-pointer rounded-xl"
+                      onClick={() => editImageFileRef.current?.click()}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setAttachedImageDataUrl(null)
+                        if (editImageFileRef.current)
+                          editImageFileRef.current.value = ""
+                      }}
+                      className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                <div className="relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => editImageFileRef.current?.click()}
+                    disabled={isRegeneratingImage}
+                    className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                    title="Attach a photo"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                  <Input
+                    autoFocus
+                    className="rounded-full px-9 focus-visible:ring-1"
+                    placeholder="Describe the image change…"
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && imagePrompt.trim()) {
+                        void handleRegenerateImageFromSidebar(
+                          imagePrompt,
+                          attachedImageDataUrl ?? undefined,
+                        )
+                        setOpenAiPanel(null)
+                      }
+                      if (e.key === "Escape") {
+                        setOpenAiPanel(null)
+                        setAttachedImageDataUrl(null)
+                      }
+                    }}
+                    disabled={isRegeneratingImage}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                    onClick={() => {
+                      setOpenAiPanel(null)
+                      setAttachedImageDataUrl(null)
+                    }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="flex gap-2">
+              <div className="relative">
                 <Input
                   autoFocus
-                  className="rounded-full focus-visible:ring-1"
+                  className="rounded-full pr-9 focus-visible:ring-1"
                   placeholder="Describe the title change…"
                   value={titlePrompt}
                   onChange={(e) => setTitlePrompt(e.target.value)}
@@ -366,10 +446,10 @@ function CardDetailInner() {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="shrink-0"
+                  className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                   onClick={() => setOpenAiPanel(null)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               </div>
             )}

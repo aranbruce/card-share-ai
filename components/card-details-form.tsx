@@ -1,13 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
+import { Paperclip, X } from "lucide-react"
+
 const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 interface CardDetailsFormProps {
   cardType: string
@@ -16,6 +19,7 @@ interface CardDetailsFormProps {
     senderName: string
     recipientName: string
     customMessage?: string
+    sourceImageUrl?: string
   }) => Promise<void>
   isLoading?: boolean
   onBack?: () => void
@@ -38,6 +42,23 @@ export function CardDetailsForm({
   const [customMessage, setCustomMessage] = useState("")
   const [tone, setTone] = useState("Warm")
   const [error, setError] = useState("")
+  const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
+    string | null
+  >(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("Image must be under 5 MB")
+      e.target.value = ""
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => setAttachedImageDataUrl(reader.result as string)
+    reader.readAsDataURL(file)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,6 +81,7 @@ export function CardDetailsForm({
         senderName,
         recipientName,
         customMessage: context,
+        sourceImageUrl: attachedImageDataUrl ?? undefined,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -168,6 +190,66 @@ export function CardDetailsForm({
             disabled={isLoading}
             variant="card"
           />
+        </div>
+
+        {/* Reference photo */}
+        <div>
+          <div className="mb-1.5 text-xs font-medium text-muted-foreground">
+            Reference photo{" "}
+            <span className="font-normal opacity-60">(optional)</span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={isLoading}
+            onChange={handleFileChange}
+          />
+          {attachedImageDataUrl ? (
+            <div className="relative w-fit overflow-hidden rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={attachedImageDataUrl}
+                alt="Reference"
+                className="max-h-48 max-w-full"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="absolute bottom-2 left-2 h-auto rounded-full bg-black/50 px-2.5 py-1 text-xs text-white backdrop-blur-sm hover:bg-black/70"
+              >
+                Change photo
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setAttachedImageDataUrl(null)
+                  if (fileInputRef.current) fileInputRef.current.value = ""
+                }}
+                disabled={isLoading}
+                className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:opacity-50"
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+              Attach a reference photo
+            </button>
+          )}
         </div>
 
         {/* Tone chips */}
