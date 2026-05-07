@@ -108,7 +108,7 @@ export function handleImageFileChange(
     }
     ctx.fillStyle = "#ffffff"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
-    ctx.drawImage(img, 0, 0)
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
     compressToTarget(canvas)
       .then((dataUrl) => {
