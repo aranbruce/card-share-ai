@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTextModel } from "@/lib/ai-text-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
+import { resolveImageForModel } from "@/lib/resolve-image-for-model"
 
 const cardCopySchema = z.object({
   headline: z
@@ -74,23 +75,28 @@ Never wrap the headline in ASCII or curly quotation marks — output the words t
 
     const userMessage = `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.${customMessage ? ` Additional context: ${customMessage}` : ""}`
 
+    const [attachedBytes, coverBytes] = await Promise.all([
+      attachedUrl ? resolveImageForModel(attachedUrl) : null,
+      coverUrl ? resolveImageForModel(coverUrl) : null,
+    ])
+
     type ContentPart =
       | { type: "text"; text: string }
-      | { type: "image"; image: URL }
+      | { type: "image"; image: Uint8Array }
     const contentParts: ContentPart[] = [{ type: "text", text: userMessage }]
-    if (attachedUrl) {
+    if (attachedBytes) {
       contentParts.push({
         type: "text",
         text: "Attached reference image (use its style, mood, and subject as context for the copy):",
       })
-      contentParts.push({ type: "image", image: new URL(attachedUrl) })
+      contentParts.push({ type: "image", image: attachedBytes })
     }
-    if (coverUrl) {
+    if (coverBytes) {
       contentParts.push({
         type: "text",
         text: "Existing card cover image (align the copy with what is shown here):",
       })
-      contentParts.push({ type: "image", image: new URL(coverUrl) })
+      contentParts.push({ type: "image", image: coverBytes })
     }
 
     const { output } = await generateText({

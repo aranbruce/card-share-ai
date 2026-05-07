@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTextModel } from "@/lib/ai-text-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
+import { resolveImageForModel } from "@/lib/resolve-image-for-model"
 
 const SYSTEM_OUTPUT_RULES = `You help rewrite greeting card text. Output only the requested field: plain text, no markdown, no labels like "Headline:" or "Message:", no leading or trailing quotation marks.`
 
@@ -95,23 +96,27 @@ Rewrite the note to be warm and personal. Keep it concise.`
       )
     }
 
+    const imageBytes =
+      field === "headline" && imageUrl.length > 0
+        ? await resolveImageForModel(imageUrl)
+        : null
+
     const { text } = await generateText({
       model: getTextModel(),
       system: SYSTEM_OUTPUT_RULES,
       messages: [
         {
           role: "user",
-          content:
-            field === "headline" && imageUrl.length > 0
-              ? [
-                  { type: "text" as const, text: userContent },
-                  {
-                    type: "text" as const,
-                    text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
-                  },
-                  { type: "image" as const, image: new URL(imageUrl) },
-                ]
-              : userContent,
+          content: imageBytes
+            ? [
+                { type: "text" as const, text: userContent },
+                {
+                  type: "text" as const,
+                  text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
+                },
+                { type: "image" as const, image: imageBytes },
+              ]
+            : userContent,
         },
       ],
     })
