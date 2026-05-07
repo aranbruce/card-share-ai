@@ -223,7 +223,7 @@ export function CardDetailsForm({
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="absolute bottom-2 left-2 h-auto rounded-full bg-black/50 px-2.5 py-1 text-xs text-white backdrop-blur-sm hover:bg-black/70"
+                className="absolute bottom-2 left-2 h-auto rounded-full bg-black/50 px-2.5 py-1 text-xs text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
               >
                 Change photo
               </Button>
@@ -238,7 +238,7 @@ export function CardDetailsForm({
                   if (fileInputRef.current) fileInputRef.current.value = ""
                 }}
                 disabled={isLoading}
-                className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+                className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -248,7 +248,7 @@ export function CardDetailsForm({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading}
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Paperclip className="h-3.5 w-3.5" />
               Attach a reference photo
