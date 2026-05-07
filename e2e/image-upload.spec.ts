@@ -1,6 +1,6 @@
 import { Buffer } from "node:buffer"
 import { expect, test } from "@playwright/test"
-import { MAX_SOURCE_IMAGE_BYTES } from "../lib/source-image-limits"
+import { MAX_UPLOAD_FILE_BYTES } from "../lib/source-image-limits"
 import { IMAGE_TOO_LARGE_ERROR } from "../lib/handle-image-file-change"
 
 // 1x1 transparent GIF — minimal valid image for upload tests
@@ -65,7 +65,7 @@ test.describe("image upload — reference photo", () => {
       buffer: TINY_GIF_BUFFER,
     })
 
-    // Wait for the async FileReader to complete before submitting
+    // Wait for the async canvas encoding to complete before submitting
     await expect(page.getByAltText("Reference")).toBeVisible()
 
     await page.getByRole("button", { name: /Generate card/i }).click()
@@ -73,10 +73,10 @@ test.describe("image upload — reference photo", () => {
       timeout: 15_000,
     })
 
-    expect(capturedAttachedImageUrl).toMatch(/^data:image\/gif;base64,/)
+    expect(capturedAttachedImageUrl).toMatch(/^data:image\/jpeg;base64,/)
   })
 
-  test("shows error and no preview when file exceeds 5 MB", async ({
+  test("shows error and no preview when file exceeds 20 MB", async ({
     page,
   }) => {
     await goToDetailsStep(page)
@@ -84,7 +84,7 @@ test.describe("image upload — reference photo", () => {
     await page.locator('input[type="file"]').setInputFiles({
       name: "big.jpg",
       mimeType: "image/jpeg",
-      buffer: Buffer.alloc(MAX_SOURCE_IMAGE_BYTES + 1),
+      buffer: Buffer.alloc(MAX_UPLOAD_FILE_BYTES + 1),
     })
 
     await expect(page.getByText(IMAGE_TOO_LARGE_ERROR)).toBeVisible()

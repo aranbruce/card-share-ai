@@ -50,16 +50,22 @@ export function CardDetailsForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setIsReadingFile(true)
-    handleImageFileChange(
-      e,
-      (url) => {
-        setAttachedImageDataUrl(url)
-        setIsReadingFile(false)
-      },
-      setUploadError,
-      uploadError,
-    )
+    if (!e.target.files?.[0]) return
+    setIsReadingFile(true)
+    // Defer until the next paint so the spinner is visible before any blocking
+    // canvas work starts. Without this, img.onload can fire before the browser
+    // paints the updated state.
+    requestAnimationFrame(() => {
+      handleImageFileChange(
+        e,
+        (url) => {
+          setAttachedImageDataUrl(url)
+          setIsReadingFile(false)
+        },
+        setUploadError,
+        uploadError,
+      )
+    })
   }
 
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
@@ -208,7 +214,12 @@ export function CardDetailsForm({
             disabled={isLoading}
             onChange={handleFileChange}
           />
-          {attachedImageDataUrl ? (
+          {isReadingFile ? (
+            <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground">
+              <Spinner className="h-3.5 w-3.5" />
+              Compressing…
+            </div>
+          ) : attachedImageDataUrl ? (
             <div className="relative w-fit overflow-hidden rounded-xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

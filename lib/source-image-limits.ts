@@ -5,6 +5,9 @@
  */
 export const MAX_SOURCE_IMAGE_BYTES = 3 * 1024 * 1024
 
+/** Hard cap on the raw uploaded file before any canvas processing. */
+export const MAX_UPLOAD_FILE_BYTES = 20 * 1024 * 1024
+
 /** Max base64 payload length in a `data:` URL before decode (~4/3 expansion + padding). */
 export const MAX_SOURCE_IMAGE_BASE64_CHARS =
   Math.ceil((MAX_SOURCE_IMAGE_BYTES * 4) / 3) + 8

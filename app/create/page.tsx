@@ -56,6 +56,7 @@ export default function CreateCardPage() {
     string | null
   >(null)
   const editImageFileRef = useRef<HTMLInputElement>(null)
+  const [isReadingImageFile, setIsReadingImageFile] = useState(false)
   const [error, setError] = useState("")
   const [editImageError, setEditImageError] = useState("")
   const [isGuest, setIsGuest] = useState(true)
@@ -410,14 +411,21 @@ export default function CreateCardPage() {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) =>
-                            handleImageFileChange(
-                              e,
-                              setAttachedImageDataUrl,
-                              setEditImageError,
-                              editImageError,
-                            )
-                          }
+                          onChange={(e) => {
+                            if (!e.target.files?.[0]) return
+                            setIsReadingImageFile(true)
+                            requestAnimationFrame(() => {
+                              handleImageFileChange(
+                                e,
+                                (url) => {
+                                  setAttachedImageDataUrl(url)
+                                  setIsReadingImageFile(false)
+                                },
+                                setEditImageError,
+                                editImageError,
+                              )
+                            })
+                          }}
                         />
                         {attachedImageDataUrl && (
                           <div className="relative w-fit">
@@ -438,7 +446,7 @@ export default function CreateCardPage() {
                                 if (editImageFileRef.current)
                                   editImageFileRef.current.value = ""
                               }}
-                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70"
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -449,13 +457,17 @@ export default function CreateCardPage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => editImageFileRef.current?.click()}
+                            onClick={() => !isReadingImageFile && editImageFileRef.current?.click()}
                             disabled={isRegeneratingImage}
                             className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                             aria-label="Attach a photo"
                             title="Attach a photo"
                           >
-                            <Paperclip className="h-4 w-4" />
+                            {isReadingImageFile ? (
+                              <Spinner className="h-4 w-4" />
+                            ) : (
+                              <Paperclip className="h-4 w-4" />
+                            )}
                           </Button>
                           <Input
                             autoFocus
