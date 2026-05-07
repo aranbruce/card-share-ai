@@ -17,6 +17,7 @@ import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Paperclip, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
+import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -167,7 +168,7 @@ export default function CreateCardPage() {
           senderName,
           currentValue: cardData.headline,
           userPrompt: prompt,
-          existingCardCoverImageUrl: cardData.imageUrl,
+          existingCardCoverImageUrl: sourceImageUrlForRefineRequest(cardData.imageUrl),
         }),
       })
 
@@ -202,8 +203,8 @@ export default function CreateCardPage() {
           cardType: cardData.cardType,
           coverHeadline: cardData.headline,
           ...(prompt ? { imagePrompt: prompt } : {}),
-          ...(cardData.imageUrl
-            ? { existingCardCoverImageUrl: cardData.imageUrl }
+          ...(sourceImageUrlForRefineRequest(cardData.imageUrl)
+            ? { existingCardCoverImageUrl: sourceImageUrlForRefineRequest(cardData.imageUrl) }
             : {}),
           ...(attachedImageUrl ? { attachedImageUrl } : {}),
         }),

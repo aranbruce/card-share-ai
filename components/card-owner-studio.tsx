@@ -19,6 +19,7 @@ import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
+import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 export type OwnerCard = {
   id: string
@@ -349,7 +350,7 @@ export const CardOwnerStudio = forwardRef<
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
-            existingCardCoverImageUrl: card.image_url ?? "",
+            existingCardCoverImageUrl: sourceImageUrlForRefineRequest(card.image_url) ?? "",
           },
         )
         const next = String(text ?? "").trim()
@@ -376,8 +377,8 @@ export const CardOwnerStudio = forwardRef<
             cardType: card.card_type,
             coverHeadline: card.copy_headline,
             ...(prompt ? { imagePrompt: prompt } : {}),
-            ...(card.image_url
-              ? { existingCardCoverImageUrl: card.image_url }
+            ...(sourceImageUrlForRefineRequest(card.image_url)
+              ? { existingCardCoverImageUrl: sourceImageUrlForRefineRequest(card.image_url) }
               : {}),
             ...(attachedImageUrl ? { attachedImageUrl } : {}),
           },

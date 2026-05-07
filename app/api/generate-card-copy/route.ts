@@ -51,12 +51,17 @@ export async function POST(request: NextRequest) {
         ? existingCardCoverImageUrl.trim()
         : ""
 
+    const [attachedBytes, coverBytes] = await Promise.all([
+      attachedUrl ? resolveImageForModel(attachedUrl) : null,
+      coverUrl ? resolveImageForModel(coverUrl) : null,
+    ])
+
     const imageContextParts: string[] = []
-    if (attachedUrl)
+    if (attachedBytes)
       imageContextParts.push(
         "An attached reference image has been provided — align the copy with its mood, subject, and visual style.",
       )
-    if (coverUrl)
+    if (coverBytes)
       imageContextParts.push(
         "The existing card cover image has been provided — align the copy with what is already shown on the card.",
       )
@@ -72,11 +77,6 @@ ${imageContext}
 Output only the headline — no other fields, no surrounding quotation marks.`
 
     const userMessage = `Write a headline for a ${cardType} card to ${recipientName} from ${senderName}.${customMessage ? ` Additional context: ${customMessage}` : ""}`
-
-    const [attachedBytes, coverBytes] = await Promise.all([
-      attachedUrl ? resolveImageForModel(attachedUrl) : null,
-      coverUrl ? resolveImageForModel(coverUrl) : null,
-    ])
 
     type ContentPart =
       | { type: "text"; text: string }
