@@ -48,21 +48,21 @@ export function CardDetailsForm({
   >(null)
   const [isReadingFile, setIsReadingFile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileRequestRef = useRef(0)
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.[0]) return
     setIsReadingFile(true)
-    // Defer until the next paint so the spinner is visible before any blocking
-    // canvas work starts. Without this, img.onload can fire before the browser
-    // paints the updated state.
+    const reqId = ++fileRequestRef.current
     requestAnimationFrame(() => {
       handleImageFileChange(
         e,
         (url) => {
+          if (reqId !== fileRequestRef.current) return
           setAttachedImageDataUrl(url)
           setIsReadingFile(false)
         },
-        setUploadError,
+        (msg) => { if (reqId === fileRequestRef.current) setUploadError(msg) },
         uploadError,
       )
     })
