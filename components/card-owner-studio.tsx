@@ -377,7 +377,7 @@ export const CardOwnerStudio = forwardRef<
             cardType: card.card_type,
             coverHeadline: card.copy_headline,
             ...(prompt ? { imagePrompt: prompt } : {}),
-            ...(sourceImageUrlForRefineRequest(card.image_url)
+            ...(sourceImageUrlForRefineRequest(card.image_url) && !attachedImageUrl
               ? { existingCardCoverImageUrl: sourceImageUrlForRefineRequest(card.image_url) }
               : {}),
             ...(attachedImageUrl ? { attachedImageUrl } : {}),

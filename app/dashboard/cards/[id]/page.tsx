@@ -158,6 +158,7 @@ function CardDetailInner() {
     string | null
   >(null)
   const editImageFileRef = useRef<HTMLInputElement>(null)
+  const editImageRequestRef = useRef(0)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isReadingImageFile, setIsReadingImageFile] = useState(false)
@@ -221,16 +222,21 @@ function CardDetailInner() {
   }
 
   const handleEditImageFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setIsReadingImageFile(true)
-    handleImageFileChange(
-      e,
-      (url) => {
-        setAttachedImageDataUrl(url)
-        setIsReadingImageFile(false)
-      },
-      setError,
-      error,
-    )
+    if (!e.target.files?.[0]) return
+    setIsReadingImageFile(true)
+    const reqId = ++editImageRequestRef.current
+    requestAnimationFrame(() => {
+      handleImageFileChange(
+        e,
+        (url) => {
+          if (reqId !== editImageRequestRef.current) return
+          setAttachedImageDataUrl(url)
+          setIsReadingImageFile(false)
+        },
+        setError,
+        error,
+      )
+    })
   }
 
   const handleRegenerateTitleFromSidebar = async (prompt: string) => {
@@ -414,6 +420,8 @@ function CardDetailInner() {
                         setOpenAiPanel(null)
                       }
                       if (e.key === "Escape") {
+                        editImageRequestRef.current++
+                        setIsReadingImageFile(false)
                         setOpenAiPanel(null)
                         setAttachedImageDataUrl(null)
                         if (editImageFileRef.current)
@@ -428,6 +436,8 @@ function CardDetailInner() {
                     aria-label="Close image edit panel"
                     className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                     onClick={() => {
+                      editImageRequestRef.current++
+                      setIsReadingImageFile(false)
                       setOpenAiPanel(null)
                       setAttachedImageDataUrl(null)
                       if (editImageFileRef.current)

@@ -87,13 +87,16 @@ export function handleImageFileChange(
   // Load all formats via Image so the browser applies EXIF orientation, then
   // re-encode via canvas to JPEG — this also enables quality-based compression
   // for any format when the output would otherwise exceed the size limit.
+  const MAX_CANVAS_EDGE = 2048
+
   const objectUrl = URL.createObjectURL(file)
   const img = new Image()
   img.onload = () => {
     URL.revokeObjectURL(objectUrl)
+    const scale = Math.min(1, MAX_CANVAS_EDGE / Math.max(img.naturalWidth, img.naturalHeight))
     const canvas = document.createElement("canvas")
-    canvas.width = img.naturalWidth
-    canvas.height = img.naturalHeight
+    canvas.width = Math.round(img.naturalWidth * scale)
+    canvas.height = Math.round(img.naturalHeight * scale)
     const ctx = canvas.getContext("2d")
     if (!ctx) {
       setError(IMAGE_READ_ERROR)

@@ -56,6 +56,7 @@ export default function CreateCardPage() {
     string | null
   >(null)
   const editImageFileRef = useRef<HTMLInputElement>(null)
+  const editImageRequestRef = useRef(0)
   const [isReadingImageFile, setIsReadingImageFile] = useState(false)
   const [error, setError] = useState("")
   const [editImageError, setEditImageError] = useState("")
@@ -203,7 +204,7 @@ export default function CreateCardPage() {
           cardType: cardData.cardType,
           coverHeadline: cardData.headline,
           ...(prompt ? { imagePrompt: prompt } : {}),
-          ...(sourceImageUrlForRefineRequest(cardData.imageUrl)
+          ...(sourceImageUrlForRefineRequest(cardData.imageUrl) && !attachedImageUrl
             ? { existingCardCoverImageUrl: sourceImageUrlForRefineRequest(cardData.imageUrl) }
             : {}),
           ...(attachedImageUrl ? { attachedImageUrl } : {}),
@@ -406,10 +407,12 @@ export default function CreateCardPage() {
                           onChange={(e) => {
                             if (!e.target.files?.[0]) return
                             setIsReadingImageFile(true)
+                            const reqId = ++editImageRequestRef.current
                             requestAnimationFrame(() => {
                               handleImageFileChange(
                                 e,
                                 (url) => {
+                                  if (reqId !== editImageRequestRef.current) return
                                   setAttachedImageDataUrl(url)
                                   setIsReadingImageFile(false)
                                 },
@@ -483,6 +486,8 @@ export default function CreateCardPage() {
                                   editImageFileRef.current.value = ""
                               }
                               if (e.key === "Escape") {
+                                editImageRequestRef.current++
+                                setIsReadingImageFile(false)
                                 setOpenAiPanel(null)
                                 setAttachedImageDataUrl(null)
                                 setEditImageError("")
@@ -498,6 +503,8 @@ export default function CreateCardPage() {
                             aria-label="Close image edit panel"
                             className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                             onClick={() => {
+                              editImageRequestRef.current++
+                              setIsReadingImageFile(false)
                               setOpenAiPanel(null)
                               setAttachedImageDataUrl(null)
                               setEditImageError("")
