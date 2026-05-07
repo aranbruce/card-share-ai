@@ -54,7 +54,7 @@ export type ActiveContributionFormattingState = {
 }
 
 export type CardOwnerStudioHandle = {
-  regenerateImage: (prompt: string, sourceImageUrl?: string) => Promise<void>
+  regenerateImage: (prompt: string, attachedImageUrl?: string) => Promise<void>
   regenerateHeadline: (prompt: string) => Promise<void>
 }
 
@@ -352,7 +352,7 @@ export const CardOwnerStudio = forwardRef<
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
-            coverImagePrompt: card.image_prompt ?? "",
+            existingCardCoverImageUrl: card.image_url ?? "",
           },
         )
         const next = String(text ?? "").trim()
@@ -369,28 +369,40 @@ export const CardOwnerStudio = forwardRef<
   )
 
   const handleRegenerateImage = useCallback(
-    async (prompt: string, sourceImageUrl?: string) => {
+    async (prompt: string, attachedImageUrl?: string) => {
       if (!card) return
       setIsRegeneratingImage(true)
       try {
-        const newPrompt = prompt || card.image_prompt || ""
         const { imageUrl } = await apiPost<{ imageUrl?: string }>(
           "/api/generate-image",
           {
-            imagePrompt: newPrompt,
+            cardType: card.card_type,
             coverHeadline: card.copy_headline,
-            ...(sourceImageUrl ? { sourceImageUrl } : {}),
+            ...(prompt ? { imagePrompt: prompt } : {}),
+            ...(card.image_url
+              ? { existingCardCoverImageUrl: card.image_url }
+              : {}),
+            ...(attachedImageUrl ? { attachedImageUrl } : {}),
           },
         )
         if (imageUrl) {
           setCard((c) =>
-            c ? { ...c, image_url: imageUrl, image_prompt: newPrompt } : c,
+            c
+              ? {
+                  ...c,
+                  image_url: imageUrl,
+                  ...(prompt ? { image_prompt: prompt } : {}),
+                }
+              : c,
           )
           await patchCardFields({
             image_url: imageUrl,
-            image_prompt: newPrompt,
+            ...(prompt ? { image_prompt: prompt } : {}),
           })
-          onCardDataChange?.({ image_url: imageUrl, image_prompt: newPrompt })
+          onCardDataChange?.({
+            image_url: imageUrl,
+            ...(prompt ? { image_prompt: prompt } : {}),
+          })
         }
       } catch (e) {
         console.error(e)
@@ -404,8 +416,8 @@ export const CardOwnerStudio = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      regenerateImage: (prompt, sourceImageUrl) =>
-        handleRegenerateImage(prompt, sourceImageUrl),
+      regenerateImage: (prompt, attachedImageUrl) =>
+        handleRegenerateImage(prompt, attachedImageUrl),
       regenerateHeadline: handleRegenerateHeadline,
     }),
     [handleRegenerateImage, handleRegenerateHeadline],

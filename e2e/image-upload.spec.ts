@@ -30,7 +30,7 @@ test.describe("image upload — reference photo", () => {
     await expect(page.getByAltText("Reference")).toBeVisible()
   })
 
-  test("passes sourceImageUrl to generate-image when a photo is attached", async ({
+  test("passes attachedImageUrl to generate-image when a photo is attached", async ({
     page,
   }) => {
     await page.route("**/api/generate-card-copy", (route) =>
@@ -40,17 +40,16 @@ test.describe("image upload — reference photo", () => {
         body: JSON.stringify({
           cardCopy: {
             headline: "Happy Birthday!",
-            message: "Wishing you a wonderful day.",
-            signoff: "With love,",
-            imagePrompt: "Birthday balloons",
           },
         }),
       }),
     )
 
-    let capturedSourceImageUrl: string | undefined
+    let capturedAttachedImageUrl: string | undefined
     await page.route("**/api/generate-image", async (route) => {
-      capturedSourceImageUrl = route.request().postDataJSON()?.sourceImageUrl
+      capturedAttachedImageUrl = route
+        .request()
+        .postDataJSON()?.attachedImageUrl
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -74,7 +73,7 @@ test.describe("image upload — reference photo", () => {
       timeout: 15_000,
     })
 
-    expect(capturedSourceImageUrl).toMatch(/^data:image\/gif;base64,/)
+    expect(capturedAttachedImageUrl).toMatch(/^data:image\/gif;base64,/)
   })
 
   test("shows error and no preview when file exceeds 5 MB", async ({
@@ -92,7 +91,7 @@ test.describe("image upload — reference photo", () => {
     await expect(page.getByAltText("Reference")).not.toBeVisible()
   })
 
-  test("omits sourceImageUrl from generate-image when no photo is attached", async ({
+  test("omits attachedImageUrl from generate-image when no photo is attached", async ({
     page,
   }) => {
     await page.route("**/api/generate-card-copy", (route) =>
@@ -102,9 +101,6 @@ test.describe("image upload — reference photo", () => {
         body: JSON.stringify({
           cardCopy: {
             headline: "Happy Birthday!",
-            message: "Wishing you a wonderful day.",
-            signoff: "With love,",
-            imagePrompt: "Birthday balloons",
           },
         }),
       }),
@@ -126,6 +122,6 @@ test.describe("image upload — reference photo", () => {
       timeout: 15_000,
     })
 
-    expect(capturedBody).not.toHaveProperty("sourceImageUrl")
+    expect(capturedBody).not.toHaveProperty("attachedImageUrl")
   })
 })

@@ -32,17 +32,9 @@ interface CardData {
   headline: string
   message: string
   imageUrl: string
-  imagePrompt: string
 }
 
 type Step = "select-type" | "details"
-
-function formatInnerCardCopy(message: string, signoff: string) {
-  const m = message.trim()
-  const s = signoff.trim()
-  if (m && s) return `${m}\n\n${s}`
-  return m || s
-}
 
 export default function CreateCardPage() {
   const router = useRouter()
@@ -90,7 +82,7 @@ export default function CreateCardPage() {
     senderName: string
     recipientName: string
     customMessage?: string
-    sourceImageUrl?: string
+    attachedImageUrl?: string
   }) => {
     setError("")
     setSenderName(details.senderName)
@@ -100,7 +92,6 @@ export default function CreateCardPage() {
       headline: "",
       message: "",
       imageUrl: "",
-      imagePrompt: "",
     })
     setIsGeneratingCopy(true)
     setIsGeneratingImage(true)
@@ -114,6 +105,9 @@ export default function CreateCardPage() {
           recipientName: details.recipientName,
           senderName: details.senderName,
           customMessage: details.customMessage,
+          ...(details.attachedImageUrl
+            ? { attachedImageUrl: details.attachedImageUrl }
+            : {}),
         }),
       })
 
@@ -122,31 +116,24 @@ export default function CreateCardPage() {
       }
 
       const { cardCopy } = await copyResponse.json()
-      const innerMessage = formatInnerCardCopy(
-        cardCopy.message,
-        cardCopy.signoff,
-      )
 
       setIsGeneratingCopy(false)
       setCardData((prev) =>
-        prev
-          ? {
-              ...prev,
-              headline: cardCopy.headline,
-              message: innerMessage,
-              imagePrompt: cardCopy.imagePrompt,
-            }
-          : null,
+        prev ? { ...prev, headline: cardCopy.headline } : null,
       )
 
       const imageResponse = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          cardType: details.cardType,
           coverHeadline: cardCopy.headline,
-          ...(details.sourceImageUrl
-            ? { sourceImageUrl: details.sourceImageUrl }
-            : { imagePrompt: cardCopy.imagePrompt }),
+          ...(details.customMessage
+            ? { customMessage: details.customMessage }
+            : {}),
+          ...(details.attachedImageUrl
+            ? { attachedImageUrl: details.attachedImageUrl }
+            : {}),
         }),
       })
 
@@ -181,7 +168,7 @@ export default function CreateCardPage() {
           senderName,
           currentValue: cardData.headline,
           userPrompt: prompt,
-          coverImagePrompt: cardData.imagePrompt,
+          existingCardCoverImageUrl: cardData.imageUrl,
         }),
       })
 
@@ -203,21 +190,23 @@ export default function CreateCardPage() {
 
   const handleRegenerateImage = async (
     prompt: string,
-    sourceImageUrl?: string,
+    attachedImageUrl?: string,
   ) => {
     if (!cardData) return
 
     setIsRegeneratingImage(true)
     try {
-      // Use the user's prompt as the new image prompt
-      const newPrompt = prompt || cardData.imagePrompt
       const response = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imagePrompt: newPrompt,
+          cardType: cardData.cardType,
           coverHeadline: cardData.headline,
-          ...(sourceImageUrl ? { sourceImageUrl } : {}),
+          ...(prompt ? { imagePrompt: prompt } : {}),
+          ...(cardData.imageUrl
+            ? { existingCardCoverImageUrl: cardData.imageUrl }
+            : {}),
+          ...(attachedImageUrl ? { attachedImageUrl } : {}),
         }),
       })
 
@@ -229,7 +218,7 @@ export default function CreateCardPage() {
           ? {
               ...prev,
               imageUrl: imageUrl ?? prev.imageUrl,
-              imagePrompt: newPrompt,
+              ...(prompt ? { imagePrompt: prompt } : {}),
             }
           : null,
       )
@@ -252,7 +241,6 @@ export default function CreateCardPage() {
       copyHeadline: cardData.headline,
       copyMessage: cardData.message,
       imageUrl: cardData.imageUrl,
-      imagePrompt: cardData.imagePrompt,
       extraPages: 0,
     }
 
@@ -283,7 +271,6 @@ export default function CreateCardPage() {
           copyHeadline: cardData.headline,
           copyMessage: cardData.message,
           imageUrl: cardData.imageUrl,
-          imagePrompt: cardData.imagePrompt,
           extraPages: 0,
         }),
       })

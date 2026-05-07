@@ -136,50 +136,93 @@ export async function POST(request: NextRequest) {
     )
   }
   try {
-    const { imagePrompt, sourceImageUrl, coverHeadline } =
-      (await request.json()) as {
-        imagePrompt?: string
-        sourceImageUrl?: string
-        /** Current card headline — guides mood/theme; must not appear as text in the image. */
-        coverHeadline?: string
-      }
+    const {
+      imagePrompt,
+      attachedImageUrl,
+      existingCardCoverImageUrl,
+      coverHeadline,
+      cardType,
+      customMessage,
+    } = (await request.json()) as {
+      imagePrompt?: string
+      /** User-uploaded style/subject reference image. */
+      attachedImageUrl?: string
+      /** Existing card cover image to refine. */
+      existingCardCoverImageUrl?: string
+      /** Current card headline — guides mood/theme; must not appear as text in the image. */
+      coverHeadline?: string
+      cardType?: string
+      customMessage?: string
+    }
 
     const trimmedPrompt =
       typeof imagePrompt === "string" ? imagePrompt.trim() : ""
+    const trimmedCardType = typeof cardType === "string" ? cardType.trim() : ""
+    const trimmedCustomMessage =
+      typeof customMessage === "string" ? customMessage.trim() : ""
 
     const sourceRaw =
-      typeof sourceImageUrl === "string" && sourceImageUrl.trim().length > 0
-        ? sourceImageUrl.trim()
+      typeof attachedImageUrl === "string" && attachedImageUrl.trim().length > 0
+        ? attachedImageUrl.trim()
         : undefined
 
-    if (!trimmedPrompt && !sourceRaw) {
+    const previousRaw =
+      typeof existingCardCoverImageUrl === "string" &&
+      existingCardCoverImageUrl.trim().length > 0
+        ? existingCardCoverImageUrl.trim()
+        : undefined
+
+    const hasAnyContext =
+      trimmedPrompt ||
+      trimmedCardType ||
+      trimmedCustomMessage ||
+      sourceRaw ||
+      previousRaw
+    if (!hasAnyContext) {
       return NextResponse.json(
-        { error: "Image prompt is required" },
+        {
+          error:
+            "At least one of cardType, imagePrompt, attachedImageUrl, or existingCardCoverImageUrl is required",
+        },
         { status: 400, headers: rate.headers },
       )
     }
 
+    async function resolveImage(
+      raw: string,
+    ): Promise<
+      { ok: true; image: string | Uint8Array } | { ok: false; message: string }
+    > {
+      const parsed = parseSourceImageInput(raw)
+      if (!parsed.ok) return parsed
+      if (parsed.kind === "data") return { ok: true, image: parsed.bytes }
+      const fetched = await fetchHttpsSourceImageBytes(parsed.url)
+      if (!fetched.ok) return fetched
+      return { ok: true, image: fetched.bytes }
+    }
+
     let source: string | Uint8Array | undefined
     if (sourceRaw) {
-      const parsed = parseSourceImageInput(sourceRaw)
-      if (!parsed.ok) {
+      const result = await resolveImage(sourceRaw)
+      if (!result.ok) {
         return NextResponse.json(
-          { error: parsed.message },
+          { error: result.message },
           { status: 400, headers: rate.headers },
         )
       }
-      if (parsed.kind === "data") {
-        source = parsed.bytes
-      } else {
-        const fetched = await fetchHttpsSourceImageBytes(parsed.url)
-        if (!fetched.ok) {
-          return NextResponse.json(
-            { error: fetched.message },
-            { status: 400, headers: rate.headers },
-          )
-        }
-        source = fetched.bytes
+      source = result.image
+    }
+
+    let previous: string | Uint8Array | undefined
+    if (previousRaw) {
+      const result = await resolveImage(previousRaw)
+      if (!result.ok) {
+        return NextResponse.json(
+          { error: result.message },
+          { status: 400, headers: rate.headers },
+        )
       }
+      previous = result.image
     }
 
     const headline =
@@ -187,27 +230,61 @@ export async function POST(request: NextRequest) {
     const constraints = coverArtInstructionBlock(
       headline.length > 0 ? headline : undefined,
     )
-    const userScene = trimmedPrompt
-      ? `${constraints}\n\n${trimmedPrompt}`
-      : constraints
+    const contextLines: string[] = []
+    if (trimmedCardType) contextLines.push(`Card type: ${trimmedCardType}`)
+    if (trimmedCustomMessage)
+      contextLines.push(`Additional context: ${trimmedCustomMessage}`)
+    if (trimmedPrompt) contextLines.push(trimmedPrompt)
+    const userScene =
+      contextLines.length > 0
+        ? `${constraints}\n\n${contextLines.join("\n")}`
+        : constraints
 
-    const refinePrefix =
-      "Refine this greeting card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n"
+    type ImagePart = { type: "image"; image: string | Uint8Array }
+    type TextPart = { type: "text"; text: string }
 
-    const prompt: ModelMessage[] = [
-      {
-        role: "user",
-        content: source
-          ? [
-              { type: "image", image: source },
-              {
-                type: "text",
-                text: `${refinePrefix}${userScene}`,
-              },
-            ]
-          : userScene,
-      },
-    ]
+    let content: string | Array<ImagePart | TextPart>
+
+    if (previous && source) {
+      content = [
+        { type: "text", text: "Existing card cover image (refine this):" },
+        { type: "image", image: previous },
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration):",
+        },
+        { type: "image", image: source },
+        {
+          type: "text",
+          text: `Refine the existing card cover using the attached image as inspiration. Follow the instructions; keep layout and subject unless asked to change them.\n\n${userScene}`,
+        },
+      ]
+    } else if (previous) {
+      content = [
+        { type: "text", text: "Existing card cover image (refine this):" },
+        { type: "image", image: previous },
+        {
+          type: "text",
+          text: `Refine this existing card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n${userScene}`,
+        },
+      ]
+    } else if (source) {
+      content = [
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration to generate a new card cover):",
+        },
+        { type: "image", image: source },
+        {
+          type: "text",
+          text: `Generate a new greeting card cover inspired by the attached image.\n\n${userScene}`,
+        },
+      ]
+    } else {
+      content = userScene
+    }
+
+    const prompt: ModelMessage[] = [{ role: "user", content }]
 
     const { files } = await generateText({
       model: GEMINI_IMAGE_MODEL,

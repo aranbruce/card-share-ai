@@ -212,10 +212,10 @@ function CardDetailInner() {
 
   const handleRegenerateImageFromSidebar = async (
     prompt: string,
-    sourceImageUrl?: string,
+    attachedImageUrl?: string,
   ) => {
     if (!prompt.trim()) return
-    await studioRef.current?.regenerateImage(prompt, sourceImageUrl)
+    await studioRef.current?.regenerateImage(prompt, attachedImageUrl)
     setImagePrompt("")
     setAttachedImageDataUrl(null)
     if (editImageFileRef.current) editImageFileRef.current.value = ""

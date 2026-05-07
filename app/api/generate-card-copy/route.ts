@@ -11,21 +11,6 @@ const cardCopySchema = z.object({
     .describe(
       "A catchy, celebratory headline for the card. Plain text only — no surrounding quotation marks.",
     ),
-  message: z
-    .string()
-    .describe(
-      "The main message body of the card. Plain text only — no surrounding quotation marks.",
-    ),
-  signoff: z
-    .string()
-    .describe(
-      "A warm closing/signature line. Plain text only — no surrounding quotation marks.",
-    ),
-  imagePrompt: z
-    .string()
-    .describe(
-      "Detailed prompt for the card cover illustration only: scene, style, colors, mood. Do not ask for readable text, lettering, captions, or typography in the image; the headline is shown separately on the card. Align visually with the headline’s tone and subject. Plain text — no surrounding quotation marks.",
-    ),
 })
 
 export async function POST(request: NextRequest) {
@@ -47,9 +32,8 @@ export async function POST(request: NextRequest) {
       recipientName,
       senderName,
       customMessage,
-      existingHeadline,
-      existingMessage,
-      existingSignoff,
+      attachedImageUrl,
+      existingCardCoverImageUrl,
     } = await request.json()
 
     if (!cardType || !recipientName || !senderName) {
@@ -59,33 +43,55 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const hasExisting =
-      (typeof existingHeadline === "string" && existingHeadline.trim()) ||
-      (typeof existingMessage === "string" && existingMessage.trim()) ||
-      (typeof existingSignoff === "string" && existingSignoff.trim())
+    const attachedUrl =
+      typeof attachedImageUrl === "string" ? attachedImageUrl.trim() : ""
+    const coverUrl =
+      typeof existingCardCoverImageUrl === "string"
+        ? existingCardCoverImageUrl.trim()
+        : ""
 
-    const existingBlock = hasExisting
-      ? `
-You already have draft copy — refine and improve it (keep the same tone and intent unless context asks otherwise).
-Current headline: ${typeof existingHeadline === "string" ? existingHeadline : ""}
-Current message body: ${typeof existingMessage === "string" ? existingMessage : ""}
-Current sign-off: ${typeof existingSignoff === "string" ? existingSignoff : ""}`
-      : ""
+    const imageContextParts: string[] = []
+    if (attachedUrl)
+      imageContextParts.push(
+        "An attached reference image has been provided — align the copy with its mood, subject, and visual style.",
+      )
+    if (coverUrl)
+      imageContextParts.push(
+        "The existing card cover image has been provided — align the copy with what is already shown on the card.",
+      )
+    const imageContext =
+      imageContextParts.length > 0 ? `\n${imageContextParts.join(" ")}` : ""
 
-    const systemPrompt = `You are a creative greeting card writer. ${hasExisting ? "Refine" : "Generate heartfelt, personalized"} greeting card copy for a ${cardType} card.
-    
+    const systemPrompt = `You are a creative greeting card writer. Generate heartfelt, personalized greeting card copy for a ${cardType} card.
+
 The card is from: ${senderName}
 To: ${recipientName}
 ${customMessage ? `Additional context: ${customMessage}` : ""}
-${existingBlock}
+${imageContext}
+Create warm, appropriate copy that matches the card type.
 
-Create warm, appropriate copy that matches the card type. The headline and image prompt should feel cohesive: the image describes artwork only (no words in the picture); the headline carries the words.
+Never wrap the headline or sign-off in ASCII or curly quotation marks — output the words themselves only.`
 
-Never wrap the headline, message body, sign-off, or image prompt in ASCII or curly quotation marks — output the words themselves only.`
+    const userMessage = `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.${customMessage ? ` Additional context: ${customMessage}` : ""}`
 
-    const userLead = hasExisting
-      ? `Please refine this greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.`
-      : `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.`
+    type ContentPart =
+      | { type: "text"; text: string }
+      | { type: "image"; image: URL }
+    const contentParts: ContentPart[] = [{ type: "text", text: userMessage }]
+    if (attachedUrl) {
+      contentParts.push({
+        type: "text",
+        text: "Attached reference image (use its style, mood, and subject as context for the copy):",
+      })
+      contentParts.push({ type: "image", image: new URL(attachedUrl) })
+    }
+    if (coverUrl) {
+      contentParts.push({
+        type: "text",
+        text: "Existing card cover image (align the copy with what is shown here):",
+      })
+      contentParts.push({ type: "image", image: new URL(coverUrl) })
+    }
 
     const { output } = await generateText({
       model: getTextModel(),
@@ -95,18 +101,14 @@ Never wrap the headline, message body, sign-off, or image prompt in ASCII or cur
       messages: [
         {
           role: "user",
-          content: `${userLead} ${customMessage ? `Additional context: ${customMessage}` : ""}`,
+          content: contentParts.length > 1 ? contentParts : userMessage,
         },
       ],
       system: systemPrompt,
     })
 
     const cardCopy = {
-      ...output,
       headline: stripSurroundingQuotes(output.headline),
-      message: stripSurroundingQuotes(output.message),
-      signoff: stripSurroundingQuotes(output.signoff),
-      imagePrompt: stripSurroundingQuotes(output.imagePrompt),
     }
 
     return NextResponse.json({ cardCopy }, { headers: rateLimit.headers })

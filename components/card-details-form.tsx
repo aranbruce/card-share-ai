@@ -19,7 +19,7 @@ interface CardDetailsFormProps {
     senderName: string
     recipientName: string
     customMessage?: string
-    sourceImageUrl?: string
+    attachedImageUrl?: string
   }) => Promise<void>
   isLoading?: boolean
   onBack?: () => void
@@ -83,7 +83,7 @@ export function CardDetailsForm({
         senderName,
         recipientName,
         customMessage: context,
-        sourceImageUrl: attachedImageDataUrl ?? undefined,
+        attachedImageUrl: attachedImageDataUrl ?? undefined,
       })
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "An error occurred")

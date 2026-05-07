@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       senderName,
       currentValue,
       userPrompt,
-      coverImagePrompt,
+      existingCardCoverImageUrl,
     } = (await request.json()) as {
       field?: string
       cardType?: string
@@ -45,8 +45,7 @@ export async function POST(request: NextRequest) {
       senderName?: string
       currentValue?: string
       userPrompt?: string
-      /** Optional: current cover art description so the headline matches the image theme. */
-      coverImagePrompt?: string
+      existingCardCoverImageUrl?: string
     }
 
     if (!field || !cardType) {
@@ -58,23 +57,21 @@ export async function POST(request: NextRequest) {
 
     const cur = typeof currentValue === "string" ? currentValue : ""
     const userReq = typeof userPrompt === "string" ? userPrompt : ""
-    const imagePrompt =
-      typeof coverImagePrompt === "string" ? coverImagePrompt.trim() : ""
+    const imageUrl =
+      typeof existingCardCoverImageUrl === "string"
+        ? existingCardCoverImageUrl.trim()
+        : ""
 
     let userContent = ""
 
     if (field === "headline") {
-      const imageContext =
-        imagePrompt.length > 0
-          ? `\nThe cover illustration is described as follows; align the headline’s mood and subject with this art (the headline text is shown separately from the image — do not describe rendering text into the picture):\n${block("COVER_IMAGE_PROMPT", imagePrompt)}\n`
-          : ""
       userContent = `Generate a single catchy, celebratory headline for a ${cardType} greeting card to ${recipientName ?? ""} from ${senderName ?? ""}.
-${imageContext}
+
 ${block("CURRENT_HEADLINE", cur)}
 
 ${block("USER_CHANGE_REQUEST", userReq)}
 
-Based on the user's request, write a new headline.`
+Based on the user’s request, write a new headline.`
     } else if (field === "message") {
       userContent = `Generate a heartfelt message for a ${cardType} greeting card to ${recipientName ?? ""} from ${senderName ?? ""}.
 
@@ -104,7 +101,17 @@ Rewrite the note to be warm and personal. Keep it concise.`
       messages: [
         {
           role: "user",
-          content: userContent,
+          content:
+            field === "headline" && imageUrl.length > 0
+              ? [
+                  { type: "text" as const, text: userContent },
+                  {
+                    type: "text" as const,
+                    text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
+                  },
+                  { type: "image" as const, image: new URL(imageUrl) },
+                ]
+              : userContent,
         },
       ],
     })
