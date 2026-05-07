@@ -40,7 +40,7 @@ import {
   MIN_CONTRIBUTION_ROTATION_DEGREES,
   MAX_CONTRIBUTION_ROTATION_DEGREES,
 } from "@/lib/contribution-rotation"
-import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
+import { handleImageFileChange } from "@/lib/handle-image-file-change"
 
 const FONT_SIZE_PRESETS = [
   { px: 12, label: "Tiny" },
@@ -221,19 +221,8 @@ function CardDetailInner() {
     if (editImageFileRef.current) editImageFileRef.current.value = ""
   }
 
-  const handleEditImageFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
-      setError("Image must be under 5 MB")
-      e.target.value = ""
-      return
-    }
-    setError("")
-    const reader = new FileReader()
-    reader.onload = () => setAttachedImageDataUrl(reader.result as string)
-    reader.readAsDataURL(file)
-  }
+  const handleEditImageFileChange = (e: ChangeEvent<HTMLInputElement>) =>
+    handleImageFileChange(e, setAttachedImageDataUrl, setError)
 
   const handleRegenerateTitleFromSidebar = async (prompt: string) => {
     if (!prompt.trim()) return

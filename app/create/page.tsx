@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Paperclip, Sparkles, X } from "lucide-react"
-import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
+import { handleImageFileChange } from "@/lib/handle-image-file-change"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -422,20 +422,13 @@ export default function CreateCardPage() {
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (!file) return
-                            if (file.size > MAX_SOURCE_IMAGE_BYTES) {
-                              setError("Image must be under 5 MB")
-                              e.target.value = ""
-                              return
-                            }
-                            setError("")
-                            const reader = new FileReader()
-                            reader.onload = () =>
-                              setAttachedImageDataUrl(reader.result as string)
-                            reader.readAsDataURL(file)
-                          }}
+                          onChange={(e) =>
+                            handleImageFileChange(
+                              e,
+                              setAttachedImageDataUrl,
+                              setError,
+                            )
+                          }
                         />
                         {attachedImageDataUrl && (
                           <div className="relative w-fit">

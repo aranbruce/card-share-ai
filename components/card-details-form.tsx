@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { Paperclip, X } from "lucide-react"
-import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
+import { handleImageFileChange } from "@/lib/handle-image-file-change"
 
 const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
 
@@ -47,19 +47,8 @@ export function CardDetailsForm({
   >(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
-      setError("Image must be under 5 MB")
-      e.target.value = ""
-      return
-    }
-    setError("")
-    const reader = new FileReader()
-    reader.onload = () => setAttachedImageDataUrl(reader.result as string)
-    reader.readAsDataURL(file)
-  }
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) =>
+    handleImageFileChange(e, setAttachedImageDataUrl, setError)
 
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()

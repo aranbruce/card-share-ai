@@ -65,6 +65,9 @@ test.describe("image upload — reference photo", () => {
       buffer: TINY_GIF_BUFFER,
     })
 
+    // Wait for the async FileReader to complete before submitting
+    await expect(page.getByAltText("Reference")).toBeVisible()
+
     await page.getByRole("button", { name: /Generate card/i }).click()
     await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled({
       timeout: 15_000,
