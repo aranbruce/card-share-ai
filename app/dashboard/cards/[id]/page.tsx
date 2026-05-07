@@ -412,7 +412,10 @@ function CardDetailInner() {
                     value={imagePrompt}
                     onChange={(e) => setImagePrompt(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && (imagePrompt.trim() || attachedImageDataUrl)) {
+                      if (
+                        e.key === "Enter" &&
+                        (imagePrompt.trim() || attachedImageDataUrl)
+                      ) {
                         void handleRegenerateImageFromSidebar(
                           imagePrompt,
                           attachedImageDataUrl ?? undefined,

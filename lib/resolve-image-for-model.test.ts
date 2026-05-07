@@ -37,14 +37,22 @@ describe("resolveImageForModel", () => {
     })
 
     it("returns null for non-image MIME types", async () => {
-      expect(await resolveImageForModel(dataUrl("text/plain", TINY_B64))).toBeNull()
-      expect(await resolveImageForModel(dataUrl("application/json", TINY_B64))).toBeNull()
-      expect(await resolveImageForModel(dataUrl("video/mp4", TINY_B64))).toBeNull()
+      expect(
+        await resolveImageForModel(dataUrl("text/plain", TINY_B64)),
+      ).toBeNull()
+      expect(
+        await resolveImageForModel(dataUrl("application/json", TINY_B64)),
+      ).toBeNull()
+      expect(
+        await resolveImageForModel(dataUrl("video/mp4", TINY_B64)),
+      ).toBeNull()
     })
 
     it("returns null when ;base64 is absent (plain data URL)", async () => {
       expect(await resolveImageForModel("data:image/svg+xml,<svg/>")).toBeNull()
-      expect(await resolveImageForModel("data:image/png;utf8," + TINY_B64)).toBeNull()
+      expect(
+        await resolveImageForModel("data:image/png;utf8," + TINY_B64),
+      ).toBeNull()
     })
 
     it("returns null for an empty base64 payload (zero decoded bytes)", async () => {
@@ -59,7 +67,9 @@ describe("resolveImageForModel", () => {
 
     it("accepts image/jpeg, image/gif, and image/webp", async () => {
       for (const mime of ["image/jpeg", "image/gif", "image/webp"]) {
-        expect(await resolveImageForModel(dataUrl(mime, TINY_B64))).toBeInstanceOf(Uint8Array)
+        expect(
+          await resolveImageForModel(dataUrl(mime, TINY_B64)),
+        ).toBeInstanceOf(Uint8Array)
       }
     })
 
@@ -70,12 +80,17 @@ describe("resolveImageForModel", () => {
     })
 
     it("trims surrounding whitespace from the raw input", async () => {
-      const result = await resolveImageForModel(`  ${dataUrl("image/png", TINY_B64)}  `)
+      const result = await resolveImageForModel(
+        `  ${dataUrl("image/png", TINY_B64)}  `,
+      )
       expect(result).toBeInstanceOf(Uint8Array)
     })
 
     it("returns null when the base64 payload exceeds MAX_SOURCE_IMAGE_BASE64_CHARS", async () => {
-      const oversized = dataUrl("image/png", "A".repeat(MAX_SOURCE_IMAGE_BASE64_CHARS + 1))
+      const oversized = dataUrl(
+        "image/png",
+        "A".repeat(MAX_SOURCE_IMAGE_BASE64_CHARS + 1),
+      )
       expect(await resolveImageForModel(oversized)).toBeNull()
     })
   })
@@ -98,7 +113,8 @@ describe("resolveImageForModel", () => {
     })
 
     it("returns null and skips fetch for URLs exceeding MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH", async () => {
-      const tooLong = "https://example.com/" + "a".repeat(MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH)
+      const tooLong =
+        "https://example.com/" + "a".repeat(MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH)
       expect(await resolveImageForModel(tooLong)).toBeNull()
       expect(mockFetch).not.toHaveBeenCalled()
     })

@@ -350,7 +350,8 @@ export const CardOwnerStudio = forwardRef<
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
-            existingCardCoverImageUrl: sourceImageUrlForRefineRequest(card.image_url) ?? "",
+            existingCardCoverImageUrl:
+              sourceImageUrlForRefineRequest(card.image_url) ?? "",
           },
         )
         const next = String(text ?? "").trim()
@@ -377,8 +378,13 @@ export const CardOwnerStudio = forwardRef<
             cardType: card.card_type,
             coverHeadline: card.copy_headline,
             ...(prompt ? { imagePrompt: prompt } : {}),
-            ...(sourceImageUrlForRefineRequest(card.image_url) && !attachedImageUrl
-              ? { existingCardCoverImageUrl: sourceImageUrlForRefineRequest(card.image_url) }
+            ...(sourceImageUrlForRefineRequest(card.image_url) &&
+            !attachedImageUrl
+              ? {
+                  existingCardCoverImageUrl: sourceImageUrlForRefineRequest(
+                    card.image_url,
+                  ),
+                }
               : {}),
             ...(attachedImageUrl ? { attachedImageUrl } : {}),
           },

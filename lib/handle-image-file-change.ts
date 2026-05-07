@@ -93,7 +93,10 @@ export function handleImageFileChange(
   const img = new Image()
   img.onload = () => {
     URL.revokeObjectURL(objectUrl)
-    const scale = Math.min(1, MAX_CANVAS_EDGE / Math.max(img.naturalWidth, img.naturalHeight))
+    const scale = Math.min(
+      1,
+      MAX_CANVAS_EDGE / Math.max(img.naturalWidth, img.naturalHeight),
+    )
     const canvas = document.createElement("canvas")
     canvas.width = Math.round(img.naturalWidth * scale)
     canvas.height = Math.round(img.naturalHeight * scale)

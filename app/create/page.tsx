@@ -169,7 +169,9 @@ export default function CreateCardPage() {
           senderName,
           currentValue: cardData.headline,
           userPrompt: prompt,
-          existingCardCoverImageUrl: sourceImageUrlForRefineRequest(cardData.imageUrl),
+          existingCardCoverImageUrl: sourceImageUrlForRefineRequest(
+            cardData.imageUrl,
+          ),
         }),
       })
 
@@ -204,8 +206,13 @@ export default function CreateCardPage() {
           cardType: cardData.cardType,
           coverHeadline: cardData.headline,
           ...(prompt ? { imagePrompt: prompt } : {}),
-          ...(sourceImageUrlForRefineRequest(cardData.imageUrl) && !attachedImageUrl
-            ? { existingCardCoverImageUrl: sourceImageUrlForRefineRequest(cardData.imageUrl) }
+          ...(sourceImageUrlForRefineRequest(cardData.imageUrl) &&
+          !attachedImageUrl
+            ? {
+                existingCardCoverImageUrl: sourceImageUrlForRefineRequest(
+                  cardData.imageUrl,
+                ),
+              }
             : {}),
           ...(attachedImageUrl ? { attachedImageUrl } : {}),
         }),
@@ -412,7 +419,8 @@ export default function CreateCardPage() {
                               handleImageFileChange(
                                 e,
                                 (url) => {
-                                  if (reqId !== editImageRequestRef.current) return
+                                  if (reqId !== editImageRequestRef.current)
+                                    return
                                   setAttachedImageDataUrl(url)
                                   setIsReadingImageFile(false)
                                 },
@@ -474,7 +482,10 @@ export default function CreateCardPage() {
                             value={imagePrompt}
                             onChange={(e) => setImagePrompt(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter" && (imagePrompt.trim() || attachedImageDataUrl)) {
+                              if (
+                                e.key === "Enter" &&
+                                (imagePrompt.trim() || attachedImageDataUrl)
+                              ) {
                                 void handleRegenerateImage(
                                   imagePrompt,
                                   attachedImageDataUrl ?? undefined,
