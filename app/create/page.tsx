@@ -516,7 +516,9 @@ export default function CreateCardPage() {
                         </div>
                         {editImageError && (
                           <Alert variant="destructive">
-                            <AlertDescription>{editImageError}</AlertDescription>
+                            <AlertDescription>
+                              {editImageError}
+                            </AlertDescription>
                           </Alert>
                         )}
                       </div>

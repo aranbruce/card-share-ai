@@ -1,6 +1,9 @@
 import { type ChangeEvent } from "react"
 
-import { MAX_SOURCE_IMAGE_BASE64_CHARS, MAX_SOURCE_IMAGE_BYTES } from "./source-image-limits"
+import {
+  MAX_SOURCE_IMAGE_BASE64_CHARS,
+  MAX_SOURCE_IMAGE_BYTES,
+} from "./source-image-limits"
 
 export const IMAGE_TOO_LARGE_ERROR = "Image must not exceed 3 MB"
 export const IMAGE_READ_ERROR = "Failed to read image file"
