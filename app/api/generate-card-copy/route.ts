@@ -63,17 +63,15 @@ export async function POST(request: NextRequest) {
     const imageContext =
       imageContextParts.length > 0 ? `\n${imageContextParts.join(" ")}` : ""
 
-    const systemPrompt = `You are a creative greeting card writer. Generate heartfelt, personalized greeting card copy for a ${cardType} card.
+    const systemPrompt = `You are a creative greeting card writer. Generate a single punchy headline for a ${cardType} greeting card.
 
 The card is from: ${senderName}
 To: ${recipientName}
 ${customMessage ? `Additional context: ${customMessage}` : ""}
 ${imageContext}
-Create warm, appropriate copy that matches the card type.
+Output only the headline — no other fields, no surrounding quotation marks.`
 
-Never wrap the headline in ASCII or curly quotation marks — output the words themselves only.`
-
-    const userMessage = `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.${customMessage ? ` Additional context: ${customMessage}` : ""}`
+    const userMessage = `Write a headline for a ${cardType} card to ${recipientName} from ${senderName}.${customMessage ? ` Additional context: ${customMessage}` : ""}`
 
     const [attachedBytes, coverBytes] = await Promise.all([
       attachedUrl ? resolveImageForModel(attachedUrl) : null,

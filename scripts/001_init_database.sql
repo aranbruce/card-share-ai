@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS cards (
   copy_message TEXT NOT NULL,
   copy_signoff TEXT NOT NULL,
   image_url TEXT NOT NULL,
-  image_prompt TEXT,
+  image_prompt TEXT, -- dropped by migration 20260507220000_drop_image_prompt
   contributor_link_id TEXT UNIQUE,
   contributor_link_expires_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,

@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer"
 import {
+  MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH,
   MAX_SOURCE_IMAGE_BASE64_CHARS,
   MAX_SOURCE_IMAGE_BYTES,
 } from "./source-image-limits"
@@ -34,6 +35,7 @@ export async function resolveImageForModel(
   }
 
   if (trimmed.startsWith("https://")) {
+    if (trimmed.length > MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH) return null
     const result = await fetchHttpsSourceImageBytes(trimmed)
     return result.ok ? result.bytes : null
   }

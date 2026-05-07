@@ -30,7 +30,6 @@ const TYPE_HUE: Record<string, number> = {
 interface CardData {
   cardType: string
   headline: string
-  message: string
   imageUrl: string
 }
 
@@ -91,7 +90,6 @@ export default function CreateCardPage() {
     setCardData({
       cardType: details.cardType,
       headline: "",
-      message: "",
       imageUrl: "",
     })
     setIsGeneratingCopy(true)
@@ -234,7 +232,7 @@ export default function CreateCardPage() {
       recipientName,
       senderName,
       copyHeadline: cardData.headline,
-      copyMessage: cardData.message,
+      copyMessage: "",
       imageUrl: cardData.imageUrl,
       extraPages: 0,
     }
@@ -264,7 +262,6 @@ export default function CreateCardPage() {
           recipientEmail: "", // Optional field
           senderName,
           copyHeadline: cardData.headline,
-          copyMessage: cardData.message,
           imageUrl: cardData.imageUrl,
           extraPages: 0,
         }),
@@ -473,7 +470,7 @@ export default function CreateCardPage() {
                             value={imagePrompt}
                             onChange={(e) => setImagePrompt(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter" && imagePrompt.trim()) {
+                              if (e.key === "Enter" && (imagePrompt.trim() || attachedImageDataUrl)) {
                                 void handleRegenerateImage(
                                   imagePrompt,
                                   attachedImageDataUrl ?? undefined,
@@ -550,7 +547,7 @@ export default function CreateCardPage() {
                     <Card3D
                       imageUrl={cardData.imageUrl}
                       headline={cardData.headline}
-                      message={cardData.message}
+                      message=""
                       senderName={senderName}
                       recipientName={recipientName}
                       isGeneratingImage={isGeneratingImage}

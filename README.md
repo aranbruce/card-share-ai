@@ -38,7 +38,7 @@ SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=your_github_oauth_app_client_id
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 GIPHY_API_KEY=your_giphy_api_key
 
-# Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to xAI Grok via the gateway.
+# Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to openai/gpt-4o via the gateway.
 # AI_TEXT_MODEL=openai/gpt-4o
 ```
 
