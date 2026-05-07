@@ -147,17 +147,17 @@ export async function POST(request: NextRequest) {
     const trimmedPrompt =
       typeof imagePrompt === "string" ? imagePrompt.trim() : ""
 
-    if (!trimmedPrompt) {
+    const sourceRaw =
+      typeof sourceImageUrl === "string" && sourceImageUrl.trim().length > 0
+        ? sourceImageUrl.trim()
+        : undefined
+
+    if (!trimmedPrompt && !sourceRaw) {
       return NextResponse.json(
         { error: "Image prompt is required" },
         { status: 400, headers: rate.headers },
       )
     }
-
-    const sourceRaw =
-      typeof sourceImageUrl === "string" && sourceImageUrl.trim().length > 0
-        ? sourceImageUrl.trim()
-        : undefined
 
     let source: string | Uint8Array | undefined
     if (sourceRaw) {
@@ -187,7 +187,9 @@ export async function POST(request: NextRequest) {
     const constraints = coverArtInstructionBlock(
       headline.length > 0 ? headline : undefined,
     )
-    const userScene = `${constraints}\n\n${trimmedPrompt}`
+    const userScene = trimmedPrompt
+      ? `${constraints}\n\n${trimmedPrompt}`
+      : constraints
 
     const refinePrefix =
       "Refine this greeting card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n"

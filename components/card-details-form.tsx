@@ -41,21 +41,33 @@ export function CardDetailsForm({
   const [recipientName, setRecipientName] = useState("")
   const [customMessage, setCustomMessage] = useState("")
   const [tone, setTone] = useState("Warm")
-  const [error, setError] = useState("")
+  const [formError, setFormError] = useState("")
+  const [uploadError, setUploadError] = useState("")
   const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
     string | null
   >(null)
+  const [isReadingFile, setIsReadingFile] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) =>
-    handleImageFileChange(e, setAttachedImageDataUrl, setError, error)
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) setIsReadingFile(true)
+    handleImageFileChange(
+      e,
+      (url) => {
+        setAttachedImageDataUrl(url)
+        setIsReadingFile(false)
+      },
+      setUploadError,
+      uploadError,
+    )
+  }
 
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError("")
+    setFormError("")
 
     if (!senderName || !recipientName) {
-      setError("Please fill in the To and From fields")
+      setFormError("Please fill in the To and From fields")
       return
     }
 
@@ -74,7 +86,7 @@ export function CardDetailsForm({
         sourceImageUrl: attachedImageDataUrl ?? undefined,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setFormError(err instanceof Error ? err.message : "An error occurred")
     }
   }
 
@@ -120,9 +132,9 @@ export function CardDetailsForm({
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="mt-7 flex flex-1 flex-col gap-4">
-        {error && (
+        {formError && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{formError}</AlertDescription>
           </Alert>
         )}
 
@@ -222,6 +234,7 @@ export function CardDetailsForm({
                 aria-label="Remove reference photo"
                 onClick={() => {
                   setAttachedImageDataUrl(null)
+                  setUploadError("")
                   if (fileInputRef.current) fileInputRef.current.value = ""
                 }}
                 disabled={isLoading}
@@ -240,6 +253,11 @@ export function CardDetailsForm({
               <Paperclip className="h-3.5 w-3.5" />
               Attach a reference photo
             </button>
+          )}
+          {uploadError && (
+            <Alert variant="destructive" className="mt-1.5">
+              <AlertDescription>{uploadError}</AlertDescription>
+            </Alert>
           )}
         </div>
 
@@ -271,7 +289,7 @@ export function CardDetailsForm({
                 variant="outline"
                 size="default"
                 className="flex-1"
-                disabled={isLoading || isContinuing}
+                disabled={isLoading || isContinuing || isReadingFile}
               >
                 {isLoading ? (
                   <>
@@ -317,7 +335,7 @@ export function CardDetailsForm({
               type="submit"
               size="default"
               className="flex-1"
-              disabled={isLoading}
+              disabled={isLoading || isReadingFile}
             >
               {isLoading ? (
                 <>

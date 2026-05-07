@@ -12,6 +12,7 @@ import { ChipButton } from "@/components/ui/chip-button"
 import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Paperclip, Sparkles, X } from "lucide-react"
@@ -64,6 +65,7 @@ export default function CreateCardPage() {
   >(null)
   const editImageFileRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState("")
+  const [editImageError, setEditImageError] = useState("")
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
 
@@ -141,11 +143,10 @@ export default function CreateCardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imagePrompt: cardCopy.imagePrompt,
           coverHeadline: cardCopy.headline,
           ...(details.sourceImageUrl
             ? { sourceImageUrl: details.sourceImageUrl }
-            : {}),
+            : { imagePrompt: cardCopy.imagePrompt }),
         }),
       })
 
@@ -426,8 +427,8 @@ export default function CreateCardPage() {
                             handleImageFileChange(
                               e,
                               setAttachedImageDataUrl,
-                              setError,
-                              error,
+                              setEditImageError,
+                              editImageError,
                             )
                           }
                         />
@@ -490,6 +491,7 @@ export default function CreateCardPage() {
                               if (e.key === "Escape") {
                                 setOpenAiPanel(null)
                                 setAttachedImageDataUrl(null)
+                                setEditImageError("")
                                 if (editImageFileRef.current)
                                   editImageFileRef.current.value = ""
                               }
@@ -504,6 +506,7 @@ export default function CreateCardPage() {
                             onClick={() => {
                               setOpenAiPanel(null)
                               setAttachedImageDataUrl(null)
+                              setEditImageError("")
                               if (editImageFileRef.current)
                                 editImageFileRef.current.value = ""
                             }}
@@ -511,6 +514,11 @@ export default function CreateCardPage() {
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         </div>
+                        {editImageError && (
+                          <Alert variant="destructive">
+                            <AlertDescription>{editImageError}</AlertDescription>
+                          </Alert>
+                        )}
                       </div>
                     ) : (
                       <div className="relative">
