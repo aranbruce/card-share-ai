@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { Paperclip, X } from "lucide-react"
+import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
 
 const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 interface CardDetailsFormProps {
   cardType: string
@@ -50,7 +50,7 @@ export function CardDetailsForm({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > MAX_IMAGE_BYTES) {
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
       setError("Image must be under 5 MB")
       e.target.value = ""
       return

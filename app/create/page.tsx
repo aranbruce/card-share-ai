@@ -15,8 +15,7 @@ import { Input } from "@/components/ui/input"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Paperclip, Sparkles, X } from "lucide-react"
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -426,7 +425,7 @@ export default function CreateCardPage() {
                           onChange={(e) => {
                             const file = e.target.files?.[0]
                             if (!file) return
-                            if (file.size > MAX_IMAGE_BYTES) {
+                            if (file.size > MAX_SOURCE_IMAGE_BYTES) {
                               setError("Image must be under 5 MB")
                               e.target.value = ""
                               return
@@ -471,6 +470,7 @@ export default function CreateCardPage() {
                             onClick={() => editImageFileRef.current?.click()}
                             disabled={isRegeneratingImage}
                             className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                            aria-label="Attach a photo"
                             title="Attach a photo"
                           >
                             <Paperclip className="h-4 w-4" />
@@ -537,6 +537,7 @@ export default function CreateCardPage() {
                         <Button
                           size="icon"
                           variant="ghost"
+                          aria-label="Close title edit panel"
                           className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                           onClick={() => setOpenAiPanel(null)}
                         >

@@ -40,8 +40,7 @@ import {
   MIN_CONTRIBUTION_ROTATION_DEGREES,
   MAX_CONTRIBUTION_ROTATION_DEGREES,
 } from "@/lib/contribution-rotation"
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
 
 const FONT_SIZE_PRESETS = [
   { px: 12, label: "Tiny" },
@@ -225,7 +224,7 @@ function CardDetailInner() {
   const handleEditImageFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > MAX_IMAGE_BYTES) {
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
       setError("Image must be under 5 MB")
       e.target.value = ""
       return
@@ -391,6 +390,7 @@ function CardDetailInner() {
                     onClick={() => editImageFileRef.current?.click()}
                     disabled={isRegeneratingImage}
                     className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                    aria-label="Attach a photo"
                     title="Attach a photo"
                   >
                     <Paperclip className="h-4 w-4" />
@@ -454,6 +454,7 @@ function CardDetailInner() {
                 <Button
                   size="icon"
                   variant="ghost"
+                  aria-label="Close title edit panel"
                   className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                   onClick={() => setOpenAiPanel(null)}
                 >
