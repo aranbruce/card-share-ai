@@ -39,10 +39,16 @@ export async function resolveSourceImage(
       }
     const b64 = trimmed.slice(comma + 1).replace(/\s/g, "")
     if (b64.length > MAX_SOURCE_IMAGE_BASE64_CHARS)
-      return { ok: false, message: "Source image data URL exceeds maximum size" }
+      return {
+        ok: false,
+        message: "Source image data URL exceeds maximum size",
+      }
     const decoded = Buffer.from(b64, "base64")
     if (decoded.length === 0 || decoded.length > MAX_SOURCE_IMAGE_BYTES)
-      return { ok: false, message: "Source image data URL exceeds maximum size" }
+      return {
+        ok: false,
+        message: "Source image data URL exceeds maximum size",
+      }
     return { ok: true, bytes: new Uint8Array(decoded) }
   }
 

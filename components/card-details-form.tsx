@@ -62,7 +62,9 @@ export function CardDetailsForm({
           setAttachedImageDataUrl(url)
           setIsReadingFile(false)
         },
-        (msg) => { if (reqId === fileRequestRef.current) setUploadError(msg) },
+        (msg) => {
+          if (reqId === fileRequestRef.current) setUploadError(msg)
+        },
         uploadError,
       )
     })
