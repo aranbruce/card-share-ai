@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { type ChangeEvent, type SubmitEvent, useRef, useState } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
@@ -47,7 +47,7 @@ export function CardDetailsForm({
   >(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > MAX_SOURCE_IMAGE_BYTES) {
@@ -61,7 +61,7 @@ export function CardDetailsForm({
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError("")
 

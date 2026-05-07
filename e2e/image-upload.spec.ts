@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer"
 import { expect, test } from "@playwright/test"
+import { MAX_SOURCE_IMAGE_BYTES } from "../lib/source-image-limits"
 
 // 1x1 transparent GIF — minimal valid image for upload tests
 const TINY_GIF_BASE64 =
@@ -80,7 +81,7 @@ test.describe("image upload — reference photo", () => {
     await page.locator('input[type="file"]').setInputFiles({
       name: "big.jpg",
       mimeType: "image/jpeg",
-      buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+      buffer: Buffer.alloc(MAX_SOURCE_IMAGE_BYTES + 1),
     })
 
     await expect(page.getByText("Image must be under 5 MB")).toBeVisible()

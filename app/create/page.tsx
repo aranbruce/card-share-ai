@@ -490,6 +490,8 @@ export default function CreateCardPage() {
                                 setOpenAiPanel(null)
                                 setImagePrompt("")
                                 setAttachedImageDataUrl(null)
+                                if (editImageFileRef.current)
+                                  editImageFileRef.current.value = ""
                               }
                               if (e.key === "Escape") {
                                 setOpenAiPanel(null)
