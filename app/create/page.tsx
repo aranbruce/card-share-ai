@@ -215,13 +215,7 @@ export default function CreateCardPage() {
 
       const { imageUrl } = (await response.json()) as { imageUrl?: string }
       setCardData((prev) =>
-        prev
-          ? {
-              ...prev,
-              imageUrl: imageUrl ?? prev.imageUrl,
-              ...(prompt ? { imagePrompt: prompt } : {}),
-            }
-          : null,
+        prev ? { ...prev, imageUrl: imageUrl ?? prev.imageUrl } : null,
       )
     } catch (err) {
       setError(
@@ -457,7 +451,10 @@ export default function CreateCardPage() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            onClick={() => !isReadingImageFile && editImageFileRef.current?.click()}
+                            onClick={() =>
+                              !isReadingImageFile &&
+                              editImageFileRef.current?.click()
+                            }
                             disabled={isRegeneratingImage}
                             className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                             aria-label="Attach a photo"

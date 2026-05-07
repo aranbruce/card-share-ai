@@ -387,7 +387,9 @@ function CardDetailInner() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => !isReadingImageFile && editImageFileRef.current?.click()}
+                    onClick={() =>
+                      !isReadingImageFile && editImageFileRef.current?.click()
+                    }
                     disabled={isRegeneratingImage}
                     className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                     aria-label="Attach a photo"

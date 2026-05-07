@@ -70,7 +70,7 @@ ${customMessage ? `Additional context: ${customMessage}` : ""}
 ${imageContext}
 Create warm, appropriate copy that matches the card type.
 
-Never wrap the headline or sign-off in ASCII or curly quotation marks — output the words themselves only.`
+Never wrap the headline in ASCII or curly quotation marks — output the words themselves only.`
 
     const userMessage = `Please create greeting card copy for a ${cardType} card to ${recipientName} from ${senderName}.${customMessage ? ` Additional context: ${customMessage}` : ""}`
 

@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "At least one of cardType, imagePrompt, attachedImageUrl, or existingCardCoverImageUrl is required",
+            "At least one of cardType, imagePrompt, customMessage, attachedImageUrl, or existingCardCoverImageUrl is required",
         },
         { status: 400, headers: rate.headers },
       )

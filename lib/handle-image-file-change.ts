@@ -17,7 +17,10 @@ const UPLOAD_ERRORS = new Set([
   IMAGE_READ_ERROR,
 ])
 
-function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  quality: number,
+): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error("toBlob failed"))),
@@ -37,7 +40,9 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 /** Returns the highest-quality JPEG data URL that fits within MAX_SOURCE_IMAGE_BYTES, or null. */
-async function compressToTarget(canvas: HTMLCanvasElement): Promise<string | null> {
+async function compressToTarget(
+  canvas: HTMLCanvasElement,
+): Promise<string | null> {
   const initial = await canvasToBlob(canvas, 0.85)
   if (initial.size <= MAX_SOURCE_IMAGE_BYTES) return blobToDataUrl(initial)
 
