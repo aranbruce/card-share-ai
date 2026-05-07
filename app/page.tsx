@@ -40,7 +40,7 @@ const FEATURES = [
   {
     n: "02",
     title: "AI drafts first, you edit",
-    desc: "Regenerate any line, any cover, any time. The AI has a light touch. Never saccharine.",
+    desc: "Upload a photo or let AI generate the cover. Regenerate any line, any time. The AI has a light touch. Never saccharine.",
   },
   {
     n: "03",
@@ -149,7 +149,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-20 md:px-15 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-20">
         <div>
-          <h1 className="mt-5 text-3xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance md:text-4xl lg:text-[80px] xl:text-[96px]">
+          <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-5xl lg:text-5xl xl:text-6xl">
             Greeting cards,
             <br />
             <span className="text-muted-foreground">
@@ -158,8 +158,8 @@ export default function HomePage() {
             <span className="text-brand">signed in minutes.</span>
           </h1>
           <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
-            Describe the card. We design the cover, draft the message, and pass
-            it around for the whole team to sign.
+            Describe the card or upload a photo. We design the cover, draft the
+            message, and pass it around for the whole team to sign.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild size="lg">
