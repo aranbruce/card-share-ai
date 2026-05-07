@@ -29,7 +29,6 @@ export type OwnerCard = {
   copy_headline: string
   copy_message: string
   image_url: string
-  image_prompt?: string | null
   extra_pages?: number
   contributor_link_id?: string
 }
@@ -72,11 +71,9 @@ export type CardOwnerStudioProps = {
   onRegeneratingImageChange?: (v: boolean) => void
   /** Called when headline regeneration starts or finishes. */
   onRegeneratingHeadlineChange?: (v: boolean) => void
-  /** Called when the card's headline, image URL, or image prompt changes (after a successful regeneration). */
+  /** Called when the card's headline or image URL changes (after a successful regeneration). */
   onCardDataChange?: (
-    updates: Partial<
-      Pick<OwnerCard, "copy_headline" | "image_url" | "image_prompt">
-    >,
+    updates: Partial<Pick<OwnerCard, "copy_headline" | "image_url">>,
   ) => void
 }
 
@@ -386,23 +383,9 @@ export const CardOwnerStudio = forwardRef<
           },
         )
         if (imageUrl) {
-          setCard((c) =>
-            c
-              ? {
-                  ...c,
-                  image_url: imageUrl,
-                  ...(prompt ? { image_prompt: prompt } : {}),
-                }
-              : c,
-          )
-          await patchCardFields({
-            image_url: imageUrl,
-            ...(prompt ? { image_prompt: prompt } : {}),
-          })
-          onCardDataChange?.({
-            image_url: imageUrl,
-            ...(prompt ? { image_prompt: prompt } : {}),
-          })
+          setCard((c) => (c ? { ...c, image_url: imageUrl } : c))
+          await patchCardFields({ image_url: imageUrl })
+          onCardDataChange?.({ image_url: imageUrl })
         }
       } catch (e) {
         console.error(e)

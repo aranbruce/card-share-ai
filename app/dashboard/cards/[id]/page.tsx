@@ -59,7 +59,6 @@ interface CardData {
   copy_message: string
   copy_signoff?: string
   image_url: string
-  image_prompt?: string | null
   card_type?: string
   sent_at?: string | null
   contributor_link_id: string
@@ -203,7 +202,6 @@ function CardDetailInner() {
       updates: Partial<{
         copy_headline: string
         image_url: string
-        image_prompt: string | null
       }>,
     ) => {
       setCard((prev) => (prev ? { ...prev, ...updates } : null))

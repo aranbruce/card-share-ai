@@ -19,9 +19,6 @@ test.describe("card create and delete", () => {
         body: JSON.stringify({
           cardCopy: {
             headline: "Happy Birthday!",
-            message: "Wishing you a wonderful day full of joy and celebration.",
-            signoff: "With warmest wishes,",
-            imagePrompt: "Colorful birthday balloons and confetti",
           },
         }),
       }),
