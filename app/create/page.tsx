@@ -431,6 +431,7 @@ export default function CreateCardPage() {
                               e.target.value = ""
                               return
                             }
+                            setError("")
                             const reader = new FileReader()
                             reader.onload = () =>
                               setAttachedImageDataUrl(reader.result as string)
@@ -450,6 +451,7 @@ export default function CreateCardPage() {
                               type="button"
                               variant="ghost"
                               size="icon"
+                              aria-label="Remove attached photo"
                               onClick={() => {
                                 setAttachedImageDataUrl(null)
                                 if (editImageFileRef.current)
@@ -492,6 +494,8 @@ export default function CreateCardPage() {
                               if (e.key === "Escape") {
                                 setOpenAiPanel(null)
                                 setAttachedImageDataUrl(null)
+                                if (editImageFileRef.current)
+                                  editImageFileRef.current.value = ""
                               }
                             }}
                             disabled={isRegeneratingImage}
@@ -499,10 +503,13 @@ export default function CreateCardPage() {
                           <Button
                             size="icon"
                             variant="ghost"
+                            aria-label="Close image edit panel"
                             className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                             onClick={() => {
                               setOpenAiPanel(null)
                               setAttachedImageDataUrl(null)
+                              if (editImageFileRef.current)
+                                editImageFileRef.current.value = ""
                             }}
                           >
                             <X className="h-3.5 w-3.5" />

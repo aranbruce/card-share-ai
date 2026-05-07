@@ -55,6 +55,7 @@ export function CardDetailsForm({
       e.target.value = ""
       return
     }
+    setError("")
     const reader = new FileReader()
     reader.onload = () => setAttachedImageDataUrl(reader.result as string)
     reader.readAsDataURL(file)
@@ -229,6 +230,7 @@ export function CardDetailsForm({
                 type="button"
                 variant="ghost"
                 size="icon"
+                aria-label="Remove reference photo"
                 onClick={() => {
                   setAttachedImageDataUrl(null)
                   if (fileInputRef.current) fileInputRef.current.value = ""

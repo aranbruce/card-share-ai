@@ -65,9 +65,9 @@ test.describe("image upload — reference photo", () => {
     })
 
     await page.getByRole("button", { name: /Generate card/i }).click()
-    await expect(
-      page.getByRole("button", { name: "Continue" }),
-    ).toBeEnabled({ timeout: 15_000 })
+    await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled({
+      timeout: 15_000,
+    })
 
     expect(capturedSourceImageUrl).toMatch(/^data:image\/gif;base64,/)
   })
@@ -117,9 +117,9 @@ test.describe("image upload — reference photo", () => {
 
     await goToDetailsStep(page)
     await page.getByRole("button", { name: /Generate card/i }).click()
-    await expect(
-      page.getByRole("button", { name: "Continue" }),
-    ).toBeEnabled({ timeout: 15_000 })
+    await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled({
+      timeout: 15_000,
+    })
 
     expect(capturedBody).not.toHaveProperty("sourceImageUrl")
   })
