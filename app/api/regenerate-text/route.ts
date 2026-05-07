@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
       senderName,
       currentValue,
       userPrompt,
+      attachedImageUrl,
       existingCardCoverImageUrl,
     } = (await request.json()) as {
       field?: string
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       senderName?: string
       currentValue?: string
       userPrompt?: string
+      attachedImageUrl?: string
       existingCardCoverImageUrl?: string
     }
 
@@ -58,6 +60,8 @@ export async function POST(request: NextRequest) {
 
     const cur = typeof currentValue === "string" ? currentValue : ""
     const userReq = typeof userPrompt === "string" ? userPrompt : ""
+    const attachedUrl =
+      typeof attachedImageUrl === "string" ? attachedImageUrl.trim() : ""
     const imageUrl =
       typeof existingCardCoverImageUrl === "string"
         ? existingCardCoverImageUrl.trim()
@@ -96,10 +100,53 @@ Rewrite the note to be warm and personal. Keep it concise.`
       )
     }
 
-    const imageBytes =
-      field === "headline" && imageUrl.length > 0
-        ? await resolveImageForModel(imageUrl)
-        : null
+    const [attachedBytes, coverBytes] =
+      field === "headline"
+        ? await Promise.all([
+            attachedUrl.length > 0 ? resolveImageForModel(attachedUrl) : null,
+            imageUrl.length > 0 ? resolveImageForModel(imageUrl) : null,
+          ])
+        : [null, null]
+
+    type ImagePart = { type: "image"; image: Uint8Array }
+    type TextPart = { type: "text"; text: string }
+    let userMessageContent: string | Array<ImagePart | TextPart>
+
+    if (attachedBytes && coverBytes) {
+      userMessageContent = [
+        { type: "text", text: userContent },
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration):",
+        },
+        { type: "image", image: attachedBytes },
+        {
+          type: "text",
+          text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
+        },
+        { type: "image", image: coverBytes },
+      ]
+    } else if (attachedBytes) {
+      userMessageContent = [
+        { type: "text", text: userContent },
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration):",
+        },
+        { type: "image", image: attachedBytes },
+      ]
+    } else if (coverBytes) {
+      userMessageContent = [
+        { type: "text", text: userContent },
+        {
+          type: "text",
+          text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
+        },
+        { type: "image", image: coverBytes },
+      ]
+    } else {
+      userMessageContent = userContent
+    }
 
     const { text } = await generateText({
       model: getTextModel(),
@@ -107,16 +154,7 @@ Rewrite the note to be warm and personal. Keep it concise.`
       messages: [
         {
           role: "user",
-          content: imageBytes
-            ? [
-                { type: "text" as const, text: userContent },
-                {
-                  type: "text" as const,
-                  text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
-                },
-                { type: "image" as const, image: imageBytes },
-              ]
-            : userContent,
+          content: userMessageContent,
         },
       ],
     })

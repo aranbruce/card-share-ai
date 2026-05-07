@@ -121,16 +121,11 @@ export async function POST(request: NextRequest) {
         { status: 400, headers: rate.headers },
       )
     }
-    if (previousResult && !previousResult.ok) {
-      return NextResponse.json(
-        { error: previousResult.message },
-        { status: 400, headers: rate.headers },
-      )
-    }
 
     const source: Uint8Array | undefined = sourceResult?.ok
       ? sourceResult.bytes
       : undefined
+    // Soft-fail: if the existing cover can't be resolved, proceed without it
     const previous: Uint8Array | undefined = previousResult?.ok
       ? previousResult.bytes
       : undefined
