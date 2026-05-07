@@ -201,29 +201,30 @@ export async function POST(request: NextRequest) {
       return { ok: true, image: fetched.bytes }
     }
 
-    let source: string | Uint8Array | undefined
-    if (sourceRaw) {
-      const result = await resolveImage(sourceRaw)
-      if (!result.ok) {
-        return NextResponse.json(
-          { error: result.message },
-          { status: 400, headers: rate.headers },
-        )
-      }
-      source = result.image
+    const [sourceResult, previousResult] = await Promise.all([
+      sourceRaw ? resolveImage(sourceRaw) : Promise.resolve(null),
+      previousRaw ? resolveImage(previousRaw) : Promise.resolve(null),
+    ])
+
+    if (sourceResult && !sourceResult.ok) {
+      return NextResponse.json(
+        { error: sourceResult.message },
+        { status: 400, headers: rate.headers },
+      )
+    }
+    if (previousResult && !previousResult.ok) {
+      return NextResponse.json(
+        { error: previousResult.message },
+        { status: 400, headers: rate.headers },
+      )
     }
 
-    let previous: string | Uint8Array | undefined
-    if (previousRaw) {
-      const result = await resolveImage(previousRaw)
-      if (!result.ok) {
-        return NextResponse.json(
-          { error: result.message },
-          { status: 400, headers: rate.headers },
-        )
-      }
-      previous = result.image
-    }
+    const source: string | Uint8Array | undefined = sourceResult?.ok
+      ? sourceResult.image
+      : undefined
+    const previous: string | Uint8Array | undefined = previousResult?.ok
+      ? previousResult.image
+      : undefined
 
     const headline =
       typeof coverHeadline === "string" ? coverHeadline.trim() : ""

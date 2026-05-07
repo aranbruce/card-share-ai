@@ -372,19 +372,15 @@ export const CardOwnerStudio = forwardRef<
       if (!card) return
       setIsRegeneratingImage(true)
       try {
+        const existingCover = sourceImageUrlForRefineRequest(card.image_url)
         const { imageUrl } = await apiPost<{ imageUrl?: string }>(
           "/api/generate-image",
           {
             cardType: card.card_type,
             coverHeadline: card.copy_headline,
             ...(prompt ? { imagePrompt: prompt } : {}),
-            ...(sourceImageUrlForRefineRequest(card.image_url) &&
-            !attachedImageUrl
-              ? {
-                  existingCardCoverImageUrl: sourceImageUrlForRefineRequest(
-                    card.image_url,
-                  ),
-                }
+            ...(existingCover && !attachedImageUrl
+              ? { existingCardCoverImageUrl: existingCover }
               : {}),
             ...(attachedImageUrl ? { attachedImageUrl } : {}),
           },

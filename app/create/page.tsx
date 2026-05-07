@@ -199,6 +199,7 @@ export default function CreateCardPage() {
 
     setIsRegeneratingImage(true)
     try {
+      const existingCover = sourceImageUrlForRefineRequest(cardData.imageUrl)
       const response = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -206,13 +207,8 @@ export default function CreateCardPage() {
           cardType: cardData.cardType,
           coverHeadline: cardData.headline,
           ...(prompt ? { imagePrompt: prompt } : {}),
-          ...(sourceImageUrlForRefineRequest(cardData.imageUrl) &&
-          !attachedImageUrl
-            ? {
-                existingCardCoverImageUrl: sourceImageUrlForRefineRequest(
-                  cardData.imageUrl,
-                ),
-              }
+          ...(existingCover && !attachedImageUrl
+            ? { existingCardCoverImageUrl: existingCover }
             : {}),
           ...(attachedImageUrl ? { attachedImageUrl } : {}),
         }),
