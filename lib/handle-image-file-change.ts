@@ -8,6 +8,7 @@ export function handleImageFileChange(
   e: ChangeEvent<HTMLInputElement>,
   onDataUrl: (url: string | null) => void,
   setError: (msg: string) => void,
+  currentError = "",
 ): void {
   const file = e.target.files?.[0]
   if (!file) return
@@ -17,9 +18,14 @@ export function handleImageFileChange(
     e.target.value = ""
     return
   }
-  setError("")
+  // Only clear the error if it was set by a previous upload attempt
+  if (currentError === IMAGE_TOO_LARGE_ERROR) setError("")
   const reader = new FileReader()
   reader.onload = () => onDataUrl(reader.result as string)
+  reader.onerror = reader.onabort = () => {
+    setError("Failed to read image file")
+    onDataUrl(null)
+  }
   reader.readAsDataURL(file)
   e.target.value = ""
 }

@@ -427,6 +427,7 @@ export default function CreateCardPage() {
                               e,
                               setAttachedImageDataUrl,
                               setError,
+                              error,
                             )
                           }
                         />

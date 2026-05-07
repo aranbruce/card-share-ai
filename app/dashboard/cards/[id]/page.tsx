@@ -222,7 +222,7 @@ function CardDetailInner() {
   }
 
   const handleEditImageFileChange = (e: ChangeEvent<HTMLInputElement>) =>
-    handleImageFileChange(e, setAttachedImageDataUrl, setError)
+    handleImageFileChange(e, setAttachedImageDataUrl, setError, error)
 
   const handleRegenerateTitleFromSidebar = async (prompt: string) => {
     if (!prompt.trim()) return

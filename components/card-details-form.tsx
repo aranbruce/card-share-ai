@@ -48,7 +48,7 @@ export function CardDetailsForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) =>
-    handleImageFileChange(e, setAttachedImageDataUrl, setError)
+    handleImageFileChange(e, setAttachedImageDataUrl, setError, error)
 
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
