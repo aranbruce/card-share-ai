@@ -55,6 +55,14 @@ describe("resolveImageForModel", () => {
       ).toBeNull()
     })
 
+    it("accepts the non-standard ;base64; form to match the image route", async () => {
+      expect(
+        await resolveImageForModel(
+          `data:image/png;base64;charset=utf-8,${TINY_B64}`,
+        ),
+      ).toBeInstanceOf(Uint8Array)
+    })
+
     it("returns null for an empty base64 payload (zero decoded bytes)", async () => {
       expect(await resolveImageForModel("data:image/png;base64,")).toBeNull()
     })

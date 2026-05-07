@@ -25,7 +25,7 @@ export async function resolveImageForModel(
     if (comma === -1) return null
     const meta = trimmed.slice(5, comma)
     if (!meta.toLowerCase().startsWith("image/")) return null
-    if (!/;base64$/i.test(meta)) return null
+    if (!/;base64$/i.test(meta) && !/;base64;/i.test(meta)) return null
     const b64 = trimmed.slice(comma + 1).replace(/\s/g, "")
     if (b64.length > MAX_SOURCE_IMAGE_BASE64_CHARS) return null
     const decoded = Buffer.from(b64, "base64")

@@ -379,7 +379,8 @@ export const CardOwnerStudio = forwardRef<
             cardType: card.card_type,
             coverHeadline: card.copy_headline,
             ...(prompt ? { imagePrompt: prompt } : {}),
-            ...(existingCover && !attachedImageUrl
+            ...(existingCover &&
+            (!attachedImageUrl || !existingCover.startsWith("data:"))
               ? { existingCardCoverImageUrl: existingCover }
               : {}),
             ...(attachedImageUrl ? { attachedImageUrl } : {}),

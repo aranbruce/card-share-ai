@@ -207,7 +207,8 @@ export default function CreateCardPage() {
           cardType: cardData.cardType,
           coverHeadline: cardData.headline,
           ...(prompt ? { imagePrompt: prompt } : {}),
-          ...(existingCover && !attachedImageUrl
+          ...(existingCover &&
+          (!attachedImageUrl || !existingCover.startsWith("data:"))
             ? { existingCardCoverImageUrl: existingCover }
             : {}),
           ...(attachedImageUrl ? { attachedImageUrl } : {}),
@@ -420,7 +421,10 @@ export default function CreateCardPage() {
                                   setAttachedImageDataUrl(url)
                                   setIsReadingImageFile(false)
                                 },
-                                setEditImageError,
+                                (msg) => {
+                                  if (reqId === editImageRequestRef.current)
+                                    setEditImageError(msg)
+                                },
                                 editImageError,
                               )
                             })

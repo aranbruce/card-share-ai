@@ -233,7 +233,9 @@ function CardDetailInner() {
           setAttachedImageDataUrl(url)
           setIsReadingImageFile(false)
         },
-        setError,
+        (msg) => {
+          if (reqId === editImageRequestRef.current) setError(msg)
+        },
         error,
       )
     })
