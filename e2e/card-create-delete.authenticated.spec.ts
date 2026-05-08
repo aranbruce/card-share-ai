@@ -39,7 +39,7 @@ test.describe("card create and delete", () => {
     await expect(page.getByRole("heading", { name: "All cards" })).toBeVisible()
 
     await page
-      .getByRole("link", { name: /\+ New card|Create your first card/i })
+      .getByRole("link", { name: /New card|Create your first card/i })
       .first()
       .click()
     await expect(
