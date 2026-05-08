@@ -22,8 +22,6 @@ function extractAllowedCardUpdates(raw: unknown): Record<string, unknown> {
   if (typeof body.copy_message === "string")
     updates.copy_message = body.copy_message
   if (typeof body.image_url === "string") updates.image_url = body.image_url
-  if (typeof body.image_prompt === "string")
-    updates.image_prompt = body.image_prompt
   if (
     typeof body.extra_pages === "number" &&
     Number.isFinite(body.extra_pages) &&

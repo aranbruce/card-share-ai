@@ -1,5 +1,12 @@
-/** Max decoded image size for refine/source uploads (server + client guard). */
-export const MAX_SOURCE_IMAGE_BYTES = 5 * 1024 * 1024
+/**
+ * Max decoded image size for refine/source uploads (server + client guard).
+ * Kept at 3 MB so the base64-encoded data URL fits inside Vercel's 4.5 MB
+ * request-body hard limit (3 MB × 4/3 ≈ 4 MB base64 + JSON overhead).
+ */
+export const MAX_SOURCE_IMAGE_BYTES = 3 * 1024 * 1024
+
+/** Hard cap on the raw uploaded file before any canvas processing. */
+export const MAX_UPLOAD_FILE_BYTES = 20 * 1024 * 1024
 
 /** Max base64 payload length in a `data:` URL before decode (~4/3 expansion + padding). */
 export const MAX_SOURCE_IMAGE_BASE64_CHARS =

@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { type ChangeEvent, type SubmitEvent, useRef, useState } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
+import { Paperclip, X } from "lucide-react"
+import { handleImageFileChange } from "@/lib/handle-image-file-change"
+
 const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
 
 interface CardDetailsFormProps {
@@ -16,6 +19,7 @@ interface CardDetailsFormProps {
     senderName: string
     recipientName: string
     customMessage?: string
+    attachedImageUrl?: string
   }) => Promise<void>
   isLoading?: boolean
   onBack?: () => void
@@ -37,14 +41,41 @@ export function CardDetailsForm({
   const [recipientName, setRecipientName] = useState("")
   const [customMessage, setCustomMessage] = useState("")
   const [tone, setTone] = useState("Warm")
-  const [error, setError] = useState("")
+  const [formError, setFormError] = useState("")
+  const [uploadError, setUploadError] = useState("")
+  const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
+    string | null
+  >(null)
+  const [isReadingFile, setIsReadingFile] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileRequestRef = useRef(0)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return
+    setIsReadingFile(true)
+    const reqId = ++fileRequestRef.current
+    requestAnimationFrame(() => {
+      handleImageFileChange(
+        e,
+        (url) => {
+          if (reqId !== fileRequestRef.current) return
+          setAttachedImageDataUrl(url)
+          setIsReadingFile(false)
+        },
+        (msg) => {
+          if (reqId === fileRequestRef.current) setUploadError(msg)
+        },
+        uploadError,
+      )
+    })
+  }
+
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setError("")
+    setFormError("")
 
     if (!senderName || !recipientName) {
-      setError("Please fill in the To and From fields")
+      setFormError("Please fill in the To and From fields")
       return
     }
 
@@ -60,9 +91,10 @@ export function CardDetailsForm({
         senderName,
         recipientName,
         customMessage: context,
+        attachedImageUrl: attachedImageDataUrl ?? undefined,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setFormError(err instanceof Error ? err.message : "An error occurred")
     }
   }
 
@@ -108,9 +140,9 @@ export function CardDetailsForm({
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="mt-7 flex flex-1 flex-col gap-4">
-        {error && (
+        {formError && (
           <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{formError}</AlertDescription>
           </Alert>
         )}
 
@@ -170,6 +202,78 @@ export function CardDetailsForm({
           />
         </div>
 
+        {/* Reference photo */}
+        <div>
+          <div className="mb-1.5 text-xs font-medium text-muted-foreground">
+            Reference photo{" "}
+            <span className="font-normal opacity-60">(optional)</span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={isLoading}
+            onChange={handleFileChange}
+          />
+          {isReadingFile ? (
+            <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground">
+              <Spinner className="h-3.5 w-3.5" />
+              Compressing…
+            </div>
+          ) : attachedImageDataUrl ? (
+            <div className="relative w-fit overflow-hidden rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={attachedImageDataUrl}
+                alt="Reference"
+                className="max-h-48 max-w-full"
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="absolute bottom-2 left-2 h-auto rounded-full bg-black/50 px-2.5 py-1 text-xs text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+              >
+                Change photo
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Remove reference photo"
+                onClick={() => {
+                  setAttachedImageDataUrl(null)
+                  setUploadError("")
+                  if (fileInputRef.current) fileInputRef.current.value = ""
+                }}
+                disabled={isLoading}
+                className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Paperclip className="h-3.5 w-3.5" />
+              Attach a reference photo
+            </button>
+          )}
+          {uploadError && (
+            <Alert variant="destructive" className="mt-1.5">
+              <AlertDescription>{uploadError}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
         {/* Tone chips */}
         <div>
           <div className="mb-1.5 text-xs font-medium text-muted-foreground">
@@ -198,7 +302,7 @@ export function CardDetailsForm({
                 variant="outline"
                 size="default"
                 className="flex-1"
-                disabled={isLoading || isContinuing}
+                disabled={isLoading || isContinuing || isReadingFile}
               >
                 {isLoading ? (
                   <>
@@ -244,7 +348,7 @@ export function CardDetailsForm({
               type="submit"
               size="default"
               className="flex-1"
-              disabled={isLoading}
+              disabled={isLoading || isReadingFile}
             >
               {isLoading ? (
                 <>

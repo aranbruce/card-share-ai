@@ -19,6 +19,7 @@ import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
+import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 export type OwnerCard = {
   id: string
@@ -29,7 +30,6 @@ export type OwnerCard = {
   copy_headline: string
   copy_message: string
   image_url: string
-  image_prompt?: string | null
   extra_pages?: number
   contributor_link_id?: string
 }
@@ -54,7 +54,7 @@ export type ActiveContributionFormattingState = {
 }
 
 export type CardOwnerStudioHandle = {
-  regenerateImage: (prompt: string) => Promise<void>
+  regenerateImage: (prompt: string, attachedImageUrl?: string) => Promise<void>
   regenerateHeadline: (prompt: string) => Promise<void>
 }
 
@@ -72,11 +72,9 @@ export type CardOwnerStudioProps = {
   onRegeneratingImageChange?: (v: boolean) => void
   /** Called when headline regeneration starts or finishes. */
   onRegeneratingHeadlineChange?: (v: boolean) => void
-  /** Called when the card's headline, image URL, or image prompt changes (after a successful regeneration). */
+  /** Called when the card's headline or image URL changes (after a successful regeneration). */
   onCardDataChange?: (
-    updates: Partial<
-      Pick<OwnerCard, "copy_headline" | "image_url" | "image_prompt">
-    >,
+    updates: Partial<Pick<OwnerCard, "copy_headline" | "image_url">>,
   ) => void
 }
 
@@ -352,7 +350,8 @@ export const CardOwnerStudio = forwardRef<
             senderName: card.sender_name,
             currentValue: card.copy_headline,
             userPrompt: prompt,
-            coverImagePrompt: card.image_prompt ?? "",
+            existingCardCoverImageUrl:
+              sourceImageUrlForRefineRequest(card.image_url) ?? "",
           },
         )
         const next = String(text ?? "").trim()
@@ -369,28 +368,28 @@ export const CardOwnerStudio = forwardRef<
   )
 
   const handleRegenerateImage = useCallback(
-    async (prompt: string, sourceImageUrl?: string) => {
+    async (prompt: string, attachedImageUrl?: string) => {
       if (!card) return
       setIsRegeneratingImage(true)
       try {
-        const newPrompt = prompt || card.image_prompt || ""
+        const existingCover = sourceImageUrlForRefineRequest(card.image_url)
         const { imageUrl } = await apiPost<{ imageUrl?: string }>(
           "/api/generate-image",
           {
-            imagePrompt: newPrompt,
+            cardType: card.card_type,
             coverHeadline: card.copy_headline,
-            ...(sourceImageUrl ? { sourceImageUrl } : {}),
+            ...(prompt ? { imagePrompt: prompt } : {}),
+            ...(existingCover &&
+            (!attachedImageUrl || !existingCover.startsWith("data:"))
+              ? { existingCardCoverImageUrl: existingCover }
+              : {}),
+            ...(attachedImageUrl ? { attachedImageUrl } : {}),
           },
         )
         if (imageUrl) {
-          setCard((c) =>
-            c ? { ...c, image_url: imageUrl, image_prompt: newPrompt } : c,
-          )
-          await patchCardFields({
-            image_url: imageUrl,
-            image_prompt: newPrompt,
-          })
-          onCardDataChange?.({ image_url: imageUrl, image_prompt: newPrompt })
+          setCard((c) => (c ? { ...c, image_url: imageUrl } : c))
+          await patchCardFields({ image_url: imageUrl })
+          onCardDataChange?.({ image_url: imageUrl })
         }
       } catch (e) {
         console.error(e)
@@ -404,7 +403,8 @@ export const CardOwnerStudio = forwardRef<
   useImperativeHandle(
     ref,
     () => ({
-      regenerateImage: (prompt) => handleRegenerateImage(prompt),
+      regenerateImage: (prompt, attachedImageUrl) =>
+        handleRegenerateImage(prompt, attachedImageUrl),
       regenerateHeadline: handleRegenerateHeadline,
     }),
     [handleRegenerateImage, handleRegenerateHeadline],

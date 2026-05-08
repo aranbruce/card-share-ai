@@ -7,7 +7,6 @@ const pendingCardSchema = z.object({
   copyHeadline: z.string(),
   copyMessage: z.string(),
   imageUrl: z.string(),
-  imagePrompt: z.string(),
   extraPages: z.number(),
 })
 

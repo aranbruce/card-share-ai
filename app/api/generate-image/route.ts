@@ -2,90 +2,12 @@ import { Buffer } from "node:buffer"
 import { NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import type { GeneratedFile, ModelMessage } from "ai"
-import { fetchHttpsSourceImageBytes } from "@/lib/https-source-image"
 import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
-import {
-  MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH,
-  MAX_SOURCE_IMAGE_BASE64_CHARS,
-  MAX_SOURCE_IMAGE_BYTES,
-} from "@/lib/source-image-limits"
+import { resolveSourceImage } from "@/lib/resolve-image-for-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 /** Nano Banana 2 — use `generateText`; image outputs are in `files`. */
 const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
-
-type SourceImageOk =
-  | { ok: true; kind: "https"; url: string }
-  | { ok: true; kind: "data"; bytes: Uint8Array }
-type SourceImageErr = { ok: false; message: string }
-
-/**
- * Only `https://` URLs (fetched server-side with host allowlist; never passed through)
- * or `data:image/*;base64,...` (decoded here). Rejects http, other schemes, non-image
- * data URLs, and bare strings.
- */
-function parseSourceImageInput(source: string): SourceImageOk | SourceImageErr {
-  const trimmed = source.trim()
-  if (!trimmed) {
-    return { ok: false, message: "Source image URL must not be empty" }
-  }
-
-  if (trimmed.startsWith("https://")) {
-    if (trimmed.length > MAX_HTTPS_SOURCE_IMAGE_URL_LENGTH) {
-      return { ok: false, message: "Source image URL is too long" }
-    }
-    try {
-      const parsed = new URL(trimmed)
-      if (parsed.protocol !== "https:") {
-        return { ok: false, message: "Source image URL must use https" }
-      }
-      return { ok: true, kind: "https", url: trimmed }
-    } catch {
-      return { ok: false, message: "Invalid source image URL" }
-    }
-  }
-
-  if (trimmed.startsWith("data:")) {
-    const comma = trimmed.indexOf(",")
-    if (comma === -1) {
-      return { ok: false, message: "Invalid data URL" }
-    }
-    const meta = trimmed.slice(5, comma)
-    if (!meta.toLowerCase().startsWith("image/")) {
-      return {
-        ok: false,
-        message: "Source image data URL must use an image/* media type",
-      }
-    }
-    if (!/;base64$/i.test(meta) && !/;base64;/i.test(meta)) {
-      return {
-        ok: false,
-        message: "Source image data URL must be base64-encoded",
-      }
-    }
-    const b64 = trimmed.slice(comma + 1).replace(/\s/g, "")
-    if (b64.length > MAX_SOURCE_IMAGE_BASE64_CHARS) {
-      return {
-        ok: false,
-        message: "Source image data URL exceeds maximum size",
-      }
-    }
-    const decoded = Buffer.from(b64, "base64")
-    if (decoded.length === 0 || decoded.length > MAX_SOURCE_IMAGE_BYTES) {
-      return {
-        ok: false,
-        message: "Source image data URL exceeds maximum size",
-      }
-    }
-    return { ok: true, kind: "data", bytes: new Uint8Array(decoded) }
-  }
-
-  return {
-    ok: false,
-    message:
-      "Source image must be an https URL or a data:image/*;base64 data URL",
-  }
-}
 
 const MAX_COVER_HEADLINE_PROMPT_CHARS = 300
 
@@ -136,76 +58,138 @@ export async function POST(request: NextRequest) {
     )
   }
   try {
-    const { imagePrompt, sourceImageUrl, coverHeadline } =
-      (await request.json()) as {
-        imagePrompt?: string
-        sourceImageUrl?: string
-        /** Current card headline — guides mood/theme; must not appear as text in the image. */
-        coverHeadline?: string
-      }
+    const {
+      imagePrompt,
+      attachedImageUrl,
+      existingCardCoverImageUrl,
+      coverHeadline,
+      cardType,
+      customMessage,
+    } = (await request.json()) as {
+      imagePrompt?: string
+      /** User-uploaded style/subject reference image. */
+      attachedImageUrl?: string
+      /** Existing card cover image to refine. */
+      existingCardCoverImageUrl?: string
+      /** Current card headline — guides mood/theme; must not appear as text in the image. */
+      coverHeadline?: string
+      cardType?: string
+      customMessage?: string
+    }
 
     const trimmedPrompt =
       typeof imagePrompt === "string" ? imagePrompt.trim() : ""
+    const trimmedCardType = typeof cardType === "string" ? cardType.trim() : ""
+    const trimmedCustomMessage =
+      typeof customMessage === "string" ? customMessage.trim() : ""
 
-    if (!trimmedPrompt) {
+    const sourceRaw =
+      typeof attachedImageUrl === "string" && attachedImageUrl.trim().length > 0
+        ? attachedImageUrl.trim()
+        : undefined
+
+    const previousRaw =
+      typeof existingCardCoverImageUrl === "string" &&
+      existingCardCoverImageUrl.trim().length > 0
+        ? existingCardCoverImageUrl.trim()
+        : undefined
+
+    const hasAnyContext =
+      trimmedPrompt ||
+      trimmedCardType ||
+      trimmedCustomMessage ||
+      sourceRaw ||
+      previousRaw
+    if (!hasAnyContext) {
       return NextResponse.json(
-        { error: "Image prompt is required" },
+        {
+          error:
+            "At least one of cardType, imagePrompt, customMessage, attachedImageUrl, or existingCardCoverImageUrl is required",
+        },
         { status: 400, headers: rate.headers },
       )
     }
 
-    const sourceRaw =
-      typeof sourceImageUrl === "string" && sourceImageUrl.trim().length > 0
-        ? sourceImageUrl.trim()
-        : undefined
+    const [sourceResult, previousResult] = await Promise.all([
+      sourceRaw ? resolveSourceImage(sourceRaw) : Promise.resolve(null),
+      previousRaw ? resolveSourceImage(previousRaw) : Promise.resolve(null),
+    ])
 
-    let source: string | Uint8Array | undefined
-    if (sourceRaw) {
-      const parsed = parseSourceImageInput(sourceRaw)
-      if (!parsed.ok) {
-        return NextResponse.json(
-          { error: parsed.message },
-          { status: 400, headers: rate.headers },
-        )
-      }
-      if (parsed.kind === "data") {
-        source = parsed.bytes
-      } else {
-        const fetched = await fetchHttpsSourceImageBytes(parsed.url)
-        if (!fetched.ok) {
-          return NextResponse.json(
-            { error: fetched.message },
-            { status: 400, headers: rate.headers },
-          )
-        }
-        source = fetched.bytes
-      }
+    if (sourceResult && !sourceResult.ok) {
+      return NextResponse.json(
+        { error: sourceResult.message },
+        { status: 400, headers: rate.headers },
+      )
     }
+
+    const source: Uint8Array | undefined = sourceResult?.ok
+      ? sourceResult.bytes
+      : undefined
+    // Soft-fail: if the existing cover can't be resolved, proceed without it
+    const previous: Uint8Array | undefined = previousResult?.ok
+      ? previousResult.bytes
+      : undefined
 
     const headline =
       typeof coverHeadline === "string" ? coverHeadline.trim() : ""
     const constraints = coverArtInstructionBlock(
       headline.length > 0 ? headline : undefined,
     )
-    const userScene = `${constraints}\n\n${trimmedPrompt}`
+    const contextLines: string[] = []
+    if (trimmedCardType) contextLines.push(`Card type: ${trimmedCardType}`)
+    if (trimmedCustomMessage)
+      contextLines.push(`Additional context: ${trimmedCustomMessage}`)
+    if (trimmedPrompt) contextLines.push(trimmedPrompt)
+    const userScene =
+      contextLines.length > 0
+        ? `${constraints}\n\n${contextLines.join("\n")}`
+        : constraints
 
-    const refinePrefix =
-      "Refine this greeting card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n"
+    type ImagePart = { type: "image"; image: string | Uint8Array }
+    type TextPart = { type: "text"; text: string }
 
-    const prompt: ModelMessage[] = [
-      {
-        role: "user",
-        content: source
-          ? [
-              { type: "image", image: source },
-              {
-                type: "text",
-                text: `${refinePrefix}${userScene}`,
-              },
-            ]
-          : userScene,
-      },
-    ]
+    let content: string | Array<ImagePart | TextPart>
+
+    if (previous && source) {
+      content = [
+        { type: "text", text: "Existing card cover image (refine this):" },
+        { type: "image", image: previous },
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration):",
+        },
+        { type: "image", image: source },
+        {
+          type: "text",
+          text: `Refine the existing card cover using the attached image as inspiration. Follow the instructions; keep layout and subject unless asked to change them.\n\n${userScene}`,
+        },
+      ]
+    } else if (previous) {
+      content = [
+        { type: "text", text: "Existing card cover image (refine this):" },
+        { type: "image", image: previous },
+        {
+          type: "text",
+          text: `Refine this existing card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n${userScene}`,
+        },
+      ]
+    } else if (source) {
+      content = [
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration to generate a new card cover):",
+        },
+        { type: "image", image: source },
+        {
+          type: "text",
+          text: `Generate a new greeting card cover inspired by the attached image.\n\n${userScene}`,
+        },
+      ]
+    } else {
+      content = userScene
+    }
+
+    const prompt: ModelMessage[] = [{ role: "user", content }]
 
     const { files } = await generateText({
       model: GEMINI_IMAGE_MODEL,

@@ -16,7 +16,6 @@ const validCard: PendingCard = {
   copyHeadline: "Happy Birthday!",
   copyMessage: "Wishing you all the best.",
   imageUrl: "https://example.com/image.png",
-  imagePrompt: "A festive birthday scene",
   extraPages: 0,
 }
 

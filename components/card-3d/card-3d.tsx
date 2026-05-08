@@ -494,6 +494,7 @@ export function Card3D({
                         src={imageUrl}
                         alt="Card cover"
                         fill
+                        sizes="(max-width: 1024px) 100vw, 448px"
                         className="object-cover"
                         crossOrigin={
                           looksLikeDataUrl(imageUrl) ? undefined : "anonymous"

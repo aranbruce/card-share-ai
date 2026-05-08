@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { CardTypeSelector } from "@/components/card-type-selector"
@@ -12,9 +12,12 @@ import { ChipButton } from "@/components/ui/chip-button"
 import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
-import { Sparkles, X } from "lucide-react"
+import { Paperclip, Sparkles, X } from "lucide-react"
+import { handleImageFileChange } from "@/lib/handle-image-file-change"
+import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -28,19 +31,10 @@ const TYPE_HUE: Record<string, number> = {
 interface CardData {
   cardType: string
   headline: string
-  message: string
   imageUrl: string
-  imagePrompt: string
 }
 
 type Step = "select-type" | "details"
-
-function formatInnerCardCopy(message: string, signoff: string) {
-  const m = message.trim()
-  const s = signoff.trim()
-  if (m && s) return `${m}\n\n${s}`
-  return m || s
-}
 
 export default function CreateCardPage() {
   const router = useRouter()
@@ -58,7 +52,14 @@ export default function CreateCardPage() {
   const [openAiPanel, setOpenAiPanel] = useState<"image" | "title" | null>(null)
   const [imagePrompt, setImagePrompt] = useState("")
   const [titlePrompt, setTitlePrompt] = useState("")
+  const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
+    string | null
+  >(null)
+  const editImageFileRef = useRef<HTMLInputElement>(null)
+  const editImageRequestRef = useRef(0)
+  const [isReadingImageFile, setIsReadingImageFile] = useState(false)
   const [error, setError] = useState("")
+  const [editImageError, setEditImageError] = useState("")
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
 
@@ -83,6 +84,7 @@ export default function CreateCardPage() {
     senderName: string
     recipientName: string
     customMessage?: string
+    attachedImageUrl?: string
   }) => {
     setError("")
     setSenderName(details.senderName)
@@ -90,9 +92,7 @@ export default function CreateCardPage() {
     setCardData({
       cardType: details.cardType,
       headline: "",
-      message: "",
       imageUrl: "",
-      imagePrompt: "",
     })
     setIsGeneratingCopy(true)
     setIsGeneratingImage(true)
@@ -106,6 +106,9 @@ export default function CreateCardPage() {
           recipientName: details.recipientName,
           senderName: details.senderName,
           customMessage: details.customMessage,
+          ...(details.attachedImageUrl
+            ? { attachedImageUrl: details.attachedImageUrl }
+            : {}),
         }),
       })
 
@@ -114,29 +117,24 @@ export default function CreateCardPage() {
       }
 
       const { cardCopy } = await copyResponse.json()
-      const innerMessage = formatInnerCardCopy(
-        cardCopy.message,
-        cardCopy.signoff,
-      )
 
       setIsGeneratingCopy(false)
       setCardData((prev) =>
-        prev
-          ? {
-              ...prev,
-              headline: cardCopy.headline,
-              message: innerMessage,
-              imagePrompt: cardCopy.imagePrompt,
-            }
-          : null,
+        prev ? { ...prev, headline: cardCopy.headline } : null,
       )
 
       const imageResponse = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imagePrompt: cardCopy.imagePrompt,
+          cardType: details.cardType,
           coverHeadline: cardCopy.headline,
+          ...(details.customMessage
+            ? { customMessage: details.customMessage }
+            : {}),
+          ...(details.attachedImageUrl
+            ? { attachedImageUrl: details.attachedImageUrl }
+            : {}),
         }),
       })
 
@@ -171,7 +169,9 @@ export default function CreateCardPage() {
           senderName,
           currentValue: cardData.headline,
           userPrompt: prompt,
-          coverImagePrompt: cardData.imagePrompt,
+          existingCardCoverImageUrl: sourceImageUrlForRefineRequest(
+            cardData.imageUrl,
+          ),
         }),
       })
 
@@ -193,21 +193,25 @@ export default function CreateCardPage() {
 
   const handleRegenerateImage = async (
     prompt: string,
-    sourceImageUrl?: string,
+    attachedImageUrl?: string,
   ) => {
     if (!cardData) return
 
     setIsRegeneratingImage(true)
     try {
-      // Use the user's prompt as the new image prompt
-      const newPrompt = prompt || cardData.imagePrompt
+      const existingCover = sourceImageUrlForRefineRequest(cardData.imageUrl)
       const response = await fetch("/api/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imagePrompt: newPrompt,
+          cardType: cardData.cardType,
           coverHeadline: cardData.headline,
-          ...(sourceImageUrl ? { sourceImageUrl } : {}),
+          ...(prompt ? { imagePrompt: prompt } : {}),
+          ...(existingCover &&
+          (!attachedImageUrl || !existingCover.startsWith("data:"))
+            ? { existingCardCoverImageUrl: existingCover }
+            : {}),
+          ...(attachedImageUrl ? { attachedImageUrl } : {}),
         }),
       })
 
@@ -215,13 +219,7 @@ export default function CreateCardPage() {
 
       const { imageUrl } = (await response.json()) as { imageUrl?: string }
       setCardData((prev) =>
-        prev
-          ? {
-              ...prev,
-              imageUrl: imageUrl ?? prev.imageUrl,
-              imagePrompt: newPrompt,
-            }
-          : null,
+        prev ? { ...prev, imageUrl: imageUrl ?? prev.imageUrl } : null,
       )
     } catch (err) {
       setError(
@@ -240,9 +238,8 @@ export default function CreateCardPage() {
       recipientName,
       senderName,
       copyHeadline: cardData.headline,
-      copyMessage: cardData.message,
+      copyMessage: "",
       imageUrl: cardData.imageUrl,
-      imagePrompt: cardData.imagePrompt,
       extraPages: 0,
     }
 
@@ -271,9 +268,7 @@ export default function CreateCardPage() {
           recipientEmail: "", // Optional field
           senderName,
           copyHeadline: cardData.headline,
-          copyMessage: cardData.message,
           imageUrl: cardData.imageUrl,
-          imagePrompt: cardData.imagePrompt,
           extraPages: 0,
         }),
       })
@@ -347,7 +342,7 @@ export default function CreateCardPage() {
 
       {/* Studio — full-width two-column layout */}
       {step === "details" && (
-        <div className="grid min-h-[calc(100vh-0px)] grid-cols-1 lg:grid-cols-[420px_1fr]">
+        <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[420px_1fr]">
           <CardDetailsForm
             cardType={selectedType}
             onSubmit={handleDetailsSubmit}
@@ -380,7 +375,7 @@ export default function CreateCardPage() {
                 ) : cardData ? (
                   <div className="flex w-full max-w-md flex-col gap-12">
                     {openAiPanel === null ? (
-                      <div className="flex justify-center gap-2">
+                      <div className="flex h-9 items-center justify-center gap-2">
                         <ChipButton
                           onClick={() => setOpenAiPanel("image")}
                           disabled={isRegeneratingImage || isGeneratingImage}
@@ -407,37 +402,143 @@ export default function CreateCardPage() {
                         </ChipButton>
                       </div>
                     ) : openAiPanel === "image" ? (
-                      <div className="flex gap-2">
-                        <Input
-                          autoFocus
-                          className="rounded-full focus-visible:ring-1"
-                          placeholder="Describe the image change…"
-                          value={imagePrompt}
-                          onChange={(e) => setImagePrompt(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && imagePrompt.trim()) {
-                              void handleRegenerateImage(imagePrompt)
-                              setOpenAiPanel(null)
-                              setImagePrompt("")
-                            }
-                            if (e.key === "Escape") setOpenAiPanel(null)
+                      <div className="flex flex-col gap-2">
+                        <input
+                          ref={editImageFileRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (!e.target.files?.[0]) return
+                            setIsReadingImageFile(true)
+                            const reqId = ++editImageRequestRef.current
+                            requestAnimationFrame(() => {
+                              handleImageFileChange(
+                                e,
+                                (url) => {
+                                  if (reqId !== editImageRequestRef.current)
+                                    return
+                                  setAttachedImageDataUrl(url)
+                                  setIsReadingImageFile(false)
+                                },
+                                (msg) => {
+                                  if (reqId === editImageRequestRef.current)
+                                    setEditImageError(msg)
+                                },
+                                editImageError,
+                              )
+                            })
                           }}
-                          disabled={isRegeneratingImage}
                         />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="shrink-0"
-                          onClick={() => setOpenAiPanel(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        {attachedImageDataUrl && (
+                          <div className="relative w-fit">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={attachedImageDataUrl}
+                              alt="Reference"
+                              className="max-h-48 max-w-full cursor-pointer rounded-xl"
+                              onClick={() => editImageFileRef.current?.click()}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Remove attached photo"
+                              onClick={() => {
+                                setAttachedImageDataUrl(null)
+                                if (editImageFileRef.current)
+                                  editImageFileRef.current.value = ""
+                              }}
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                        <div className="relative w-full">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              !isReadingImageFile &&
+                              editImageFileRef.current?.click()
+                            }
+                            disabled={isRegeneratingImage}
+                            className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                            aria-label="Attach a photo"
+                            title="Attach a photo"
+                          >
+                            {isReadingImageFile ? (
+                              <Spinner className="h-4 w-4" />
+                            ) : (
+                              <Paperclip className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Input
+                            autoFocus
+                            className="rounded-full px-9 focus-visible:ring-1"
+                            placeholder="Describe the image change…"
+                            value={imagePrompt}
+                            onChange={(e) => setImagePrompt(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (
+                                e.key === "Enter" &&
+                                (imagePrompt.trim() || attachedImageDataUrl)
+                              ) {
+                                void handleRegenerateImage(
+                                  imagePrompt,
+                                  attachedImageDataUrl ?? undefined,
+                                )
+                                setOpenAiPanel(null)
+                                setImagePrompt("")
+                                setAttachedImageDataUrl(null)
+                                if (editImageFileRef.current)
+                                  editImageFileRef.current.value = ""
+                              }
+                              if (e.key === "Escape") {
+                                editImageRequestRef.current++
+                                setIsReadingImageFile(false)
+                                setOpenAiPanel(null)
+                                setAttachedImageDataUrl(null)
+                                setEditImageError("")
+                                if (editImageFileRef.current)
+                                  editImageFileRef.current.value = ""
+                              }
+                            }}
+                            disabled={isRegeneratingImage}
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label="Close image edit panel"
+                            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                            onClick={() => {
+                              editImageRequestRef.current++
+                              setIsReadingImageFile(false)
+                              setOpenAiPanel(null)
+                              setAttachedImageDataUrl(null)
+                              setEditImageError("")
+                              if (editImageFileRef.current)
+                                editImageFileRef.current.value = ""
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        {editImageError && (
+                          <Alert variant="destructive">
+                            <AlertDescription>
+                              {editImageError}
+                            </AlertDescription>
+                          </Alert>
+                        )}
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="relative">
                         <Input
                           autoFocus
-                          className="rounded-full focus-visible:ring-1"
+                          className="rounded-full pr-9 focus-visible:ring-1"
                           placeholder="Describe the title change…"
                           value={titlePrompt}
                           onChange={(e) => setTitlePrompt(e.target.value)}
@@ -454,17 +555,18 @@ export default function CreateCardPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="shrink-0"
+                          aria-label="Close title edit panel"
+                          className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                           onClick={() => setOpenAiPanel(null)}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     )}
                     <Card3D
                       imageUrl={cardData.imageUrl}
                       headline={cardData.headline}
-                      message={cardData.message}
+                      message=""
                       senderName={senderName}
                       recipientName={recipientName}
                       isGeneratingImage={isGeneratingImage}
@@ -529,7 +631,7 @@ export default function CreateCardPage() {
       )}
 
       {error && (
-        <div className="fixed right-4 bottom-4 max-w-sm rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="fixed right-4 bottom-4 max-w-md rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}

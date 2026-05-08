@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS cards (
   copy_message TEXT NOT NULL,
   copy_signoff TEXT NOT NULL,
   image_url TEXT NOT NULL,
-  image_prompt TEXT,
   contributor_link_id TEXT UNIQUE,
   contributor_link_expires_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,

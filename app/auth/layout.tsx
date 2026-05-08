@@ -45,7 +45,7 @@ export default function AuthLayout({
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             One prompt, any card
           </p>
-          <p className="mt-3 max-w-sm text-3xl leading-tight font-semibold tracking-[-0.025em] text-background">
+          <p className="mt-3 max-w-sm text-3xl leading-tight font-semibold tracking-tight text-background">
             Every card you&apos;ve ever organized. Saved for good.
           </p>
         </div>

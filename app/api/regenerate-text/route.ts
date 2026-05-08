@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getTextModel } from "@/lib/ai-text-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
+import { resolveImageForModel } from "@/lib/resolve-image-for-model"
 
 const SYSTEM_OUTPUT_RULES = `You help rewrite greeting card text. Output only the requested field: plain text, no markdown, no labels like "Headline:" or "Message:", no leading or trailing quotation marks.`
 
@@ -37,7 +38,8 @@ export async function POST(request: NextRequest) {
       senderName,
       currentValue,
       userPrompt,
-      coverImagePrompt,
+      attachedImageUrl,
+      existingCardCoverImageUrl,
     } = (await request.json()) as {
       field?: string
       cardType?: string
@@ -45,8 +47,8 @@ export async function POST(request: NextRequest) {
       senderName?: string
       currentValue?: string
       userPrompt?: string
-      /** Optional: current cover art description so the headline matches the image theme. */
-      coverImagePrompt?: string
+      attachedImageUrl?: string
+      existingCardCoverImageUrl?: string
     }
 
     if (!field || !cardType) {
@@ -58,23 +60,23 @@ export async function POST(request: NextRequest) {
 
     const cur = typeof currentValue === "string" ? currentValue : ""
     const userReq = typeof userPrompt === "string" ? userPrompt : ""
-    const imagePrompt =
-      typeof coverImagePrompt === "string" ? coverImagePrompt.trim() : ""
+    const attachedUrl =
+      typeof attachedImageUrl === "string" ? attachedImageUrl.trim() : ""
+    const imageUrl =
+      typeof existingCardCoverImageUrl === "string"
+        ? existingCardCoverImageUrl.trim()
+        : ""
 
     let userContent = ""
 
     if (field === "headline") {
-      const imageContext =
-        imagePrompt.length > 0
-          ? `\nThe cover illustration is described as follows; align the headline’s mood and subject with this art (the headline text is shown separately from the image — do not describe rendering text into the picture):\n${block("COVER_IMAGE_PROMPT", imagePrompt)}\n`
-          : ""
       userContent = `Generate a single catchy, celebratory headline for a ${cardType} greeting card to ${recipientName ?? ""} from ${senderName ?? ""}.
-${imageContext}
+
 ${block("CURRENT_HEADLINE", cur)}
 
 ${block("USER_CHANGE_REQUEST", userReq)}
 
-Based on the user's request, write a new headline.`
+Based on the user’s request, write a new headline.`
     } else if (field === "message") {
       userContent = `Generate a heartfelt message for a ${cardType} greeting card to ${recipientName ?? ""} from ${senderName ?? ""}.
 
@@ -98,13 +100,61 @@ Rewrite the note to be warm and personal. Keep it concise.`
       )
     }
 
+    const [attachedBytes, coverBytes] =
+      field === "headline"
+        ? await Promise.all([
+            attachedUrl.length > 0 ? resolveImageForModel(attachedUrl) : null,
+            imageUrl.length > 0 ? resolveImageForModel(imageUrl) : null,
+          ])
+        : [null, null]
+
+    type ImagePart = { type: "image"; image: Uint8Array }
+    type TextPart = { type: "text"; text: string }
+    let userMessageContent: string | Array<ImagePart | TextPart>
+
+    if (attachedBytes && coverBytes) {
+      userMessageContent = [
+        { type: "text", text: userContent },
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration):",
+        },
+        { type: "image", image: attachedBytes },
+        {
+          type: "text",
+          text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
+        },
+        { type: "image", image: coverBytes },
+      ]
+    } else if (attachedBytes) {
+      userMessageContent = [
+        { type: "text", text: userContent },
+        {
+          type: "text",
+          text: "Attached reference image (use its style, mood, and subject as inspiration):",
+        },
+        { type: "image", image: attachedBytes },
+      ]
+    } else if (coverBytes) {
+      userMessageContent = [
+        { type: "text", text: userContent },
+        {
+          type: "text",
+          text: "Existing card cover image (align the headline's mood and subject with this art; do not describe rendering text into the picture):",
+        },
+        { type: "image", image: coverBytes },
+      ]
+    } else {
+      userMessageContent = userContent
+    }
+
     const { text } = await generateText({
       model: getTextModel(),
       system: SYSTEM_OUTPUT_RULES,
       messages: [
         {
           role: "user",
-          content: userContent,
+          content: userMessageContent,
         },
       ],
     })

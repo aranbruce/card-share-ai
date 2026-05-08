@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
       senderName,
       copyHeadline,
       imageUrl,
-      imagePrompt,
       extraPages = 0,
     } = await request.json()
 
@@ -38,7 +37,6 @@ export async function POST(request: NextRequest) {
         copy_headline: copyHeadline,
         copy_message: "",
         image_url: imageUrl,
-        image_prompt: imagePrompt,
         contributor_link_id: linkId,
         extra_pages:
           typeof extraPages === "number" && Number.isFinite(extraPages)
