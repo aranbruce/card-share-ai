@@ -738,94 +738,91 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         </main>
 
         {/* ── Right: writing panel ── */}
-        {canPlaceNewGuestMessage ? (
-          /* ── Compose panel ── */
-          <NotePanel
-            title="Write something real."
-            values={{
-              textColor: composeValues.textColor,
-              giphyUrl: composeValues.giphyUrl,
-              fontSize: composeValues.fontSize,
-              rotationDegrees: composeValues.rotationDegrees,
-              pageIndex: composeValues.pageIndex,
-            }}
-            isRegenerating={composeDraftRegenerating}
-            onRegenerate={handleComposeDraftRegenerate}
-            onTextColorChange={(color) =>
-              patchComposeValues({ textColor: color })
-            }
-            onFontSizeChange={(px) => patchComposeValues({ fontSize: px })}
-            onRotationChange={(deg) =>
-              patchComposeValues({ rotationDegrees: deg })
-            }
-            onPageChange={(pageNum) => {
+        <NotePanel
+          title={editableContrib !== null ? "Edit your note." : "Write something real."}
+          values={editableContrib !== null ? {
+            textColor: editableContrib.text_color,
+            giphyUrl: editableContrib.giphy_url,
+            fontSize: editableContrib.font_size,
+            rotationDegrees: editableContrib.rotation_degrees,
+            pageIndex: editableContrib.page_index,
+          } : {
+            textColor: composeValues.textColor,
+            giphyUrl: composeValues.giphyUrl,
+            fontSize: composeValues.fontSize,
+            rotationDegrees: composeValues.rotationDegrees,
+            pageIndex: composeValues.pageIndex,
+          }}
+          isRegenerating={
+            editableContrib !== null
+              ? regeneratingContributionId === editableContrib.id
+              : composeDraftRegenerating
+          }
+          onRegenerate={
+            editableContrib !== null
+              ? (prompt) => handleContributionRegenerateMessage(editableContrib.id, prompt)
+              : handleComposeDraftRegenerate
+          }
+          onTextColorChange={(color) =>
+            editableContrib !== null
+              ? changeActiveContributionLayout({ textColor: color })
+              : patchComposeValues({ textColor: color })
+          }
+          onFontSizeChange={(px) =>
+            editableContrib !== null
+              ? changeActiveContributionLayout({ fontSize: px })
+              : patchComposeValues({ fontSize: px })
+          }
+          onRotationChange={(deg) =>
+            editableContrib !== null
+              ? changeActiveContributionLayout({ rotationDegrees: deg })
+              : patchComposeValues({ rotationDegrees: deg })
+          }
+          onPageChange={(pageNum) => {
+            if (editableContrib !== null) {
+              changeActiveContributionLayout({ pageIndex: pageNum })
+            } else {
               patchComposeValues({ pageIndex: pageNum })
               setNavigateToPage(pageNum)
-            }}
-            onOpenGifPicker={() => setComposeGifPickerOpen(true)}
-            onGifChange={handleComposeDraftGifChange}
-            totalInnerPages={totalInnerPages}
-            error={error && composeDraft ? error : undefined}
-            footer={
-              <div className="mt-auto flex gap-3 pt-4">
-                <Button
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={cancelCompose}
-                  disabled={submitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => void submitComposeDraft()}
-                  disabled={submitting || composeDraftRegenerating}
-                >
-                  {submitting ? (
-                    <Spinner className="mr-2 h-4 w-4" />
-                  ) : (
-                    <ArrowUp className="mr-2 h-4 w-4" />
-                  )}
-                  Add my note
-                </Button>
-              </div>
             }
-          />
-        ) : editableContrib !== null ? (
-          <NotePanel
-            title="Edit your note."
-            values={{
-              textColor: editableContrib.text_color,
-              giphyUrl: editableContrib.giphy_url,
-              fontSize: editableContrib.font_size,
-              rotationDegrees: editableContrib.rotation_degrees,
-              pageIndex: editableContrib.page_index,
-            }}
-            isRegenerating={regeneratingContributionId === editableContrib.id}
-            onRegenerate={(prompt) =>
-              handleContributionRegenerateMessage(editableContrib.id, prompt)
-            }
-            onTextColorChange={(color) =>
-              changeActiveContributionLayout({ textColor: color })
-            }
-            onFontSizeChange={(px) =>
-              changeActiveContributionLayout({ fontSize: px })
-            }
-            onRotationChange={(deg) =>
-              changeActiveContributionLayout({ rotationDegrees: deg })
-            }
-            onPageChange={(pageNum) =>
-              changeActiveContributionLayout({ pageIndex: pageNum })
-            }
-            onOpenGifPicker={() =>
-              setContribGifPickerContributionId(editableContrib.id)
-            }
-            onGifChange={(url) =>
-              handleContributionGifChange(editableContrib.id, url)
-            }
-            totalInnerPages={totalInnerPages}
-          />
-        ) : null}
+          }}
+          onOpenGifPicker={() =>
+            editableContrib !== null
+              ? setContribGifPickerContributionId(editableContrib.id)
+              : setComposeGifPickerOpen(true)
+          }
+          onGifChange={(url) =>
+            editableContrib !== null
+              ? handleContributionGifChange(editableContrib.id, url)
+              : handleComposeDraftGifChange(url)
+          }
+          totalInnerPages={totalInnerPages}
+          error={error && composeDraft ? error : undefined}
+          footer={composeDraft !== null && editableContrib === null ? (
+            <div className="mt-auto flex gap-3 pt-4">
+              <Button
+                variant="ghost"
+                className="flex-1"
+                onClick={cancelCompose}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => void submitComposeDraft()}
+                disabled={submitting || composeDraftRegenerating}
+              >
+                {submitting ? (
+                  <Spinner className="mr-2 h-4 w-4" />
+                ) : (
+                  <ArrowUp className="mr-2 h-4 w-4" />
+                )}
+                Add my note
+              </Button>
+            </div>
+          ) : undefined}
+        />
       </div>
 
       {/* GIF pickers */}

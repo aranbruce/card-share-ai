@@ -18,7 +18,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { ArrowUp, Sparkles, X } from "lucide-react"
+import { ArrowUp, X } from "lucide-react"
 import { CANVAS_EDGE_PADDING } from "./draggable-wrapper"
 
 export function RegenerateShimmerOverlay({
@@ -69,11 +69,6 @@ export type InlineEditProps = {
   /** Muted placeholder on light pages; use e.g. `text-white/45` on the cover headline. */
   placeholderClassName?: string
   onFocusChange?: (focused: boolean) => void
-  /**
-   * `floating`: sparkle on the text edge (cover headline).
-   * `toolbar`: hide sparkle; call `ref.openRegeneratePrompt()` from Size/Page toolbar.
-   */
-  regeneratePlacement?: "floating" | "toolbar"
   /** Fires when the “Describe the change” prompt opens or closes (toolbar placement). */
   onRegeneratePromptOpenChange?: (open: boolean) => void
   /**
@@ -104,7 +99,6 @@ export const InlineEdit = forwardRef<
     placeholder,
     placeholderClassName = "text-muted-foreground/45",
     onFocusChange,
-    regeneratePlacement = "floating",
     regenerateShimmerTone = "cover",
     autoFocus = false,
     onRegeneratePromptOpenChange,
@@ -115,8 +109,7 @@ export const InlineEdit = forwardRef<
   const [isEditing, setIsEditing] = useState(() => autoFocus)
   const [showPromptInput, setShowPromptInput] = useState(false)
   const [internalPrompt, setInternalPrompt] = useState("")
-  const toolbarExternal =
-    regeneratePlacement === "toolbar" && toolbarRegeneratePrompt != null
+  const toolbarExternal = toolbarRegeneratePrompt != null
   const promptText = toolbarExternal
     ? toolbarRegeneratePrompt.value
     : internalPrompt
@@ -196,20 +189,18 @@ export const InlineEdit = forwardRef<
 
     const updatePosition = () => {
       if (!containerRef.current) return
-      if (regeneratePlacement === "toolbar") {
-        const canvas = containerRef.current.closest(
-          "[data-card-canvas]",
-        ) as HTMLElement | null
-        if (canvas) {
-          const cr = canvas.getBoundingClientRect()
-          const ir = containerRef.current.getBoundingClientRect()
-          setPromptPosition({
-            top: ir.bottom + 12,
-            left: cr.left + CANVAS_EDGE_PADDING,
-            width: Math.max(0, cr.width - 2 * CANVAS_EDGE_PADDING),
-          })
-          return
-        }
+      const canvas = containerRef.current.closest(
+        "[data-card-canvas]",
+      ) as HTMLElement | null
+      if (canvas) {
+        const cr = canvas.getBoundingClientRect()
+        const ir = containerRef.current.getBoundingClientRect()
+        setPromptPosition({
+          top: ir.bottom + 12,
+          left: cr.left + CANVAS_EDGE_PADDING,
+          width: Math.max(0, cr.width - 2 * CANVAS_EDGE_PADDING),
+        })
+        return
       }
       const rect = containerRef.current.getBoundingClientRect()
       setPromptPosition({
@@ -232,7 +223,7 @@ export const InlineEdit = forwardRef<
       window.removeEventListener("resize", updatePosition)
       window.removeEventListener("scroll", updatePosition, true)
     }
-  }, [showPromptInput, regeneratePlacement, toolbarExternal])
+  }, [showPromptInput, toolbarExternal])
 
   const handleBlur = (e: FocusEvent) => {
     if (e.relatedTarget?.closest("[data-regenerate-area]")) {
@@ -266,13 +257,6 @@ export const InlineEdit = forwardRef<
       setShowPromptInput(false)
       setPromptText("")
     }
-  }
-
-  const handleSparkleClick = (e: MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    setPromptText("")
-    setShowPromptInput(true)
   }
 
   const closeRegeneratePrompt = useCallback(() => {
@@ -328,13 +312,6 @@ export const InlineEdit = forwardRef<
 
   const showShimmer = isRegenerating || isGenerating
 
-  const showFloatingRegenerate =
-    editable &&
-    onRegenerate &&
-    !showPromptInput &&
-    regeneratePlacement === "floating" &&
-    !isGenerating
-
   /** Match typing metrics without applying message `color` to the hint overlay. */
   const placeholderMetricsStyle: CSSProperties | undefined = (() => {
     if (!style) return undefined
@@ -365,12 +342,7 @@ export const InlineEdit = forwardRef<
   return (
     <div
       ref={containerRef}
-      className={cn("group relative", isGenerating && "pointer-events-none")}
-      onMouseLeave={() => {
-        if (!isEditing && !showPromptInput) {
-          setShowPromptInput(false)
-        }
-      }}
+      className={cn("relative", isGenerating && "pointer-events-none")}
     >
       <div className="relative w-full min-w-0">
         {/* Outside contentEditable so React does not fight the browser over children (insertBefore errors).
@@ -436,24 +408,6 @@ export const InlineEdit = forwardRef<
           )}
         </div>
       </div>
-
-      {showFloatingRegenerate && (
-        <Button
-          data-regenerate-area
-          variant="primary"
-          size="icon"
-          onClick={handleSparkleClick}
-          disabled={isRegenerating}
-          className="absolute top-1/2 right-0 z-10 -translate-y-1/2 rounded-full p-2.5 opacity-100 shadow-lg transition-all hover:scale-110 md:-right-12 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
-          title="Rewrite with AI"
-        >
-          {isRegenerating ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <Sparkles className="h-4 w-4" />
-          )}
-        </Button>
-      )}
 
       {showPromptInput && !toolbarExternal ? (
         <div
