@@ -30,6 +30,9 @@ export default function PublicCardPage() {
 
   useEffect(() => {
     const loadCard = async () => {
+      setLoading(true)
+      setError("")
+      setCard(null)
       try {
         const response = await fetch(`/api/cards/view/${linkId}`)
 

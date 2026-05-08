@@ -57,12 +57,12 @@ function CardDetailSkeleton() {
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* LEFT */}
         <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
-          <Link href="/dashboard">
-            <Button variant="outline" size="default">
+          <Button asChild variant="outline" size="default">
+            <Link href="/dashboard">
               <ChevronLeft />
               Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div className="space-y-2 text-center">
             <Skeleton className="mx-auto h-3 w-16 rounded-sm" />
             <Skeleton className="mx-auto h-9 w-72 rounded-md" />
