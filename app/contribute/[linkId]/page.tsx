@@ -739,20 +739,28 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
 
         {/* ── Right: writing panel ── */}
         <NotePanel
-          title={editableContrib !== null ? "Edit your note." : "Write something real."}
-          values={editableContrib !== null ? {
-            textColor: editableContrib.text_color,
-            giphyUrl: editableContrib.giphy_url,
-            fontSize: editableContrib.font_size,
-            rotationDegrees: editableContrib.rotation_degrees,
-            pageIndex: editableContrib.page_index,
-          } : {
-            textColor: composeValues.textColor,
-            giphyUrl: composeValues.giphyUrl,
-            fontSize: composeValues.fontSize,
-            rotationDegrees: composeValues.rotationDegrees,
-            pageIndex: composeValues.pageIndex,
-          }}
+          title={
+            editableContrib !== null
+              ? "Edit your note."
+              : "Write something real."
+          }
+          values={
+            editableContrib !== null
+              ? {
+                  textColor: editableContrib.text_color,
+                  giphyUrl: editableContrib.giphy_url,
+                  fontSize: editableContrib.font_size,
+                  rotationDegrees: editableContrib.rotation_degrees,
+                  pageIndex: editableContrib.page_index,
+                }
+              : {
+                  textColor: composeValues.textColor,
+                  giphyUrl: composeValues.giphyUrl,
+                  fontSize: composeValues.fontSize,
+                  rotationDegrees: composeValues.rotationDegrees,
+                  pageIndex: composeValues.pageIndex,
+                }
+          }
           isRegenerating={
             editableContrib !== null
               ? regeneratingContributionId === editableContrib.id
@@ -760,7 +768,11 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           }
           onRegenerate={
             editableContrib !== null
-              ? (prompt) => handleContributionRegenerateMessage(editableContrib.id, prompt)
+              ? (prompt) =>
+                  handleContributionRegenerateMessage(
+                    editableContrib.id,
+                    prompt,
+                  )
               : handleComposeDraftRegenerate
           }
           onTextColorChange={(color) =>
@@ -798,30 +810,32 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           }
           totalInnerPages={totalInnerPages}
           error={error && composeDraft ? error : undefined}
-          footer={composeDraft !== null && editableContrib === null ? (
-            <div className="mt-auto flex gap-3 pt-4">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={cancelCompose}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => void submitComposeDraft()}
-                disabled={submitting || composeDraftRegenerating}
-              >
-                {submitting ? (
-                  <Spinner className="mr-2 h-4 w-4" />
-                ) : (
-                  <ArrowUp className="mr-2 h-4 w-4" />
-                )}
-                Add my note
-              </Button>
-            </div>
-          ) : undefined}
+          footer={
+            composeDraft !== null && editableContrib === null ? (
+              <div className="mt-auto flex gap-3 pt-4">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={cancelCompose}
+                  disabled={submitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => void submitComposeDraft()}
+                  disabled={submitting || composeDraftRegenerating}
+                >
+                  {submitting ? (
+                    <Spinner className="mr-2 h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="mr-2 h-4 w-4" />
+                  )}
+                  Add my note
+                </Button>
+              </div>
+            ) : undefined
+          }
         />
       </div>
 
