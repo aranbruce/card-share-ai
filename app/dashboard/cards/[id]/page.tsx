@@ -250,15 +250,12 @@ function CardDetailInner() {
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* LEFT — editor stage */}
         <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Button variant="outline" size="default">
+          <Button asChild variant="outline" size="default">
+            <Link href="/dashboard">
               <ChevronLeft />
               Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           {/* Page heading */}
           <div className="text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
