@@ -93,7 +93,7 @@ Copy `.env.local` from a team member or pull via `vercel env pull`. Key variable
 
 - **Card states**: Draft → Collecting → Sent
 - **Contributions**: Group members add messages/GIFs via a shareable link (`/contribute/[linkId]`); each contribution has an edit token for post-submission edits
-- **Image handling**: `lib/resolve-source-image.ts` (or similar) centralises image validation before passing to AI models; multiple source types (upload, URL, base64) are normalised here
+- **Image handling**: `lib/resolve-image-for-model.ts` centralises image validation and normalisation before passing to AI models; multiple source types (upload, URL, base64) are handled here alongside `lib/source-image-limits.ts`
 - **Pending card storage**: `lib/pending-card-storage.ts` preserves in-progress card state across auth redirects
 - **AI text model**: Configured via `lib/ai-text-model.ts`; reads `AI_TEXT_MODEL` env var
 - **Supabase RLS**: All database access enforces Row Level Security; use the service role key only in API routes, never client-side
