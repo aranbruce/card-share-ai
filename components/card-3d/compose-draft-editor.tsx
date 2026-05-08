@@ -104,7 +104,6 @@ export function ComposeDraftEditor({
                 : undefined
             }
             isRegenerating={composeDraftRegenerating}
-            regeneratePlacement="floating"
             regenerateShimmerTone="paper"
             className="min-h-[1.5em] leading-relaxed whitespace-pre-wrap text-foreground/90"
             style={{
