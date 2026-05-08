@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 
 const CARD_TYPES = [
@@ -58,18 +59,7 @@ export function CardTypeSelector({
       <div className="mb-10">
         <Button asChild variant="outline" size="default">
           <Link href={isGuest ? "/" : "/dashboard"}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
+            <ChevronLeft />
             {isGuest ? "Back" : "Back to dashboard"}
           </Link>
         </Button>

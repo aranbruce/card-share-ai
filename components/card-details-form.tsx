@@ -7,7 +7,7 @@ import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
-import { Paperclip, X } from "lucide-react"
+import { ChevronLeft, Paperclip, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 
 const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
@@ -107,18 +107,7 @@ export function CardDetailsForm({
         onClick={onBack}
         className="-ml-2 self-start text-muted-foreground"
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M19 12H5M12 5l-7 7 7 7" />
-        </svg>
+        <ChevronLeft />
         Back to occasions
       </Button>
 
@@ -306,22 +295,12 @@ export function CardDetailsForm({
               >
                 {isLoading ? (
                   <>
-                    <Spinner className="mr-2 h-4 w-4" />
+                    <Spinner />
                     Regenerating…
                   </>
                 ) : (
                   <>
-                    <svg
-                      className="mr-1.5 h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-                    </svg>
+                    <Sparkles />
                     Regenerate
                   </>
                 )}
@@ -335,7 +314,7 @@ export function CardDetailsForm({
               >
                 {isContinuing ? (
                   <>
-                    <Spinner className="mr-2 h-4 w-4" />
+                    <Spinner />
                     Saving…
                   </>
                 ) : (
@@ -352,22 +331,12 @@ export function CardDetailsForm({
             >
               {isLoading ? (
                 <>
-                  <Spinner className="mr-2 h-4 w-4" />
+                  <Spinner />
                   Generating…
                 </>
               ) : (
                 <>
-                  <svg
-                    className="mr-1.5 h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-                  </svg>
+                  <Sparkles />
                   Generate card
                 </>
               )}

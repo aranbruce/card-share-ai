@@ -2,14 +2,13 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { useParams } from "next/navigation"
-import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
 import { forCardDisplay, type Contribution } from "@/lib/card-body"
 import { Logo } from "@/components/logo"
 import Link from "next/link"
-import { Sparkles } from "lucide-react"
+import { FileX2 } from "lucide-react"
 
 interface CardData {
   recipient_name: string
@@ -36,7 +35,8 @@ export default function PublicCardPage() {
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || "Card not found")
+          setError(errorData.error || "Card not found")
+          return
         }
 
         const { card: cardData, contributions: fetchedContributions } =
@@ -45,7 +45,7 @@ export default function PublicCardPage() {
         setContributions(fetchedContributions)
       } catch (err) {
         console.error("Error loading card:", err)
-        setError(err instanceof Error ? err.message : "Failed to load card")
+        setError("Failed to load card")
       } finally {
         setLoading(false)
       }
@@ -87,13 +87,29 @@ export default function PublicCardPage() {
 
   if (error || !card) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md p-8 text-center">
-          <h1 className="mb-2 text-2xl font-bold">Card Not Found</h1>
-          <p className="text-muted-foreground">
-            {error || "The card could not be loaded"}
-          </p>
-        </Card>
+      <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
+          <Logo />
+        </header>
+        <main className="flex flex-1 flex-col items-center justify-center gap-8 p-8 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+              <FileX2 className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+                Card not found
+              </h1>
+              <p className="max-w-xs text-sm text-muted-foreground">
+                {error ||
+                  "This card may have been deleted or the link may be invalid."}
+              </p>
+            </div>
+          </div>
+          <Button asChild>
+            <Link href="/auth/sign-up">Create your own card</Link>
+          </Button>
+        </main>
       </div>
     )
   }
@@ -130,10 +146,7 @@ export default function PublicCardPage() {
 
           <div className="mt-8 flex justify-center">
             <Button size="xl" asChild>
-              <Link href="/auth/sign-up">
-                <Sparkles />
-                Create your own card
-              </Link>
+              <Link href="/auth/sign-up">Create your own card</Link>
             </Button>
           </div>
 

@@ -9,7 +9,7 @@ import Link from "next/link"
 import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
 import Image from "next/image"
-import { Inbox, Trash2 } from "lucide-react"
+import { Inbox, Plus, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { apiFetch, apiDelete } from "@/lib/api-client"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
@@ -454,7 +454,10 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2.5">
             <Button asChild size="default">
-              <Link href="/create">+ New card</Link>
+              <Link href="/create">
+                <Plus />
+                New card
+              </Link>
             </Button>
           </div>
         </div>
@@ -563,10 +566,10 @@ export default function DashboardPage() {
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => setConfirmDeleteId(card.id)}
-                      className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                      className="absolute top-3 right-3 rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
                       aria-label="Delete card"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 />
                     </Button>
                   )}
 
@@ -591,11 +594,7 @@ export default function DashboardPage() {
                             disabled={isDeleting}
                             onClick={() => handleDelete(card.id)}
                           >
-                            {isDeleting ? (
-                              <Spinner className="h-4 w-4" />
-                            ) : (
-                              "Delete"
-                            )}
+                            {isDeleting ? <Spinner /> : "Delete"}
                           </Button>
                         </div>
                       </div>

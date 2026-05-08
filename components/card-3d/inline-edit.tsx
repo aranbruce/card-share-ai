@@ -439,11 +439,7 @@ export const InlineEdit = forwardRef<
               className="rounded-full"
               title="Generate"
             >
-              {isRegenerating ? (
-                <Spinner className="h-4 w-4" />
-              ) : (
-                <ArrowUp className="h-4 w-4" />
-              )}
+              {isRegenerating ? <Spinner /> : <ArrowUp />}
             </Button>
             <Button
               variant="ghost"
@@ -452,7 +448,7 @@ export const InlineEdit = forwardRef<
               className="rounded-full"
               title="Cancel"
             >
-              <X className="h-4 w-4 text-muted-foreground" />
+              <X className="text-muted-foreground" />
             </Button>
           </div>
         </div>
