@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import Image from "next/image"
 import {
   Sparkles,
   ImagePlus,
   X,
-  ArrowUp,
   RotateCcw,
   RotateCw,
 } from "lucide-react"
@@ -14,7 +13,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
-import { Spinner } from "@/components/ui/spinner"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
 
 const FONT_SIZE_PRESETS = [
@@ -44,9 +42,7 @@ export type NotePanelProps = {
   onGifChange: (url: string | null) => void
   totalInnerPages: number
   error?: string | null
-  onSubmit?: () => void
-  onCancel?: () => void
-  submitting?: boolean
+  footer?: ReactNode
 }
 
 export function NotePanel({
@@ -62,9 +58,7 @@ export function NotePanel({
   onGifChange,
   totalInnerPages,
   error,
-  onSubmit,
-  onCancel,
-  submitting = false,
+  footer,
 }: NotePanelProps) {
   const [refineOpen, setRefineOpen] = useState(false)
   const [refinePrompt, setRefinePrompt] = useState("")
@@ -72,7 +66,8 @@ export function NotePanel({
   const rotation = values.rotationDegrees ?? 0
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 lg:p-8">
+    <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
+    <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 lg:p-7">
       <div>
         <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
           Your note
@@ -93,12 +88,12 @@ export function NotePanel({
         <p className="text-xs font-medium text-muted-foreground">
           Refine with AI
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex h-7 flex-wrap items-center gap-2">
           {refineOpen ? (
-            <div className="flex w-full gap-2">
+            <div className="relative w-full">
               <Input
                 autoFocus
-                className="rounded-full focus-visible:ring-1"
+                className="rounded-full pr-9 focus-visible:ring-1"
                 placeholder="Describe the change…"
                 value={refinePrompt}
                 onChange={(e) => setRefinePrompt(e.target.value)}
@@ -114,10 +109,11 @@ export function NotePanel({
               <Button
                 size="icon"
                 variant="ghost"
-                className="shrink-0"
+                aria-label="Close refine panel"
+                className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
                 onClick={() => setRefineOpen(false)}
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </Button>
             </div>
           ) : (
@@ -295,31 +291,8 @@ export function NotePanel({
         </div>
       )}
 
-      {/* Submit / cancel — compose mode only */}
-      {onSubmit && onCancel && (
-        <div className="mt-auto flex gap-3 pt-4">
-          <Button
-            variant="ghost"
-            className="flex-1"
-            onClick={onCancel}
-            disabled={submitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={() => void onSubmit()}
-            disabled={submitting || isRegenerating}
-          >
-            {submitting ? (
-              <Spinner className="mr-2 h-4 w-4" />
-            ) : (
-              <ArrowUp className="mr-2 h-4 w-4" />
-            )}
-            Add my note
-          </Button>
-        </div>
-      )}
+      {footer}
     </div>
+    </aside>
   )
 }

@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
+import { ArrowUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Spinner } from "@/components/ui/spinner"
 import { Card3D } from "@/components/card-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
@@ -11,7 +14,7 @@ import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import type { Contribution } from "@/lib/card-body"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
-import { NotePanel } from "@/components/contribute/note-panel"
+import { NotePanel } from "@/components/note-panel"
 
 function readContributeTokensFromStorage(
   linkId: string,
@@ -735,84 +738,94 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         </main>
 
         {/* ── Right: writing panel ── */}
-        <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
-          {canPlaceNewGuestMessage ? (
-            /* ── Compose panel ── */
-            <NotePanel
-              title="Write something real."
-              values={{
-                textColor: composeValues.textColor,
-                giphyUrl: composeValues.giphyUrl,
-                fontSize: composeValues.fontSize,
-                rotationDegrees: composeValues.rotationDegrees,
-                pageIndex: composeValues.pageIndex,
-              }}
-              isRegenerating={composeDraftRegenerating}
-              onRegenerate={handleComposeDraftRegenerate}
-              onTextColorChange={(color) =>
-                patchComposeValues({ textColor: color })
-              }
-              onFontSizeChange={(px) => patchComposeValues({ fontSize: px })}
-              onRotationChange={(deg) =>
-                patchComposeValues({ rotationDegrees: deg })
-              }
-              onPageChange={(pageNum) => {
-                patchComposeValues({ pageIndex: pageNum })
-                setNavigateToPage(pageNum)
-              }}
-              onOpenGifPicker={() => setComposeGifPickerOpen(true)}
-              onGifChange={handleComposeDraftGifChange}
-              totalInnerPages={totalInnerPages}
-              error={error && composeDraft ? error : undefined}
-              onSubmit={submitComposeDraft}
-              onCancel={cancelCompose}
-              submitting={submitting}
-            />
-          ) : editableContrib !== null ? (
-            <NotePanel
-              title="Edit your note."
-              values={{
-                textColor: editableContrib.text_color,
-                giphyUrl: editableContrib.giphy_url,
-                fontSize: editableContrib.font_size,
-                rotationDegrees: editableContrib.rotation_degrees,
-                pageIndex: editableContrib.page_index,
-              }}
-              isRegenerating={regeneratingContributionId === editableContrib.id}
-              onRegenerate={(prompt) =>
-                handleContributionRegenerateMessage(editableContrib.id, prompt)
-              }
-              onTextColorChange={(color) =>
-                changeActiveContributionLayout({ textColor: color })
-              }
-              onFontSizeChange={(px) =>
-                changeActiveContributionLayout({ fontSize: px })
-              }
-              onRotationChange={(deg) =>
-                changeActiveContributionLayout({ rotationDegrees: deg })
-              }
-              onPageChange={(pageNum) =>
-                changeActiveContributionLayout({ pageIndex: pageNum })
-              }
-              onOpenGifPicker={() =>
-                setContribGifPickerContributionId(editableContrib.id)
-              }
-              onGifChange={(url) =>
-                handleContributionGifChange(editableContrib.id, url)
-              }
-              totalInnerPages={totalInnerPages}
-            />
-          ) : (
-            /* ── Empty state ── */
-            <div className="flex flex-1 items-center justify-center p-8">
-              <div className="text-center">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Flip to the inside and click anywhere to place your note.
-                </p>
+        {canPlaceNewGuestMessage ? (
+          /* ── Compose panel ── */
+          <NotePanel
+            title="Write something real."
+            values={{
+              textColor: composeValues.textColor,
+              giphyUrl: composeValues.giphyUrl,
+              fontSize: composeValues.fontSize,
+              rotationDegrees: composeValues.rotationDegrees,
+              pageIndex: composeValues.pageIndex,
+            }}
+            isRegenerating={composeDraftRegenerating}
+            onRegenerate={handleComposeDraftRegenerate}
+            onTextColorChange={(color) =>
+              patchComposeValues({ textColor: color })
+            }
+            onFontSizeChange={(px) => patchComposeValues({ fontSize: px })}
+            onRotationChange={(deg) =>
+              patchComposeValues({ rotationDegrees: deg })
+            }
+            onPageChange={(pageNum) => {
+              patchComposeValues({ pageIndex: pageNum })
+              setNavigateToPage(pageNum)
+            }}
+            onOpenGifPicker={() => setComposeGifPickerOpen(true)}
+            onGifChange={handleComposeDraftGifChange}
+            totalInnerPages={totalInnerPages}
+            error={error && composeDraft ? error : undefined}
+            footer={
+              <div className="mt-auto flex gap-3 pt-4">
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={cancelCompose}
+                  disabled={submitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => void submitComposeDraft()}
+                  disabled={submitting || composeDraftRegenerating}
+                >
+                  {submitting ? (
+                    <Spinner className="mr-2 h-4 w-4" />
+                  ) : (
+                    <ArrowUp className="mr-2 h-4 w-4" />
+                  )}
+                  Add my note
+                </Button>
               </div>
-            </div>
-          )}
-        </aside>
+            }
+          />
+        ) : editableContrib !== null ? (
+          <NotePanel
+            title="Edit your note."
+            values={{
+              textColor: editableContrib.text_color,
+              giphyUrl: editableContrib.giphy_url,
+              fontSize: editableContrib.font_size,
+              rotationDegrees: editableContrib.rotation_degrees,
+              pageIndex: editableContrib.page_index,
+            }}
+            isRegenerating={regeneratingContributionId === editableContrib.id}
+            onRegenerate={(prompt) =>
+              handleContributionRegenerateMessage(editableContrib.id, prompt)
+            }
+            onTextColorChange={(color) =>
+              changeActiveContributionLayout({ textColor: color })
+            }
+            onFontSizeChange={(px) =>
+              changeActiveContributionLayout({ fontSize: px })
+            }
+            onRotationChange={(deg) =>
+              changeActiveContributionLayout({ rotationDegrees: deg })
+            }
+            onPageChange={(pageNum) =>
+              changeActiveContributionLayout({ pageIndex: pageNum })
+            }
+            onOpenGifPicker={() =>
+              setContribGifPickerContributionId(editableContrib.id)
+            }
+            onGifChange={(url) =>
+              handleContributionGifChange(editableContrib.id, url)
+            }
+            totalInnerPages={totalInnerPages}
+          />
+        ) : null}
       </div>
 
       {/* GIF pickers */}
