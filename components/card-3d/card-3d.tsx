@@ -26,7 +26,7 @@ import { looksLikeDataUrl } from "@/lib/source-image-limits"
 import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import {
   useState,
   useRef,
@@ -637,7 +637,7 @@ export function Card3D({
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 0}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ChevronLeft />
           </Button>
 
           <div className="flex items-center gap-2">
@@ -667,7 +667,7 @@ export function Card3D({
             disabled={!canGoRight}
             title={isLastPage && onAddPage ? "Add a new page" : "Next page"}
           >
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ChevronRight />
           </Button>
         </div>
       ) : null}
@@ -688,7 +688,7 @@ export function Card3D({
             >
               {composeSubmitting ? (
                 <>
-                  <Spinner className="mr-2 h-4 w-4" />
+                  <Spinner />
                   Saving…
                 </>
               ) : (

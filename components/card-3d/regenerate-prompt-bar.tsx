@@ -55,11 +55,7 @@ export function RegeneratePromptBar({
           className="rounded-full"
           title="Generate"
         >
-          {isRegenerating ? (
-            <Spinner className="h-4 w-4" />
-          ) : (
-            <ArrowUp className="h-4 w-4" />
-          )}
+          {isRegenerating ? <Spinner /> : <ArrowUp />}
         </Button>
         <Button
           variant="ghost"

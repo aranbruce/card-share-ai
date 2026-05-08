@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
 
 const FONT_SIZE_PRESETS = [
@@ -17,7 +18,12 @@ const FONT_SIZE_PRESETS = [
   { px: 24, label: "Huge" },
 ] as const
 
-export type NotePanelProps = {
+type NotePanelLoadingProps = {
+  loading: true
+}
+
+type NotePanelReadyProps = {
+  loading?: false | undefined
   title: string
   values: {
     textColor?: string | null
@@ -39,23 +45,56 @@ export type NotePanelProps = {
   footer?: ReactNode
 }
 
-export function NotePanel({
-  title,
-  values,
-  isRegenerating,
-  onRegenerate,
-  onTextColorChange,
-  onFontSizeChange,
-  onRotationChange,
-  onPageChange,
-  onOpenGifPicker,
-  onGifChange,
-  totalInnerPages,
-  error,
-  footer,
-}: NotePanelProps) {
+export type NotePanelProps = NotePanelLoadingProps | NotePanelReadyProps
+
+export function NotePanel(props: NotePanelProps) {
   const [refineOpen, setRefineOpen] = useState(false)
   const [refinePrompt, setRefinePrompt] = useState("")
+
+  if (props.loading) {
+    return (
+      <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 lg:p-7">
+          <div className="space-y-1.5">
+            <Skeleton className="h-2.5 w-16 rounded-sm" />
+            <Skeleton className="h-7 w-40 rounded-md" />
+          </div>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <Skeleton className="h-3 w-20 rounded-sm" />
+              <div className="flex gap-1.5">
+                {Array.from({ length: 3 }).map((_, j) => (
+                  <Skeleton key={j} className="h-8 w-16 rounded-full" />
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="mt-auto flex flex-col gap-3 pt-6">
+            <div className="h-px bg-border" />
+            <Skeleton className="h-3 w-12 rounded-sm" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+        </div>
+      </aside>
+    )
+  }
+
+  const {
+    title,
+    values,
+    isRegenerating,
+    onRegenerate,
+    onTextColorChange,
+    onFontSizeChange,
+    onRotationChange,
+    onPageChange,
+    onOpenGifPicker,
+    onGifChange,
+    totalInnerPages,
+    error,
+    footer,
+  } = props
 
   const rotation = values.rotationDegrees ?? 0
 
@@ -115,7 +154,7 @@ export function NotePanel({
                 <ChipButton
                   onClick={() => setRefineOpen(true)}
                   disabled={isRegenerating}
-                  className="gap-1.5 text-xs"
+                  className="text-xs"
                 >
                   <Sparkles className="h-3 w-3" />
                   Improve
@@ -209,9 +248,9 @@ export function NotePanel({
           ) : (
             <ChipButton
               onClick={onOpenGifPicker}
-              className="gap-2 self-start text-xs"
+              className="self-start text-xs"
             >
-              <ImagePlus className="h-3.5 w-3.5" />
+              <ImagePlus className="h-3 w-3" />
               Add GIF
             </ChipButton>
           )}

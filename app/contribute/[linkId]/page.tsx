@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import { useParams } from "next/navigation"
-import { ArrowUp } from "lucide-react"
+import { ArrowUp, ChevronLeft, FileX2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
@@ -617,18 +617,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
               />
             </div>
           </main>
-          <aside className="flex flex-col border-t border-border bg-muted/20 lg:border-t-0 lg:border-l">
-            <div className="flex flex-1 flex-col gap-5 p-6">
-              <Skeleton className="h-6 w-40 rounded-md" />
-              <Skeleton className="h-32 w-full rounded-xl" />
-              <div className="flex items-center gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-8 rounded-lg" />
-                ))}
-              </div>
-              <Skeleton className="h-11 w-full rounded-lg" />
-            </div>
-          </aside>
+          <NotePanel loading />
         </div>
       </div>
     )
@@ -636,16 +625,27 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
 
   if (!card) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-4">
-        <p className="text-xl font-semibold tracking-[-0.02em]">
-          Card not found
-        </p>
-        <Link
-          href="/"
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          ← Go home
-        </Link>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-8 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+            <FileX2 className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+              Card not found
+            </h1>
+            <p className="max-w-xs text-sm text-muted-foreground">
+              This contribution link may be invalid or the card has been
+              removed.
+            </p>
+          </div>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/">
+            <ChevronLeft />
+            Go home
+          </Link>
+        </Button>
       </div>
     )
   }
@@ -826,11 +826,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                   onClick={() => void submitComposeDraft()}
                   disabled={submitting || composeDraftRegenerating}
                 >
-                  {submitting ? (
-                    <Spinner className="mr-2 h-4 w-4" />
-                  ) : (
-                    <ArrowUp className="mr-2 h-4 w-4" />
-                  )}
+                  {submitting ? <Spinner /> : <ArrowUp />}
                   Add my note
                 </Button>
               </div>

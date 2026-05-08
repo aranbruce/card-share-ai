@@ -255,7 +255,7 @@ export function ShareModal({
                   >
                     {savingEmail ? (
                       <>
-                        <Spinner className="mr-2 size-4" />
+                        <Spinner />
                         Saving...
                       </>
                     ) : (
@@ -269,12 +269,12 @@ export function ShareModal({
                   >
                     {sending ? (
                       <>
-                        <Spinner className="mr-2 size-4" />
+                        <Spinner />
                         Sending...
                       </>
                     ) : (
                       <>
-                        <SendIcon className="mr-2 size-4" />
+                        <SendIcon />
                         Send email
                       </>
                     )}
