@@ -57,7 +57,12 @@ function CardDetailSkeleton() {
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* LEFT */}
         <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
-          <Button asChild variant="outline" size="default">
+          <Button
+            asChild
+            variant="outline"
+            size="default"
+            className="w-fit self-start"
+          >
             <Link href="/dashboard">
               <ChevronLeft />
               Dashboard
@@ -250,7 +255,12 @@ function CardDetailInner() {
       <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
         {/* LEFT — editor stage */}
         <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
-          <Button asChild variant="outline" size="default">
+          <Button
+            asChild
+            variant="outline"
+            size="default"
+            className="w-fit self-start"
+          >
             <Link href="/dashboard">
               <ChevronLeft />
               Dashboard
@@ -265,14 +275,13 @@ function CardDetailInner() {
               The message to {card.recipient_name}.
             </h1>
           </div>
-
-          <div className="mx-auto flex w-full max-w-md flex-col gap-12">
-            {error && (
+          {error && (
+            <div className="mx-auto flex w-full max-w-md flex-col gap-12">
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* AI edit buttons + card — share max-w-md so input matches card width */}
           <div className="mx-auto flex w-full max-w-md flex-col gap-12">

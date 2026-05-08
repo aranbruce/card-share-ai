@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
 import { forCardDisplay, type Contribution } from "@/lib/card-body"
-import { Logo } from "@/components/logo"
 import Link from "next/link"
 import { FileX2 } from "lucide-react"
 
@@ -64,102 +63,85 @@ export default function PublicCardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
-          <Logo />
-        </header>
-        <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
-          <div className="mx-auto max-w-2xl">
-            <section className="mb-8 space-y-3 text-center">
-              <Skeleton className="mx-auto h-3 w-40 rounded-sm" />
-              <Skeleton className="mx-auto h-12 w-56 rounded-md" />
-              <Skeleton className="mx-auto h-4 w-64 rounded-sm" />
-            </section>
-            <Skeleton
-              className="mx-auto w-full max-w-md rounded-2xl"
-              style={{ minHeight: "500px" }}
-            />
-            <div className="mt-8 flex justify-center">
-              <Skeleton className="h-12 w-52 rounded-xl" />
-            </div>
+      <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
+        <div className="mx-auto max-w-2xl">
+          <section className="mb-8 space-y-3 text-center">
+            <Skeleton className="mx-auto h-3 w-40 rounded-sm" />
+            <Skeleton className="mx-auto h-12 w-56 rounded-md" />
+            <Skeleton className="mx-auto h-4 w-64 rounded-sm" />
+          </section>
+          <Skeleton
+            className="mx-auto w-full max-w-md rounded-2xl"
+            style={{ minHeight: "500px" }}
+          />
+          <div className="mt-8 flex justify-center">
+            <Skeleton className="h-12 w-52 rounded-xl" />
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     )
   }
 
   if (error || !card) {
     return (
-      <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
-          <Logo />
-        </header>
-        <main className="flex flex-1 flex-col items-center justify-center gap-8 p-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-              <FileX2 className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <h1 className="text-2xl font-semibold tracking-[-0.02em]">
-                Card not found
-              </h1>
-              <p className="max-w-xs text-sm text-muted-foreground">
-                {error ||
-                  "This card may have been deleted or the link may be invalid."}
-              </p>
-            </div>
+      <main className="flex flex-1 flex-col items-center justify-center gap-8 p-8 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+            <FileX2 className="h-8 w-8 text-muted-foreground" />
           </div>
-          <Button asChild>
-            <Link href="/auth/sign-up">Create your own card</Link>
-          </Button>
-        </main>
-      </div>
+          <div className="flex flex-col gap-1.5">
+            <h1 className="text-2xl font-semibold tracking-[-0.02em]">
+              Card not found
+            </h1>
+            <p className="max-w-xs text-sm text-muted-foreground">
+              {error ||
+                "This card may have been deleted or the link may be invalid."}
+            </p>
+          </div>
+        </div>
+        <Button asChild>
+          <Link href="/auth/sign-up">Create your own card</Link>
+        </Button>
+      </main>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-linear-to-br from-rose-50/50 via-background to-amber-50/50 dark:from-stone-900 dark:via-background dark:to-stone-900">
-      <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-center">
-        <Logo />
-      </header>
-      <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
-        <div className="mx-auto max-w-2xl">
-          <section className="mb-8 text-center">
-            <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-              A card arrived for you
-            </p>
-            <h1 className="text-4xl leading-[1.05] font-semibold tracking-tight md:text-5xl">
-              {card.recipient_name}
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Sent by {card.sender_name || "Someone special"} · received today
-            </p>
-          </section>
+    <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
+      <div className="mx-auto max-w-2xl">
+        <section className="mb-8 text-center">
+          <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+            A card arrived for you
+          </p>
+          <h1 className="text-4xl leading-[1.05] font-semibold tracking-tight md:text-5xl">
+            {card.recipient_name}
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Sent by {card.sender_name || "Someone special"} · received today
+          </p>
+        </section>
 
-          <Card3D
-            imageUrl={card.image_url}
-            headline={card.copy_headline}
-            message={bodyMessage}
-            senderName={card.sender_name || "Someone special"}
-            recipientName={card.recipient_name || "You"}
-            contributions={displayContributions}
-            extraPages={card.extra_pages || 0}
-            hideEmptyCenterMessageBody={true}
-          />
+        <Card3D
+          imageUrl={card.image_url}
+          headline={card.copy_headline}
+          message={bodyMessage}
+          senderName={card.sender_name || "Someone special"}
+          recipientName={card.recipient_name || "You"}
+          contributions={displayContributions}
+          extraPages={card.extra_pages || 0}
+          hideEmptyCenterMessageBody={true}
+        />
 
-          <div className="mt-8 flex justify-center">
-            <Button size="xl" asChild>
-              <Link href="/auth/sign-up">Create your own card</Link>
-            </Button>
-          </div>
-
-          <div className="mt-12 text-center">
-            <p className="text-xs text-muted-foreground">
-              Created with CardsAI
-            </p>
-          </div>
+        <div className="mt-8 flex justify-center">
+          <Button size="xl" asChild>
+            <Link href="/auth/sign-up">Create your own card</Link>
+          </Button>
         </div>
-      </main>
-    </div>
+
+        <div className="mt-12 text-center">
+          <p className="text-xs text-muted-foreground">Created with CardsAI</p>
+        </div>
+      </div>
+    </main>
   )
 }
