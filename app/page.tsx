@@ -113,8 +113,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-[18px]">
+      <header className="sticky top-0 z-50 border-b border-border bg-background/95 px-6 py-[18px] backdrop-blur-sm md:px-15">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-8">
             <Logo />
             {/* <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex"> */}
@@ -147,34 +147,35 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-20 md:px-15 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:py-20">
-        <div>
-          <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-5xl lg:text-5xl xl:text-6xl">
-            Greeting cards,
-            <br />
-            <span className="text-muted-foreground">
-              generated in seconds,{" "}
-            </span>
-            <span className="text-brand">signed in minutes.</span>
-          </h1>
-          <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
-            Describe the card or upload a photo. We design the cover, draft the
-            message, and pass it around for the whole team to sign.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg">
-              <Link href="/create">
-                Start a card
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
-                  Free
-                </span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/auth/login">Sign in</Link>
-            </Button>
-          </div>
-          {/* <div className="mt-10 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.15em] text-muted-foreground/60 uppercase">
+      <section className="mx-auto items-center gap-12 px-6 py-20 md:px-15 lg:gap-16 lg:py-20">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-[1.15fr_1fr]">
+          <div>
+            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
+              Greeting cards,
+              <br />
+              <span className="text-muted-foreground">
+                generated in seconds,{" "}
+              </span>
+              <span className="text-brand">signed in minutes.</span>
+            </h1>
+            <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
+              Describe the card or upload a photo. We design the cover, draft
+              the message, and pass it around for the whole team to sign.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button asChild size="lg">
+                <Link href="/create">
+                  Start a card
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                    Free
+                  </span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/auth/login">Sign in</Link>
+              </Button>
+            </div>
+            {/* <div className="mt-10 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.15em] text-muted-foreground/60 uppercase">
             Trusted by teams at
             <div className="flex gap-5 font-sans text-sm font-semibold tracking-tight text-muted-foreground">
               <span>Notion</span>
@@ -183,72 +184,75 @@ export default function HomePage() {
               <span>Ramp</span>
             </div>
           </div> */}
-        </div>
-
-        {/* Demo panel */}
-        <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.14)] lg:block">
-          <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/60 uppercase">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-border" />
-              <div className="h-2.5 w-2.5 rounded-full bg-border" />
-              <div className="h-2.5 w-2.5 rounded-full bg-border" />
-            </div>
-            Live preview
           </div>
-          <div className="p-5">
-            <div className="rounded-xl bg-background p-3.5 text-sm leading-relaxed text-foreground">
-              <span className="text-muted-foreground">Describe the card.</span>
-              <br />
-              Mira turns 30 on Thursday. She&apos;s on the design team, loves
-              botanical illustration and long train rides.
+
+          {/* Demo panel */}
+          <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.14)] lg:block">
+            <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/60 uppercase">
+              <div className="flex gap-1.5">
+                <div className="h-2.5 w-2.5 rounded-full bg-border" />
+                <div className="h-2.5 w-2.5 rounded-full bg-border" />
+                <div className="h-2.5 w-2.5 rounded-full bg-border" />
+              </div>
+              Live preview
             </div>
-            {/* Card preview */}
-            <div className="mx-auto mt-6 mb-4 w-[200px]">
-              <div
-                className="relative w-full overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
-                style={{ aspectRatio: "3/4" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={displayedImageUrl}
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                {/* Shimmer overlay during generation */}
+            <div className="p-5">
+              <div className="rounded-xl bg-background p-3.5 text-sm leading-relaxed text-foreground">
+                <span className="text-muted-foreground">
+                  Describe the card.
+                </span>
+                <br />
+                Mira turns 30 on Thursday. She&apos;s on the design team, loves
+                botanical illustration and long train rides.
+              </div>
+              {/* Card preview */}
+              <div className="mx-auto mt-6 mb-4 w-[200px]">
                 <div
-                  className={`absolute inset-0 z-10 transition-opacity duration-500 ${
-                    showShimmer
-                      ? "opacity-100"
-                      : "pointer-events-none opacity-0"
-                  }`}
+                  className="relative w-full overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
+                  style={{ aspectRatio: "3/4" }}
                 >
-                  <div className="h-full w-full animate-pulse bg-stone-200" />
-                </div>
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
-                <div className="absolute inset-0 flex flex-col justify-end p-4">
-                  <p className="min-h-10 text-sm font-semibold text-white/90">
-                    {displayedMessage}
-                    {isGenerating && (
-                      <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-white/70" />
-                    )}
-                  </p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={displayedImageUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  {/* Shimmer overlay during generation */}
+                  <div
+                    className={`absolute inset-0 z-10 transition-opacity duration-500 ${
+                      showShimmer
+                        ? "opacity-100"
+                        : "pointer-events-none opacity-0"
+                    }`}
+                  >
+                    <div className="h-full w-full animate-pulse bg-stone-200" />
+                  </div>
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-4">
+                    <p className="min-h-10 text-sm font-semibold text-white/90">
+                      {displayedMessage}
+                      {isGenerating && (
+                        <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-white/70" />
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(["Warmer", "Sassier", "Shorter", "Friendlier"] as const).map(
-                (c) => (
-                  <ChipButton
-                    key={c}
-                    onClick={() => handleVariantClick(c)}
-                    disabled={isGenerating}
-                    active={demoKey === c}
-                    className="text-xs"
-                  >
-                    {c}
-                  </ChipButton>
-                ),
-              )}
+              <div className="flex flex-wrap gap-2">
+                {(["Warmer", "Sassier", "Shorter", "Friendlier"] as const).map(
+                  (c) => (
+                    <ChipButton
+                      key={c}
+                      onClick={() => handleVariantClick(c)}
+                      disabled={isGenerating}
+                      active={demoKey === c}
+                      className="text-xs"
+                    >
+                      {c}
+                    </ChipButton>
+                  ),
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -284,7 +288,7 @@ export default function HomePage() {
       {/* CTA section */}
       <section className="border-t border-border bg-secondary/50 px-6 md:px-15">
         <div className="mx-auto max-w-4xl py-24 text-center">
-          <h2 className="text-4xl font-semibold tracking-[-0.03em]">
+          <h2 className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             Start the card. We&apos;ll handle the rest.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-muted-foreground">
