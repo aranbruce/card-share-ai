@@ -7,27 +7,50 @@ import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import Link from "next/link"
 import { Logo } from "@/components/logo"
+import { Paperclip, Sparkles, X } from "lucide-react"
 
 const DEMO_STATES = {
-  default: {
-    imageUrl: "/demo/card-default.png",
-    message: "Here's to making 30 look completely effortless.",
+  Warm: {
+    base: {
+      imageUrl: "/demo/card-warm.png",
+      message:
+        "Celebrating Your Blossoming 30s with Love, Laughter, and Adventure!",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-warm-with-photo.png",
+      message: "Blooming into 30: A Journey to Remember!",
+    },
   },
-  Warmer: {
-    imageUrl: "/demo/card-warmer.png",
-    message: "May your 30th be as radiant and wonderful as you are.",
+  Playful: {
+    base: {
+      imageUrl: "/demo/card-playful.png",
+      message: "All Aboard the Fabulous 30s Express, Mira!",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-playful-with-photo.png",
+      message: "All Aboard the Crazy Thirties Train, Mira!",
+    },
   },
-  Sassier: {
-    imageUrl: "/demo/card-sassier.png",
-    message: "Let's be honest, you've always been the coolest one in the room.",
+  Dry: {
+    base: {
+      imageUrl: "/demo/card-dry.png",
+      message:
+        "Turning 30: A Stop on Life's Train Where You Collect More Plants",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-dry-with-photo.png",
+      message: "Turning 30: Embrace the Art of Aging Gracefully",
+    },
   },
-  Shorter: {
-    imageUrl: "/demo/card-shorter.png",
-    message: "Make it a good one.",
-  },
-  Friendlier: {
-    imageUrl: "/demo/card-friendlier.png",
-    message: "So glad you're on our team - today is all yours!",
+  Sincere: {
+    base: {
+      imageUrl: "/demo/card-sincere.png",
+      message: "So glad you're on our team - today is all yours!",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-sincere-with-photo.png",
+      message: "Blossoming into Your Best Decade Yet, Mira!",
+    },
   },
 } as const
 
@@ -53,28 +76,37 @@ export default function HomePage() {
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
-  const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("default")
+  const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("Warm")
   const [isGenerating, setIsGenerating] = useState(false)
   const [showShimmer, setShowShimmer] = useState(false)
-  const [displayedImageUrl, setDisplayedImageUrl] = useState<string>(
-    DEMO_STATES.default.imageUrl,
-  )
-  const [displayedMessage, setDisplayedMessage] = useState<string>(
-    DEMO_STATES.default.message,
-  )
+  const [displayedImageUrl, setDisplayedImageUrl] = useState("")
+  const [displayedMessage, setDisplayedMessage] = useState("")
+  const [photoAttached, setPhotoAttached] = useState(false)
+  const [hasGenerated, setHasGenerated] = useState(false)
 
-  const handleVariantClick = (key: keyof typeof DEMO_STATES) => {
-    if (isGenerating || key === demoKey) return
-    setDemoKey(key)
+  const handlePhotoAttach = () => {
+    setPhotoAttached(true)
+  }
+
+  const handlePhotoRemove = () => {
+    setPhotoAttached(false)
+  }
+
+  const handleGenerate = () => {
+    if (isGenerating) return
+    const variant = photoAttached
+      ? DEMO_STATES[demoKey].withPhoto
+      : DEMO_STATES[demoKey].base
     setIsGenerating(true)
     setShowShimmer(true)
     setDisplayedMessage("")
 
     setTimeout(() => {
-      setDisplayedImageUrl(DEMO_STATES[key].imageUrl)
+      setDisplayedImageUrl(variant.imageUrl)
       setShowShimmer(false)
+      setHasGenerated(true)
 
-      const newMessage = DEMO_STATES[key].message
+      const newMessage = variant.message
       let i = 0
       const type = () => {
         i++
@@ -117,20 +149,6 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-8">
             <Logo />
-            {/* <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex"> */}
-            {/* <Link
-                href="/create"
-                className="transition-colors hover:text-foreground"
-              >
-                Browse
-              </Link>
-              <span className="cursor-default transition-colors hover:text-foreground">
-                How it works
-              </span>
-              <span className="cursor-default transition-colors hover:text-foreground">
-                For teams
-              </span>
-            </nav> */}
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -148,7 +166,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="mx-auto items-center gap-12 px-6 py-20 md:px-15 lg:gap-16 lg:py-20">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-[1.15fr_1fr]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-x-12 lg:grid-cols-[1.15fr_1fr]">
           {/* Left panel */}
           <div>
             <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
@@ -197,61 +215,138 @@ export default function HomePage() {
               </div>
               Live preview
             </div>
-            <div className="p-5">
-              <div className="rounded-xl bg-background p-3.5 text-sm leading-relaxed text-foreground">
-                <span className="text-muted-foreground">
-                  Describe the card.
-                </span>
-                <br />
-                Mira turns 30 on Thursday. She&apos;s on the design team, loves
-                botanical illustration and long train rides.
-              </div>
-              {/* Card preview */}
-              <div className="mx-auto mt-6 mb-4 w-[200px]">
-                <div
-                  className="relative w-full overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
-                  style={{ aspectRatio: "3/4" }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={displayedImageUrl}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  {/* Shimmer overlay during generation */}
-                  <div
-                    className={`absolute inset-0 z-10 transition-opacity duration-500 ${
-                      showShimmer
-                        ? "opacity-100"
-                        : "pointer-events-none opacity-0"
-                    }`}
-                  >
-                    <div className="h-full w-full animate-pulse bg-stone-200" />
-                  </div>
-                  <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-4">
-                    <p className="min-h-10 text-sm font-semibold text-white/90">
-                      {displayedMessage}
-                      {isGenerating && (
-                        <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-white/70" />
-                      )}
-                    </p>
+            <div className="flex">
+              {/* Form column */}
+              <div className="flex w-52 shrink-0 flex-col gap-4 p-4">
+                <div className="rounded-xl bg-background p-3 text-sm leading-relaxed text-foreground">
+                  <span className="text-muted-foreground">
+                    Describe the card.
+                  </span>
+                  <br />
+                  Mira turns 30 on Thursday. She&apos;s on the design team,
+                  loves botanical illustration and long train rides.
+                </div>
+
+                <div>
+                  <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                    Tone
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(["Warm", "Playful", "Dry", "Sincere"] as const).map(
+                      (c) => (
+                        <ChipButton
+                          key={c}
+                          onClick={() => setDemoKey(c)}
+                          disabled={isGenerating}
+                          active={demoKey === c}
+                          className="text-xs"
+                        >
+                          {c}
+                        </ChipButton>
+                      ),
+                    )}
                   </div>
                 </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(["Warmer", "Sassier", "Shorter", "Friendlier"] as const).map(
-                  (c) => (
-                    <ChipButton
-                      key={c}
-                      onClick={() => handleVariantClick(c)}
+                <div className="h-30">
+                  <div className="mb-1.5 text-xs font-medium text-muted-foreground">
+                    Reference photo{" "}
+                    <span className="font-normal opacity-60">(optional)</span>
+                  </div>
+                  {photoAttached ? (
+                    <div className="relative w-fit overflow-hidden rounded-xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/demo/mira.png"
+                        alt="Reference"
+                        className="max-h-24 max-w-full"
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remove reference photo"
+                        onClick={handlePhotoRemove}
+                        disabled={isGenerating}
+                        className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handlePhotoAttach}
                       disabled={isGenerating}
-                      active={demoKey === c}
-                      className="text-xs"
+                      className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {c}
-                    </ChipButton>
-                  ),
+                      <Paperclip className="h-3.5 w-3.5" />
+                      Attach a reference photo
+                    </button>
+                  )}
+                </div>
+                <Button
+                  className="mt-auto w-full"
+                  size="sm"
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? "Generating…" : "Generate card"}
+                </Button>
+              </div>
+
+              {/* Card column */}
+              <div className="relative min-h-64 flex-1 border-l border-border">
+                {!hasGenerated ? (
+                  <div
+                    className="absolute inset-x-2 inset-y-4 overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)] xl:inset-x-8"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, oklch(0.92 0.07 18) 0%, oklch(0.82 0.12 3) 100%)",
+                    }}
+                  >
+                    <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-lg opacity-60"
+                        style={{ background: "oklch(0.7 0.14 18)" }}
+                      >
+                        <Sparkles className="h-4 w-4 stroke-white" />
+                      </div>
+                      <p
+                        className="text-xs leading-relaxed opacity-70"
+                        style={{ color: "oklch(0.25 0.06 18)" }}
+                      >
+                        Click Generate to see your card
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-x-2 inset-y-4 overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)] xl:inset-x-8">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={displayedImageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    <div
+                      className={`absolute inset-0 z-10 transition-opacity duration-500 ${
+                        showShimmer
+                          ? "opacity-100"
+                          : "pointer-events-none opacity-0"
+                      }`}
+                    >
+                      <div className="h-full w-full animate-pulse bg-stone-200" />
+                    </div>
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute inset-0 flex flex-col justify-end p-4">
+                      <p className="min-h-10 text-lg font-semibold text-white/90">
+                        {displayedMessage}
+                        {isGenerating && (
+                          <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-white/70" />
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
