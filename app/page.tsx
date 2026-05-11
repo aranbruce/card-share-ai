@@ -99,12 +99,12 @@ export default function HomePage() {
       : DEMO_STATES[demoKey].base
     setIsGenerating(true)
     setShowShimmer(true)
+    setHasGenerated(true)
     setDisplayedMessage("")
 
     setTimeout(() => {
       setDisplayedImageUrl(variant.imageUrl)
       setShowShimmer(false)
-      setHasGenerated(true)
 
       const newMessage = variant.message
       let i = 0
