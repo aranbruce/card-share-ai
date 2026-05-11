@@ -11,6 +11,7 @@ type GiphyResponse = {
       original?: { url?: string }
     }
   }>
+  pagination?: { total_count?: number; count?: number; offset?: number }
 }
 
 export async function GET(request: NextRequest) {
@@ -41,11 +42,16 @@ export async function GET(request: NextRequest) {
     const limit = Number.isFinite(limitRaw)
       ? Math.min(25, Math.max(1, Math.trunc(limitRaw)))
       : 20
+    const offsetRaw = Number(searchParams.get("offset") ?? "0")
+    const offset = Number.isFinite(offsetRaw)
+      ? Math.max(0, Math.trunc(offsetRaw))
+      : 0
 
     const endpoint = q.length > 0 ? "search" : "trending"
     const upstreamUrl = new URL(`https://api.giphy.com/v1/gifs/${endpoint}`)
     upstreamUrl.searchParams.set("api_key", apiKey)
     upstreamUrl.searchParams.set("limit", String(limit))
+    upstreamUrl.searchParams.set("offset", String(offset))
     upstreamUrl.searchParams.set("rating", "pg-13")
     if (q.length > 0) {
       upstreamUrl.searchParams.set("q", q)
@@ -97,7 +103,24 @@ export async function GET(request: NextRequest) {
         } => item !== null,
       )
 
-    return NextResponse.json({ gifs }, { headers: rateLimit.headers })
+    const totalCount =
+      typeof payload.pagination?.total_count === "number"
+        ? payload.pagination.total_count
+        : null
+    const rawCount = payload.data?.length ?? 0
+    const upstreamCount =
+      typeof payload.pagination?.count === "number"
+        ? payload.pagination.count
+        : rawCount
+    const hasMore =
+      totalCount !== null
+        ? offset + upstreamCount < totalCount
+        : upstreamCount === limit
+
+    return NextResponse.json(
+      { gifs, hasMore, count: upstreamCount },
+      { headers: rateLimit.headers },
+    )
   } catch (error) {
     console.error("[GET /api/giphy/search]", error)
     return NextResponse.json(
