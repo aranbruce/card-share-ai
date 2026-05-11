@@ -109,14 +109,9 @@ export async function GET(request: NextRequest) {
         : null
     const rawCount = payload.data?.length ?? 0
     const hasMore =
-      totalCount !== null
-        ? offset + limit < totalCount
-        : rawCount === limit
+      totalCount !== null ? offset + limit < totalCount : rawCount === limit
 
-    return NextResponse.json(
-      { gifs, hasMore },
-      { headers: rateLimit.headers },
-    )
+    return NextResponse.json({ gifs, hasMore }, { headers: rateLimit.headers })
   } catch (error) {
     console.error("[GET /api/giphy/search]", error)
     return NextResponse.json(

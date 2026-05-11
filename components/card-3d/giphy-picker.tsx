@@ -204,7 +204,7 @@ export function GiphyPicker({
       if (controller.signal.aborted) return
       setLoadMoreError(e instanceof Error ? e.message : "Failed to load GIFs")
     } finally {
-      setLoadingMore(false)
+      if (loadMoreAbortRef.current === controller) setLoadingMore(false)
     }
   }, [gifs.length, searchTerm])
 
