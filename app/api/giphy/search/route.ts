@@ -41,11 +41,16 @@ export async function GET(request: NextRequest) {
     const limit = Number.isFinite(limitRaw)
       ? Math.min(25, Math.max(1, Math.trunc(limitRaw)))
       : 20
+    const offsetRaw = Number(searchParams.get("offset") ?? "0")
+    const offset = Number.isFinite(offsetRaw)
+      ? Math.max(0, Math.trunc(offsetRaw))
+      : 0
 
     const endpoint = q.length > 0 ? "search" : "trending"
     const upstreamUrl = new URL(`https://api.giphy.com/v1/gifs/${endpoint}`)
     upstreamUrl.searchParams.set("api_key", apiKey)
     upstreamUrl.searchParams.set("limit", String(limit))
+    upstreamUrl.searchParams.set("offset", String(offset))
     upstreamUrl.searchParams.set("rating", "pg-13")
     if (q.length > 0) {
       upstreamUrl.searchParams.set("q", q)

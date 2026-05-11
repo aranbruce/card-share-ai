@@ -149,6 +149,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="mx-auto items-center gap-12 px-6 py-20 md:px-15 lg:gap-16 lg:py-20">
         <div className="mx-auto grid max-w-7xl grid-cols-1 lg:grid-cols-[1.15fr_1fr]">
+          {/* Left panel */}
           <div>
             <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
               Greeting cards,

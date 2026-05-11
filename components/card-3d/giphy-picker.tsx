@@ -66,6 +66,8 @@ function normalizeGifList(raw: unknown): GiphyGif[] {
     .filter((item): item is GiphyGif => item !== null)
 }
 
+const LIMIT = 20
+
 export function GiphyPicker({
   open,
   onOpenChange,
@@ -79,7 +81,10 @@ export function GiphyPicker({
 }) {
   const [query, setQuery] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
+  const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [gifs, setGifs] = useState<GiphyGif[]>([])
 
@@ -88,6 +93,8 @@ export function GiphyPicker({
       if (!next) {
         setQuery("")
         setSearchTerm("")
+        setOffset(0)
+        setHasMore(false)
         setGifs([])
         setError(null)
       }
@@ -100,15 +107,22 @@ export function GiphyPicker({
     if (!open) return
     let cancelled = false
     const controller = new AbortController()
+    const isLoadMore = offset > 0
 
     async function run() {
-      setLoading(true)
+      if (isLoadMore) {
+        setLoadingMore(true)
+      } else {
+        setLoading(true)
+      }
       setError(null)
       try {
         const url = new URL("/api/giphy/search", window.location.origin)
         if (searchTerm.trim()) {
           url.searchParams.set("q", searchTerm.trim())
         }
+        url.searchParams.set("limit", String(LIMIT))
+        url.searchParams.set("offset", String(offset))
         const res = await fetch(url.toString(), {
           method: "GET",
           signal: controller.signal,
@@ -122,14 +136,19 @@ export function GiphyPicker({
           throw new Error(msg)
         }
         if (cancelled) return
-        setGifs(normalizeGifList(payload.gifs))
+        const next = normalizeGifList(payload.gifs)
+        setGifs((prev) => (isLoadMore ? [...prev, ...next] : next))
+        setHasMore(next.length >= LIMIT)
       } catch (e) {
         if (cancelled) return
         const msg = e instanceof Error ? e.message : "Failed to load GIFs"
         setError(msg)
-        setGifs([])
+        if (!isLoadMore) setGifs([])
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+          setLoadingMore(false)
+        }
       }
     }
 
@@ -138,7 +157,7 @@ export function GiphyPicker({
       cancelled = true
       controller.abort()
     }
-  }, [open, searchTerm])
+  }, [open, searchTerm, offset])
 
   const title = useMemo(
     () =>
@@ -148,7 +167,7 @@ export function GiphyPicker({
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-h-[80vh] max-w-3xl overflow-hidden p-0">
+      <DialogContent className="max-h-[80vh] max-w-3xl gap-0 overflow-hidden p-0">
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <DialogTitle>Choose a GIF</DialogTitle>
           <DialogDescription>
@@ -158,6 +177,8 @@ export function GiphyPicker({
             className="mt-3 flex items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault()
+              setOffset(0)
+              setHasMore(false)
               setSearchTerm(query.trim())
             }}
           >
@@ -242,6 +263,24 @@ export function GiphyPicker({
                   )
                 })}
               </div>
+              {hasMore && !error && (
+                <div className="flex w-full justify-center py-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loadingMore}
+                    onClick={() => setOffset((prev) => prev + LIMIT)}
+                    className="w-full"
+                  >
+                    {loadingMore ? (
+                      <Spinner className="h-4 w-4" />
+                    ) : (
+                      "Load more"
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
