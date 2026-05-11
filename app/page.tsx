@@ -100,10 +100,10 @@ export default function HomePage() {
     setIsGenerating(true)
     setShowShimmer(true)
     setHasGenerated(true)
+    setDisplayedImageUrl(variant.imageUrl)
     setDisplayedMessage("")
 
     setTimeout(() => {
-      setDisplayedImageUrl(variant.imageUrl)
       setShowShimmer(false)
 
       const newMessage = variant.message
