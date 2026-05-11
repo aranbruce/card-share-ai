@@ -219,7 +219,7 @@ export default function HomePage() {
               {/* Form column */}
               <div className="flex w-52 shrink-0 flex-col gap-4 p-4">
                 <div className="rounded-xl bg-background p-3 text-sm leading-relaxed text-foreground">
-                  <span className="text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Describe the card.
                   </span>
                   <br />
@@ -232,19 +232,21 @@ export default function HomePage() {
                     Tone
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {(Object.keys(DEMO_STATES) as Array<keyof typeof DEMO_STATES>).map(
-                      (c) => (
-                        <ChipButton
-                          key={c}
-                          onClick={() => setDemoKey(c)}
-                          disabled={isGenerating}
-                          active={demoKey === c}
-                          className="text-xs"
-                        >
-                          {c}
-                        </ChipButton>
-                      ),
-                    )}
+                    {(
+                      Object.keys(DEMO_STATES) as Array<
+                        keyof typeof DEMO_STATES
+                      >
+                    ).map((c) => (
+                      <ChipButton
+                        key={c}
+                        onClick={() => setDemoKey(c)}
+                        disabled={isGenerating}
+                        active={demoKey === c}
+                        className="text-xs"
+                      >
+                        {c}
+                      </ChipButton>
+                    ))}
                   </div>
                 </div>
                 <div className="h-30">
