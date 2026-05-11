@@ -89,12 +89,14 @@ export function GiphyPicker({
   const [gifs, setGifs] = useState<GiphyGif[]>([])
   const initialFetchAbortRef = useRef<AbortController | null>(null)
   const loadMoreAbortRef = useRef<AbortController | null>(null)
+  const nextOffsetRef = useRef(0)
 
   const handleDialogOpenChange = useCallback(
     (next: boolean) => {
       if (!next) {
         initialFetchAbortRef.current?.abort()
         loadMoreAbortRef.current?.abort()
+        nextOffsetRef.current = 0
         setQuery("")
         setSearchTerm("")
         setLoading(false)
@@ -115,6 +117,7 @@ export function GiphyPicker({
     // Aborting load-more clears loadingMore via handleLoadMore's finally block.
     loadMoreAbortRef.current?.abort()
     initialFetchAbortRef.current?.abort()
+    nextOffsetRef.current = 0
     const controller = new AbortController()
     initialFetchAbortRef.current = controller
 
@@ -142,6 +145,8 @@ export function GiphyPicker({
         }
         if (controller.signal.aborted) return
         const next = normalizeGifList(payload.gifs)
+        nextOffsetRef.current =
+          typeof payload.count === "number" ? payload.count : next.length
         setGifs(next)
         setHasMore(
           typeof payload.hasMore === "boolean"
@@ -163,8 +168,8 @@ export function GiphyPicker({
     }
   }, [open, searchTerm])
 
-  // Imperative load-more: offset is gifs.length at call time, so it's always
-  // correct even after a failed retry (no stale-increment risk).
+  // Imperative load-more: nextOffsetRef tracks the true upstream offset, advanced
+  // only on success, so retries and filtered items never cause page skips.
   const handleLoadMore = useCallback(async () => {
     loadMoreAbortRef.current?.abort()
     const controller = new AbortController()
@@ -178,8 +183,7 @@ export function GiphyPicker({
         url.searchParams.set("q", searchTerm.trim())
       }
       url.searchParams.set("limit", String(LIMIT))
-      // gifs.length is captured at call time — always the correct next offset.
-      url.searchParams.set("offset", String(gifs.length))
+      url.searchParams.set("offset", String(nextOffsetRef.current))
       const res = await fetch(url.toString(), {
         method: "GET",
         signal: controller.signal,
@@ -194,6 +198,8 @@ export function GiphyPicker({
       }
       if (controller.signal.aborted) return
       const next = normalizeGifList(payload.gifs)
+      nextOffsetRef.current +=
+        typeof payload.count === "number" ? payload.count : next.length
       setGifs((prev) => [...prev, ...next])
       setHasMore(
         typeof payload.hasMore === "boolean"
@@ -206,7 +212,7 @@ export function GiphyPicker({
     } finally {
       if (loadMoreAbortRef.current === controller) setLoadingMore(false)
     }
-  }, [gifs.length, searchTerm])
+  }, [searchTerm])
 
   const title = useMemo(
     () =>
