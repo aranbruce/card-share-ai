@@ -232,7 +232,7 @@ export default function HomePage() {
                     Tone
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {(["Warm", "Playful", "Dry", "Sincere"] as const).map(
+                    {(Object.keys(DEMO_STATES) as Array<keyof typeof DEMO_STATES>).map(
                       (c) => (
                         <ChipButton
                           key={c}
