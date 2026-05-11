@@ -107,10 +107,11 @@ export async function GET(request: NextRequest) {
       typeof payload.pagination?.total_count === "number"
         ? payload.pagination.total_count
         : null
+    const rawCount = payload.data?.length ?? 0
     const hasMore =
       totalCount !== null
         ? offset + limit < totalCount
-        : gifs.length === limit
+        : rawCount === limit
 
     return NextResponse.json(
       { gifs, hasMore },

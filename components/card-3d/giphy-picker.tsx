@@ -87,11 +87,13 @@ export function GiphyPicker({
   const [initialError, setInitialError] = useState<string | null>(null)
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
   const [gifs, setGifs] = useState<GiphyGif[]>([])
+  const initialFetchAbortRef = useRef<AbortController | null>(null)
   const loadMoreAbortRef = useRef<AbortController | null>(null)
 
   const handleDialogOpenChange = useCallback(
     (next: boolean) => {
       if (!next) {
+        initialFetchAbortRef.current?.abort()
         loadMoreAbortRef.current?.abort()
         setQuery("")
         setSearchTerm("")
@@ -110,9 +112,11 @@ export function GiphyPicker({
   // Initial load and search-term changes always replace the gif list.
   useEffect(() => {
     if (!open) return
+    // Aborting load-more clears loadingMore via handleLoadMore's finally block.
     loadMoreAbortRef.current?.abort()
-    let cancelled = false
+    initialFetchAbortRef.current?.abort()
     const controller = new AbortController()
+    initialFetchAbortRef.current = controller
 
     async function run() {
       setLoading(true)
@@ -136,7 +140,7 @@ export function GiphyPicker({
               : "Failed to load GIFs"
           throw new Error(msg)
         }
-        if (cancelled) return
+        if (controller.signal.aborted) return
         const next = normalizeGifList(payload.gifs)
         setGifs(next)
         setHasMore(
@@ -145,17 +149,16 @@ export function GiphyPicker({
             : next.length >= LIMIT,
         )
       } catch (e) {
-        if (cancelled) return
+        if (controller.signal.aborted) return
         setInitialError(e instanceof Error ? e.message : "Failed to load GIFs")
         setGifs([])
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       }
     }
 
     void run()
     return () => {
-      cancelled = true
       controller.abort()
     }
   }, [open, searchTerm])
@@ -201,7 +204,7 @@ export function GiphyPicker({
       if (controller.signal.aborted) return
       setLoadMoreError(e instanceof Error ? e.message : "Failed to load GIFs")
     } finally {
-      if (!controller.signal.aborted) setLoadingMore(false)
+      setLoadingMore(false)
     }
   }, [gifs.length, searchTerm])
 
@@ -314,32 +317,30 @@ export function GiphyPicker({
                       <AlertDescription>{loadMoreError}</AlertDescription>
                     </Alert>
                   )}
-                  {(hasMore || loadMoreError) && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={loadingMore}
-                      onClick={handleLoadMore}
-                      className="w-full"
-                      aria-label={
-                        loadingMore
-                          ? "Loading more GIFs"
-                          : loadMoreError
-                            ? "Retry loading more GIFs"
-                            : "Load more GIFs"
-                      }
-                      aria-busy={loadingMore}
-                    >
-                      {loadingMore ? (
-                        <Spinner className="h-4 w-4" />
-                      ) : loadMoreError ? (
-                        "Retry"
-                      ) : (
-                        "Load more"
-                      )}
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loadingMore}
+                    onClick={handleLoadMore}
+                    className="w-full"
+                    aria-label={
+                      loadingMore
+                        ? "Loading more GIFs"
+                        : loadMoreError
+                          ? "Retry loading more GIFs"
+                          : "Load more GIFs"
+                    }
+                    aria-busy={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <Spinner className="h-4 w-4" />
+                    ) : loadMoreError ? (
+                      "Retry"
+                    ) : (
+                      "Load more"
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
