@@ -11,6 +11,7 @@ type GiphyResponse = {
       original?: { url?: string }
     }
   }>
+  pagination?: { total_count?: number; count?: number; offset?: number }
 }
 
 export async function GET(request: NextRequest) {
@@ -102,7 +103,17 @@ export async function GET(request: NextRequest) {
         } => item !== null,
       )
 
-    return NextResponse.json({ gifs }, { headers: rateLimit.headers })
+    const totalCount =
+      typeof payload.pagination?.total_count === "number"
+        ? payload.pagination.total_count
+        : null
+    const hasMore =
+      totalCount !== null ? offset + gifs.length < totalCount : null
+
+    return NextResponse.json(
+      { gifs, hasMore },
+      { headers: rateLimit.headers },
+    )
   } catch (error) {
     console.error("[GET /api/giphy/search]", error)
     return NextResponse.json(

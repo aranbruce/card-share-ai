@@ -85,7 +85,8 @@ export function GiphyPicker({
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [initialError, setInitialError] = useState<string | null>(null)
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
   const [gifs, setGifs] = useState<GiphyGif[]>([])
 
   const handleDialogOpenChange = useCallback(
@@ -96,7 +97,8 @@ export function GiphyPicker({
         setOffset(0)
         setHasMore(false)
         setGifs([])
-        setError(null)
+        setInitialError(null)
+        setLoadMoreError(null)
       }
       onOpenChange(next)
     },
@@ -115,7 +117,8 @@ export function GiphyPicker({
       } else {
         setLoading(true)
       }
-      setError(null)
+      setInitialError(null)
+      setLoadMoreError(null)
       try {
         const url = new URL("/api/giphy/search", window.location.origin)
         if (searchTerm.trim()) {
@@ -138,12 +141,20 @@ export function GiphyPicker({
         if (cancelled) return
         const next = normalizeGifList(payload.gifs)
         setGifs((prev) => (isLoadMore ? [...prev, ...next] : next))
-        setHasMore(next.length >= LIMIT)
+        setHasMore(
+          typeof payload.hasMore === "boolean"
+            ? payload.hasMore
+            : next.length >= LIMIT,
+        )
       } catch (e) {
         if (cancelled) return
         const msg = e instanceof Error ? e.message : "Failed to load GIFs"
-        setError(msg)
-        if (!isLoadMore) setGifs([])
+        if (isLoadMore) {
+          setLoadMoreError(msg)
+        } else {
+          setInitialError(msg)
+          setGifs([])
+        }
       } finally {
         if (!cancelled) {
           setLoading(false)
@@ -202,9 +213,9 @@ export function GiphyPicker({
             <div className="flex flex-1 items-center justify-center">
               <Spinner className="h-6 w-6" />
             </div>
-          ) : error ? (
+          ) : initialError ? (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{initialError}</AlertDescription>
             </Alert>
           ) : gifs.length === 0 ? (
             <p className="text-sm text-muted-foreground">No GIFs found.</p>
@@ -263,7 +274,12 @@ export function GiphyPicker({
                   )
                 })}
               </div>
-              {hasMore && !error && (
+              {loadMoreError && (
+                <Alert variant="destructive" className="mb-2">
+                  <AlertDescription>{loadMoreError}</AlertDescription>
+                </Alert>
+              )}
+              {hasMore && !loadMoreError && (
                 <div className="flex w-full justify-center py-4">
                   <Button
                     type="button"
