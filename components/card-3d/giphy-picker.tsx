@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -81,20 +81,22 @@ export function GiphyPicker({
 }) {
   const [query, setQuery] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
-  const [offset, setOffset] = useState(0)
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [initialError, setInitialError] = useState<string | null>(null)
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
   const [gifs, setGifs] = useState<GiphyGif[]>([])
+  const loadMoreAbortRef = useRef<AbortController | null>(null)
 
   const handleDialogOpenChange = useCallback(
     (next: boolean) => {
       if (!next) {
+        loadMoreAbortRef.current?.abort()
         setQuery("")
         setSearchTerm("")
-        setOffset(0)
+        setLoading(false)
+        setLoadingMore(false)
         setHasMore(false)
         setGifs([])
         setInitialError(null)
@@ -105,18 +107,14 @@ export function GiphyPicker({
     [onOpenChange],
   )
 
+  // Initial load and search-term changes always replace the gif list.
   useEffect(() => {
     if (!open) return
     let cancelled = false
     const controller = new AbortController()
-    const isLoadMore = offset > 0
 
     async function run() {
-      if (isLoadMore) {
-        setLoadingMore(true)
-      } else {
-        setLoading(true)
-      }
+      setLoading(true)
       setInitialError(null)
       setLoadMoreError(null)
       try {
@@ -125,7 +123,6 @@ export function GiphyPicker({
           url.searchParams.set("q", searchTerm.trim())
         }
         url.searchParams.set("limit", String(LIMIT))
-        url.searchParams.set("offset", String(offset))
         const res = await fetch(url.toString(), {
           method: "GET",
           signal: controller.signal,
@@ -140,7 +137,7 @@ export function GiphyPicker({
         }
         if (cancelled) return
         const next = normalizeGifList(payload.gifs)
-        setGifs((prev) => (isLoadMore ? [...prev, ...next] : next))
+        setGifs(next)
         setHasMore(
           typeof payload.hasMore === "boolean"
             ? payload.hasMore
@@ -148,18 +145,10 @@ export function GiphyPicker({
         )
       } catch (e) {
         if (cancelled) return
-        const msg = e instanceof Error ? e.message : "Failed to load GIFs"
-        if (isLoadMore) {
-          setLoadMoreError(msg)
-        } else {
-          setInitialError(msg)
-          setGifs([])
-        }
+        setInitialError(e instanceof Error ? e.message : "Failed to load GIFs")
+        setGifs([])
       } finally {
-        if (!cancelled) {
-          setLoading(false)
-          setLoadingMore(false)
-        }
+        if (!cancelled) setLoading(false)
       }
     }
 
@@ -168,7 +157,52 @@ export function GiphyPicker({
       cancelled = true
       controller.abort()
     }
-  }, [open, searchTerm, offset])
+  }, [open, searchTerm])
+
+  // Imperative load-more: offset is gifs.length at call time, so it's always
+  // correct even after a failed retry (no stale-increment risk).
+  const handleLoadMore = useCallback(async () => {
+    loadMoreAbortRef.current?.abort()
+    const controller = new AbortController()
+    loadMoreAbortRef.current = controller
+
+    setLoadingMore(true)
+    setLoadMoreError(null)
+    try {
+      const url = new URL("/api/giphy/search", window.location.origin)
+      if (searchTerm.trim()) {
+        url.searchParams.set("q", searchTerm.trim())
+      }
+      url.searchParams.set("limit", String(LIMIT))
+      // gifs.length is captured at call time — always the correct next offset.
+      url.searchParams.set("offset", String(gifs.length))
+      const res = await fetch(url.toString(), {
+        method: "GET",
+        signal: controller.signal,
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const msg =
+          typeof payload.error === "string"
+            ? payload.error
+            : "Failed to load GIFs"
+        throw new Error(msg)
+      }
+      if (controller.signal.aborted) return
+      const next = normalizeGifList(payload.gifs)
+      setGifs((prev) => [...prev, ...next])
+      setHasMore(
+        typeof payload.hasMore === "boolean"
+          ? payload.hasMore
+          : next.length >= LIMIT,
+      )
+    } catch (e) {
+      if (controller.signal.aborted) return
+      setLoadMoreError(e instanceof Error ? e.message : "Failed to load GIFs")
+    } finally {
+      if (!controller.signal.aborted) setLoadingMore(false)
+    }
+  }, [gifs.length, searchTerm])
 
   const title = useMemo(
     () =>
@@ -188,8 +222,6 @@ export function GiphyPicker({
             className="mt-3 flex items-center gap-2"
             onSubmit={(e) => {
               e.preventDefault()
-              setOffset(0)
-              setHasMore(false)
               setSearchTerm(query.trim())
             }}
           >
@@ -274,27 +306,31 @@ export function GiphyPicker({
                   )
                 })}
               </div>
-              {loadMoreError && (
-                <Alert variant="destructive" className="mb-2">
-                  <AlertDescription>{loadMoreError}</AlertDescription>
-                </Alert>
-              )}
-              {hasMore && !loadMoreError && (
-                <div className="flex w-full justify-center py-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={loadingMore}
-                    onClick={() => setOffset((prev) => prev + LIMIT)}
-                    className="w-full"
-                  >
-                    {loadingMore ? (
-                      <Spinner className="h-4 w-4" />
-                    ) : (
-                      "Load more"
-                    )}
-                  </Button>
+              {(hasMore || loadMoreError) && (
+                <div className="flex w-full flex-col items-center gap-2 py-4">
+                  {loadMoreError && (
+                    <Alert variant="destructive" className="w-full">
+                      <AlertDescription>{loadMoreError}</AlertDescription>
+                    </Alert>
+                  )}
+                  {(hasMore || loadMoreError) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={loadingMore}
+                      onClick={handleLoadMore}
+                      className="w-full"
+                    >
+                      {loadingMore ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : loadMoreError ? (
+                        "Retry"
+                      ) : (
+                        "Load more"
+                      )}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
