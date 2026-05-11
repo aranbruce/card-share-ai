@@ -110,6 +110,7 @@ export function GiphyPicker({
   // Initial load and search-term changes always replace the gif list.
   useEffect(() => {
     if (!open) return
+    loadMoreAbortRef.current?.abort()
     let cancelled = false
     const controller = new AbortController()
 
@@ -321,6 +322,14 @@ export function GiphyPicker({
                       disabled={loadingMore}
                       onClick={handleLoadMore}
                       className="w-full"
+                      aria-label={
+                        loadingMore
+                          ? "Loading more GIFs"
+                          : loadMoreError
+                            ? "Retry loading more GIFs"
+                            : "Load more GIFs"
+                      }
+                      aria-busy={loadingMore}
                     >
                       {loadingMore ? (
                         <Spinner className="h-4 w-4" />

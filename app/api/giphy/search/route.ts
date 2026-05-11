@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         : null
     const hasMore =
       totalCount !== null
-        ? offset + gifs.length < totalCount
+        ? offset + limit < totalCount
         : gifs.length === limit
 
     return NextResponse.json(
