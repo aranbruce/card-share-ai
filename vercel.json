@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/bot/webhooks/slack",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
