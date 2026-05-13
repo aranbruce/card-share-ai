@@ -168,8 +168,15 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         ],
       })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error(`[cardsai] FAIL: ${msg}`)
+      console.error(`[cardsai] openModal FAIL:`, err)
+      try {
+        const dm = await bot.openDM(event.user)
+        await dm.post(
+          "Something went wrong opening the card creator. Please try again.",
+        )
+      } catch {
+        // DM also failed — nothing more we can do
+      }
     }
   })
 
@@ -177,20 +184,30 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   bot.onSlashCommand("/cardsai-link", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
     const userId = event.user.userId
-    const dm = await bot.openDM(event.user)
-
-    const existing = await findLinkedUser(platform, userId)
-    if (existing) {
+    try {
+      const dm = await bot.openDM(event.user)
+      const existing = await findLinkedUser(platform, userId)
+      if (existing) {
+        await dm.post(
+          "Your CardsAI account is already connected! Use `/cardsai` to create a card.",
+        )
+        return
+      }
+      const linkUrl = await createLinkUrl(platform, userId)
       await dm.post(
-        "Your CardsAI account is already connected! Use `/cardsai` to create a card.",
+        `Connect your CardsAI account:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
       )
-      return
+    } catch (err) {
+      console.error(`[cardsai-link] FAIL:`, err)
+      try {
+        const dm = await bot.openDM(event.user)
+        await dm.post(
+          "Something went wrong generating your link. Please try again.",
+        )
+      } catch {
+        // DM also failed — nothing more we can do
+      }
     }
-
-    const linkUrl = await createLinkUrl(platform, userId)
-    await dm.post(
-      `Connect your CardsAI account:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
-    )
   })
 
   // Modal submit handler
@@ -214,13 +231,31 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       }
     }
 
-    const supabaseUserId = await findLinkedUser(platform, user.userId)
+    let supabaseUserId: string | null
+    try {
+      supabaseUserId = await findLinkedUser(platform, user.userId)
+    } catch (err) {
+      console.error(`[modal/findLinkedUser] FAIL:`, err)
+      return {
+        action: "errors",
+        errors: {
+          recipient_name: "Something went wrong. Please try again in a moment.",
+        },
+      }
+    }
+
     if (!supabaseUserId) {
-      const linkUrl = await createLinkUrl(platform, user.userId)
-      const dm = await bot.openDM(user)
-      await dm.post(`Connect your CardsAI account first:\n${linkUrl}`)
+      try {
+        const linkUrl = await createLinkUrl(platform, user.userId)
+        const dm = await bot.openDM(user)
+        await dm.post(`Connect your CardsAI account first:\n${linkUrl}`)
+      } catch (err) {
+        console.error(`[modal/createLinkUrl] FAIL:`, err)
+      }
       return { action: "close" }
     }
+
+    const resolvedUserId = supabaseUserId
 
     // Use after() so card generation survives after Slack's response is sent
     after(async () => {
@@ -234,14 +269,22 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
               await bot.openDM(user)
             ).post(`✨ Creating a card for *${recipientName}*…`)
       } catch {
-        placeholder = await (
-          await bot.openDM(user)
-        ).post(`✨ Creating a card for *${recipientName}*…`)
+        try {
+          placeholder = await (
+            await bot.openDM(user)
+          ).post(`✨ Creating a card for *${recipientName}*…`)
+        } catch (err) {
+          console.error(
+            `[modal/placeholder] FAIL: could not post to Slack`,
+            err,
+          )
+          return
+        }
       }
 
       try {
         const card = await generateAndCreateCard(
-          supabaseUserId,
+          resolvedUserId,
           cardType,
           recipientName,
           senderName,
@@ -253,11 +296,14 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
             : "Sorry, I couldn't create the card. Please try again later.",
         )
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error(`[modal/generate] FAIL: ${msg}`)
-        await placeholder.edit(
-          "Sorry, I couldn't create the card. Please try again later.",
-        )
+        console.error(`[modal/generate] FAIL:`, err)
+        try {
+          await placeholder.edit(
+            "Sorry, I couldn't create the card. Please try again later.",
+          )
+        } catch {
+          // Editing the placeholder also failed — nothing more we can do
+        }
       }
     })
 
