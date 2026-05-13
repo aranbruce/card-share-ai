@@ -170,6 +170,21 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       console.error(
         `[cardsai] account check FAIL: ${err instanceof Error ? err.message : String(err)}`,
       )
+      const errMsg =
+        "Something went wrong checking your account. Please try again."
+      try {
+        await event.channel.postEphemeral(event.user, errMsg, {
+          fallbackToDM: false,
+        })
+      } catch {
+        try {
+          const dm = await bot.openDM(event.user)
+          await dm.post(errMsg)
+        } catch {
+          // nothing more we can do
+        }
+      }
+      return
     }
 
     try {

@@ -112,6 +112,11 @@ export async function POST(request: NextRequest) {
 
     if (upsertError) {
       console.error("[bot/link] upsert identity:", upsertError)
+      // Revert the token claim so the user can retry with the same link
+      await serviceSupabase
+        .from("chat_link_tokens")
+        .update({ used_at: null })
+        .eq("token", token)
       return NextResponse.json({ error: upsertError.message }, { status: 500 })
     }
 
