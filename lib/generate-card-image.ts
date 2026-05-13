@@ -27,7 +27,7 @@ export async function generateCardCoverImage(params: {
   })
 
   const imageFile = files.find((f) => f.mediaType.startsWith("image/"))
-  if (!imageFile) return ""
+  if (!imageFile) throw new Error("No image generated")
 
   const persisted = await persistGeneratedCardImage(imageFile)
   if (!persisted) throw new Error("Image generated but could not be persisted")
