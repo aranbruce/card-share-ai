@@ -112,8 +112,12 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   // /createcard slash command → open modal
   bot.onSlashCommand("/cardsai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
+    console.log(
+      `[cardsai] slash command received platform=${platform} userId=${event.user.userId}`,
+    )
     try {
       const linked = await findLinkedUser(platform, event.user.userId)
+      console.log(`[cardsai] findLinkedUser result=${linked ?? "null"}`)
       if (!linked) {
         const linkUrl = await createLinkUrl(platform, event.user.userId)
         await event.channel.postEphemeral(
@@ -124,7 +128,9 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         return
       }
     } catch (err) {
-      console.error(`[cardsai] account check FAIL:`, err)
+      console.error(
+        `[cardsai] account check FAIL: ${err instanceof Error ? err.message : String(err)}`,
+      )
     }
 
     try {
