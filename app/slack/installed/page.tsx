@@ -66,7 +66,7 @@ export default function SlackInstalledPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <Suspense>
+      <Suspense fallback={null}>
         <InstalledContent />
       </Suspense>
     </div>

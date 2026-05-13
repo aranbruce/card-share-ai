@@ -520,7 +520,7 @@ export default function HomePage() {
                     {/* Card link preview */}
                     <div className="mt-2 rounded-lg border border-border bg-background p-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-rose-300 to-pink-500" />
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-linear-to-br from-rose-300 to-pink-500" />
                         <div className="min-w-0">
                           <p className="truncate text-xs font-semibold text-foreground">
                             Happy Birthday, Emily!

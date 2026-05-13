@@ -91,8 +91,9 @@ function LinkChatContent() {
         CardsAI. You can create cards directly from the bot.
       </p>
       <p className="text-sm text-muted-foreground">
-        Head back to the chat and send <strong>create card</strong> to get
-        started.
+        Head back to the chat and use{" "}
+        <code className="rounded bg-muted px-1 py-0.5 text-sm">/cardsai</code>{" "}
+        to create your first card.
       </p>
     </div>
   )

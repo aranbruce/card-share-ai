@@ -345,7 +345,9 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         )
       } catch (err) {
         console.error(`[modal/generate] FAIL:`, err)
-        await notify("Sorry, I couldn't create the card. Please try again later.")
+        await notify(
+          "Sorry, I couldn't create the card. Please try again later.",
+        )
       }
     })
 

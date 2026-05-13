@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   const appUrl = getAppUrl()
-  await getBot().initialize()
   const adapter = getSlackAdapter()
 
   try {
+    await getBot().initialize()
     const { teamId, installation } = await adapter.handleOAuthCallback(
       request,
       {

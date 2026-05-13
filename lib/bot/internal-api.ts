@@ -26,13 +26,17 @@ export async function createLinkUrl(
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
 
   const supabase = requireServiceRoleClient()
-  await supabase.from("chat_link_tokens").insert({
+  const { error } = await supabase.from("chat_link_tokens").insert({
     token,
     platform,
     platform_user_id: platformUserId,
-    platform_team_id: null,
+    platform_team_id: "",
     expires_at: expiresAt,
   })
+
+  if (error) {
+    throw new Error(`Failed to store link token: ${error.message}`)
+  }
 
   const appUrl = getAppUrl()
   return `${appUrl}/auth/link-chat?token=${encodeURIComponent(token)}`

@@ -66,30 +66,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid link token" }, { status: 400 })
     }
 
-    await serviceSupabase
+    const { error: upsertError } = await serviceSupabase
       .from("chat_platform_identities")
-      .delete()
-      .eq("platform", tokenRow.platform)
-      .eq("platform_user_id", tokenRow.platform_user_id)
+      .upsert(
+        {
+          supabase_user_id: user.id,
+          platform: tokenRow.platform,
+          platform_user_id: tokenRow.platform_user_id,
+          platform_team_id: tokenRow.platform_team_id ?? "",
+        },
+        { onConflict: "platform,platform_user_id,platform_team_id" },
+      )
 
-    const { error: insertError } = await serviceSupabase
-      .from("chat_platform_identities")
-      .insert({
-        supabase_user_id: user.id,
-        platform: tokenRow.platform,
-        platform_user_id: tokenRow.platform_user_id,
-        platform_team_id: tokenRow.platform_team_id ?? null,
-      })
-
-    if (insertError) {
-      console.error("[bot/link] insert identity:", insertError)
-      return NextResponse.json({ error: insertError.message }, { status: 500 })
+    if (upsertError) {
+      console.error("[bot/link] upsert identity:", upsertError)
+      return NextResponse.json({ error: upsertError.message }, { status: 500 })
     }
 
-    await serviceSupabase
+    const { error: markUsedError } = await serviceSupabase
       .from("chat_link_tokens")
       .update({ used_at: new Date().toISOString() })
       .eq("token", token)
+
+    if (markUsedError) {
+      console.error("[bot/link] mark token used:", markUsedError)
+    }
 
     return NextResponse.json({ success: true, platform: tokenRow.platform })
   } catch (error) {
