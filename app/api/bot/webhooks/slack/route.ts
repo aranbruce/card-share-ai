@@ -10,16 +10,31 @@ export const maxDuration = 60
 // expired_trigger_id because the token lookup fails.
 let _initError: unknown = null
 
+const INIT_MAX_ATTEMPTS = 4
+const INIT_RETRY_BASE_MS = 500
+
 function startInit(): Promise<void> {
   // Wrap in Promise.resolve().then() so synchronous throws from getBot()
   // (e.g. missing env vars) are captured as rejections rather than crashing
   // the module at evaluation time.
-  return Promise.resolve()
-    .then(() => getBot().initialize())
-    .catch((err) => {
-      console.error("[bot] init error:", err)
-      _initError = err
-    })
+  return Promise.resolve().then(async () => {
+    for (let attempt = 1; attempt <= INIT_MAX_ATTEMPTS; attempt++) {
+      try {
+        await getBot().initialize()
+        return
+      } catch (err) {
+        const isLast = attempt === INIT_MAX_ATTEMPTS
+        if (isLast) {
+          console.error("[bot] init error:", err)
+          _initError = err
+          return
+        }
+        const delay = INIT_RETRY_BASE_MS * 2 ** (attempt - 1)
+        console.warn(`[bot] init attempt ${attempt} failed, retrying in ${delay}ms:`, err)
+        await new Promise((r) => setTimeout(r, delay))
+      }
+    }
+  })
 }
 
 let _init = startInit()
