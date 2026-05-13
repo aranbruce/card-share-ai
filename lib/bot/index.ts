@@ -1,4 +1,12 @@
-import { Chat } from "chat"
+import {
+  Chat,
+  Card,
+  CardText,
+  Divider,
+  Actions,
+  LinkButton,
+  type AdapterPostableMessage,
+} from "chat"
 import { createSlackAdapter } from "@chat-adapter/slack"
 import { getAppUrl } from "@/lib/app-url"
 import { createPostgresState } from "@chat-adapter/state-pg"
@@ -56,6 +64,11 @@ async function generateAndCreateCard(
 function cardUrl(card: CardRow): string {
   const appUrl = getAppUrl()
   return `${appUrl}/dashboard/cards/${card.id}`
+}
+
+function contributorUrl(card: CardRow): string {
+  const appUrl = getAppUrl()
+  return `${appUrl}/contribute/${card.contributor_link_id}`
 }
 
 type BotAdapters = {
@@ -189,6 +202,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         callbackId: "create_card",
         title: "Create a Card",
         submitLabel: "Create",
+        privateMetadata: event.channel.toJSON().id,
         children: [
           {
             type: "select",
@@ -305,9 +319,10 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
 
   // Modal submit handler
   bot.onModalSubmit("create_card", async (event: ModalSubmitEvent) => {
-    const { values, user, relatedChannel } = event
+    const { values, user } = event
     const platform = event.adapter.name
     const teamId = getSlackTeamId(event)
+    const channelId = event.privateMetadata || null
 
     const cardType = values.card_type || "custom"
     const recipientName = (values.recipient_name || "").trim()
@@ -353,12 +368,12 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
 
     // Use after() so card generation survives after Slack's response is sent
     after(async () => {
-      async function notify(msg: string) {
-        if (relatedChannel) {
+      async function notify(msg: AdapterPostableMessage) {
+        if (channelId) {
           try {
-            await relatedChannel.postEphemeral(user, msg, {
-              fallbackToDM: false,
-            })
+            await bot
+              .getAdapter("slack")
+              .postEphemeral(channelId, user.userId, msg)
             return
           } catch {
             // fall through to DM
@@ -381,10 +396,35 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
           senderName,
           customMessage,
         )
+        if (!card) {
+          await notify(
+            "Sorry, I couldn't create the card. Please try again later.",
+          )
+          return
+        }
+
+        const isHttpsImage =
+          typeof card.image_url === "string" &&
+          (card.image_url as string).startsWith("https")
+
         await notify(
-          card
-            ? `Your card for *${recipientName}* is ready!\n${cardUrl(card)}`
-            : "Sorry, I couldn't create the card. Please try again later.",
+          Card({
+            title: `Your card for ${recipientName} is ready!`,
+            ...(isHttpsImage ? { imageUrl: card.image_url as string } : {}),
+            children: [
+              ...(card.copy_headline
+                ? [CardText(`"${card.copy_headline as string}"`)]
+                : []),
+              Divider(),
+              Actions([
+                LinkButton({ label: "Open Card", url: cardUrl(card) }),
+                LinkButton({
+                  label: "Share Contributor Link",
+                  url: contributorUrl(card),
+                }),
+              ]),
+            ],
+          }),
         )
       } catch (err) {
         console.error(`[modal/generate] FAIL:`, err)
