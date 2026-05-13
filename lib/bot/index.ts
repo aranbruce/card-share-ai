@@ -199,16 +199,24 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         ],
       })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error(`[cardsai] openModal FAIL: ${msg}`)
+      console.error(
+        `[cardsai] openModal FAIL: ${err instanceof Error ? err.message : String(err)}`,
+      )
       try {
-        const dm = await bot.openDM(event.user)
-        await dm.post(
+        await event.channel.postEphemeral(
+          event.user,
           "Something went wrong opening the card creator. Please try again.",
+          { fallbackToDM: false },
         )
-      } catch (dmErr) {
-        const dmMsg = dmErr instanceof Error ? dmErr.message : String(dmErr)
-        console.error(`[cardsai] DM fallback FAIL: ${dmMsg}`)
+      } catch {
+        try {
+          const dm = await bot.openDM(event.user)
+          await dm.post(
+            "Something went wrong opening the card creator. Please try again.",
+          )
+        } catch {
+          // nothing more we can do
+        }
       }
     }
   })
