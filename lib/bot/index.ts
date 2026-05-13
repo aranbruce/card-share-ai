@@ -240,7 +240,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         action: "errors",
         errors: {
           recipient_name: "Something went wrong. Please try again in a moment.",
-        },
+        } as Record<string, string>,
       }
     }
 
