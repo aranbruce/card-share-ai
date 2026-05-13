@@ -4,22 +4,45 @@ import type { NextRequest } from "next/server"
 
 export const maxDuration = 60
 
+// Slack's trigger_id (and ack) deadline is 3 seconds. Leave 500ms buffer for
+// the actual handler to run before we bail with 503 rather than waiting for
+// the full retry schedule (which can exceed 3.5s on repeated cold-start failures).
+const SLACK_DEADLINE_MS = 2500
+
 // Store the initialization promise so we can await it before the first request.
 // On a cold start, module load and the first request arrive simultaneously — without
 // awaiting this, openModal is called before Postgres is ready and Slack returns
 // expired_trigger_id because the token lookup fails.
 let _initError: unknown = null
 
+const INIT_MAX_ATTEMPTS = 4
+const INIT_RETRY_BASE_MS = 500
+
 function startInit(): Promise<void> {
   // Wrap in Promise.resolve().then() so synchronous throws from getBot()
   // (e.g. missing env vars) are captured as rejections rather than crashing
   // the module at evaluation time.
-  return Promise.resolve()
-    .then(() => getBot().initialize())
-    .catch((err) => {
-      console.error("[bot] init error:", err)
-      _initError = err
-    })
+  return Promise.resolve().then(async () => {
+    for (let attempt = 1; attempt <= INIT_MAX_ATTEMPTS; attempt++) {
+      try {
+        await getBot().initialize()
+        return
+      } catch (err) {
+        const isLast = attempt === INIT_MAX_ATTEMPTS
+        if (isLast) {
+          console.error("[bot] init error:", err)
+          _initError = err
+          return
+        }
+        const delay = INIT_RETRY_BASE_MS * 2 ** (attempt - 1)
+        console.warn(
+          `[bot] init attempt ${attempt} failed, retrying in ${delay}ms:`,
+          err,
+        )
+        await new Promise((r) => setTimeout(r, delay))
+      }
+    }
+  })
 }
 
 let _init = startInit()
@@ -47,7 +70,22 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  await _init
+  let timedOut = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<void>((resolve) => {
+    timer = setTimeout(() => {
+      timedOut = true
+      resolve()
+    }, SLACK_DEADLINE_MS)
+  })
+  try {
+    await Promise.race([_init, deadline])
+  } finally {
+    clearTimeout(timer)
+  }
+  if (timedOut) {
+    return new Response("Bot initialization timed out", { status: 503 })
+  }
   if (_initError) {
     _initError = null
     _init = startInit()
