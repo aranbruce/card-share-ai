@@ -71,13 +71,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   let timedOut = false
-  const deadline = new Promise<void>((resolve) =>
-    setTimeout(() => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const deadline = new Promise<void>((resolve) => {
+    timer = setTimeout(() => {
       timedOut = true
       resolve()
-    }, SLACK_DEADLINE_MS),
-  )
-  await Promise.race([_init, deadline])
+    }, SLACK_DEADLINE_MS)
+  })
+  try {
+    await Promise.race([_init, deadline])
+  } finally {
+    clearTimeout(timer)
+  }
   if (timedOut) {
     return new Response("Bot initialization timed out", { status: 503 })
   }
