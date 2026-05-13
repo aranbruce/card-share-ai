@@ -1,8 +1,18 @@
-import { describe, expect, it, beforeAll } from "vitest"
+import { describe, expect, it, beforeAll, afterAll } from "vitest"
 import { generateLinkToken, verifyLinkToken } from "./chat-link-token"
+
+const _originalSecret = process.env.BOT_LINK_SECRET
 
 beforeAll(() => {
   process.env.BOT_LINK_SECRET = "test-secret-for-unit-tests"
+})
+
+afterAll(() => {
+  if (_originalSecret === undefined) {
+    delete process.env.BOT_LINK_SECRET
+  } else {
+    process.env.BOT_LINK_SECRET = _originalSecret
+  }
 })
 
 const payload = { platform: "slack", platformUserId: "U123ABC" }

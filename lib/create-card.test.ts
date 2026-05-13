@@ -14,7 +14,15 @@ const params: CreateCardParams = {
 
 describe("createCardForUser", () => {
   it("returns the created card on success", async () => {
-    const cardRow = { id: CARD_ID, contributor_link_id: LINK_ID, ...params }
+    const cardRow = {
+      id: CARD_ID,
+      contributor_link_id: LINK_ID,
+      card_type: params.cardType,
+      recipient_name: params.recipientName,
+      sender_name: params.senderName,
+      copy_headline: params.copyHeadline,
+      image_url: params.imageUrl,
+    }
 
     const supabase = {
       from: vi.fn((table: string) => {

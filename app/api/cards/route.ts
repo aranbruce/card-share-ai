@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     })
 
     if ("error" in result) {
+      console.error("Error creating card:", result.error)
       return NextResponse.json({ error: result.error }, { status: 400 })
     }
 
