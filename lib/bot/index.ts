@@ -2,6 +2,7 @@ import { Chat } from "chat"
 import { createSlackAdapter } from "@chat-adapter/slack"
 import { getAppUrl } from "@/lib/app-url"
 import { createPostgresState } from "@chat-adapter/state-pg"
+import pg from "pg"
 import type { ModalSubmitEvent, SlashCommandEvent } from "chat"
 import { after } from "next/server"
 import {
@@ -63,6 +64,13 @@ type BotAdapters = {
 let _slackAdapter: ReturnType<typeof createSlackAdapter> | null = null
 let _bot: Chat<BotAdapters> | null = null
 
+// Supabase's transaction pooler uses a certificate that Node.js can't verify
+// natively, so we create the pool manually with rejectUnauthorized disabled.
+const _pgPool = new pg.Pool({
+  connectionString: process.env.POSTGRES_URL,
+  ssl: { rejectUnauthorized: false },
+})
+
 export function getSlackAdapter(): ReturnType<typeof createSlackAdapter> {
   if (_slackAdapter) return _slackAdapter
   _slackAdapter = createSlackAdapter({
@@ -81,7 +89,7 @@ export function getBot(): Chat<BotAdapters> {
     adapters: {
       slack: getSlackAdapter(),
     },
-    state: createPostgresState(),
+    state: createPostgresState({ client: _pgPool }),
     dedupeTtlMs: 600_000,
   })
 
