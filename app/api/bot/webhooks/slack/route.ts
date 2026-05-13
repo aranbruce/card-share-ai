@@ -22,15 +22,22 @@ const _init = Promise.resolve()
 // Called by the Vercel cron every 5 minutes to keep this function warm.
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
-  // When CRON_SECRET is set, Vercel automatically injects Authorization: Bearer
-  // <CRON_SECRET> for cron invocations — no header config needed in vercel.json.
-  // When unset (preview/dev), skip auth so cron warms up instead of logging 401s.
+  const isDeployed = !!process.env.VERCEL_ENV
   if (cronSecret) {
+    // Vercel automatically injects Authorization: Bearer <CRON_SECRET> for cron
+    // invocations — no header config needed in vercel.json.
     const auth = request.headers.get("authorization")
     if (auth !== `Bearer ${cronSecret}`) {
       return new Response("Unauthorized", { status: 401 })
     }
+  } else if (isDeployed) {
+    // Deployed (production or preview) without CRON_SECRET — refuse rather than
+    // leave the warmup endpoint publicly accessible in Vercel environments.
+    return new Response("CRON_SECRET is required in deployed environments", {
+      status: 401,
+    })
   }
+  // else: local dev without CRON_SECRET — allow unauthenticated warmup
   await _init
   if (_initError) {
     return new Response("Bot initialization failed", { status: 503 })
