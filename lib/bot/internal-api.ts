@@ -1,6 +1,10 @@
 import { generateLinkToken } from "@/lib/chat-link-token"
 import { requireServiceRoleClient } from "@/lib/supabase/admin"
-import { createCardForUser, type CreateCardParams } from "@/lib/create-card"
+import {
+  createCardForUser,
+  type CardRow,
+  type CreateCardParams,
+} from "@/lib/create-card"
 import { getAppUrl } from "@/lib/app-url"
 
 export async function findLinkedUser(
@@ -87,7 +91,7 @@ export async function generateImageUrl(params: {
 export async function createBotCard(
   supabaseUserId: string,
   params: CreateCardParams,
-): Promise<Record<string, unknown> | null> {
+): Promise<CardRow | null> {
   const supabase = requireServiceRoleClient()
   const result = await createCardForUser(supabase, supabaseUserId, params)
   if ("error" in result) {

@@ -14,8 +14,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { token } = body as Record<string, unknown>
+    let body: Record<string, unknown>
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+    const { token } = body
 
     if (typeof token !== "string" || !token) {
       return NextResponse.json({ error: "token is required" }, { status: 400 })

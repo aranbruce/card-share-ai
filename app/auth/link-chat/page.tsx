@@ -27,33 +27,43 @@ function LinkChatContent() {
     if (!token) return
 
     async function exchange() {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        const supabase = createClient()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
 
-      if (!user) {
-        const next = encodeURIComponent(`/auth/link-chat?token=${token}`)
-        router.replace(`/auth/login?next=${next}`)
-        return
-      }
+        if (!user) {
+          const next = encodeURIComponent(`/auth/link-chat?token=${token}`)
+          router.replace(`/auth/login?next=${next}`)
+          return
+        }
 
-      const res = await fetch("/api/bot/link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      })
+        const res = await fetch("/api/bot/link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        })
 
-      const data = await res.json()
+        let data: Record<string, unknown> = {}
+        try {
+          data = await res.json()
+        } catch {
+          // ignore — body may be empty on unexpected errors
+        }
 
-      if (!res.ok) {
+        if (!res.ok) {
+          setStatus("error")
+          setErrorMessage((data.error as string) ?? "Something went wrong.")
+          return
+        }
+
+        setPlatform((data.platform as string) ?? "")
+        setStatus("success")
+      } catch {
         setStatus("error")
-        setErrorMessage(data.error ?? "Something went wrong.")
-        return
+        setErrorMessage("Something went wrong. Please try again.")
       }
-
-      setPlatform(data.platform ?? "")
-      setStatus("success")
     }
 
     exchange()

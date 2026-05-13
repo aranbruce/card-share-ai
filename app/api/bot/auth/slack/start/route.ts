@@ -12,8 +12,13 @@ const SCOPES = [
 ].join(",")
 
 export async function GET() {
+  const clientId = process.env.NEXT_PUBLIC_SLACK_CLIENT_ID
+  if (!clientId) {
+    return new Response("NEXT_PUBLIC_SLACK_CLIENT_ID is not configured", {
+      status: 500,
+    })
+  }
   const appUrl = getAppUrl()
-  const clientId = process.env.NEXT_PUBLIC_SLACK_CLIENT_ID ?? ""
   const redirectUri = `${appUrl}/api/bot/auth/slack/callback`
   const state = randomBytes(32).toString("hex")
 

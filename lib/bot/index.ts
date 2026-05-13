@@ -12,6 +12,7 @@ import {
   generateImageUrl,
   createBotCard,
 } from "./internal-api"
+import type { CardRow } from "@/lib/create-card"
 
 const CARD_TYPES = [
   "birthday",
@@ -30,7 +31,7 @@ async function generateAndCreateCard(
   recipientName: string,
   senderName: string,
   customMessage?: string,
-): Promise<Record<string, unknown> | null> {
+): Promise<CardRow | null> {
   const headline = await generateHeadline({
     cardType,
     recipientName,
@@ -52,7 +53,7 @@ async function generateAndCreateCard(
   })
 }
 
-function cardUrl(card: Record<string, unknown>): string {
+function cardUrl(card: CardRow): string {
   const appUrl = getAppUrl()
   return `${appUrl}/dashboard/cards/${card.id}`
 }
@@ -81,9 +82,15 @@ function stripSslMode(url: string): string {
 function createPgPool(): pg.Pool {
   const postgresUrl = process.env.POSTGRES_URL
   if (!postgresUrl) throw new Error("POSTGRES_URL is not configured")
+  // SECURITY: Supabase's transaction pooler presents a self-signed certificate
+  // that Node.js cannot verify natively, so TLS verification is disabled by
+  // default. Set POSTGRES_SSL_REJECT_UNAUTHORIZED=true to enable verification
+  // when connecting to a Postgres host that has a verifiable certificate.
+  const rejectUnauthorized =
+    process.env.POSTGRES_SSL_REJECT_UNAUTHORIZED === "true"
   return new pg.Pool({
     connectionString: stripSslMode(postgresUrl),
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized },
   })
 }
 

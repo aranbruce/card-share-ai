@@ -1,6 +1,11 @@
 import { v4 as uuidv4 } from "uuid"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+export interface CardRow {
+  id: string
+  [key: string]: unknown
+}
+
 export interface CreateCardParams {
   cardType: string
   recipientName: string
@@ -15,7 +20,7 @@ export async function createCardForUser(
   supabase: SupabaseClient,
   userId: string,
   params: CreateCardParams,
-): Promise<{ card: Record<string, unknown> } | { error: string }> {
+): Promise<{ card: CardRow } | { error: string }> {
   const {
     cardType,
     recipientName,
@@ -71,5 +76,5 @@ export async function createCardForUser(
     console.error("Failed to pre-create creator contribution:", contribError)
   }
 
-  return { card: data }
+  return { card: data as CardRow }
 }

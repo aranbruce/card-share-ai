@@ -10,7 +10,7 @@ UPDATE chat_link_tokens SET platform_team_id = '' WHERE platform_team_id IS NULL
 ALTER TABLE chat_link_tokens ALTER COLUMN platform_team_id SET NOT NULL;
 ALTER TABLE chat_link_tokens ALTER COLUMN platform_team_id SET DEFAULT '';
 
-DROP INDEX chat_platform_identities_unique;
+DROP INDEX IF EXISTS chat_platform_identities_unique;
 ALTER TABLE chat_platform_identities
   ADD CONSTRAINT chat_platform_identities_unique
   UNIQUE (platform, platform_user_id, platform_team_id);
