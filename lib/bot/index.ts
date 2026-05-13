@@ -116,9 +116,10 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       const linked = await findLinkedUser(platform, event.user.userId)
       if (!linked) {
         const linkUrl = await createLinkUrl(platform, event.user.userId)
-        const dm = await bot.openDM(event.user)
-        await dm.post(
-          `Connect your CardsAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
+        await event.channel.postEphemeral(
+          event.user,
+          `You need to connect your CardsAI account first:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
+          { fallbackToDM: true },
         )
         return
       }
