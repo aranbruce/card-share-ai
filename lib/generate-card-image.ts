@@ -30,5 +30,6 @@ export async function generateCardCoverImage(params: {
   if (!imageFile) return ""
 
   const persisted = await persistGeneratedCardImage(imageFile)
-  return persisted ?? ""
+  if (!persisted) throw new Error("Image generated but could not be persisted")
+  return persisted
 }

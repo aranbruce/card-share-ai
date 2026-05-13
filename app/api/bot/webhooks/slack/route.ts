@@ -57,6 +57,11 @@ export async function POST(request: NextRequest) {
       headers: request.headers,
       body,
     }),
-    { waitUntil: (p) => after(p) },
+    {
+      waitUntil: (p) =>
+        after(async () => {
+          await p
+        }),
+    },
   )
 }
