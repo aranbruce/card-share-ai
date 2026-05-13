@@ -4,6 +4,11 @@ import type { NextRequest } from "next/server"
 
 export const maxDuration = 60
 
+// Slack's trigger_id (and ack) deadline is 3 seconds. Leave 500ms buffer for
+// the actual handler to run before we bail with 503 rather than waiting for
+// the full retry schedule (which can exceed 3.5s on repeated cold-start failures).
+const SLACK_DEADLINE_MS = 2500
+
 // Store the initialization promise so we can await it before the first request.
 // On a cold start, module load and the first request arrive simultaneously — without
 // awaiting this, openModal is called before Postgres is ready and Slack returns
@@ -30,7 +35,10 @@ function startInit(): Promise<void> {
           return
         }
         const delay = INIT_RETRY_BASE_MS * 2 ** (attempt - 1)
-        console.warn(`[bot] init attempt ${attempt} failed, retrying in ${delay}ms:`, err)
+        console.warn(
+          `[bot] init attempt ${attempt} failed, retrying in ${delay}ms:`,
+          err,
+        )
         await new Promise((r) => setTimeout(r, delay))
       }
     }
@@ -62,7 +70,17 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  await _init
+  let timedOut = false
+  const deadline = new Promise<void>((resolve) =>
+    setTimeout(() => {
+      timedOut = true
+      resolve()
+    }, SLACK_DEADLINE_MS),
+  )
+  await Promise.race([_init, deadline])
+  if (timedOut) {
+    return new Response("Bot initialization timed out", { status: 503 })
+  }
   if (_initError) {
     _initError = null
     _init = startInit()
