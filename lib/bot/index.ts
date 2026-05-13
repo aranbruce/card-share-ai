@@ -66,22 +66,28 @@ let _slackAdapter: ReturnType<typeof createSlackAdapter> | null = null
 let _bot: Chat<BotAdapters> | null = null
 let _pgPool: pg.Pool | null = null
 
-// Supabase's transaction pooler uses a certificate that Node.js can't verify
-// natively. Newer pg versions treat sslmode=require as verify-full (rejectUnauthorized:
-// true), overriding our ssl option — so strip sslmode from the URL first.
-function stripSslMode(url: string): string {
-  try {
-    const u = new URL(url)
-    u.searchParams.delete("sslmode")
-    return u.toString()
-  } catch {
-    return url
-  }
-}
-
 function createPgPool(): pg.Pool {
   const postgresUrl = process.env.POSTGRES_URL
   if (!postgresUrl) throw new Error("POSTGRES_URL is not configured")
+
+  // pg's newer versions treat sslmode=require as verify-full, overriding our
+  // ssl option, so we parse and strip sslmode before passing the URL to pg.
+  // We also honour sslmode=disable explicitly rather than silently ignoring it.
+  let connectionString = postgresUrl
+  let sslMode: string | null = null
+  try {
+    const u = new URL(postgresUrl)
+    sslMode = u.searchParams.get("sslmode")
+    u.searchParams.delete("sslmode")
+    connectionString = u.toString()
+  } catch {
+    // not a parseable URL, use as-is
+  }
+
+  if (sslMode === "disable") {
+    return new pg.Pool({ connectionString, ssl: false })
+  }
+
   // SECURITY: TLS certificate verification is enabled by default. Set
   // POSTGRES_SSL_REJECT_UNAUTHORIZED=false only when connecting through
   // Supabase's transaction pooler, which presents a certificate that Node.js
@@ -89,10 +95,7 @@ function createPgPool(): pg.Pool {
   // the MITM risk on the network path to the database.
   const rejectUnauthorized =
     process.env.POSTGRES_SSL_REJECT_UNAUTHORIZED !== "false"
-  return new pg.Pool({
-    connectionString: stripSslMode(postgresUrl),
-    ssl: { rejectUnauthorized },
-  })
+  return new pg.Pool({ connectionString, ssl: { rejectUnauthorized } })
 }
 
 // Extract the Slack workspace/team ID from a raw event payload.
@@ -108,11 +111,14 @@ function getSlackTeamId(event: { raw: unknown }): string {
 
 export function getSlackAdapter(): ReturnType<typeof createSlackAdapter> {
   if (_slackAdapter) return _slackAdapter
-  _slackAdapter = createSlackAdapter({
-    clientId: process.env.NEXT_PUBLIC_SLACK_CLIENT_ID,
-    clientSecret: process.env.SLACK_CLIENT_SECRET,
-    signingSecret: process.env.SLACK_SIGNING_SECRET,
-  })
+  const clientId = process.env.NEXT_PUBLIC_SLACK_CLIENT_ID
+  const clientSecret = process.env.SLACK_CLIENT_SECRET
+  const signingSecret = process.env.SLACK_SIGNING_SECRET
+  if (!clientId)
+    throw new Error("NEXT_PUBLIC_SLACK_CLIENT_ID is not configured")
+  if (!clientSecret) throw new Error("SLACK_CLIENT_SECRET is not configured")
+  if (!signingSecret) throw new Error("SLACK_SIGNING_SECRET is not configured")
+  _slackAdapter = createSlackAdapter({ clientId, clientSecret, signingSecret })
   return _slackAdapter
 }
 

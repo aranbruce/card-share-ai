@@ -9,8 +9,11 @@ export const maxDuration = 60
 // awaiting this, openModal is called before Postgres is ready and Slack returns
 // expired_trigger_id because the token lookup fails.
 let _initError: unknown = null
-const _init = getBot()
-  .initialize()
+// Wrap in Promise.resolve().then() so synchronous throws from getBot()
+// (e.g. missing env vars) are captured as rejections rather than crashing
+// the module at evaluation time.
+const _init = Promise.resolve()
+  .then(() => getBot().initialize())
   .catch((err) => {
     console.error("[bot] init error:", err)
     _initError = err
@@ -22,11 +25,12 @@ const _init = getBot()
 // vercel.json. External callers without the secret receive a 401.
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = request.headers.get("authorization")
-    if (auth !== `Bearer ${cronSecret}`) {
-      return new Response("Unauthorized", { status: 401 })
-    }
+  if (!cronSecret) {
+    return new Response("CRON_SECRET is not configured", { status: 401 })
+  }
+  const auth = request.headers.get("authorization")
+  if (auth !== `Bearer ${cronSecret}`) {
+    return new Response("Unauthorized", { status: 401 })
   }
   await _init
   if (_initError) {
