@@ -122,13 +122,22 @@ export async function POST(request: NextRequest) {
       // Allow if it's already mapped to the requesting user (idempotent re-link).
       // Reject if it belongs to a different user — upsert would allow link takeover.
       if (insertError.code === "23505") {
-        const { data: existing } = await serviceSupabase
+        const { data: existing, error: selectError } = await serviceSupabase
           .from("chat_platform_identities")
           .select("supabase_user_id")
           .eq("platform", tokenRow.platform)
           .eq("platform_user_id", tokenRow.platform_user_id)
           .eq("platform_team_id", tokenRow.platform_team_id ?? "")
           .maybeSingle()
+
+        if (selectError) {
+          console.error("[bot/link] existing identity lookup:", selectError)
+          await revertTokenClaim()
+          return NextResponse.json(
+            { error: selectError.message },
+            { status: 500 },
+          )
+        }
 
         if (existing?.supabase_user_id === user.id) {
           return NextResponse.json({
