@@ -98,21 +98,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { error: upsertError } = await serviceSupabase
-      .from("chat_platform_identities")
-      .upsert(
-        {
-          supabase_user_id: user.id,
-          platform: tokenRow.platform,
-          platform_user_id: tokenRow.platform_user_id,
-          platform_team_id: tokenRow.platform_team_id ?? "",
-        },
-        { onConflict: "platform,platform_user_id,platform_team_id" },
-      )
-
-    if (upsertError) {
-      console.error("[bot/link] upsert identity:", upsertError)
-      // Revert the token claim so the user can retry with the same link
+    async function revertTokenClaim() {
       const { error: revertError } = await serviceSupabase
         .from("chat_link_tokens")
         .update({ used_at: null })
@@ -120,7 +106,50 @@ export async function POST(request: NextRequest) {
       if (revertError) {
         console.error("[bot/link] revert token claim:", revertError)
       }
-      return NextResponse.json({ error: upsertError.message }, { status: 500 })
+    }
+
+    const { error: insertError } = await serviceSupabase
+      .from("chat_platform_identities")
+      .insert({
+        supabase_user_id: user.id,
+        platform: tokenRow.platform,
+        platform_user_id: tokenRow.platform_user_id,
+        platform_team_id: tokenRow.platform_team_id ?? "",
+      })
+
+    if (insertError) {
+      // Unique constraint violation: identity already exists for this platform account.
+      // Allow if it's already mapped to the requesting user (idempotent re-link).
+      // Reject if it belongs to a different user — upsert would allow link takeover.
+      if (insertError.code === "23505") {
+        const { data: existing } = await serviceSupabase
+          .from("chat_platform_identities")
+          .select("supabase_user_id")
+          .eq("platform", tokenRow.platform)
+          .eq("platform_user_id", tokenRow.platform_user_id)
+          .eq("platform_team_id", tokenRow.platform_team_id ?? "")
+          .maybeSingle()
+
+        if (existing?.supabase_user_id === user.id) {
+          return NextResponse.json({
+            success: true,
+            platform: tokenRow.platform,
+          })
+        }
+
+        console.error(
+          "[bot/link] identity conflict: platform identity owned by another user",
+        )
+        await revertTokenClaim()
+        return NextResponse.json(
+          { error: "This account is already linked to a different user" },
+          { status: 409 },
+        )
+      }
+
+      console.error("[bot/link] insert identity:", insertError)
+      await revertTokenClaim()
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, platform: tokenRow.platform })

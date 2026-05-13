@@ -24,5 +24,7 @@ CREATE TABLE IF NOT EXISTS chat_link_tokens (
 
 ALTER TABLE chat_link_tokens ENABLE ROW LEVEL SECURITY;
 
--- Index to support efficient cleanup of expired/used tokens
+-- Supports cleanup queries that filter by expiry date
 CREATE INDEX ON chat_link_tokens (expires_at);
+-- Supports token-claim lookups that filter for unclaimed tokens (used_at IS NULL)
+CREATE INDEX ON chat_link_tokens (used_at) WHERE used_at IS NULL;
