@@ -218,27 +218,37 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
     const platform = event.adapter.name
     const userId = event.user.userId
     try {
-      const dm = await bot.openDM(event.user)
       const existing = await findLinkedUser(platform, userId)
-      if (existing) {
-        await dm.post(
-          "Your CardsAI account is already connected! Use `/cardsai` to create a card.",
-        )
-        return
-      }
-      const linkUrl = await createLinkUrl(platform, userId)
-      await dm.post(
-        `Connect your CardsAI account:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
-      )
-    } catch (err) {
-      console.error(`[cardsai-link] FAIL:`, err)
+      const msg = existing
+        ? "Your CardsAI account is already connected! Use `/cardsai` to create a card."
+        : `Connect your CardsAI account:\n${await createLinkUrl(platform, userId)}\n\n_This link expires in 15 minutes._`
       try {
+        await event.channel.postEphemeral(event.user, msg, {
+          fallbackToDM: false,
+        })
+      } catch {
         const dm = await bot.openDM(event.user)
-        await dm.post(
+        await dm.post(msg)
+      }
+    } catch (err) {
+      console.error(
+        `[cardsai-link] FAIL: ${err instanceof Error ? err.message : String(err)}`,
+      )
+      try {
+        await event.channel.postEphemeral(
+          event.user,
           "Something went wrong generating your link. Please try again.",
+          { fallbackToDM: false },
         )
       } catch {
-        // DM also failed — nothing more we can do
+        try {
+          const dm = await bot.openDM(event.user)
+          await dm.post(
+            "Something went wrong generating your link. Please try again.",
+          )
+        } catch {
+          // nothing more we can do
+        }
       }
     }
   })
