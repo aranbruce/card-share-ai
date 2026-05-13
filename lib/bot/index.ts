@@ -63,6 +63,7 @@ type BotAdapters = {
 
 let _slackAdapter: ReturnType<typeof createSlackAdapter> | null = null
 let _bot: Chat<BotAdapters> | null = null
+let _pgPool: pg.Pool | null = null
 
 // Supabase's transaction pooler uses a certificate that Node.js can't verify
 // natively. Newer pg versions treat sslmode=require as verify-full (rejectUnauthorized:
@@ -77,10 +78,25 @@ function stripSslMode(url: string): string {
   }
 }
 
-const _pgPool = new pg.Pool({
-  connectionString: stripSslMode(process.env.POSTGRES_URL ?? ""),
-  ssl: { rejectUnauthorized: false },
-})
+function createPgPool(): pg.Pool {
+  const postgresUrl = process.env.POSTGRES_URL
+  if (!postgresUrl) throw new Error("POSTGRES_URL is not configured")
+  return new pg.Pool({
+    connectionString: stripSslMode(postgresUrl),
+    ssl: { rejectUnauthorized: false },
+  })
+}
+
+// Extract the Slack workspace/team ID from a raw event payload.
+// Slash command payloads carry team_id as a top-level string; modal/action
+// payloads carry it under team.id. Falls back to "" for platforms with no team concept.
+function getSlackTeamId(event: { raw: unknown }): string {
+  const raw = event.raw as Record<string, unknown>
+  if (typeof raw?.team_id === "string") return raw.team_id
+  const team = raw?.team as Record<string, unknown> | undefined
+  if (typeof team?.id === "string") return team.id
+  return ""
+}
 
 export function getSlackAdapter(): ReturnType<typeof createSlackAdapter> {
   if (_slackAdapter) return _slackAdapter
@@ -95,6 +111,7 @@ export function getSlackAdapter(): ReturnType<typeof createSlackAdapter> {
 export function getBot(): Chat<BotAdapters> {
   if (_bot) return _bot
 
+  if (!_pgPool) _pgPool = createPgPool()
   _bot = new Chat<BotAdapters>({
     userName: "CardsAI",
     adapters: {
@@ -112,14 +129,15 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   // /createcard slash command → open modal
   bot.onSlashCommand("/cardsai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
+    const teamId = getSlackTeamId(event)
     console.log(
       `[cardsai] slash command received platform=${platform} userId=${event.user.userId}`,
     )
     try {
-      const linked = await findLinkedUser(platform, event.user.userId)
+      const linked = await findLinkedUser(platform, event.user.userId, teamId)
       console.log(`[cardsai] findLinkedUser result=${linked ?? "null"}`)
       if (!linked) {
-        const linkUrl = await createLinkUrl(platform, event.user.userId)
+        const linkUrl = await createLinkUrl(platform, event.user.userId, teamId)
         const msg = `You need to connect your CardsAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
         try {
           await event.channel.postEphemeral(event.user, msg, {
@@ -225,11 +243,12 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   bot.onSlashCommand("/cardsai-link", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
     const userId = event.user.userId
+    const teamId = getSlackTeamId(event)
     try {
-      const existing = await findLinkedUser(platform, userId)
+      const existing = await findLinkedUser(platform, userId, teamId)
       const msg = existing
         ? "Your CardsAI account is already connected! Use `/cardsai` to create a card."
-        : `Connect your CardsAI account:\n${await createLinkUrl(platform, userId)}\n\n_This link expires in 15 minutes._`
+        : `Connect your CardsAI account:\n${await createLinkUrl(platform, userId, teamId)}\n\n_This link expires in 15 minutes._`
       try {
         await event.channel.postEphemeral(event.user, msg, {
           fallbackToDM: false,
@@ -265,6 +284,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   bot.onModalSubmit("create_card", async (event: ModalSubmitEvent) => {
     const { values, user, relatedChannel } = event
     const platform = event.adapter.name
+    const teamId = getSlackTeamId(event)
 
     const cardType = values.card_type || "custom"
     const recipientName = (values.recipient_name || "").trim()
@@ -284,7 +304,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
 
     let supabaseUserId: string | null
     try {
-      supabaseUserId = await findLinkedUser(platform, user.userId)
+      supabaseUserId = await findLinkedUser(platform, user.userId, teamId)
     } catch (err) {
       console.error(`[modal/findLinkedUser] FAIL:`, err)
       return {
@@ -297,7 +317,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
 
     if (!supabaseUserId) {
       try {
-        const linkUrl = await createLinkUrl(platform, user.userId)
+        const linkUrl = await createLinkUrl(platform, user.userId, teamId)
         const dm = await bot.openDM(user)
         await dm.post(`Connect your CardsAI account first:\n${linkUrl}`)
       } catch (err) {

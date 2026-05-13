@@ -6,6 +6,7 @@ import { getAppUrl } from "@/lib/app-url"
 export async function findLinkedUser(
   platform: string,
   platformUserId: string,
+  platformTeamId: string,
 ): Promise<string | null> {
   const supabase = requireServiceRoleClient()
   const { data } = await supabase
@@ -13,6 +14,7 @@ export async function findLinkedUser(
     .select("supabase_user_id")
     .eq("platform", platform)
     .eq("platform_user_id", platformUserId)
+    .eq("platform_team_id", platformTeamId)
     .maybeSingle()
   return data?.supabase_user_id ?? null
 }
@@ -20,8 +22,9 @@ export async function findLinkedUser(
 export async function createLinkUrl(
   platform: string,
   platformUserId: string,
+  platformTeamId: string,
 ): Promise<string> {
-  const payload = { platform, platformUserId }
+  const payload = { platform, platformUserId, platformTeamId }
   const token = generateLinkToken(payload)
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
 
@@ -30,7 +33,7 @@ export async function createLinkUrl(
     token,
     platform,
     platform_user_id: platformUserId,
-    platform_team_id: "",
+    platform_team_id: platformTeamId,
     expires_at: expiresAt,
   })
 

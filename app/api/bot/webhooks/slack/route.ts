@@ -19,6 +19,9 @@ const _init = getBot()
 // Called by the Vercel cron every 5 minutes to keep this function warm.
 export async function GET() {
   await _init
+  if (_initError) {
+    return new Response("Bot initialization failed", { status: 503 })
+  }
   return new Response("ok")
 }
 

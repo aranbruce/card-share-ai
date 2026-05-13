@@ -1,20 +1,6 @@
 import { AppHeader } from "@/components/app-header"
-import { getAppUrl } from "@/lib/app-url"
-
-const SCOPES = [
-  "chat:write",
-  "chat:write.public",
-  "commands",
-  "im:history",
-  "im:write",
-  "users:read",
-].join(",")
 
 export default function SlackInstallPage() {
-  const clientId = process.env.NEXT_PUBLIC_SLACK_CLIENT_ID ?? ""
-  const redirectUri = `${getAppUrl()}/api/bot/auth/slack/callback`
-  const installUrl = `https://slack.com/oauth/v2/authorize?client_id=${clientId}&scope=${SCOPES}&redirect_uri=${encodeURIComponent(redirectUri)}`
-
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
@@ -46,7 +32,7 @@ export default function SlackInstallPage() {
           ))}
         </ul>
 
-        <a href={installUrl}>
+        <a href="/api/bot/auth/slack/start">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt="Add to Slack"
