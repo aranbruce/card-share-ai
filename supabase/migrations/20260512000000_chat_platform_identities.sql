@@ -23,3 +23,6 @@ CREATE TABLE IF NOT EXISTS chat_link_tokens (
 );
 
 ALTER TABLE chat_link_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Index to support efficient cleanup of expired/used tokens
+CREATE INDEX ON chat_link_tokens (expires_at);

@@ -15,13 +15,14 @@ export async function findLinkedUser(
   platformTeamId: string,
 ): Promise<string | null> {
   const supabase = requireServiceRoleClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("chat_platform_identities")
     .select("supabase_user_id")
     .eq("platform", platform)
     .eq("platform_user_id", platformUserId)
     .eq("platform_team_id", platformTeamId)
     .maybeSingle()
+  if (error) throw new Error(`findLinkedUser: ${error.message}`)
   return data?.supabase_user_id ?? null
 }
 
@@ -59,7 +60,8 @@ export async function generateHeadline(params: {
 }): Promise<string> {
   try {
     return await generateCardHeadline(params)
-  } catch {
+  } catch (err) {
+    console.error("[bot/generateHeadline] FAIL:", err)
     return "Wishing you all the best!"
   }
 }
@@ -71,7 +73,8 @@ export async function generateImageUrl(params: {
 }): Promise<string> {
   try {
     return await generateCardCoverImage(params)
-  } catch {
+  } catch (err) {
+    console.error("[bot/generateImageUrl] FAIL:", err)
     return ""
   }
 }
