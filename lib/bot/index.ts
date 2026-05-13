@@ -120,11 +120,20 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       console.log(`[cardsai] findLinkedUser result=${linked ?? "null"}`)
       if (!linked) {
         const linkUrl = await createLinkUrl(platform, event.user.userId)
-        await event.channel.postEphemeral(
-          event.user,
-          `You need to connect your CardsAI account first:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
-          { fallbackToDM: true },
-        )
+        const msg = `You need to connect your CardsAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
+        try {
+          await event.channel.postEphemeral(event.user, msg, {
+            fallbackToDM: false,
+          })
+          console.log(`[cardsai] ephemeral sent to userId=${event.user.userId}`)
+        } catch (ephemeralErr) {
+          console.error(
+            `[cardsai] ephemeral FAIL: ${ephemeralErr instanceof Error ? ephemeralErr.message : String(ephemeralErr)} — falling back to DM`,
+          )
+          const dm = await bot.openDM(event.user)
+          await dm.post(msg)
+          console.log(`[cardsai] DM sent to userId=${event.user.userId}`)
+        }
         return
       }
     } catch (err) {
