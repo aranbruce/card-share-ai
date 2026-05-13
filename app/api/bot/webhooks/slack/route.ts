@@ -9,20 +9,24 @@ export const maxDuration = 60
 // awaiting this, openModal is called before Postgres is ready and Slack returns
 // expired_trigger_id because the token lookup fails.
 let _initError: unknown = null
-// Wrap in Promise.resolve().then() so synchronous throws from getBot()
-// (e.g. missing env vars) are captured as rejections rather than crashing
-// the module at evaluation time.
-const _init = Promise.resolve()
-  .then(() => getBot().initialize())
-  .catch((err) => {
-    console.error("[bot] init error:", err)
-    _initError = err
-  })
+
+function startInit(): Promise<void> {
+  // Wrap in Promise.resolve().then() so synchronous throws from getBot()
+  // (e.g. missing env vars) are captured as rejections rather than crashing
+  // the module at evaluation time.
+  return Promise.resolve()
+    .then(() => getBot().initialize())
+    .catch((err) => {
+      console.error("[bot] init error:", err)
+      _initError = err
+    })
+}
+
+let _init = startInit()
 
 // Called by the Vercel cron every 5 minutes to keep this function warm.
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
-  const isDeployed = !!process.env.VERCEL_ENV
   if (cronSecret) {
     // Vercel automatically injects Authorization: Bearer <CRON_SECRET> for cron
     // invocations — no header config needed in vercel.json.
@@ -30,16 +34,13 @@ export async function GET(request: NextRequest) {
     if (auth !== `Bearer ${cronSecret}`) {
       return new Response("Unauthorized", { status: 401 })
     }
-  } else if (isDeployed) {
-    // Deployed (production or preview) without CRON_SECRET — refuse rather than
-    // leave the warmup endpoint publicly accessible in Vercel environments.
-    return new Response("CRON_SECRET is required in deployed environments", {
-      status: 401,
-    })
   }
-  // else: local dev without CRON_SECRET — allow unauthenticated warmup
+  // No CRON_SECRET: allow unauthenticated warmup (endpoint is non-sensitive;
+  // set CRON_SECRET in production to restrict access).
   await _init
   if (_initError) {
+    _initError = null
+    _init = startInit()
     return new Response("Bot initialization failed", { status: 503 })
   }
   return new Response("ok")
@@ -48,6 +49,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   await _init
   if (_initError) {
+    _initError = null
+    _init = startInit()
     return new Response("Bot initialization failed", { status: 503 })
   }
   const body = await request.text()
