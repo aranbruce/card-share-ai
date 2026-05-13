@@ -1,6 +1,4 @@
-import { Buffer } from "node:buffer"
 import { generateText } from "ai"
-import type { GeneratedFile } from "ai"
 import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 
 const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
@@ -26,14 +24,6 @@ function coverArtInstructionBlock(coverHeadline?: string): string {
     )
   }
   return lines.join("\n")
-}
-
-function generatedImageToDataUrl(file: GeneratedFile): string {
-  const bytes =
-    file.uint8Array instanceof Uint8Array
-      ? file.uint8Array
-      : Buffer.from(file.base64, "base64")
-  return `data:${file.mediaType};base64,${Buffer.from(bytes).toString("base64")}`
 }
 
 export async function generateCardCoverImage(params: {
@@ -62,5 +52,5 @@ export async function generateCardCoverImage(params: {
   if (!imageFile) return ""
 
   const persisted = await persistGeneratedCardImage(imageFile)
-  return persisted ?? generatedImageToDataUrl(imageFile)
+  return persisted ?? ""
 }

@@ -526,7 +526,10 @@ export default function HomePage() {
                             Happy Birthday, Emily!
                           </p>
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            greeting-cards-ai.vercel.app
+                            {(
+                              process.env.NEXT_PUBLIC_APP_URL ??
+                              "greeting-cards-ai.vercel.app"
+                            ).replace(/^https?:\/\//, "")}
                           </p>
                         </div>
                       </div>

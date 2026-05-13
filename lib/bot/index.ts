@@ -144,10 +144,8 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   bot.onSlashCommand("/cardsai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
     const teamId = getSlackTeamId(event)
-    console.log(`[cardsai] slash command received platform=${platform}`)
     try {
       const linked = await findLinkedUser(platform, event.user.userId, teamId)
-      console.log(`[cardsai] findLinkedUser result=${linked ?? "null"}`)
       if (!linked) {
         const linkUrl = await createLinkUrl(platform, event.user.userId, teamId)
         const msg = `You need to connect your CardsAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
@@ -155,14 +153,12 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
           await event.channel.postEphemeral(event.user, msg, {
             fallbackToDM: false,
           })
-          console.log(`[cardsai] ephemeral sent`)
         } catch (ephemeralErr) {
           console.error(
             `[cardsai] ephemeral FAIL: ${ephemeralErr instanceof Error ? ephemeralErr.message : String(ephemeralErr)} — falling back to DM`,
           )
           const dm = await bot.openDM(event.user)
           await dm.post(msg)
-          console.log(`[cardsai] DM sent`)
         }
         return
       }
