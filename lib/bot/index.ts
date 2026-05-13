@@ -111,6 +111,21 @@ export function getBot(): Chat<BotAdapters> {
 function registerHandlers(bot: Chat<BotAdapters>): void {
   // /createcard slash command → open modal
   bot.onSlashCommand("/cardsai", async (event: SlashCommandEvent) => {
+    const platform = event.adapter.name
+    try {
+      const linked = await findLinkedUser(platform, event.user.userId)
+      if (!linked) {
+        const linkUrl = await createLinkUrl(platform, event.user.userId)
+        const dm = await bot.openDM(event.user)
+        await dm.post(
+          `Connect your CardsAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`,
+        )
+        return
+      }
+    } catch (err) {
+      console.error(`[cardsai] account check FAIL:`, err)
+    }
+
     try {
       await event.openModal({
         type: "modal",
