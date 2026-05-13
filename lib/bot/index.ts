@@ -310,28 +310,25 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
 
     // Use after() so card generation survives after Slack's response is sent
     after(async () => {
-      let placeholder
-      try {
-        placeholder = relatedChannel
-          ? await relatedChannel.post(
-              `✨ Creating a card for *${recipientName}*…`,
-            )
-          : await (
-              await bot.openDM(user)
-            ).post(`✨ Creating a card for *${recipientName}*…`)
-      } catch {
+      async function notify(msg: string) {
+        if (relatedChannel) {
+          try {
+            await relatedChannel.postEphemeral(user, msg, {
+              fallbackToDM: false,
+            })
+            return
+          } catch {
+            // fall through to DM
+          }
+        }
         try {
-          placeholder = await (
-            await bot.openDM(user)
-          ).post(`✨ Creating a card for *${recipientName}*…`)
+          await (await bot.openDM(user)).post(msg)
         } catch (err) {
-          console.error(
-            `[modal/placeholder] FAIL: could not post to Slack`,
-            err,
-          )
-          return
+          console.error(`[modal/notify] FAIL:`, err)
         }
       }
+
+      await notify(`✨ Creating a card for *${recipientName}*…`)
 
       try {
         const card = await generateAndCreateCard(
@@ -341,20 +338,14 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
           senderName,
           customMessage,
         )
-        await placeholder.edit(
+        await notify(
           card
-            ? `<@${user.userId}> Your card for *${recipientName}* is ready!\n${cardUrl(card)}`
+            ? `Your card for *${recipientName}* is ready!\n${cardUrl(card)}`
             : "Sorry, I couldn't create the card. Please try again later.",
         )
       } catch (err) {
         console.error(`[modal/generate] FAIL:`, err)
-        try {
-          await placeholder.edit(
-            "Sorry, I couldn't create the card. Please try again later.",
-          )
-        } catch {
-          // Editing the placeholder also failed — nothing more we can do
-        }
+        await notify("Sorry, I couldn't create the card. Please try again later.")
       }
     })
 
