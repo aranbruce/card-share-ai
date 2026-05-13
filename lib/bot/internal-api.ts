@@ -6,6 +6,8 @@ import {
   type CreateCardParams,
 } from "@/lib/create-card"
 import { getAppUrl } from "@/lib/app-url"
+import { generateCardHeadline } from "@/lib/generate-card-headline"
+import { generateCardCoverImage } from "@/lib/generate-card-image"
 
 export async function findLinkedUser(
   platform: string,
@@ -55,15 +57,8 @@ export async function generateHeadline(params: {
   senderName: string
   customMessage?: string
 }): Promise<string> {
-  const appUrl = getAppUrl()
   try {
-    const res = await fetch(`${appUrl}/api/generate-card-copy`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    })
-    const data = await res.json()
-    return (data.cardCopy?.headline as string) || "Wishing you all the best!"
+    return await generateCardHeadline(params)
   } catch {
     return "Wishing you all the best!"
   }
@@ -74,15 +69,8 @@ export async function generateImageUrl(params: {
   coverHeadline: string
   customMessage?: string
 }): Promise<string> {
-  const appUrl = getAppUrl()
   try {
-    const res = await fetch(`${appUrl}/api/generate-image`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    })
-    const data = await res.json()
-    return (data.imageUrl as string) || ""
+    return await generateCardCoverImage(params)
   } catch {
     return ""
   }

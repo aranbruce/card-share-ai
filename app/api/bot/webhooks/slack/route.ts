@@ -17,7 +17,9 @@ const _init = getBot()
   })
 
 // Called by the Vercel cron every 5 minutes to keep this function warm.
-// Restricted to Vercel cron invocations via CRON_SECRET when configured.
+// When CRON_SECRET is set, Vercel's cron infrastructure automatically injects
+// Authorization: Bearer <CRON_SECRET> — no header configuration is needed in
+// vercel.json. External callers without the secret receive a 401.
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
   if (cronSecret) {

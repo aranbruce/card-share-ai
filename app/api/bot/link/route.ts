@@ -73,12 +73,15 @@ export async function POST(request: NextRequest) {
 
     // Atomically claim the token before touching identity data. The WHERE
     // used_at IS NULL guard means only one concurrent request can succeed;
-    // any racing request gets count=0 and returns 400 instead of proceeding.
-    const { count, error: markUsedError } = await serviceSupabase
+    // any racing request gets an empty data array and returns 400.
+    // Using .select() rather than { count: "exact" } because PostgREST can
+    // return a null count when no Content-Range header is present.
+    const { data: claimedRows, error: markUsedError } = await serviceSupabase
       .from("chat_link_tokens")
-      .update({ used_at: new Date().toISOString() }, { count: "exact" })
+      .update({ used_at: new Date().toISOString() })
       .eq("token", token)
       .is("used_at", null)
+      .select("token")
 
     if (markUsedError) {
       console.error("[bot/link] mark token used:", markUsedError)
@@ -88,7 +91,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!count) {
+    if (!claimedRows || claimedRows.length === 0) {
       return NextResponse.json(
         { error: "This link has already been used" },
         { status: 400 },
