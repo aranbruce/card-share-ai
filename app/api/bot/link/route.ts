@@ -71,6 +71,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid link token" }, { status: 400 })
     }
 
+    // Atomically claim the token before touching identity data. The WHERE
+    // used_at IS NULL guard means only one concurrent request can succeed;
+    // any racing request gets count=0 and returns 400 instead of proceeding.
+    const { count, error: markUsedError } = await serviceSupabase
+      .from("chat_link_tokens")
+      .update({ used_at: new Date().toISOString() }, { count: "exact" })
+      .eq("token", token)
+      .is("used_at", null)
+
+    if (markUsedError) {
+      console.error("[bot/link] mark token used:", markUsedError)
+      return NextResponse.json(
+        { error: markUsedError.message },
+        { status: 500 },
+      )
+    }
+
+    if (!count) {
+      return NextResponse.json(
+        { error: "This link has already been used" },
+        { status: 400 },
+      )
+    }
+
     const { error: upsertError } = await serviceSupabase
       .from("chat_platform_identities")
       .upsert(
@@ -86,15 +110,6 @@ export async function POST(request: NextRequest) {
     if (upsertError) {
       console.error("[bot/link] upsert identity:", upsertError)
       return NextResponse.json({ error: upsertError.message }, { status: 500 })
-    }
-
-    const { error: markUsedError } = await serviceSupabase
-      .from("chat_link_tokens")
-      .update({ used_at: new Date().toISOString() })
-      .eq("token", token)
-
-    if (markUsedError) {
-      console.error("[bot/link] mark token used:", markUsedError)
     }
 
     return NextResponse.json({ success: true, platform: tokenRow.platform })

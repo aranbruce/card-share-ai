@@ -82,12 +82,13 @@ function stripSslMode(url: string): string {
 function createPgPool(): pg.Pool {
   const postgresUrl = process.env.POSTGRES_URL
   if (!postgresUrl) throw new Error("POSTGRES_URL is not configured")
-  // SECURITY: Supabase's transaction pooler presents a self-signed certificate
-  // that Node.js cannot verify natively, so TLS verification is disabled by
-  // default. Set POSTGRES_SSL_REJECT_UNAUTHORIZED=true to enable verification
-  // when connecting to a Postgres host that has a verifiable certificate.
+  // SECURITY: TLS certificate verification is enabled by default. Set
+  // POSTGRES_SSL_REJECT_UNAUTHORIZED=false only when connecting through
+  // Supabase's transaction pooler, which presents a certificate that Node.js
+  // cannot verify natively. Do not disable in production without understanding
+  // the MITM risk on the network path to the database.
   const rejectUnauthorized =
-    process.env.POSTGRES_SSL_REJECT_UNAUTHORIZED === "true"
+    process.env.POSTGRES_SSL_REJECT_UNAUTHORIZED !== "false"
   return new pg.Pool({
     connectionString: stripSslMode(postgresUrl),
     ssl: { rejectUnauthorized },
@@ -137,9 +138,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   bot.onSlashCommand("/cardsai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
     const teamId = getSlackTeamId(event)
-    console.log(
-      `[cardsai] slash command received platform=${platform} userId=${event.user.userId}`,
-    )
+    console.log(`[cardsai] slash command received platform=${platform}`)
     try {
       const linked = await findLinkedUser(platform, event.user.userId, teamId)
       console.log(`[cardsai] findLinkedUser result=${linked ?? "null"}`)
@@ -150,14 +149,14 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
           await event.channel.postEphemeral(event.user, msg, {
             fallbackToDM: false,
           })
-          console.log(`[cardsai] ephemeral sent to userId=${event.user.userId}`)
+          console.log(`[cardsai] ephemeral sent`)
         } catch (ephemeralErr) {
           console.error(
             `[cardsai] ephemeral FAIL: ${ephemeralErr instanceof Error ? ephemeralErr.message : String(ephemeralErr)} — falling back to DM`,
           )
           const dm = await bot.openDM(event.user)
           await dm.post(msg)
-          console.log(`[cardsai] DM sent to userId=${event.user.userId}`)
+          console.log(`[cardsai] DM sent`)
         }
         return
       }

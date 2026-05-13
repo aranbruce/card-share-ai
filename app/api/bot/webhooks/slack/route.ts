@@ -17,7 +17,15 @@ const _init = getBot()
   })
 
 // Called by the Vercel cron every 5 minutes to keep this function warm.
-export async function GET() {
+// Restricted to Vercel cron invocations via CRON_SECRET when configured.
+export async function GET(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret) {
+    const auth = request.headers.get("authorization")
+    if (auth !== `Bearer ${cronSecret}`) {
+      return new Response("Unauthorized", { status: 401 })
+    }
+  }
   await _init
   if (_initError) {
     return new Response("Bot initialization failed", { status: 503 })
