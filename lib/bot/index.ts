@@ -65,9 +65,20 @@ let _slackAdapter: ReturnType<typeof createSlackAdapter> | null = null
 let _bot: Chat<BotAdapters> | null = null
 
 // Supabase's transaction pooler uses a certificate that Node.js can't verify
-// natively, so we create the pool manually with rejectUnauthorized disabled.
+// natively. Newer pg versions treat sslmode=require as verify-full (rejectUnauthorized:
+// true), overriding our ssl option — so strip sslmode from the URL first.
+function stripSslMode(url: string): string {
+  try {
+    const u = new URL(url)
+    u.searchParams.delete("sslmode")
+    return u.toString()
+  } catch {
+    return url
+  }
+}
+
 const _pgPool = new pg.Pool({
-  connectionString: process.env.POSTGRES_URL,
+  connectionString: stripSslMode(process.env.POSTGRES_URL ?? ""),
   ssl: { rejectUnauthorized: false },
 })
 
