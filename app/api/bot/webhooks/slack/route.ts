@@ -1,4 +1,5 @@
 import { getBot } from "@/lib/bot"
+import { after } from "next/server"
 import type { NextRequest } from "next/server"
 
 export const maxDuration = 60
@@ -26,5 +27,6 @@ export async function POST(request: NextRequest) {
       headers: request.headers,
       body,
     }),
+    { waitUntil: (p) => after(p) },
   )
 }
