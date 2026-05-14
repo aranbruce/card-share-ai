@@ -1,23 +1,8 @@
-import { Buffer } from "node:buffer"
 import { NextRequest, NextResponse } from "next/server"
-import { generateText } from "ai"
-import type { GeneratedFile, ModelMessage } from "ai"
-import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
+import { generateCardCoverArt } from "@/lib/generate-card-cover-art"
+import { parseAspectRatio } from "@/lib/card-image-aspect"
 import { resolveSourceImage } from "@/lib/resolve-image-for-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
-import { coverArtInstructionBlock } from "@/lib/card-image-prompt"
-
-/** Nano Banana 2 — use `generateText`; image outputs are in `files`. */
-const GEMINI_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
-
-/** Build a data URL from a generated image; prefer bytes so plain `{ uint8Array }` parts work. */
-function generatedImageToDataUrl(file: GeneratedFile): string {
-  const bytes =
-    file.uint8Array instanceof Uint8Array
-      ? file.uint8Array
-      : Buffer.from(file.base64, "base64")
-  return `data:${file.mediaType};base64,${Buffer.from(bytes).toString("base64")}`
-}
 
 export async function POST(request: NextRequest) {
   const rate = checkFixedWindowRateLimit(request, {
@@ -39,6 +24,7 @@ export async function POST(request: NextRequest) {
       coverHeadline,
       cardType,
       customMessage,
+      aspectRatio: aspectRatioRaw,
     } = (await request.json()) as {
       imagePrompt?: string
       /** User-uploaded style/subject reference image. */
@@ -49,6 +35,22 @@ export async function POST(request: NextRequest) {
       coverHeadline?: string
       cardType?: string
       customMessage?: string
+      /** Optional `width:height` (e.g. `4:5`). Invalid values return 400. */
+      aspectRatio?: string
+    }
+
+    if (
+      aspectRatioRaw !== undefined &&
+      aspectRatioRaw !== null &&
+      String(aspectRatioRaw).trim() !== "" &&
+      parseAspectRatio(aspectRatioRaw) === undefined
+    ) {
+      return NextResponse.json(
+        {
+          error: "Invalid aspectRatio (use width:height from the allowed set)",
+        },
+        { status: 400, headers: rate.headers },
+      )
     }
 
     const trimmedPrompt =
@@ -106,80 +108,19 @@ export async function POST(request: NextRequest) {
 
     const headline =
       typeof coverHeadline === "string" ? coverHeadline.trim() : ""
-    const constraints = coverArtInstructionBlock(
-      headline.length > 0 ? headline : undefined,
-    )
-    const contextLines: string[] = []
-    if (trimmedCardType) contextLines.push(`Card type: ${trimmedCardType}`)
-    if (trimmedCustomMessage)
-      contextLines.push(`Additional context: ${trimmedCustomMessage}`)
-    if (trimmedPrompt) contextLines.push(trimmedPrompt)
-    const userScene =
-      contextLines.length > 0
-        ? `${constraints}\n\n${contextLines.join("\n")}`
-        : constraints
 
-    type ImagePart = { type: "image"; image: string | Uint8Array }
-    type TextPart = { type: "text"; text: string }
-
-    let content: string | Array<ImagePart | TextPart>
-
-    if (previous && source) {
-      content = [
-        { type: "text", text: "Existing card cover image (refine this):" },
-        { type: "image", image: previous },
-        {
-          type: "text",
-          text: "Attached reference image (use its style, mood, and subject as inspiration):",
-        },
-        { type: "image", image: source },
-        {
-          type: "text",
-          text: `Refine the existing card cover using the attached image as inspiration. Follow the instructions; keep layout and subject unless asked to change them.\n\n${userScene}`,
-        },
-      ]
-    } else if (previous) {
-      content = [
-        { type: "text", text: "Existing card cover image (refine this):" },
-        { type: "image", image: previous },
-        {
-          type: "text",
-          text: `Refine this existing card cover image. Follow the instructions; keep layout and subject unless asked to change them.\n\n${userScene}`,
-        },
-      ]
-    } else if (source) {
-      content = [
-        {
-          type: "text",
-          text: "Attached reference image (use its style, mood, and subject as inspiration to generate a new card cover):",
-        },
-        { type: "image", image: source },
-        {
-          type: "text",
-          text: `Generate a new greeting card cover inspired by the attached image.\n\n${userScene}`,
-        },
-      ]
-    } else {
-      content = userScene
-    }
-
-    const prompt: ModelMessage[] = [{ role: "user", content }]
-
-    const { files } = await generateText({
-      model: GEMINI_IMAGE_MODEL,
-      prompt,
-      providerOptions: {
-        google: { responseModalities: ["TEXT", "IMAGE"] },
+    const { imageUrl } = await generateCardCoverArt(
+      {
+        imagePrompt: trimmedPrompt,
+        cardType: trimmedCardType,
+        customMessage: trimmedCustomMessage,
+        coverHeadline: headline,
+        source,
+        previous,
       },
-    })
-
-    const imageFile = files.find((f) => f.mediaType.startsWith("image/"))
-    if (!imageFile) {
-      throw new Error("No image generated")
-    }
-
-    const persisted = await persistGeneratedCardImage(imageFile)
-    const imageUrl = persisted ?? generatedImageToDataUrl(imageFile)
+      typeof aspectRatioRaw === "string" ? aspectRatioRaw : undefined,
+      { persist: true },
+    )
 
     return NextResponse.json({ imageUrl }, { headers: rate.headers })
   } catch (error) {

@@ -20,6 +20,7 @@
     "fix": "prettier --write . && eslint . --fix"
   },
   "dependencies": {
+    "@ai-sdk/fal": "^2.0.34",
     "@chat-adapter/slack": "^4.28.1",
     "@chat-adapter/state-pg": "^4.28.1",
     "@radix-ui/react-dialog": "1.1.15",
@@ -42,9 +43,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "@types/pg": "^8.20.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^25.6.0",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "dotenv": "^17.4.2",
