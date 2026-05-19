@@ -21,7 +21,7 @@ export function useCopyToClipboard() {
 
   useEffect(() => {
     return () => {
-      if (resetTimeoutRef.current) {
+      if (resetTimeoutRef.current !== null) {
         clearTimeout(resetTimeoutRef.current)
       }
     }
@@ -29,7 +29,7 @@ export function useCopyToClipboard() {
 
   const copy = useCallback((text: string, options?: CopyToClipboardOptions) => {
     const markCopied = () => {
-      if (resetTimeoutRef.current) {
+      if (resetTimeoutRef.current !== null) {
         clearTimeout(resetTimeoutRef.current)
       }
       requestAnimationFrame(() => {
@@ -41,7 +41,7 @@ export function useCopyToClipboard() {
     }
 
     const markFailed = () => {
-      if (resetTimeoutRef.current) {
+      if (resetTimeoutRef.current !== null) {
         clearTimeout(resetTimeoutRef.current)
       }
       setCopied(false)
@@ -70,7 +70,7 @@ export function useCopyToClipboard() {
   }, [])
 
   const reset = useCallback(() => {
-    if (resetTimeoutRef.current) {
+    if (resetTimeoutRef.current !== null) {
       clearTimeout(resetTimeoutRef.current)
     }
     setCopied(false)

@@ -8,6 +8,7 @@ import {
 
 describe("copy-to-clipboard", () => {
   const originalClipboard = navigator.clipboard
+  const originalExecCommand = document.execCommand
 
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -15,12 +16,11 @@ describe("copy-to-clipboard", () => {
   })
 
   afterEach(() => {
+    document.execCommand = originalExecCommand
+    document.body.replaceChildren()
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: originalClipboard,
-    })
-    document.querySelectorAll("input[aria-hidden='true']").forEach((el) => {
-      el.remove()
     })
   })
 
