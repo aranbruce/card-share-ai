@@ -44,7 +44,12 @@ export function CopyLinkButton({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <p id={statusId} className="sr-only" aria-live="polite" aria-atomic="true">
+      <p
+        id={statusId}
+        className="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {statusMessage}
       </p>
       <Button

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RecipientViewLinkCopy } from "@/components/recipient-view-link-copy"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import { CheckIcon, LinkIcon, MailIcon, SendIcon } from "lucide-react"
 import {
@@ -37,19 +37,15 @@ export function ShareModal({
   onEmailUpdate,
   onSentAtRecorded,
 }: ShareModalProps) {
-  const [viewLink, setViewLink] = useState("")
   const [sending, setSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [recipientEmail, setRecipientEmail] = useState(initialEmail || "")
   const [emailError, setEmailError] = useState("")
   const [savingEmail, setSavingEmail] = useState(false)
 
-  useEffect(() => {
-    if (isOpen) {
-      setViewLink(`${window.location.origin}/view/${contributorLinkId}`)
-    }
-  }, [isOpen, contributorLinkId])
-
+  const viewLink = isOpen
+    ? `${window.location.origin}/view/${contributorLinkId}`
+    : ""
   const getViewLink = () => `${window.location.origin}/view/${contributorLinkId}`
 
   const recordSharedAt = async () => {

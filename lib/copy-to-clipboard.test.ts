@@ -27,9 +27,9 @@ describe("copy-to-clipboard", () => {
   it("tryCopyTextToClipboardSync uses a shared hidden field on body", () => {
     const execCommand = vi.mocked(document.execCommand)
 
-    expect(tryCopyTextToClipboardSync("https://example.com/contribute/abc")).toBe(
-      true,
-    )
+    expect(
+      tryCopyTextToClipboardSync("https://example.com/contribute/abc"),
+    ).toBe(true)
     expect(execCommand).toHaveBeenCalledWith("copy")
     expect(document.querySelectorAll("input[aria-hidden='true']")).toHaveLength(
       1,

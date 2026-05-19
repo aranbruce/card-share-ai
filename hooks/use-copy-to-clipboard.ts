@@ -55,7 +55,10 @@ export function useCopyToClipboard() {
 
     // No focus/DOM tricks — avoids scroll on HTTPS (desktop and many mobile browsers).
     if (window.isSecureContext && navigator.clipboard) {
-      void navigator.clipboard.writeText(text).then(markCopied).catch(runExecCopy)
+      void navigator.clipboard
+        .writeText(text)
+        .then(markCopied)
+        .catch(runExecCopy)
       return true
     }
 
