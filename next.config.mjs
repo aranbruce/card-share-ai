@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
+const allowedDevOrigins = process.env.NEXT_ALLOWED_DEV_ORIGINS?.split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 const nextConfig = {
-  // LAN access (e.g. phone on same Wi‑Fi) — update if your machine’s IP changes
-  allowedDevOrigins: ["192.168.86.22"],
+  ...(allowedDevOrigins?.length ? { allowedDevOrigins } : {}),
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co" },

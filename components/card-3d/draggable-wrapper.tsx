@@ -263,11 +263,19 @@ export function DraggableWrapper({
         }
       }
 
+      const posX = currentPosX ?? 0
+      const posY = currentPosY ?? 0
+      syncLayoutSnapshot({
+        x: posX,
+        y: posY,
+        widthPercent: size.width,
+      })
+
       startPos.current = {
         x: e.clientX,
         y: e.clientY,
-        posX: currentPosX ?? 0,
-        posY: currentPosY ?? 0,
+        posX,
+        posY,
         width: size.width,
       }
 

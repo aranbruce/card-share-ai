@@ -48,35 +48,25 @@ export function useCopyToClipboard() {
       setError(COPY_TO_CLIPBOARD_ERROR)
     }
 
-    const runExecCopy = () => {
-      if (
-        tryCopyTextToClipboardSync(text, {
-          scrollAnchor: options?.scrollAnchor,
-          copyContainer: options?.copyContainer,
-          input: options?.input,
-        })
-      ) {
-        markCopied()
-        return true
-      }
-
-      if (window.isSecureContext && navigator.clipboard) {
-        void copyTextWithClipboardApi(text).then(markCopied).catch(markFailed)
-      } else {
-        markFailed()
-      }
-      return false
-    }
-
-    if (window.isSecureContext && navigator.clipboard) {
-      void navigator.clipboard
-        .writeText(text)
-        .then(markCopied)
-        .catch(runExecCopy)
+    // Sync execCommand first (must stay in the user-gesture stack on iOS).
+    if (
+      tryCopyTextToClipboardSync(text, {
+        scrollAnchor: options?.scrollAnchor,
+        copyContainer: options?.copyContainer,
+        input: options?.input,
+      })
+    ) {
+      markCopied()
       return true
     }
 
-    return runExecCopy()
+    if (window.isSecureContext && navigator.clipboard) {
+      void copyTextWithClipboardApi(text).then(markCopied).catch(markFailed)
+      return true
+    }
+
+    markFailed()
+    return false
   }, [])
 
   const reset = useCallback(() => {
