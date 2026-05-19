@@ -122,6 +122,10 @@ export function DraggableWrapper({
   const [dragStarted, setDragStarted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rotatedInnerRef = useRef<HTMLDivElement>(null)
+  const gesturePointerRef = useRef<{
+    el: HTMLElement
+    pointerId: number
+  } | null>(null)
   const pointerCaptureRef = useRef<{
     el: HTMLElement
     pointerId: number
@@ -210,13 +214,29 @@ export function DraggableWrapper({
     return () => ro.disconnect()
   }, [hasFooter, position.x, position.y, size.width, CANVAS_PADDING])
 
+  const acquirePointerCapture = useCallback(() => {
+    const gesture = gesturePointerRef.current
+    if (!gesture || pointerCaptureRef.current) return
+    try {
+      if (!gesture.el.hasPointerCapture(gesture.pointerId)) {
+        gesture.el.setPointerCapture(gesture.pointerId)
+      }
+      pointerCaptureRef.current = {
+        el: gesture.el,
+        pointerId: gesture.pointerId,
+      }
+    } catch {
+      // Pointer may have been released before deferred drag begins.
+    }
+  }, [])
+
   const releasePointerCapture = useCallback(() => {
     const capture = pointerCaptureRef.current
-    if (!capture) return
-    if (capture.el.hasPointerCapture(capture.pointerId)) {
+    if (capture?.el.hasPointerCapture(capture.pointerId)) {
       capture.el.releasePointerCapture(capture.pointerId)
     }
     pointerCaptureRef.current = null
+    gesturePointerRef.current = null
   }, [])
 
   const endGesture = useCallback(() => {
@@ -301,8 +321,11 @@ export function DraggableWrapper({
       }
 
       const handle = e.currentTarget as HTMLElement
-      handle.setPointerCapture(e.pointerId)
-      pointerCaptureRef.current = { el: handle, pointerId: e.pointerId }
+      gesturePointerRef.current = { el: handle, pointerId: e.pointerId }
+      if (!deferUntilDrag) {
+        handle.setPointerCapture(e.pointerId)
+        pointerCaptureRef.current = { el: handle, pointerId: e.pointerId }
+      }
 
       let currentPosX = position.x
       let currentPosY = position.y
@@ -368,13 +391,8 @@ export function DraggableWrapper({
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
-      const activePointerId = pointerCaptureRef.current?.pointerId
-      if (
-        activePointerId !== undefined &&
-        e.pointerId !== activePointerId
-      ) {
-        return
-      }
+      const gesture = gesturePointerRef.current
+      if (gesture && e.pointerId !== gesture.pointerId) return
 
       const dx = e.clientX - startPos.current.x
       const dy = e.clientY - startPos.current.y
@@ -382,6 +400,7 @@ export function DraggableWrapper({
 
       if (gesturePhaseRef.current === "pending") {
         if (!pastDragThreshold(dx, dy)) return
+        acquirePointerCapture()
         e.preventDefault()
         window.getSelection()?.removeAllRanges()
         gesturePhaseRef.current = "drag"
@@ -457,6 +476,7 @@ export function DraggableWrapper({
     position.x,
     CANVAS_PADDING,
     syncLayoutSnapshot,
+    acquirePointerCapture,
   ])
 
   const initialX = initialOffset?.x
