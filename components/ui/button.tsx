@@ -37,23 +37,23 @@ const buttonVariants = cva(
   },
 )
 
-function Button({
-  className,
-  variant,
-  size,
-  fullWidth,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-    /** Fill parent width (e.g. stacked actions in modals and narrow forms). */
-    fullWidth?: boolean
-  }) {
+const Button = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<"button"> &
+    VariantProps<typeof buttonVariants> & {
+      asChild?: boolean
+      /** Fill parent width (e.g. stacked actions in modals and narrow forms). */
+      fullWidth?: boolean
+    }
+>(function Button(
+  { className, variant, size, fullWidth, asChild = false, ...props },
+  ref,
+) {
   const Comp = asChild ? Slot : "button"
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
       className={cn(
         buttonVariants({ variant, size }),
@@ -63,6 +63,8 @@ function Button({
       {...props}
     />
   )
-}
+})
+
+Button.displayName = "Button"
 
 export { Button, buttonVariants }
