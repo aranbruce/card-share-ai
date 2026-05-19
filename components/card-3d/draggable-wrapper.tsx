@@ -4,18 +4,32 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react"
-import { Maximize2, Move } from "lucide-react"
+import { Maximize2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  DraggableNoteMoveContext,
+  type DraggableNoteMoveContextValue,
+} from "./draggable-note-context"
 
 /** Used to center the compose block on click before first layout (field + controls). */
 export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
 
 /** Matches padding used in `DraggableWrapper` clamping (inside the positioning box). */
 export const CANVAS_EDGE_PADDING = 12
+
+const DRAG_THRESHOLD_PX = 5
+
+type GesturePhase = "none" | "pending" | "drag" | "resize"
+
+function pastDragThreshold(dx: number, dy: number): boolean {
+  return Math.abs(dx) >= DRAG_THRESHOLD_PX || Math.abs(dy) >= DRAG_THRESHOLD_PX
+}
 
 /** Containing block for `position: absolute` on the draggable — same box `left`/`top` use. */
 function getDraggableBoundsParent(el: HTMLElement | null): HTMLElement | null {
@@ -64,7 +78,6 @@ function clampNotePositionInBounds(args: {
 export function DraggableWrapper({
   children,
   editable = false,
-  isActive = true,
   initialOffset,
   initialWidthPercent,
   rotationDegrees = 0,
@@ -74,7 +87,6 @@ export function DraggableWrapper({
 }: {
   children: ReactNode
   editable?: boolean
-  isActive?: boolean
   /** Pixel `left`/`top` inside the positioning containing block (same as click-to-place overlay when it aligns). */
   initialOffset?: { x: number; y: number }
   /** Default 100; placed notes often use ~75 */
@@ -105,12 +117,22 @@ export function DraggableWrapper({
     width: initialWidthPercent ?? (initialOffset ? 75 : 100),
   })
   const [isDragging, setIsDragging] = useState(false)
+  const [pendingDrag, setPendingDrag] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [dragStarted, setDragStarted] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rotatedInnerRef = useRef<HTMLDivElement>(null)
+  const pointerCaptureRef = useRef<{
+    el: HTMLElement
+    pointerId: number
+  } | null>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
-  const DRAG_THRESHOLD = 5
+  const gesturePhaseRef = useRef<GesturePhase>("none")
+  const layoutSnapshotRef = useRef({
+    x: null as number | null,
+    y: null as number | null,
+    widthPercent: initialWidthPercent ?? (initialOffset ? 75 : 100),
+  })
   const CANVAS_PADDING = CANVAS_EDGE_PADDING
 
   const [footerPlacement, setFooterPlacement] = useState<{
@@ -133,16 +155,12 @@ export function DraggableWrapper({
 
       const runLeave = () => {
         if (!onFocusLeaveRef.current) return
-        // If the container was removed from the DOM (e.g. page navigation unmounted it),
-        // don't treat this as a user-initiated focus leave.
         if (!el.isConnected) return
         const active = document.activeElement
         if (active instanceof Node && el.contains(active)) return
         onFocusLeaveRef.current()
       }
 
-      // `relatedTarget` is often null when the focused control unmounts (e.g. sparkle → AI prompt)
-      // or when clicking a non-focusable surface. Defer so `autoFocus` on the next control wins.
       if (next == null) {
         window.setTimeout(runLeave, 0)
         return
@@ -191,11 +209,39 @@ export function DraggableWrapper({
     return () => ro.disconnect()
   }, [hasFooter, position.x, position.y, size.width, CANVAS_PADDING])
 
-  const handleMouseDown = useCallback(
-    (e: ReactMouseEvent, type: "drag" | "resize") => {
+  const releasePointerCapture = useCallback(() => {
+    const capture = pointerCaptureRef.current
+    if (!capture) return
+    if (capture.el.hasPointerCapture(capture.pointerId)) {
+      capture.el.releasePointerCapture(capture.pointerId)
+    }
+    pointerCaptureRef.current = null
+  }, [])
+
+  const syncLayoutSnapshot = useCallback(
+    (patch: Partial<typeof layoutSnapshotRef.current>) => {
+      layoutSnapshotRef.current = { ...layoutSnapshotRef.current, ...patch }
+    },
+    [],
+  )
+
+  const handlePointerDown = useCallback(
+    (
+      e: ReactPointerEvent,
+      type: "drag" | "resize",
+      options?: { deferUntilDrag?: boolean },
+    ) => {
       if (!editable) return
-      e.preventDefault()
       e.stopPropagation()
+
+      const deferUntilDrag = options?.deferUntilDrag === true && type === "drag"
+      if (!deferUntilDrag) {
+        e.preventDefault()
+      }
+
+      const handle = e.currentTarget
+      handle.setPointerCapture(e.pointerId)
+      pointerCaptureRef.current = { el: handle, pointerId: e.pointerId }
 
       let currentPosX = position.x
       let currentPosY = position.y
@@ -210,6 +256,7 @@ export function DraggableWrapper({
           currentPosX = selfRect.left - boundsRect.left
           currentPosY = selfRect.top - boundsRect.top
           setPosition({ x: currentPosX, y: currentPosY })
+          syncLayoutSnapshot({ x: currentPosX, y: currentPosY })
         } else {
           currentPosX = 0
           currentPosY = 0
@@ -224,21 +271,44 @@ export function DraggableWrapper({
         width: size.width,
       }
 
-      if (type === "drag") setIsDragging(true)
-      if (type === "resize") setIsResizing(true)
+      if (type === "drag") {
+        if (deferUntilDrag) {
+          gesturePhaseRef.current = "pending"
+          setPendingDrag(true)
+        } else {
+          gesturePhaseRef.current = "drag"
+          setIsDragging(true)
+        }
+      }
+      if (type === "resize") {
+        gesturePhaseRef.current = "resize"
+        setIsResizing(true)
+      }
     },
-    [editable, position.x, position.y, size.width],
+    [editable, position.x, position.y, size.width, syncLayoutSnapshot],
   )
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        const dx = e.clientX - startPos.current.x
-        const dy = e.clientY - startPos.current.y
+    const handlePointerMove = (e: PointerEvent) => {
+      const dx = e.clientX - startPos.current.x
+      const dy = e.clientY - startPos.current.y
+      let dragging = isDragging
 
+      if (gesturePhaseRef.current === "pending") {
+        if (!pastDragThreshold(dx, dy)) return
+        e.preventDefault()
+        window.getSelection()?.removeAllRanges()
+        gesturePhaseRef.current = "drag"
+        setPendingDrag(false)
+        setIsDragging(true)
+        setDragStarted(true)
+        dragging = true
+      }
+
+      if (dragging) {
         if (!dragStarted) {
-          if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD)
-            return
+          if (!pastDragThreshold(dx, dy)) return
+          e.preventDefault()
           setDragStarted(true)
         }
 
@@ -247,98 +317,110 @@ export function DraggableWrapper({
           if (bounds) {
             const nextX = startPos.current.posX + dx
             const nextY = startPos.current.posY + dy
-            setPosition(
-              clampNotePositionInBounds({
-                bounds,
-                containerEl: containerRef.current,
-                rotatedInnerEl: rotatedInnerRef.current,
-                padding: CANVAS_PADDING,
-                x: nextX,
-                y: nextY,
-              }),
-            )
+            const clamped = clampNotePositionInBounds({
+              bounds,
+              containerEl: containerRef.current,
+              rotatedInnerEl: rotatedInnerRef.current,
+              padding: CANVAS_PADDING,
+              x: nextX,
+              y: nextY,
+            })
+            syncLayoutSnapshot({ x: clamped.x, y: clamped.y })
+            setPosition(clamped)
           } else {
-            setPosition({
+            const next = {
               x: startPos.current.posX + dx,
               y: startPos.current.posY + dy,
-            })
+            }
+            syncLayoutSnapshot(next)
+            setPosition(next)
           }
         }
       }
-      if (isResizing && containerRef.current) {
+
+      if (gesturePhaseRef.current === "resize" && containerRef.current) {
         const bounds = getDraggableBoundsParent(containerRef.current)
         const canvasWidth = bounds
           ? bounds.clientWidth - CANVAS_PADDING * 2
           : containerRef.current.parentElement?.offsetWidth || 300
-        const currentLeft = position.x ?? 0
+        const currentLeft = layoutSnapshotRef.current.x ?? position.x ?? 0
         const maxWidthPx = canvasWidth - currentLeft - CANVAS_PADDING
-        const dx = e.clientX - startPos.current.x
         const newWidthPx = (startPos.current.width / 100) * canvasWidth + dx
         const clampedWidthPx = Math.max(
           canvasWidth * 0.3,
           Math.min(maxWidthPx, newWidthPx),
         )
-        setSize({ width: (clampedWidthPx / canvasWidth) * 100 })
+        const widthPercent = (clampedWidthPx / canvasWidth) * 100
+        syncLayoutSnapshot({ widthPercent })
+        setSize({ width: widthPercent })
       }
     }
 
-    const handleMouseUp = () => {
+    const handlePointerEnd = () => {
+      const phase = gesturePhaseRef.current
+      const snapshot = layoutSnapshotRef.current
+
       if (
         onLayoutCommit &&
-        position.x !== null &&
-        position.y !== null &&
-        (isDragging || isResizing)
+        typeof snapshot.x === "number" &&
+        typeof snapshot.y === "number" &&
+        (phase === "drag" || phase === "resize")
       ) {
         onLayoutCommit({
-          x: position.x,
-          y: position.y,
-          widthPercent: size.width,
+          x: snapshot.x,
+          y: snapshot.y,
+          widthPercent: snapshot.widthPercent,
         })
       }
+
+      gesturePhaseRef.current = "none"
+      setPendingDrag(false)
       setIsDragging(false)
       setIsResizing(false)
       setDragStarted(false)
+      releasePointerCapture()
     }
 
-    if (isDragging || isResizing) {
-      window.addEventListener("mousemove", handleMouseMove)
-      window.addEventListener("mouseup", handleMouseUp)
+    if (isDragging || isResizing || pendingDrag) {
+      window.addEventListener("pointermove", handlePointerMove)
+      window.addEventListener("pointerup", handlePointerEnd)
+      window.addEventListener("pointercancel", handlePointerEnd)
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-      window.removeEventListener("mouseup", handleMouseUp)
+      window.removeEventListener("pointermove", handlePointerMove)
+      window.removeEventListener("pointerup", handlePointerEnd)
+      window.removeEventListener("pointercancel", handlePointerEnd)
     }
   }, [
     isDragging,
+    pendingDrag,
     isResizing,
     dragStarted,
     onLayoutCommit,
     position.x,
-    position.y,
-    size.width,
     CANVAS_PADDING,
-    rotationDegrees,
+    releasePointerCapture,
+    syncLayoutSnapshot,
   ])
 
-  // Depend on coordinates, not `initialOffset` identity — parents often pass
-  // `{ x, y }` inline so the object is new every render; font/color updates
-  // must not re-run this and snap the note back to the last prop snapshot.
   const initialX = initialOffset?.x
   const initialY = initialOffset?.y
   useEffect(() => {
     if (typeof initialX !== "number" || typeof initialY !== "number") return
     queueMicrotask(() => {
       setPosition({ x: initialX, y: initialY })
+      syncLayoutSnapshot({ x: initialX, y: initialY })
     })
-  }, [initialX, initialY])
+  }, [initialX, initialY, syncLayoutSnapshot])
 
   useEffect(() => {
     if (typeof initialWidthPercent !== "number") return
     queueMicrotask(() => {
       setSize({ width: initialWidthPercent })
+      syncLayoutSnapshot({ widthPercent: initialWidthPercent })
     })
-  }, [initialWidthPercent])
+  }, [initialWidthPercent, syncLayoutSnapshot])
 
   useLayoutEffect(() => {
     if (position.x === null || position.y === null) return
@@ -357,16 +439,41 @@ export function DraggableWrapper({
     })
 
     if (clamped.x !== position.x || clamped.y !== position.y) {
+      syncLayoutSnapshot({ x: clamped.x, y: clamped.y })
       setPosition(clamped)
     }
-  }, [rotationDegrees, size.width, position.x, position.y, CANVAS_PADDING])
+  }, [
+    rotationDegrees,
+    size.width,
+    position.x,
+    position.y,
+    CANVAS_PADDING,
+    syncLayoutSnapshot,
+  ])
 
   const isPositioned = position.x !== null && position.y !== null
+  const isMovingNote = isDragging || pendingDrag
+  const isGesturing = isMovingNote || isResizing
+
+  const resizeHandleClassName =
+    "absolute -right-3 -bottom-3 z-10 flex h-7 w-7 touch-none cursor-se-resize items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+
+  const moveDragContext = useMemo(
+    (): DraggableNoteMoveContextValue =>
+      editable
+        ? {
+            onMovePointerDown: (e, options) =>
+              handlePointerDown(e, "drag", options),
+            isMovingNote,
+          }
+        : null,
+    [editable, handlePointerDown, isMovingNote],
+  )
 
   return (
     <div
       ref={containerRef}
-      className="relative"
+      className={cn("relative", isGesturing && "touch-none select-none")}
       style={
         isPositioned
           ? {
@@ -385,34 +492,27 @@ export function DraggableWrapper({
         className="group relative transition-transform"
         style={{ transform: `rotate(${rotationDegrees}deg)` }}
       >
-        {editable && isActive && (
-          <>
-            <div
-              role="button"
-              tabIndex={-1}
-              data-note-chrome
-              aria-label="Move note"
-              onMouseDown={(e) => handleMouseDown(e, "drag")}
-              className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 cursor-move rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Move className="h-3 w-3 text-muted-foreground" />
-            </div>
-
-            <div
-              role="button"
-              tabIndex={-1}
-              data-note-chrome
-              aria-label="Resize note"
-              onMouseDown={(e) => handleMouseDown(e, "resize")}
-              className="absolute -right-2 -bottom-2 z-10 cursor-se-resize rounded-full border border-border bg-background p-1 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Maximize2 className="h-3 w-3 text-muted-foreground" />
-            </div>
-
-            <div className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/30 p-2 transition-colors group-hover:border-primary/50" />
-          </>
+        {isResizing ? (
+          <div
+            className="pointer-events-none absolute inset-0 -m-2 rounded border border-dashed border-primary/50 p-2"
+            aria-hidden
+          />
+        ) : null}
+        {editable && (
+          <div
+            role="button"
+            tabIndex={-1}
+            data-note-chrome
+            aria-label="Resize note"
+            onPointerDown={(e) => handlePointerDown(e, "resize")}
+            className={resizeHandleClassName}
+          >
+            <Maximize2 className="h-2.5 w-2.5 text-muted-foreground" />
+          </div>
         )}
-        {children}
+        <DraggableNoteMoveContext.Provider value={moveDragContext}>
+          {children}
+        </DraggableNoteMoveContext.Provider>
       </div>
       {footer && footerPlacement ? (
         <div
