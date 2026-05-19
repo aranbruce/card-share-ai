@@ -554,16 +554,15 @@ export function DraggableWrapper({
           />
         ) : null}
         {editable && (
-          <div
-            role="button"
-            tabIndex={-1}
+          <button
+            type="button"
             data-note-chrome
             aria-label="Resize note"
             onPointerDown={(e) => handlePointerDown(e, "resize")}
             className={resizeHandleClassName}
           >
             <Maximize2 className="h-2.5 w-2.5 text-muted-foreground" />
-          </div>
+          </button>
         )}
         <DraggableNoteMoveContext.Provider value={moveDragContext}>
           {children}

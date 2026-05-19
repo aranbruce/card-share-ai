@@ -57,6 +57,7 @@ export function CopyLinkButton({
         variant="outline"
         size="default"
         onClick={handleClick}
+        aria-describedby={statusId}
         className="w-full"
       >
         {copied ? (

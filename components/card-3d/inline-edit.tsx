@@ -381,7 +381,7 @@ export const InlineEdit = forwardRef<
             "relative z-10 w-full min-w-0",
             className,
             editable && onChange && "rounded px-1",
-            noteMoveCursorClass(moveDrag),
+            canDragNote && !isEditing && noteMoveCursorClass(moveDrag),
             editable &&
               onChange &&
               !isEditing &&
@@ -391,6 +391,7 @@ export const InlineEdit = forwardRef<
               !isEditing &&
               !canDragNote &&
               "cursor-text",
+            isEditing && "cursor-text",
             showShimmer &&
               regenerateShimmerTone === "cover" &&
               "ai-refine-shimmer-text-cover rounded-sm",
