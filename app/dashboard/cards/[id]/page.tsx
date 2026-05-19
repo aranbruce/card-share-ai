@@ -293,14 +293,12 @@ function CardDetailInner() {
                     directly to {card.recipient_name}.
                   </p>
                   <div className="flex flex-col gap-2">
-                    {card ? (
-                      <CopyLinkButton
-                        getLink={() =>
-                          `${window.location.origin}/contribute/${card.contributor_link_id}`
-                        }
-                        label="Copy share link"
-                      />
-                    ) : null}
+                    <CopyLinkButton
+                      getLink={() =>
+                        `${window.location.origin}/contribute/${card.contributor_link_id}`
+                      }
+                      label="Copy share link"
+                    />
                     <Button
                       size="default"
                       onClick={() => setShowShareModal(true)}
