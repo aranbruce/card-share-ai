@@ -28,8 +28,9 @@ interface ShareModalProps {
 }
 
 function buildViewLink(contributorLinkId: string): string {
-  if (typeof window === "undefined") return ""
-  return `${window.location.origin}/view/${contributorLinkId}`
+  const path = `/view/${contributorLinkId}`
+  if (typeof window === "undefined") return path
+  return `${window.location.origin}${path}`
 }
 
 export function ShareModal({
