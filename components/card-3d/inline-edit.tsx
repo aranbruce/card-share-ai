@@ -371,7 +371,7 @@ export const InlineEdit = forwardRef<
         <div
           ref={editRef}
           onPointerDown={
-            canDragNote
+            canDragNote && !isEditing
               ? (e) => {
                   moveDrag!.onMovePointerDown(e, { deferUntilDrag: true })
                 }

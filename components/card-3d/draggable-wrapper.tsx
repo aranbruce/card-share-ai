@@ -291,7 +291,8 @@ export function DraggableWrapper({
       options?: { deferUntilDrag?: boolean },
     ) => {
       if (!editable) return
-      if (e.button !== 0) return
+      if (e.button !== 0 || !e.isPrimary) return
+      if (gesturePhaseRef.current !== "none") return
       e.stopPropagation()
 
       const deferUntilDrag = options?.deferUntilDrag === true && type === "drag"
@@ -367,6 +368,14 @@ export function DraggableWrapper({
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
+      const activePointerId = pointerCaptureRef.current?.pointerId
+      if (
+        activePointerId !== undefined &&
+        e.pointerId !== activePointerId
+      ) {
+        return
+      }
+
       const dx = e.clientX - startPos.current.x
       const dy = e.clientY - startPos.current.y
       let dragging = isDragging
