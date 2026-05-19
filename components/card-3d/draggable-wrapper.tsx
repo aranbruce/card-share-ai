@@ -218,6 +218,45 @@ export function DraggableWrapper({
     pointerCaptureRef.current = null
   }, [])
 
+  const endGesture = useCallback(() => {
+    const phase = gesturePhaseRef.current
+    if (phase === "none") return
+
+    const snapshot = layoutSnapshotRef.current
+
+    if (
+      onLayoutCommit &&
+      typeof snapshot.x === "number" &&
+      typeof snapshot.y === "number" &&
+      (phase === "drag" || phase === "resize")
+    ) {
+      onLayoutCommit({
+        x: snapshot.x,
+        y: snapshot.y,
+        widthPercent: snapshot.widthPercent,
+      })
+    }
+
+    gesturePhaseRef.current = "none"
+    setPendingDrag(false)
+    setIsDragging(false)
+    setIsResizing(false)
+    setDragStarted(false)
+    releasePointerCapture()
+  }, [onLayoutCommit, releasePointerCapture])
+
+  const bindWindowPointerEnd = useCallback(
+    (pointerId: number) => {
+      const onEnd = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return
+        endGesture()
+      }
+      window.addEventListener("pointerup", onEnd, { once: true })
+      window.addEventListener("pointercancel", onEnd, { once: true })
+    },
+    [endGesture],
+  )
+
   const syncLayoutSnapshot = useCallback(
     (patch: Partial<typeof layoutSnapshotRef.current>) => {
       layoutSnapshotRef.current = { ...layoutSnapshotRef.current, ...patch }
@@ -292,8 +331,17 @@ export function DraggableWrapper({
         gesturePhaseRef.current = "resize"
         setIsResizing(true)
       }
+
+      bindWindowPointerEnd(e.pointerId)
     },
-    [editable, position.x, position.y, size.width, syncLayoutSnapshot],
+    [
+      editable,
+      position.x,
+      position.y,
+      size.width,
+      syncLayoutSnapshot,
+      bindWindowPointerEnd,
+    ],
   )
 
   useEffect(() => {
@@ -364,51 +412,20 @@ export function DraggableWrapper({
       }
     }
 
-    const handlePointerEnd = () => {
-      const phase = gesturePhaseRef.current
-      const snapshot = layoutSnapshotRef.current
-
-      if (
-        onLayoutCommit &&
-        typeof snapshot.x === "number" &&
-        typeof snapshot.y === "number" &&
-        (phase === "drag" || phase === "resize")
-      ) {
-        onLayoutCommit({
-          x: snapshot.x,
-          y: snapshot.y,
-          widthPercent: snapshot.widthPercent,
-        })
-      }
-
-      gesturePhaseRef.current = "none"
-      setPendingDrag(false)
-      setIsDragging(false)
-      setIsResizing(false)
-      setDragStarted(false)
-      releasePointerCapture()
-    }
-
     if (isDragging || isResizing || pendingDrag) {
       window.addEventListener("pointermove", handlePointerMove)
-      window.addEventListener("pointerup", handlePointerEnd)
-      window.addEventListener("pointercancel", handlePointerEnd)
     }
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove)
-      window.removeEventListener("pointerup", handlePointerEnd)
-      window.removeEventListener("pointercancel", handlePointerEnd)
     }
   }, [
     isDragging,
     pendingDrag,
     isResizing,
     dragStarted,
-    onLayoutCommit,
     position.x,
     CANVAS_PADDING,
-    releasePointerCapture,
     syncLayoutSnapshot,
   ])
 

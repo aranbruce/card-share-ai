@@ -190,7 +190,7 @@ export function tryCopyTextToClipboardSync(
   options?: CopySyncOptions,
 ): boolean {
   if (typeof document === "undefined") {
-    throw new Error("Clipboard is not available")
+    return false
   }
 
   const returnFocus = options?.scrollAnchor
