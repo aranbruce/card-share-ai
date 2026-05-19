@@ -68,7 +68,7 @@ export function CopyLinkButton({
         {label}
       </Button>
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p className="text-sm text-destructive" aria-hidden="true">
           {error}
         </p>
       ) : null}

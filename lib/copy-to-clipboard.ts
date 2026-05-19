@@ -103,6 +103,14 @@ function getCopyField(parent?: HTMLElement | null): HTMLInputElement {
   return sharedBodyCopyField
 }
 
+function safeFocus(el: HTMLElement): void {
+  try {
+    el.focus({ preventScroll: true })
+  } catch {
+    el.focus()
+  }
+}
+
 function releaseFocusAfterCopy(
   copyField: HTMLElement,
   returnFocusTo?: HTMLElement | null,
@@ -110,7 +118,7 @@ function releaseFocusAfterCopy(
   copyField.blur()
   window.getSelection()?.removeAllRanges()
   if (returnFocusTo?.isConnected) {
-    returnFocusTo.focus({ preventScroll: true })
+    safeFocus(returnFocusTo)
   }
 }
 
@@ -124,7 +132,7 @@ function copyWithExecCommand(
 
   let ok = false
   try {
-    el.focus({ preventScroll: true })
+    safeFocus(el)
     el.select()
     el.setSelectionRange(0, text.length)
     ok = document.execCommand("copy")
@@ -160,7 +168,7 @@ export function tryCopyFromInputElement(
 
   let ok = false
   try {
-    el.focus({ preventScroll: true })
+    safeFocus(el)
     el.select()
     try {
       el.setSelectionRange(0, value.length)
