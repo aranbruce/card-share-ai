@@ -126,6 +126,7 @@ export function DraggableWrapper({
     el: HTMLElement
     pointerId: number
   } | null>(null)
+  const pointerEndAbortRef = useRef<AbortController | null>(null)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const gesturePhaseRef = useRef<GesturePhase>("none")
   const layoutSnapshotRef = useRef({
@@ -245,17 +246,36 @@ export function DraggableWrapper({
     releasePointerCapture()
   }, [onLayoutCommit, releasePointerCapture])
 
+  const clearPointerEndListeners = useCallback(() => {
+    pointerEndAbortRef.current?.abort()
+    pointerEndAbortRef.current = null
+  }, [])
+
   const bindWindowPointerEnd = useCallback(
     (pointerId: number) => {
+      clearPointerEndListeners()
+      const controller = new AbortController()
+      pointerEndAbortRef.current = controller
+
       const onEnd = (ev: PointerEvent) => {
         if (ev.pointerId !== pointerId) return
+        clearPointerEndListeners()
         endGesture()
       }
-      window.addEventListener("pointerup", onEnd, { once: true })
-      window.addEventListener("pointercancel", onEnd, { once: true })
+
+      const opts = { once: true, signal: controller.signal } as const
+      window.addEventListener("pointerup", onEnd, opts)
+      window.addEventListener("pointercancel", onEnd, opts)
     },
-    [endGesture],
+    [clearPointerEndListeners, endGesture],
   )
+
+  useEffect(() => {
+    return () => {
+      clearPointerEndListeners()
+      releasePointerCapture()
+    }
+  }, [clearPointerEndListeners, releasePointerCapture])
 
   const syncLayoutSnapshot = useCallback(
     (patch: Partial<typeof layoutSnapshotRef.current>) => {
