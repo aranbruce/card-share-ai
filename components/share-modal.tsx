@@ -27,6 +27,11 @@ interface ShareModalProps {
   onSentAtRecorded?: (sentAt: string) => void
 }
 
+function buildViewLink(contributorLinkId: string): string {
+  if (typeof window === "undefined") return ""
+  return `${window.location.origin}/view/${contributorLinkId}`
+}
+
 export function ShareModal({
   cardId,
   recipientName,
@@ -43,11 +48,8 @@ export function ShareModal({
   const [emailError, setEmailError] = useState("")
   const [savingEmail, setSavingEmail] = useState(false)
 
-  const viewLink = isOpen
-    ? `${window.location.origin}/view/${contributorLinkId}`
-    : ""
-  const getViewLink = () =>
-    `${window.location.origin}/view/${contributorLinkId}`
+  const viewLink = isOpen ? buildViewLink(contributorLinkId) : ""
+  const getViewLink = () => buildViewLink(contributorLinkId)
 
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()

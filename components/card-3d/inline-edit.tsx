@@ -385,13 +385,12 @@ export const InlineEdit = forwardRef<
             editable &&
               onChange &&
               !isEditing &&
-              !canDragNote &&
-              "cursor-text transition-colors hover:bg-primary/5",
+              "transition-colors hover:bg-primary/5",
             editable &&
               onChange &&
               !isEditing &&
-              canDragNote &&
-              "transition-colors hover:bg-primary/5",
+              !canDragNote &&
+              "cursor-text",
             showShimmer &&
               regenerateShimmerTone === "cover" &&
               "ai-refine-shimmer-text-cover rounded-sm",
