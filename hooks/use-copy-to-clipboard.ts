@@ -45,7 +45,7 @@ export function useCopyToClipboard() {
         return true
       }
 
-      if (window.isSecureContext && navigator.clipboard?.writeText) {
+      if (window.isSecureContext && navigator.clipboard) {
         void copyTextWithClipboardApi(text).then(markCopied).catch(markFailed)
       } else {
         markFailed()
@@ -54,7 +54,7 @@ export function useCopyToClipboard() {
     }
 
     // No focus/DOM tricks — avoids scroll on HTTPS (desktop and many mobile browsers).
-    if (window.isSecureContext && navigator.clipboard?.writeText) {
+    if (window.isSecureContext && navigator.clipboard) {
       void navigator.clipboard.writeText(text).then(markCopied).catch(runExecCopy)
       return true
     }

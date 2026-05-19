@@ -239,7 +239,7 @@ export function DraggableWrapper({
         e.preventDefault()
       }
 
-      const handle = e.currentTarget
+      const handle = e.currentTarget as HTMLElement
       handle.setPointerCapture(e.pointerId)
       pointerCaptureRef.current = { el: handle, pointerId: e.pointerId }
 
