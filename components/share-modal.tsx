@@ -46,7 +46,8 @@ export function ShareModal({
   const viewLink = isOpen
     ? `${window.location.origin}/view/${contributorLinkId}`
     : ""
-  const getViewLink = () => `${window.location.origin}/view/${contributorLinkId}`
+  const getViewLink = () =>
+    `${window.location.origin}/view/${contributorLinkId}`
 
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()
