@@ -381,7 +381,6 @@ export const InlineEdit = forwardRef<
             "relative z-10 w-full min-w-0",
             className,
             editable && onChange && "rounded px-1",
-            canDragNote && "touch-none",
             noteMoveCursorClass(moveDrag),
             editable &&
               onChange &&

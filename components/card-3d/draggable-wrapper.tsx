@@ -453,7 +453,7 @@ export function DraggableWrapper({
 
   const isPositioned = position.x !== null && position.y !== null
   const isMovingNote = isDragging || pendingDrag
-  const isGesturing = isMovingNote || isResizing
+  const lockTouchAction = isDragging || isResizing
 
   const resizeHandleClassName =
     "absolute -right-3 -bottom-3 z-10 flex h-7 w-7 touch-none cursor-se-resize items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
@@ -473,7 +473,7 @@ export function DraggableWrapper({
   return (
     <div
       ref={containerRef}
-      className={cn("relative", isGesturing && "touch-none select-none")}
+      className={cn("relative", lockTouchAction && "touch-none select-none")}
       style={
         isPositioned
           ? {

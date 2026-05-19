@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { cn } from "@/lib/utils"
 import { CheckCircle2, Copy } from "lucide-react"
-import { useId, type RefObject } from "react"
+import { useId, type MouseEvent, type RefObject } from "react"
 
 interface CopyLinkButtonProps {
   /** Build the URL at click time so origin is always current (required for iOS). */
@@ -31,7 +31,7 @@ export function CopyLinkButton({
   const statusId = useId()
   const { copied, error, copy } = useCopyToClipboard()
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     copy(getLink(), {
       scrollAnchor: event.currentTarget,
       copyContainer: copyContainerRef?.current ?? undefined,

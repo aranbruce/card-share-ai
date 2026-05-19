@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   type CopySyncOptions,
   copyTextWithClipboardApi,
@@ -17,18 +17,33 @@ export type CopyToClipboardOptions = CopySyncOptions & {
 export function useCopyToClipboard() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState("")
+  const resetTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const copy = useCallback((text: string, options?: CopyToClipboardOptions) => {
     const markCopied = () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current)
+      }
       requestAnimationFrame(() => {
         setError("")
         setCopied(true)
-        window.setTimeout(() => setCopied(false), 2000)
+        resetTimeoutRef.current = window.setTimeout(() => setCopied(false), 2000)
         options?.onSuccess?.()
       })
     }
 
     const markFailed = () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current)
+      }
       setCopied(false)
       setError(COPY_TO_CLIPBOARD_ERROR)
     }
@@ -53,7 +68,6 @@ export function useCopyToClipboard() {
       return false
     }
 
-    // No focus/DOM tricks — avoids scroll on HTTPS (desktop and many mobile browsers).
     if (window.isSecureContext && navigator.clipboard) {
       void navigator.clipboard
         .writeText(text)
@@ -66,6 +80,9 @@ export function useCopyToClipboard() {
   }, [])
 
   const reset = useCallback(() => {
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current)
+    }
     setCopied(false)
     setError("")
   }, [])

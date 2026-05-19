@@ -37,7 +37,6 @@ export function GiphyCanvasGif({
       }
       className={cn(
         "mx-auto block h-auto max-h-[min(40vh,280px)] w-auto max-w-full object-contain",
-        moveDrag && "touch-none",
         noteMoveCursorClass(moveDrag),
         className,
       )}

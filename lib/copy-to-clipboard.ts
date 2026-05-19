@@ -15,7 +15,7 @@ export type CopySyncOptions = {
 type ScrollSnapshot = {
   windowX: number
   windowY: number
-  elements: Array<{ element: Element; top: number; left: number }>
+  elements: Array<{ element: HTMLElement; top: number; left: number }>
 }
 
 function captureScrollSnapshot(anchor: HTMLElement | null): ScrollSnapshot {
