@@ -291,6 +291,7 @@ export function DraggableWrapper({
       options?: { deferUntilDrag?: boolean },
     ) => {
       if (!editable) return
+      if (e.button !== 0) return
       e.stopPropagation()
 
       const deferUntilDrag = options?.deferUntilDrag === true && type === "drag"

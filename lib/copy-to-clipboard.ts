@@ -223,7 +223,10 @@ export function tryCopyTextToClipboardSync(
 
 /** Clipboard API fallback (HTTPS / secure contexts). */
 export function copyTextWithClipboardApi(text: string): Promise<void> {
-  if (!navigator.clipboard?.writeText) {
+  if (
+    typeof navigator === "undefined" ||
+    !navigator.clipboard?.writeText
+  ) {
     return Promise.reject(new Error("Clipboard API is not available"))
   }
   return navigator.clipboard.writeText(text)
