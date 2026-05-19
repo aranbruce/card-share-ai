@@ -25,11 +25,3 @@ export function noteMoveCursorClass(
   if (!move) return undefined
   return move.isMovingNote ? "cursor-grabbing" : "cursor-grab"
 }
-
-/** Non-deferred move surfaces (e.g. GIF) need touch-action locked before pointerdown. */
-export function noteMoveTouchClass(
-  move: DraggableNoteMoveContextValue,
-): string | undefined {
-  if (!move) return undefined
-  return "touch-none"
-}
