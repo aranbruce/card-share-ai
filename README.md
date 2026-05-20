@@ -61,6 +61,10 @@ GIPHY_API_KEY=your_giphy_api_key
    - Site URL
    - Redirect URLs (e.g. `http://localhost:3000/auth/callback`)
 
+### Leaked password protection (Security Advisor)
+
+If you use **email / password** sign-up, enable HaveIBeenPwned checks in the Supabase Dashboard so the linter warning clears and weak passwords are rejected: **Authentication** → **Providers** → **Email** → enable **Prevent use of leaked passwords** (wording may vary by dashboard version). See [Password security](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). OAuth-only projects can skip this.
+
 ### Installation
 
 1. Install dependencies:

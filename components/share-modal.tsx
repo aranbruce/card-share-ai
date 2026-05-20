@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { RecipientViewLinkCopy } from "@/components/recipient-view-link-copy"
 import { useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
-import { CheckIcon, CopyIcon, LinkIcon, MailIcon, SendIcon } from "lucide-react"
+import { CheckIcon, LinkIcon, MailIcon, SendIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,12 @@ interface ShareModalProps {
   onSentAtRecorded?: (sentAt: string) => void
 }
 
+function buildViewLink(contributorLinkId: string): string {
+  const path = `/view/${contributorLinkId}`
+  if (typeof window === "undefined") return path
+  return `${window.location.origin}${path}`
+}
+
 export function ShareModal({
   cardId,
   recipientName,
@@ -36,15 +43,14 @@ export function ShareModal({
   onEmailUpdate,
   onSentAtRecorded,
 }: ShareModalProps) {
-  const [copied, setCopied] = useState("")
-  const [clipboardError, setClipboardError] = useState("")
   const [sending, setSending] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [recipientEmail, setRecipientEmail] = useState(initialEmail || "")
   const [emailError, setEmailError] = useState("")
   const [savingEmail, setSavingEmail] = useState(false)
 
-  const viewLink = `${typeof window !== "undefined" ? window.location.origin : ""}/view/${contributorLinkId}`
+  const viewLink = isOpen ? buildViewLink(contributorLinkId) : ""
+  const getViewLink = () => buildViewLink(contributorLinkId)
 
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()
@@ -56,20 +62,8 @@ export function ShareModal({
     }
   }
 
-  const copyToClipboard = async (text: string, name: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setClipboardError("")
-      setCopied(name)
-      if (name === "view" || name === "email") {
-        await recordSharedAt()
-      }
-      setTimeout(() => setCopied(""), 2000)
-    } catch {
-      setClipboardError(
-        "Could not copy. Check clipboard permissions, or select the link and copy manually.",
-      )
-    }
+  const handleLinkCopied = () => {
+    void recordSharedAt()
   }
 
   const validateEmail = (email: string) => {
@@ -115,7 +109,6 @@ export function ShareModal({
     setSending(true)
 
     try {
-      // First save the email to the card
       const sentAt = new Date().toISOString()
       await apiPatch(`/api/cards/${cardId}`, {
         recipient_email: recipientEmail,
@@ -124,9 +117,6 @@ export function ShareModal({
 
       onEmailUpdate?.(recipientEmail)
       onSentAtRecorded?.(sentAt)
-
-      // TODO: Integrate with email service like Resend
-      // For now, we'll show a success message with the link to copy
       setEmailSent(true)
     } catch {
       setEmailError("Failed to send card")
@@ -139,11 +129,7 @@ export function ShareModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open) {
-          setClipboardError("")
-          setCopied("")
-          onClose()
-        }
+        if (!open) onClose()
       }}
     >
       <DialogContent className="overflow-hidden p-0 sm:max-w-md">
@@ -156,34 +142,17 @@ export function ShareModal({
           </DialogHeader>
         </div>
 
-        {clipboardError ? (
-          <p role="alert" className="px-6 pb-2 text-sm text-destructive">
-            {clipboardError}
-          </p>
-        ) : null}
-
         <div className="space-y-6 p-6">
-          {/* Recipient View Link */}
           <div className="space-y-3">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <LinkIcon className="size-4" />
               Direct Link
             </h4>
-            <div className="flex gap-2">
-              <Input value={viewLink} readOnly variant="readonly" />
-              <Button
-                size="icon"
-                variant="outline"
-                className="shrink-0"
-                onClick={() => copyToClipboard(viewLink, "view")}
-              >
-                {copied === "view" ? (
-                  <CheckIcon className="size-4" />
-                ) : (
-                  <CopyIcon className="size-4" />
-                )}
-              </Button>
-            </div>
+            <RecipientViewLinkCopy
+              viewLink={viewLink}
+              getViewLink={getViewLink}
+              onCopied={handleLinkCopied}
+            />
             <p className="text-xs text-muted-foreground">
               Copy and share this link anywhere. They will see the finished
               card.
@@ -192,7 +161,6 @@ export function ShareModal({
 
           <div className="h-px bg-border/50" />
 
-          {/* Email Section */}
           <div className="space-y-3">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <MailIcon className="size-4" />
@@ -212,21 +180,11 @@ export function ShareModal({
                   Email integration coming soon. For now, copy the link below
                   and send it manually.
                 </p>
-                <div className="flex gap-2">
-                  <Input value={viewLink} readOnly variant="readonly" />
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="shrink-0"
-                    onClick={() => copyToClipboard(viewLink, "email")}
-                  >
-                    {copied === "email" ? (
-                      <CheckIcon className="size-4" />
-                    ) : (
-                      <CopyIcon className="size-4" />
-                    )}
-                  </Button>
-                </div>
+                <RecipientViewLinkCopy
+                  viewLink={viewLink}
+                  getViewLink={getViewLink}
+                  onCopied={handleLinkCopied}
+                />
               </div>
             ) : (
               <div className="space-y-4">
@@ -241,13 +199,14 @@ export function ShareModal({
                     }}
                     aria-invalid={!!emailError}
                   />
-                  {emailError && (
+                  {emailError ? (
                     <p className="text-xs text-destructive">{emailError}</p>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="flex gap-2">
                   <Button
+                    type="button"
                     variant="outline"
                     className="flex-1"
                     onClick={handleSaveEmail}
@@ -263,6 +222,7 @@ export function ShareModal({
                     )}
                   </Button>
                   <Button
+                    type="button"
                     className="flex-1"
                     onClick={handleSendEmail}
                     disabled={sending || !recipientEmail.trim()}

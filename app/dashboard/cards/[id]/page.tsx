@@ -24,17 +24,9 @@ import {
   type ActiveContributionFormattingState,
   type CardOwnerStudioHandle,
 } from "@/components/card-owner-studio"
-import {
-  ChevronLeft,
-  CheckCircle2,
-  Copy,
-  FileX2,
-  Paperclip,
-  Send,
-  Sparkles,
-  X,
-} from "lucide-react"
+import { ChevronLeft, FileX2, Paperclip, Send, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
+import { CopyLinkButton } from "@/components/copy-link-button"
 import { NotePanel } from "@/components/note-panel"
 import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
 
@@ -107,7 +99,6 @@ function CardDetailInner() {
   const [card, setCard] = useState<CardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [copyLinkCopied, setCopyLinkCopied] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [activeContribution, setActiveContribution] =
     useState<ActiveContributionFormattingState | null>(null)
@@ -152,14 +143,6 @@ function CardDetailInner() {
     }
     void checkAuth()
   }, [router, supabase, loadCard])
-
-  const copyContributorLink = () => {
-    if (!card) return
-    const link = `${window.location.origin}/contribute/${card.contributor_link_id}`
-    navigator.clipboard.writeText(link)
-    setCopyLinkCopied(true)
-    setTimeout(() => setCopyLinkCopied(false), 2000)
-  }
 
   const handleCardDataChange = useCallback(
     (
@@ -308,19 +291,12 @@ function CardDetailInner() {
                     directly to {card.recipient_name}.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Button
-                      variant="outline"
-                      size="default"
-                      onClick={copyContributorLink}
-                      className="w-full"
-                    >
-                      {copyLinkCopied ? (
-                        <CheckCircle2 className="text-green-600" />
-                      ) : (
-                        <Copy />
-                      )}
-                      {copyLinkCopied ? "Link copied!" : "Copy share link"}
-                    </Button>
+                    <CopyLinkButton
+                      getLink={() =>
+                        `${window.location.origin}/contribute/${card.contributor_link_id}`
+                      }
+                      label="Copy share link"
+                    />
                     <Button
                       size="default"
                       onClick={() => setShowShareModal(true)}

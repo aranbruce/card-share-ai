@@ -92,9 +92,6 @@ export function Card3D({
     setPrevNavigateToPage(navigateToPage)
     if (navigateToPage !== undefined) setCurrentPage(navigateToPage)
   }
-  const [editingContributionId, setEditingContributionId] = useState<
-    string | null
-  >(null)
   const [gifPickerContributionId, setGifPickerContributionId] = useState<
     string | null
   >(null)
@@ -340,7 +337,6 @@ export function Card3D({
           <DraggableWrapper
             key={contrib.id}
             editable
-            isActive={editingContributionId === contrib.id}
             initialOffset={
               typeof contrib.position_x === "number" &&
               typeof contrib.position_y === "number"
@@ -366,14 +362,12 @@ export function Card3D({
               contributionInlineRegenRefs.current
                 .get(contrib.id)
                 ?.closeRegeneratePrompt()
-              setEditingContributionId((id) => (id === contrib.id ? null : id))
               onEditingContributionChange?.(null)
             }}
           >
             <div
               className="space-y-3"
               onFocus={() => {
-                setEditingContributionId(contrib.id)
                 onEditingContributionChange?.(contrib.id)
               }}
             >
@@ -535,7 +529,7 @@ export function Card3D({
               </div>
             ) : (
               <div
-                className="relative flex min-h-0 flex-1 flex-col p-1"
+                className="relative flex min-h-0 flex-1 flex-col overscroll-contain p-1"
                 data-card-canvas
               >
                 <p className="mb-1 shrink-0 px-5 pt-5 text-xs font-medium tracking-wider text-muted-foreground uppercase">

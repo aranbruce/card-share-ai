@@ -16,6 +16,7 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/note-panel"
 import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
+import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 
 function readContributeTokensFromStorage(
   linkId: string,
@@ -85,6 +86,9 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
   const preComposeDraftRef = useRef(preComposeDraft)
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const saveGenerationTrackerRef = useRef(
+    createContributionSaveGenerationTracker(),
+  )
   const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   )
@@ -202,7 +206,10 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         rotationDegrees?: number | null
       },
       editToken: string,
+      saveGeneration?: number,
     ) => {
+      const tracker = saveGenerationTrackerRef.current
+      const generation = saveGeneration ?? tracker.next(contributionId)
       const response = await fetch(`/api/contribute/${linkId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -214,6 +221,9 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           "Failed to save contribution",
           typeof payload.error === "string" ? payload.error : payload,
         )
+        return
+      }
+      if (tracker.isStale(contributionId, generation)) {
         return
       }
       if (Array.isArray(payload.contributions)) {
@@ -237,9 +247,16 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
-        void saveContributionPatch(contributionId, { message: value }, token)
+        void saveContributionPatch(
+          contributionId,
+          { message: value },
+          token,
+          saveGeneration,
+        )
       }, 600)
     },
     [contributionEditTokens, saveContributionPatch],
@@ -258,6 +275,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       if (!token) return
       const existing = gifSaveTimersRef.current.get(contributionId)
       if (existing) clearTimeout(existing)
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       gifSaveTimersRef.current.set(
         contributionId,
         setTimeout(() => {
@@ -266,6 +285,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             contributionId,
             { giphyUrl, ...(currentMessage && { message: currentMessage }) },
             token,
+            saveGeneration,
           )
         }, 200),
       )
@@ -310,6 +330,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(
@@ -328,6 +350,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             }),
           },
           token,
+          saveGeneration,
         )
       }, 200)
     },
@@ -405,7 +428,14 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             c.id === contributionId ? { ...c, message: next } : c,
           ),
         )
-        await saveContributionPatch(contributionId, { message: next }, token)
+        const saveGeneration =
+          saveGenerationTrackerRef.current.next(contributionId)
+        await saveContributionPatch(
+          contributionId,
+          { message: next },
+          token,
+          saveGeneration,
+        )
       } catch (e) {
         console.error(e)
       } finally {
