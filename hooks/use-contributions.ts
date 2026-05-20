@@ -9,6 +9,7 @@ import {
 } from "react"
 import type { Contribution } from "@/lib/card-body"
 import type { OwnerCard } from "@/components/card-owner-studio"
+import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 import { useDebouncedSave } from "./use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
 
@@ -42,7 +43,9 @@ export function useContributions({
   const scheduleMessageSave = useDebouncedSave(600)
   const scheduleLayoutSave = useDebouncedSave(200)
   const scheduleGifSave = useDebouncedSave(200)
-  const saveGenerationRef = useRef(0)
+  const saveGenerationTrackerRef = useRef(
+    createContributionSaveGenerationTracker(),
+  )
 
   const creatorRow = useMemo(
     () => contributions.find((c) => Boolean(c.is_creator)),
@@ -55,13 +58,15 @@ export function useContributions({
       updates: ContributionPatchArgs,
       saveGeneration?: number,
     ) => {
-      const generation = saveGeneration ?? ++saveGenerationRef.current
+      const tracker = saveGenerationTrackerRef.current
+      const generation =
+        saveGeneration ?? tracker.next(contributionId)
       try {
         const p = await apiPatch<{
           contributions?: Contribution[]
           extra_pages?: number
         }>(`/api/cards/${cardId}/contributions`, { contributionId, ...updates })
-        if (generation !== saveGenerationRef.current) {
+        if (tracker.isStale(contributionId, generation)) {
           return
         }
         if (Array.isArray(p.contributions)) {
@@ -87,7 +92,8 @@ export function useContributions({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
-      const saveGeneration = ++saveGenerationRef.current
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       scheduleMessageSave(() => {
         void saveContributionPatch(
           contributionId,
@@ -135,7 +141,8 @@ export function useContributions({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
-      const saveGeneration = ++saveGenerationRef.current
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       scheduleLayoutSave(() => {
         void saveContributionPatch(
           contributionId,
@@ -202,7 +209,8 @@ export function useContributions({
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
       const currentMessage = creatorRow.message
-      const saveGeneration = ++saveGenerationRef.current
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       scheduleGifSave(() => {
         void saveContributionPatch(
           contributionId,
@@ -240,7 +248,8 @@ export function useContributions({
             c.id === contributionId ? { ...c, message: next } : c,
           ),
         )
-        const saveGeneration = ++saveGenerationRef.current
+        const saveGeneration =
+          saveGenerationTrackerRef.current.next(contributionId)
         await saveContributionPatch(contributionId, { message: next }, saveGeneration)
       } catch (e) {
         console.error(e)

@@ -15,6 +15,7 @@ import type { Contribution } from "@/lib/card-body"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/note-panel"
+import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 
 function readContributeTokensFromStorage(
   linkId: string,
@@ -84,7 +85,9 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
   const preComposeDraftRef = useRef(preComposeDraft)
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const saveGenerationRef = useRef(0)
+  const saveGenerationTrackerRef = useRef(
+    createContributionSaveGenerationTracker(),
+  )
   const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   )
@@ -204,7 +207,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       editToken: string,
       saveGeneration?: number,
     ) => {
-      const generation = saveGeneration ?? ++saveGenerationRef.current
+      const tracker = saveGenerationTrackerRef.current
+      const generation = saveGeneration ?? tracker.next(contributionId)
       const response = await fetch(`/api/contribute/${linkId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -218,7 +222,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         )
         return
       }
-      if (generation !== saveGenerationRef.current) {
+      if (tracker.isStale(contributionId, generation)) {
         return
       }
       if (Array.isArray(payload.contributions)) {
@@ -242,7 +246,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
-      const saveGeneration = ++saveGenerationRef.current
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(
@@ -269,7 +274,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       if (!token) return
       const existing = gifSaveTimersRef.current.get(contributionId)
       if (existing) clearTimeout(existing)
-      const saveGeneration = ++saveGenerationRef.current
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       gifSaveTimersRef.current.set(
         contributionId,
         setTimeout(() => {
@@ -323,7 +329,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
-      const saveGeneration = ++saveGenerationRef.current
+      const saveGeneration =
+        saveGenerationTrackerRef.current.next(contributionId)
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(
@@ -420,7 +427,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             c.id === contributionId ? { ...c, message: next } : c,
           ),
         )
-        const saveGeneration = ++saveGenerationRef.current
+        const saveGeneration =
+          saveGenerationTrackerRef.current.next(contributionId)
         await saveContributionPatch(
           contributionId,
           { message: next },
