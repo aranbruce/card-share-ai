@@ -1,6 +1,12 @@
 "use client"
 
-import { type Dispatch, type SetStateAction, useCallback, useMemo } from "react"
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react"
 import type { Contribution } from "@/lib/card-body"
 import type { OwnerCard } from "@/components/card-owner-studio"
 import { useDebouncedSave } from "./use-debounced-save"
@@ -36,6 +42,7 @@ export function useContributions({
   const scheduleMessageSave = useDebouncedSave(600)
   const scheduleLayoutSave = useDebouncedSave(200)
   const scheduleGifSave = useDebouncedSave(200)
+  const layoutSaveGenerationRef = useRef(0)
 
   const creatorRow = useMemo(
     () => contributions.find((c) => Boolean(c.is_creator)),
@@ -43,12 +50,22 @@ export function useContributions({
   )
 
   const saveContributionPatch = useCallback(
-    async (contributionId: string, updates: ContributionPatchArgs) => {
+    async (
+      contributionId: string,
+      updates: ContributionPatchArgs,
+      layoutGeneration?: number,
+    ) => {
       try {
         const p = await apiPatch<{
           contributions?: Contribution[]
           extra_pages?: number
         }>(`/api/cards/${cardId}/contributions`, { contributionId, ...updates })
+        if (
+          layoutGeneration !== undefined &&
+          layoutGeneration !== layoutSaveGenerationRef.current
+        ) {
+          return
+        }
         if (Array.isArray(p.contributions)) {
           setContributions(p.contributions)
         }
@@ -115,20 +132,25 @@ export function useContributions({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
+      const layoutGeneration = ++layoutSaveGenerationRef.current
       scheduleLayoutSave(() => {
-        void saveContributionPatch(contributionId, {
-          positionX: layout.x,
-          positionY: layout.y,
-          widthPercent: layout.widthPercent,
-          pageIndex: layout.pageIndex,
-          fontSize: layout.fontSize,
-          ...(layout.textColor !== undefined && {
-            textColor: layout.textColor,
-          }),
-          ...(layout.rotationDegrees !== undefined && {
-            rotationDegrees: layout.rotationDegrees,
-          }),
-        })
+        void saveContributionPatch(
+          contributionId,
+          {
+            positionX: layout.x,
+            positionY: layout.y,
+            widthPercent: layout.widthPercent,
+            pageIndex: layout.pageIndex,
+            fontSize: layout.fontSize,
+            ...(layout.textColor !== undefined && {
+              textColor: layout.textColor,
+            }),
+            ...(layout.rotationDegrees !== undefined && {
+              rotationDegrees: layout.rotationDegrees,
+            }),
+          },
+          layoutGeneration,
+        )
       })
     },
     [creatorRow, scheduleLayoutSave, saveContributionPatch, setContributions],

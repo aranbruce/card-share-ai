@@ -84,6 +84,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
   const preComposeDraftRef = useRef(preComposeDraft)
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const layoutSaveGenerationRef = useRef(0)
   const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   )
@@ -201,6 +202,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         rotationDegrees?: number | null
       },
       editToken: string,
+      layoutGeneration?: number,
     ) => {
       const response = await fetch(`/api/contribute/${linkId}`, {
         method: "PATCH",
@@ -213,6 +215,12 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           "Failed to save contribution",
           typeof payload.error === "string" ? payload.error : payload,
         )
+        return
+      }
+      if (
+        layoutGeneration !== undefined &&
+        layoutGeneration !== layoutSaveGenerationRef.current
+      ) {
         return
       }
       if (Array.isArray(payload.contributions)) {
@@ -309,6 +317,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
+      const layoutGeneration = ++layoutSaveGenerationRef.current
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(
@@ -327,6 +336,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             }),
           },
           token,
+          layoutGeneration,
         )
       }, 200)
     },

@@ -139,6 +139,8 @@ export function DraggableWrapper({
   } | null>(null)
   const gestureListenersAbortRef = useRef<AbortController | null>(null)
   const pointerMoveHandlerRef = useRef<(e: PointerEvent) => void>(() => {})
+  const hasInitializedPositionRef = useRef(false)
+  const hasInitializedWidthRef = useRef(false)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const gesturePhaseRef = useRef<GesturePhase>("none")
   const layoutSnapshotRef = useRef({
@@ -495,25 +497,22 @@ export function DraggableWrapper({
 
   const initialX = initialOffset?.x
   const initialY = initialOffset?.y
+  // Position is uncontrolled after first init — avoids snap-back when stale props or
+  // out-of-order saves arrive before the server catches up (key remount resets).
   useEffect(() => {
+    if (hasInitializedPositionRef.current) return
     if (typeof initialX !== "number" || typeof initialY !== "number") return
-    if (gesturePhaseRef.current !== "none") return
-    queueMicrotask(() => {
-      if (gesturePhaseRef.current !== "none") return
-      setPosition((prev) => {
-        if (prev.x === initialX && prev.y === initialY) return prev
-        return { x: initialX, y: initialY }
-      })
-      syncLayoutSnapshot({ x: initialX, y: initialY })
-    })
+    hasInitializedPositionRef.current = true
+    setPosition({ x: initialX, y: initialY })
+    syncLayoutSnapshot({ x: initialX, y: initialY })
   }, [initialX, initialY, syncLayoutSnapshot])
 
   useEffect(() => {
+    if (hasInitializedWidthRef.current) return
     if (typeof initialWidthPercent !== "number") return
-    queueMicrotask(() => {
-      setSize({ width: initialWidthPercent })
-      syncLayoutSnapshot({ widthPercent: initialWidthPercent })
-    })
+    hasInitializedWidthRef.current = true
+    setSize({ width: initialWidthPercent })
+    syncLayoutSnapshot({ widthPercent: initialWidthPercent })
   }, [initialWidthPercent, syncLayoutSnapshot])
 
   useLayoutEffect(() => {
