@@ -14,7 +14,8 @@ interface CopyLinkButtonProps {
   /** Visible URL field — last-resort copy target inside modals. */
   linkInputRef?: RefObject<HTMLInputElement | null>
   label?: string
-  copiedLabel?: string
+  /** Screen-reader announcement on success; visible button text stays `label`. */
+  copiedStatusLabel?: string
   onCopied?: () => void
   className?: string
 }
@@ -24,7 +25,7 @@ export function CopyLinkButton({
   copyContainerRef,
   linkInputRef,
   label = "Copy link",
-  copiedLabel = "Link copied!",
+  copiedStatusLabel = "Link copied!",
   onCopied,
   className,
 }: CopyLinkButtonProps) {
@@ -40,7 +41,7 @@ export function CopyLinkButton({
     })
   }
 
-  const statusMessage = copied ? copiedLabel : error
+  const statusMessage = copied ? copiedStatusLabel : error
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>

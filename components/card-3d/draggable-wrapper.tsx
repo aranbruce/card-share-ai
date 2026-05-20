@@ -404,7 +404,10 @@ export function DraggableWrapper({
         setIsResizing(true)
       }
 
-      setTouchLocked(true)
+      // Deferred text drag: allow page scroll until threshold; GIF/resize lock immediately.
+      if (!deferUntilDrag) {
+        setTouchLocked(true)
+      }
       bindGestureListeners(e.pointerId)
     },
     [
@@ -441,6 +444,7 @@ export function DraggableWrapper({
         setPendingDrag(false)
         setIsDragging(true)
         dragStartedRef.current = true
+        setTouchLocked(true)
       }
 
       if (phase === "drag") {
@@ -493,7 +497,7 @@ export function DraggableWrapper({
         setSize({ width: widthPercent })
       }
     }
-  }, [CANVAS_PADDING, syncLayoutSnapshot, acquirePointerCapture])
+  }, [CANVAS_PADDING, syncLayoutSnapshot, acquirePointerCapture, setTouchLocked])
 
   const initialX = initialOffset?.x
   const initialY = initialOffset?.y
@@ -546,7 +550,7 @@ export function DraggableWrapper({
 
   const isPositioned = position.x !== null && position.y !== null
   const isMovingNote = isDragging || pendingDrag
-  const lockTouchAction = isDragging || isResizing || pendingDrag
+  const lockTouchAction = isDragging || isResizing
 
   const resizeHandleClassName =
     "absolute -right-3 -bottom-3 z-10 flex h-7 w-7 touch-none cursor-se-resize items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
