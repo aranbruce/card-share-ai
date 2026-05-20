@@ -126,7 +126,7 @@ export function DraggableWrapper({
   const [isDragging, setIsDragging] = useState(false)
   const [pendingDrag, setPendingDrag] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const [dragStarted, setDragStarted] = useState(false)
+  const dragStartedRef = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rotatedInnerRef = useRef<HTMLDivElement>(null)
   const gesturePointerRef = useRef<{
@@ -282,7 +282,7 @@ export function DraggableWrapper({
     setPendingDrag(false)
     setIsDragging(false)
     setIsResizing(false)
-    setDragStarted(false)
+    dragStartedRef.current = false
     releasePointerCapture()
     setTouchLocked(false)
     clearGestureListeners()
@@ -427,25 +427,25 @@ export function DraggableWrapper({
 
       const dx = e.clientX - startPos.current.x
       const dy = e.clientY - startPos.current.y
-      let dragging = isDragging
+      let phase = gesturePhaseRef.current
 
-      if (gesturePhaseRef.current === "pending") {
+      if (phase === "pending") {
         if (!pastDragThreshold(dx, dy, e.pointerType)) return
         acquirePointerCapture()
         e.preventDefault()
         window.getSelection()?.removeAllRanges()
         gesturePhaseRef.current = "drag"
+        phase = "drag"
         setPendingDrag(false)
         setIsDragging(true)
-        setDragStarted(true)
-        dragging = true
+        dragStartedRef.current = true
       }
 
-      if (dragging) {
-        if (!dragStarted) {
+      if (phase === "drag") {
+        if (!dragStartedRef.current) {
           if (!pastDragThreshold(dx, dy, e.pointerType)) return
           e.preventDefault()
-          setDragStarted(true)
+          dragStartedRef.current = true
         }
 
         if (containerRef.current) {
@@ -474,12 +474,12 @@ export function DraggableWrapper({
         }
       }
 
-      if (gesturePhaseRef.current === "resize" && containerRef.current) {
+      if (phase === "resize" && containerRef.current) {
         const bounds = getDraggableBoundsParent(containerRef.current)
         const canvasWidth = bounds
           ? bounds.clientWidth - CANVAS_PADDING * 2
           : containerRef.current.parentElement?.offsetWidth || 300
-        const currentLeft = layoutSnapshotRef.current.x ?? position.x ?? 0
+        const currentLeft = layoutSnapshotRef.current.x ?? 0
         const maxWidthPx = canvasWidth - currentLeft - CANVAS_PADDING
         const newWidthPx = (startPos.current.width / 100) * canvasWidth + dx
         const clampedWidthPx = Math.max(
@@ -491,22 +491,19 @@ export function DraggableWrapper({
         setSize({ width: widthPercent })
       }
     }
-  }, [
-    isDragging,
-    isResizing,
-    dragStarted,
-    position.x,
-    CANVAS_PADDING,
-    syncLayoutSnapshot,
-    acquirePointerCapture,
-  ])
+  }, [CANVAS_PADDING, syncLayoutSnapshot, acquirePointerCapture])
 
   const initialX = initialOffset?.x
   const initialY = initialOffset?.y
   useEffect(() => {
     if (typeof initialX !== "number" || typeof initialY !== "number") return
+    if (gesturePhaseRef.current !== "none") return
     queueMicrotask(() => {
-      setPosition({ x: initialX, y: initialY })
+      if (gesturePhaseRef.current !== "none") return
+      setPosition((prev) => {
+        if (prev.x === initialX && prev.y === initialY) return prev
+        return { x: initialX, y: initialY }
+      })
       syncLayoutSnapshot({ x: initialX, y: initialY })
     })
   }, [initialX, initialY, syncLayoutSnapshot])
