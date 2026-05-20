@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { isGatewayMultimodalImageModel } from "./card-cover-image-model"
 import {
   ALLOWED_ASPECT_RATIOS,
   parseAspectRatio,
@@ -40,6 +41,17 @@ describe("sizingForGenerateImage", () => {
 describe("DEFAULT_CARD_COVER_ASPECT_RATIO", () => {
   it("is allowlisted", () => {
     expect(parseAspectRatio(DEFAULT_CARD_COVER_ASPECT_RATIO)).toBe("4:5")
+  })
+})
+
+describe("isGatewayMultimodalImageModel", () => {
+  it("detects Gemini multimodal gateway image models", () => {
+    expect(
+      isGatewayMultimodalImageModel("google/gemini-3.1-flash-image-preview"),
+    ).toBe(true)
+    expect(
+      isGatewayMultimodalImageModel("google/imagen-4.0-generate-001"),
+    ).toBe(false)
   })
 })
 

@@ -1,6 +1,16 @@
 import { createFal } from "@ai-sdk/fal"
 
-const DEFAULT_GATEWAY_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
+/** Multimodal Gemini image models use `generateText` on the gateway, not `generateImage`. */
+export const DEFAULT_GATEWAY_MULTIMODAL_IMAGE_MODEL =
+  "google/gemini-3.1-flash-image-preview"
+
+const DEFAULT_GATEWAY_IMAGE_MODEL = DEFAULT_GATEWAY_MULTIMODAL_IMAGE_MODEL
+
+/** Gateway string models that return images via `generateText` + `result.files`. */
+export function isGatewayMultimodalImageModel(modelId: string): boolean {
+  const id = modelId.trim().toLowerCase()
+  return id.includes("gemini") && id.includes("image")
+}
 
 type FalImageModel = ReturnType<ReturnType<typeof createFal>["image"]>
 type GenerateImageParams = Parameters<typeof import("ai").generateImage>[0]
