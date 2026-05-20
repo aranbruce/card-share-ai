@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
 import { forCardDisplay, type Contribution } from "@/lib/card-body"
+import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
 import Link from "next/link"
 import { FileX2 } from "lucide-react"
 
@@ -71,8 +72,7 @@ export default function PublicCardPage() {
             <Skeleton className="mx-auto h-4 w-64 rounded-sm" />
           </section>
           <Skeleton
-            className="mx-auto w-full max-w-md rounded-2xl"
-            style={{ minHeight: "500px" }}
+            className={`mx-auto ${cardPreviewBlockClassName} rounded-2xl`}
           />
           <div className="mt-8 flex justify-center">
             <Skeleton className="h-12 w-52 rounded-xl" />

@@ -17,6 +17,7 @@ import { AppHeader } from "@/components/app-header"
 import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Paperclip, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
+import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 const TYPE_HUE: Record<string, number> = {
@@ -368,8 +369,7 @@ export default function CreateCardPage() {
                       <Skeleton className="h-8 w-24 rounded-full" />
                     </div>
                     <Skeleton
-                      className="w-full rounded-2xl shadow-xl"
-                      style={{ minHeight: 500 }}
+                      className={`${cardPreviewBlockClassName} rounded-2xl shadow-xl`}
                     />
                   </div>
                 ) : cardData ? (
@@ -579,8 +579,7 @@ export default function CreateCardPage() {
                 ) : (
                   /* Placeholder card — matches Card3D dimensions */
                   <div
-                    className="relative w-full max-w-md overflow-hidden rounded-2xl shadow-xl"
-                    style={{ minHeight: 500 }}
+                    className={`${cardPreviewBlockClassName} overflow-hidden rounded-2xl shadow-xl`}
                   >
                     <div
                       className="flex h-full w-full flex-col items-center justify-center"

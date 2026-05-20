@@ -3,6 +3,18 @@ const RATIO = /^\s*(\d+)\s*:\s*(\d+)\s*$/
 /** Matches greeting-card cover framing in the product UI (see dashboard card tiles). */
 export const DEFAULT_CARD_COVER_ASPECT_RATIO = "4:5" as const
 
+/** CSS `aspect-ratio` value for interactive card previews (same as generated covers). */
+export const CARD_PREVIEW_ASPECT_RATIO = "4 / 5" as const
+
+/** Max height (px) for create/detail/studio card previews at full width. */
+export const CARD_PREVIEW_MAX_HEIGHT_PX = 500
+
+/** Tailwind classes for the card shell inside a `max-w-md` wrapper. */
+export const cardPreviewFrameClassName = "aspect-[4/5] max-h-[500px] w-full"
+
+/** Full-width preview block including `max-w-md` (skeletons, placeholders). */
+export const cardPreviewBlockClassName = `relative max-w-md ${cardPreviewFrameClassName}`
+
 /** Single source of truth for API `aspectRatio` validation. */
 export const ALLOWED_ASPECT_RATIOS = [
   "4:5",

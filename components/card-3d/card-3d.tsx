@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { cardPreviewFrameClassName } from "@/lib/card-image-aspect"
 import type { Card3DProps } from "./types"
 import {
   RegenerateShimmerOverlay,
@@ -455,7 +456,9 @@ export function Card3D({
               : contributeOverlay}
           </div>
         ) : null}
-        <div className="relative flex min-h-[500px] w-full flex-col overflow-visible rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out dark:ring-white/10">
+        <div
+          className={`${cardPreviewFrameClassName} flex flex-col overflow-visible rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out dark:ring-white/10`}
+        >
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-2xl">
             <div className="absolute inset-0 bg-linear-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900" />
             <div
@@ -470,12 +473,12 @@ export function Card3D({
             )}
           </div>
 
-          <div className="relative z-10 flex flex-1 flex-col">
+          <div className="relative z-10 flex min-h-0 flex-1 flex-col">
             {currentPage === 0 ? (
-              <div className="relative flex flex-1 flex-col">
+              <div className="relative flex min-h-0 flex-1 flex-col">
                 <>
                   {isGeneratingImage && !imageUrl ? (
-                    <div className="relative min-h-[280px] w-full flex-1 overflow-hidden rounded-2xl bg-border">
+                    <div className="relative min-h-0 w-full flex-1 overflow-hidden rounded-2xl bg-border">
                       <RegenerateShimmerOverlay
                         tone="cover"
                         className="z-10 rounded-2xl"
@@ -532,7 +535,7 @@ export function Card3D({
               </div>
             ) : (
               <div
-                className="relative flex min-h-[460px] flex-1 flex-col p-1"
+                className="relative flex min-h-0 flex-1 flex-col p-1"
                 data-card-canvas
               >
                 <p className="mb-1 shrink-0 px-5 pt-5 text-xs font-medium tracking-wider text-muted-foreground uppercase">
