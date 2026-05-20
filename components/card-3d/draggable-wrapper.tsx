@@ -24,11 +24,18 @@ export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
 export const CANVAS_EDGE_PADDING = 12
 
 const DRAG_THRESHOLD_PX = 5
+const DRAG_THRESHOLD_TOUCH_PX = 3
 
 type GesturePhase = "none" | "pending" | "drag" | "resize"
 
-function pastDragThreshold(dx: number, dy: number): boolean {
-  return Math.abs(dx) >= DRAG_THRESHOLD_PX || Math.abs(dy) >= DRAG_THRESHOLD_PX
+function pastDragThreshold(
+  dx: number,
+  dy: number,
+  pointerType?: string,
+): boolean {
+  const threshold =
+    pointerType === "touch" ? DRAG_THRESHOLD_TOUCH_PX : DRAG_THRESHOLD_PX
+  return Math.abs(dx) >= threshold || Math.abs(dy) >= threshold
 }
 
 /** Containing block for `position: absolute` on the draggable — same box `left`/`top` use. */
@@ -130,7 +137,8 @@ export function DraggableWrapper({
     el: HTMLElement
     pointerId: number
   } | null>(null)
-  const pointerEndAbortRef = useRef<AbortController | null>(null)
+  const gestureListenersAbortRef = useRef<AbortController | null>(null)
+  const pointerMoveHandlerRef = useRef<(e: PointerEvent) => void>(() => {})
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const gesturePhaseRef = useRef<GesturePhase>("none")
   const layoutSnapshotRef = useRef({
@@ -239,6 +247,18 @@ export function DraggableWrapper({
     gesturePointerRef.current = null
   }, [])
 
+  const setTouchLocked = useCallback((locked: boolean) => {
+    const el = containerRef.current
+    if (!el) return
+    el.classList.toggle("touch-none", locked)
+    el.classList.toggle("select-none", locked)
+  }, [])
+
+  const clearGestureListeners = useCallback(() => {
+    gestureListenersAbortRef.current?.abort()
+    gestureListenersAbortRef.current = null
+  }, [])
+
   const endGesture = useCallback(() => {
     const phase = gesturePhaseRef.current
     if (phase === "none") return
@@ -264,38 +284,43 @@ export function DraggableWrapper({
     setIsResizing(false)
     setDragStarted(false)
     releasePointerCapture()
-  }, [onLayoutCommit, releasePointerCapture])
+    setTouchLocked(false)
+    clearGestureListeners()
+  }, [
+    onLayoutCommit,
+    releasePointerCapture,
+    setTouchLocked,
+    clearGestureListeners,
+  ])
 
-  const clearPointerEndListeners = useCallback(() => {
-    pointerEndAbortRef.current?.abort()
-    pointerEndAbortRef.current = null
-  }, [])
-
-  const bindWindowPointerEnd = useCallback(
+  const bindGestureListeners = useCallback(
     (pointerId: number) => {
-      clearPointerEndListeners()
+      clearGestureListeners()
       const controller = new AbortController()
-      pointerEndAbortRef.current = controller
+      gestureListenersAbortRef.current = controller
+      const { signal } = controller
 
       const onEnd = (ev: PointerEvent) => {
         if (ev.pointerId !== pointerId) return
-        clearPointerEndListeners()
         endGesture()
       }
 
-      const opts = { once: true, signal: controller.signal } as const
-      window.addEventListener("pointerup", onEnd, opts)
-      window.addEventListener("pointercancel", onEnd, opts)
+      window.addEventListener("pointermove", (e) => {
+        pointerMoveHandlerRef.current(e)
+      }, { signal })
+      window.addEventListener("pointerup", onEnd, { signal })
+      window.addEventListener("pointercancel", onEnd, { signal })
     },
-    [clearPointerEndListeners, endGesture],
+    [clearGestureListeners, endGesture],
   )
 
   useEffect(() => {
     return () => {
-      clearPointerEndListeners()
+      clearGestureListeners()
       releasePointerCapture()
+      setTouchLocked(false)
     }
-  }, [clearPointerEndListeners, releasePointerCapture])
+  }, [clearGestureListeners, releasePointerCapture, setTouchLocked])
 
   const syncLayoutSnapshot = useCallback(
     (patch: Partial<typeof layoutSnapshotRef.current>) => {
@@ -377,7 +402,8 @@ export function DraggableWrapper({
         setIsResizing(true)
       }
 
-      bindWindowPointerEnd(e.pointerId)
+      setTouchLocked(true)
+      bindGestureListeners(e.pointerId)
     },
     [
       editable,
@@ -385,12 +411,13 @@ export function DraggableWrapper({
       position.y,
       size.width,
       syncLayoutSnapshot,
-      bindWindowPointerEnd,
+      setTouchLocked,
+      bindGestureListeners,
     ],
   )
 
   useEffect(() => {
-    const handlePointerMove = (e: PointerEvent) => {
+    pointerMoveHandlerRef.current = (e: PointerEvent) => {
       if (!gesturePointerRef.current || gesturePhaseRef.current === "none") {
         return
       }
@@ -403,7 +430,7 @@ export function DraggableWrapper({
       let dragging = isDragging
 
       if (gesturePhaseRef.current === "pending") {
-        if (!pastDragThreshold(dx, dy)) return
+        if (!pastDragThreshold(dx, dy, e.pointerType)) return
         acquirePointerCapture()
         e.preventDefault()
         window.getSelection()?.removeAllRanges()
@@ -416,7 +443,7 @@ export function DraggableWrapper({
 
       if (dragging) {
         if (!dragStarted) {
-          if (!pastDragThreshold(dx, dy)) return
+          if (!pastDragThreshold(dx, dy, e.pointerType)) return
           e.preventDefault()
           setDragStarted(true)
         }
@@ -464,17 +491,8 @@ export function DraggableWrapper({
         setSize({ width: widthPercent })
       }
     }
-
-    if (isDragging || isResizing || pendingDrag) {
-      window.addEventListener("pointermove", handlePointerMove)
-    }
-
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove)
-    }
   }, [
     isDragging,
-    pendingDrag,
     isResizing,
     dragStarted,
     position.x,
@@ -532,7 +550,7 @@ export function DraggableWrapper({
 
   const isPositioned = position.x !== null && position.y !== null
   const isMovingNote = isDragging || pendingDrag
-  const lockTouchAction = isDragging || isResizing
+  const lockTouchAction = isDragging || isResizing || pendingDrag
 
   const resizeHandleClassName =
     "absolute -right-3 -bottom-3 z-10 flex h-7 w-7 touch-none cursor-se-resize items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"

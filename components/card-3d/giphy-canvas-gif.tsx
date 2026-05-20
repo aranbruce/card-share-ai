@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import {
   noteMoveCursorClass,
+  noteMoveTouchClass,
   useDraggableNoteMove,
 } from "./draggable-note-context"
 
@@ -31,13 +32,14 @@ export function GiphyCanvasGif({
       onPointerDown={
         moveDrag
           ? (e) => {
-              moveDrag.onMovePointerDown(e, { deferUntilDrag: true })
+              moveDrag.onMovePointerDown(e)
             }
           : undefined
       }
       className={cn(
         "mx-auto block h-auto max-h-[min(40vh,280px)] w-auto max-w-full object-contain",
         noteMoveCursorClass(moveDrag),
+        noteMoveTouchClass(moveDrag),
         className,
       )}
       loading="lazy"
