@@ -56,9 +56,7 @@ const Button = React.forwardRef<
   )
 
   if (asChild) {
-    return (
-      <Slot ref={ref} data-slot="button" className={classes} {...props} />
-    )
+    return <Slot ref={ref} data-slot="button" className={classes} {...props} />
   }
 
   return (

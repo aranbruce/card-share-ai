@@ -35,7 +35,10 @@ export function useCopyToClipboard() {
       requestAnimationFrame(() => {
         setError("")
         setCopied(true)
-        resetTimeoutRef.current = window.setTimeout(() => setCopied(false), 2000)
+        resetTimeoutRef.current = window.setTimeout(
+          () => setCopied(false),
+          2000,
+        )
         options?.onSuccess?.()
       })
     }
