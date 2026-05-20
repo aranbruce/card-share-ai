@@ -3,9 +3,7 @@ import { createFal } from "@ai-sdk/fal"
 const DEFAULT_GATEWAY_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview"
 
 type FalImageModel = ReturnType<ReturnType<typeof createFal>["image"]>
-type GenerateImageParams = Parameters<
-  typeof import("ai").generateImage
->[0]
+type GenerateImageParams = Parameters<typeof import("ai").generateImage>[0]
 
 function falApiKey(): string | undefined {
   const k = process.env.FAL_API_KEY?.trim() || process.env.FAL_KEY?.trim()
