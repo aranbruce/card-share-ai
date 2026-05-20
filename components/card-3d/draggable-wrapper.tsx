@@ -14,7 +14,7 @@ import { Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   acquireCardGestureScrollLock,
-  releaseCardGestureScrollLock,
+  type CardGestureScrollLockRelease,
 } from "@/lib/card-gesture-scroll-lock"
 import {
   DraggableNoteMoveContext,
@@ -148,6 +148,7 @@ export function DraggableWrapper({
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const gesturePhaseRef = useRef<GesturePhase>("none")
   const suppressNextClickAfterDragRef = useRef(false)
+  const scrollLockReleaseRef = useRef<CardGestureScrollLockRelease | null>(null)
 
   const consumeSuppressNextClickAfterDrag = useCallback(() => {
     if (!suppressNextClickAfterDragRef.current) return false
@@ -300,17 +301,22 @@ export function DraggableWrapper({
 
   const shouldLockScroll = isDragging || isResizing || touchPendingScrollLock
 
+  const releaseScrollLock = useCallback(() => {
+    scrollLockReleaseRef.current?.()
+    scrollLockReleaseRef.current = null
+  }, [])
+
   useLayoutEffect(() => {
     const el = containerRef.current
     if (!shouldLockScroll || !el) {
-      releaseCardGestureScrollLock()
+      releaseScrollLock()
       return
     }
-    acquireCardGestureScrollLock(el)
+    scrollLockReleaseRef.current = acquireCardGestureScrollLock(el)
     return () => {
-      releaseCardGestureScrollLock()
+      releaseScrollLock()
     }
-  }, [shouldLockScroll])
+  }, [shouldLockScroll, releaseScrollLock])
 
   const bindGestureListeners = useCallback(
     (pointerId: number) => {
@@ -341,9 +347,9 @@ export function DraggableWrapper({
     return () => {
       clearGestureListeners()
       releasePointerCapture()
-      releaseCardGestureScrollLock()
+      releaseScrollLock()
     }
-  }, [clearGestureListeners, releasePointerCapture])
+  }, [clearGestureListeners, releasePointerCapture, releaseScrollLock])
 
   const syncLayoutSnapshot = useCallback(
     (patch: Partial<typeof layoutSnapshotRef.current>) => {

@@ -30,9 +30,9 @@ function lockElement(el: HTMLElement, mode: LockMode) {
 const lockCounts = new Map<HTMLElement, number>()
 const savedStyles = new Map<HTMLElement, SavedStyles>()
 
-let lockDepth = 0
-let activeFullTargets: HTMLElement[] = []
-let activeTouchOnlyTargets: HTMLElement[] = []
+function isDocumentRoot(el: HTMLElement): boolean {
+  return el === document.documentElement || el === document.body
+}
 
 function isScrollable(el: HTMLElement): boolean {
   const style = getComputedStyle(el)
@@ -62,11 +62,11 @@ export function collectCardGestureScrollLockTargets(
 ): CardGestureScrollLockTargets {
   const targets = new Set<HTMLElement>()
   const canvas = anchor.closest("[data-card-canvas]") as HTMLElement | null
-  if (canvas) targets.add(canvas)
+  if (canvas && !isDocumentRoot(canvas)) targets.add(canvas)
 
   let parent: HTMLElement | null = anchor.parentElement
   while (parent) {
-    if (isScrollable(parent)) targets.add(parent)
+    if (!isDocumentRoot(parent) && isScrollable(parent)) targets.add(parent)
     parent = parent.parentElement
   }
 
@@ -92,33 +92,30 @@ function unlockElement(el: HTMLElement) {
   }
 }
 
-/** Lock page + nested scrollers while a note drag/resize is active. */
-export function acquireCardGestureScrollLock(anchor: HTMLElement) {
-  if (lockDepth === 0) {
-    const { full, touchOnly } = collectCardGestureScrollLockTargets(anchor)
-    activeFullTargets = full
-    activeTouchOnlyTargets = touchOnly
-    for (const el of full) {
-      lockElement(el, "full")
-    }
-    for (const el of touchOnly) {
-      lockElement(el, "touchOnly")
-    }
-  }
-  lockDepth++
-}
+export type CardGestureScrollLockRelease = () => void
 
-export function releaseCardGestureScrollLock() {
-  if (lockDepth <= 0) return
-  lockDepth--
-  if (lockDepth === 0) {
-    for (const el of activeFullTargets) {
+/** Lock page + nested scrollers while a note drag/resize is active. */
+export function acquireCardGestureScrollLock(
+  anchor: HTMLElement,
+): CardGestureScrollLockRelease {
+  const { full, touchOnly } = collectCardGestureScrollLockTargets(anchor)
+  const lockedElements: HTMLElement[] = []
+
+  for (const el of full) {
+    lockElement(el, "full")
+    lockedElements.push(el)
+  }
+  for (const el of touchOnly) {
+    lockElement(el, "touchOnly")
+    lockedElements.push(el)
+  }
+
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    for (const el of lockedElements) {
       unlockElement(el)
     }
-    for (const el of activeTouchOnlyTargets) {
-      unlockElement(el)
-    }
-    activeFullTargets = []
-    activeTouchOnlyTargets = []
   }
 }
