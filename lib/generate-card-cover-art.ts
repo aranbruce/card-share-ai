@@ -20,11 +20,14 @@ export type CardCoverArtContext = {
 
 /** Build a data URL from a generated image; prefer bytes so plain `{ uint8Array }` parts work. */
 export function generatedCoverImageToDataUrl(file: GeneratedFile): string {
-  const bytes =
-    file.uint8Array instanceof Uint8Array
-      ? file.uint8Array
-      : Buffer.from(file.base64, "base64")
-  return `data:${file.mediaType};base64,${Buffer.from(bytes).toString("base64")}`
+  const mediaType = file.mediaType.split(";")[0].trim() || "image/png"
+  if (file.uint8Array instanceof Uint8Array) {
+    return `data:${mediaType};base64,${Buffer.from(file.uint8Array).toString("base64")}`
+  }
+  if (typeof file.base64 === "string" && file.base64.length > 0) {
+    return `data:${mediaType};base64,${file.base64}`
+  }
+  throw new Error("Generated image has no uint8Array or base64 payload")
 }
 
 /**
