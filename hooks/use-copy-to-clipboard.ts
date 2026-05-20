@@ -18,28 +18,39 @@ export function useCopyToClipboard() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState("")
   const resetTimeoutRef = useRef<number | null>(null)
+  const markCopiedRafRef = useRef<number | null>(null)
+
+  const cancelMarkCopiedRaf = useCallback(() => {
+    if (markCopiedRafRef.current !== null) {
+      cancelAnimationFrame(markCopiedRafRef.current)
+      markCopiedRafRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     return () => {
+      cancelMarkCopiedRaf()
       if (resetTimeoutRef.current !== null) {
         clearTimeout(resetTimeoutRef.current)
       }
     }
-  }, [])
+  }, [cancelMarkCopiedRaf])
 
   const copy = useCallback((text: string, options?: CopyToClipboardOptions) => {
     const markCopied = () => {
       if (resetTimeoutRef.current !== null) {
         clearTimeout(resetTimeoutRef.current)
       }
-      requestAnimationFrame(() => {
+      cancelMarkCopiedRaf()
+      options?.onSuccess?.()
+      markCopiedRafRef.current = requestAnimationFrame(() => {
+        markCopiedRafRef.current = null
         setError("")
         setCopied(true)
         resetTimeoutRef.current = window.setTimeout(
           () => setCopied(false),
           2000,
         )
-        options?.onSuccess?.()
       })
     }
 
@@ -47,6 +58,7 @@ export function useCopyToClipboard() {
       if (resetTimeoutRef.current !== null) {
         clearTimeout(resetTimeoutRef.current)
       }
+      cancelMarkCopiedRaf()
       setCopied(false)
       setError(COPY_TO_CLIPBOARD_ERROR)
     }
@@ -70,15 +82,16 @@ export function useCopyToClipboard() {
 
     markFailed()
     return false
-  }, [])
+  }, [cancelMarkCopiedRaf])
 
   const reset = useCallback(() => {
+    cancelMarkCopiedRaf()
     if (resetTimeoutRef.current !== null) {
       clearTimeout(resetTimeoutRef.current)
     }
     setCopied(false)
     setError("")
-  }, [])
+  }, [cancelMarkCopiedRaf])
 
   return { copied, error, copy, reset }
 }
