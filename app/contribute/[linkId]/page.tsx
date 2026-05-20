@@ -84,7 +84,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
   const preComposeDraftRef = useRef(preComposeDraft)
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const layoutSaveGenerationRef = useRef(0)
+  const saveGenerationRef = useRef(0)
   const gifSaveTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
     new Map(),
   )
@@ -202,8 +202,9 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         rotationDegrees?: number | null
       },
       editToken: string,
-      layoutGeneration?: number,
+      saveGeneration?: number,
     ) => {
+      const generation = saveGeneration ?? ++saveGenerationRef.current
       const response = await fetch(`/api/contribute/${linkId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -217,10 +218,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         )
         return
       }
-      if (
-        layoutGeneration !== undefined &&
-        layoutGeneration !== layoutSaveGenerationRef.current
-      ) {
+      if (generation !== saveGenerationRef.current) {
         return
       }
       if (Array.isArray(payload.contributions)) {
@@ -244,9 +242,15 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
+      const saveGeneration = ++saveGenerationRef.current
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
-        void saveContributionPatch(contributionId, { message: value }, token)
+        void saveContributionPatch(
+          contributionId,
+          { message: value },
+          token,
+          saveGeneration,
+        )
       }, 600)
     },
     [contributionEditTokens, saveContributionPatch],
@@ -265,6 +269,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       if (!token) return
       const existing = gifSaveTimersRef.current.get(contributionId)
       if (existing) clearTimeout(existing)
+      const saveGeneration = ++saveGenerationRef.current
       gifSaveTimersRef.current.set(
         contributionId,
         setTimeout(() => {
@@ -273,6 +278,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             contributionId,
             { giphyUrl, ...(currentMessage && { message: currentMessage }) },
             token,
+            saveGeneration,
           )
         }, 200),
       )
@@ -317,7 +323,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       )
       const token = contributionEditTokens[contributionId]
       if (!token) return
-      const layoutGeneration = ++layoutSaveGenerationRef.current
+      const saveGeneration = ++saveGenerationRef.current
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         void saveContributionPatch(
@@ -336,7 +342,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             }),
           },
           token,
-          layoutGeneration,
+          saveGeneration,
         )
       }, 200)
     },
@@ -414,7 +420,13 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             c.id === contributionId ? { ...c, message: next } : c,
           ),
         )
-        await saveContributionPatch(contributionId, { message: next }, token)
+        const saveGeneration = ++saveGenerationRef.current
+        await saveContributionPatch(
+          contributionId,
+          { message: next },
+          token,
+          saveGeneration,
+        )
       } catch (e) {
         console.error(e)
       } finally {

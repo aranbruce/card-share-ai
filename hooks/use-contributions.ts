@@ -42,7 +42,7 @@ export function useContributions({
   const scheduleMessageSave = useDebouncedSave(600)
   const scheduleLayoutSave = useDebouncedSave(200)
   const scheduleGifSave = useDebouncedSave(200)
-  const layoutSaveGenerationRef = useRef(0)
+  const saveGenerationRef = useRef(0)
 
   const creatorRow = useMemo(
     () => contributions.find((c) => Boolean(c.is_creator)),
@@ -53,17 +53,15 @@ export function useContributions({
     async (
       contributionId: string,
       updates: ContributionPatchArgs,
-      layoutGeneration?: number,
+      saveGeneration?: number,
     ) => {
+      const generation = saveGeneration ?? ++saveGenerationRef.current
       try {
         const p = await apiPatch<{
           contributions?: Contribution[]
           extra_pages?: number
         }>(`/api/cards/${cardId}/contributions`, { contributionId, ...updates })
-        if (
-          layoutGeneration !== undefined &&
-          layoutGeneration !== layoutSaveGenerationRef.current
-        ) {
+        if (generation !== saveGenerationRef.current) {
           return
         }
         if (Array.isArray(p.contributions)) {
@@ -89,8 +87,13 @@ export function useContributions({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
+      const saveGeneration = ++saveGenerationRef.current
       scheduleMessageSave(() => {
-        void saveContributionPatch(contributionId, { message: value })
+        void saveContributionPatch(
+          contributionId,
+          { message: value },
+          saveGeneration,
+        )
       })
     },
     [creatorRow, scheduleMessageSave, saveContributionPatch, setContributions],
@@ -132,7 +135,7 @@ export function useContributions({
         ),
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
-      const layoutGeneration = ++layoutSaveGenerationRef.current
+      const saveGeneration = ++saveGenerationRef.current
       scheduleLayoutSave(() => {
         void saveContributionPatch(
           contributionId,
@@ -149,7 +152,7 @@ export function useContributions({
               rotationDegrees: layout.rotationDegrees,
             }),
           },
-          layoutGeneration,
+          saveGeneration,
         )
       })
     },
@@ -199,11 +202,16 @@ export function useContributions({
       )
       if (!creatorRow || contributionId !== creatorRow.id) return
       const currentMessage = creatorRow.message
+      const saveGeneration = ++saveGenerationRef.current
       scheduleGifSave(() => {
-        void saveContributionPatch(contributionId, {
-          giphyUrl,
-          ...(currentMessage && { message: currentMessage }),
-        })
+        void saveContributionPatch(
+          contributionId,
+          {
+            giphyUrl,
+            ...(currentMessage && { message: currentMessage }),
+          },
+          saveGeneration,
+        )
       })
     },
     [creatorRow, scheduleGifSave, saveContributionPatch, setContributions],
@@ -232,7 +240,8 @@ export function useContributions({
             c.id === contributionId ? { ...c, message: next } : c,
           ),
         )
-        await saveContributionPatch(contributionId, { message: next })
+        const saveGeneration = ++saveGenerationRef.current
+        await saveContributionPatch(contributionId, { message: next }, saveGeneration)
       } catch (e) {
         console.error(e)
       }
