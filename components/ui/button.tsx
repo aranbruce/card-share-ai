@@ -38,7 +38,7 @@ const buttonVariants = cva(
 )
 
 const Button = React.forwardRef<
-  HTMLElement,
+  HTMLButtonElement,
   React.ComponentProps<"button"> &
     VariantProps<typeof buttonVariants> & {
       asChild?: boolean
@@ -56,16 +56,18 @@ const Button = React.forwardRef<
   )
 
   if (asChild) {
-    return <Slot ref={ref} data-slot="button" className={classes} {...props} />
+    return (
+      <Slot
+        ref={ref as React.Ref<HTMLElement>}
+        data-slot="button"
+        className={classes}
+        {...props}
+      />
+    )
   }
 
   return (
-    <button
-      ref={ref as React.Ref<HTMLButtonElement>}
-      data-slot="button"
-      className={classes}
-      {...props}
-    />
+    <button ref={ref} data-slot="button" className={classes} {...props} />
   )
 })
 
