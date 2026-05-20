@@ -32,7 +32,7 @@ export function GiphyCanvasGif({
       onPointerDown={
         moveDrag
           ? (e) => {
-              moveDrag.onMovePointerDown(e)
+              moveDrag.onMovePointerDown(e, { deferUntilDrag: true })
             }
           : undefined
       }

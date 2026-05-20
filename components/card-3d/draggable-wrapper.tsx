@@ -13,6 +13,10 @@ import {
 import { Maximize2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
+  acquireCardGestureScrollLock,
+  type CardGestureScrollLockRelease,
+} from "@/lib/card-gesture-scroll-lock"
+import {
   DraggableNoteMoveContext,
   type DraggableNoteMoveContextValue,
 } from "./draggable-note-context"
@@ -126,7 +130,7 @@ export function DraggableWrapper({
   const [isDragging, setIsDragging] = useState(false)
   const [pendingDrag, setPendingDrag] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
-  const dragStartedRef = useRef(false)
+  const [touchPendingScrollLock, setTouchPendingScrollLock] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const rotatedInnerRef = useRef<HTMLDivElement>(null)
   const gesturePointerRef = useRef<{
@@ -143,6 +147,15 @@ export function DraggableWrapper({
   const hasInitializedWidthRef = useRef(false)
   const startPos = useRef({ x: 0, y: 0, posX: 0, posY: 0, width: 100 })
   const gesturePhaseRef = useRef<GesturePhase>("none")
+  const suppressNextClickAfterDragRef = useRef(false)
+  const scrollLockReleaseRef = useRef<CardGestureScrollLockRelease | null>(null)
+
+  const consumeSuppressNextClickAfterDrag = useCallback(() => {
+    if (!suppressNextClickAfterDragRef.current) return false
+    suppressNextClickAfterDragRef.current = false
+    return true
+  }, [])
+
   const layoutSnapshotRef = useRef({
     x: null as number | null,
     y: null as number | null,
@@ -249,13 +262,6 @@ export function DraggableWrapper({
     gesturePointerRef.current = null
   }, [])
 
-  const setTouchLocked = useCallback((locked: boolean) => {
-    const el = containerRef.current
-    if (!el) return
-    el.classList.toggle("touch-none", locked)
-    el.classList.toggle("select-none", locked)
-  }, [])
-
   const clearGestureListeners = useCallback(() => {
     gestureListenersAbortRef.current?.abort()
     gestureListenersAbortRef.current = null
@@ -264,6 +270,10 @@ export function DraggableWrapper({
   const endGesture = useCallback(() => {
     const phase = gesturePhaseRef.current
     if (phase === "none") return
+
+    if (phase === "drag") {
+      suppressNextClickAfterDragRef.current = true
+    }
 
     const snapshot = layoutSnapshotRef.current
 
@@ -284,16 +294,29 @@ export function DraggableWrapper({
     setPendingDrag(false)
     setIsDragging(false)
     setIsResizing(false)
-    dragStartedRef.current = false
+    setTouchPendingScrollLock(false)
     releasePointerCapture()
-    setTouchLocked(false)
     clearGestureListeners()
-  }, [
-    onLayoutCommit,
-    releasePointerCapture,
-    setTouchLocked,
-    clearGestureListeners,
-  ])
+  }, [onLayoutCommit, releasePointerCapture, clearGestureListeners])
+
+  const shouldLockScroll = isDragging || isResizing || touchPendingScrollLock
+
+  const releaseScrollLock = useCallback(() => {
+    scrollLockReleaseRef.current?.()
+    scrollLockReleaseRef.current = null
+  }, [])
+
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!shouldLockScroll || !el) {
+      releaseScrollLock()
+      return
+    }
+    scrollLockReleaseRef.current = acquireCardGestureScrollLock(el)
+    return () => {
+      releaseScrollLock()
+    }
+  }, [shouldLockScroll, releaseScrollLock])
 
   const bindGestureListeners = useCallback(
     (pointerId: number) => {
@@ -307,9 +330,13 @@ export function DraggableWrapper({
         endGesture()
       }
 
-      window.addEventListener("pointermove", (e) => {
-        pointerMoveHandlerRef.current(e)
-      }, { signal })
+      window.addEventListener(
+        "pointermove",
+        (e) => {
+          pointerMoveHandlerRef.current(e)
+        },
+        { signal },
+      )
       window.addEventListener("pointerup", onEnd, { signal })
       window.addEventListener("pointercancel", onEnd, { signal })
     },
@@ -320,9 +347,9 @@ export function DraggableWrapper({
     return () => {
       clearGestureListeners()
       releasePointerCapture()
-      setTouchLocked(false)
+      releaseScrollLock()
     }
-  }, [clearGestureListeners, releasePointerCapture, setTouchLocked])
+  }, [clearGestureListeners, releasePointerCapture, releaseScrollLock])
 
   const syncLayoutSnapshot = useCallback(
     (patch: Partial<typeof layoutSnapshotRef.current>) => {
@@ -341,6 +368,11 @@ export function DraggableWrapper({
       if (e.button !== 0 || !e.isPrimary) return
       if (gesturePhaseRef.current !== "none") return
       e.stopPropagation()
+
+      // A new drag gesture — clear stale suppress from a prior drag that never got a ghost `click`.
+      if (type === "drag") {
+        suppressNextClickAfterDragRef.current = false
+      }
 
       const deferUntilDrag = options?.deferUntilDrag === true && type === "drag"
       if (!deferUntilDrag) {
@@ -393,6 +425,7 @@ export function DraggableWrapper({
       if (type === "drag") {
         if (deferUntilDrag) {
           gesturePhaseRef.current = "pending"
+          setTouchPendingScrollLock(e.pointerType === "touch")
           setPendingDrag(true)
         } else {
           gesturePhaseRef.current = "drag"
@@ -404,10 +437,6 @@ export function DraggableWrapper({
         setIsResizing(true)
       }
 
-      // Deferred text drag: allow page scroll until threshold; GIF/resize lock immediately.
-      if (!deferUntilDrag) {
-        setTouchLocked(true)
-      }
       bindGestureListeners(e.pointerId)
     },
     [
@@ -416,7 +445,6 @@ export function DraggableWrapper({
       position.y,
       size.width,
       syncLayoutSnapshot,
-      setTouchLocked,
       bindGestureListeners,
     ],
   )
@@ -443,15 +471,11 @@ export function DraggableWrapper({
         phase = "drag"
         setPendingDrag(false)
         setIsDragging(true)
-        dragStartedRef.current = true
-        setTouchLocked(true)
       }
 
       if (phase === "drag") {
-        if (!dragStartedRef.current) {
-          if (!pastDragThreshold(dx, dy, e.pointerType)) return
+        if (e.pointerType === "touch") {
           e.preventDefault()
-          dragStartedRef.current = true
         }
 
         if (containerRef.current) {
@@ -481,6 +505,9 @@ export function DraggableWrapper({
       }
 
       if (phase === "resize" && containerRef.current) {
+        if (e.pointerType === "touch") {
+          e.preventDefault()
+        }
         const bounds = getDraggableBoundsParent(containerRef.current)
         const canvasWidth = bounds
           ? bounds.clientWidth - CANVAS_PADDING * 2
@@ -497,7 +524,7 @@ export function DraggableWrapper({
         setSize({ width: widthPercent })
       }
     }
-  }, [CANVAS_PADDING, syncLayoutSnapshot, acquirePointerCapture, setTouchLocked])
+  }, [CANVAS_PADDING, syncLayoutSnapshot, acquirePointerCapture])
 
   const initialX = initialOffset?.x
   const initialY = initialOffset?.y
@@ -507,16 +534,20 @@ export function DraggableWrapper({
     if (hasInitializedPositionRef.current) return
     if (typeof initialX !== "number" || typeof initialY !== "number") return
     hasInitializedPositionRef.current = true
-    setPosition({ x: initialX, y: initialY })
-    syncLayoutSnapshot({ x: initialX, y: initialY })
+    queueMicrotask(() => {
+      setPosition({ x: initialX, y: initialY })
+      syncLayoutSnapshot({ x: initialX, y: initialY })
+    })
   }, [initialX, initialY, syncLayoutSnapshot])
 
   useEffect(() => {
     if (hasInitializedWidthRef.current) return
     if (typeof initialWidthPercent !== "number") return
     hasInitializedWidthRef.current = true
-    setSize({ width: initialWidthPercent })
-    syncLayoutSnapshot({ widthPercent: initialWidthPercent })
+    queueMicrotask(() => {
+      setSize({ width: initialWidthPercent })
+      syncLayoutSnapshot({ widthPercent: initialWidthPercent })
+    })
   }, [initialWidthPercent, syncLayoutSnapshot])
 
   useLayoutEffect(() => {
@@ -550,7 +581,7 @@ export function DraggableWrapper({
 
   const isPositioned = position.x !== null && position.y !== null
   const isMovingNote = isDragging || pendingDrag
-  const lockTouchAction = isDragging || isResizing
+  const lockTouchAction = isDragging || isResizing || touchPendingScrollLock
 
   const resizeHandleClassName =
     "absolute -right-3 -bottom-3 z-10 flex h-7 w-7 touch-none cursor-se-resize items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
@@ -562,9 +593,15 @@ export function DraggableWrapper({
             onMovePointerDown: (e, options) =>
               handlePointerDown(e, "drag", options),
             isMovingNote,
+            consumeSuppressNextClickAfterDrag,
           }
         : null,
-    [editable, handlePointerDown, isMovingNote],
+    [
+      editable,
+      handlePointerDown,
+      isMovingNote,
+      consumeSuppressNextClickAfterDrag,
+    ],
   )
 
   return (
