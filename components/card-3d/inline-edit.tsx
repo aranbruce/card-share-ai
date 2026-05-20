@@ -22,6 +22,7 @@ import { ArrowUp, X } from "lucide-react"
 import { CANVAS_EDGE_PADDING } from "./draggable-wrapper"
 import {
   noteMoveCursorClass,
+  noteMoveTouchClass,
   useDraggableNoteMove,
 } from "./draggable-note-context"
 
@@ -158,6 +159,7 @@ export const InlineEdit = forwardRef<
 
   const handleClick = (e: MouseEvent) => {
     if (isGenerating) return
+    if (moveDrag?.consumeSuppressNextClickAfterDrag()) return
     if (editable && onChange) {
       e.stopPropagation()
       setIsEditing(true)
@@ -382,6 +384,7 @@ export const InlineEdit = forwardRef<
             className,
             editable && onChange && "rounded px-1",
             canDragNote && !isEditing && noteMoveCursorClass(moveDrag),
+            canDragNote && !isEditing && noteMoveTouchClass(moveDrag),
             editable &&
               onChange &&
               !isEditing &&

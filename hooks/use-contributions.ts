@@ -59,8 +59,7 @@ export function useContributions({
       saveGeneration?: number,
     ) => {
       const tracker = saveGenerationTrackerRef.current
-      const generation =
-        saveGeneration ?? tracker.next(contributionId)
+      const generation = saveGeneration ?? tracker.next(contributionId)
       try {
         const p = await apiPatch<{
           contributions?: Contribution[]
@@ -250,7 +249,11 @@ export function useContributions({
         )
         const saveGeneration =
           saveGenerationTrackerRef.current.next(contributionId)
-        await saveContributionPatch(contributionId, { message: next }, saveGeneration)
+        await saveContributionPatch(
+          contributionId,
+          { message: next },
+          saveGeneration,
+        )
       } catch (e) {
         console.error(e)
       }

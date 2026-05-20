@@ -36,53 +36,56 @@ export function useCopyToClipboard() {
     }
   }, [cancelMarkCopiedRaf])
 
-  const copy = useCallback((text: string, options?: CopyToClipboardOptions) => {
-    const markCopied = () => {
-      if (resetTimeoutRef.current !== null) {
-        clearTimeout(resetTimeoutRef.current)
+  const copy = useCallback(
+    (text: string, options?: CopyToClipboardOptions) => {
+      const markCopied = () => {
+        if (resetTimeoutRef.current !== null) {
+          clearTimeout(resetTimeoutRef.current)
+        }
+        cancelMarkCopiedRaf()
+        options?.onSuccess?.()
+        markCopiedRafRef.current = requestAnimationFrame(() => {
+          markCopiedRafRef.current = null
+          setError("")
+          setCopied(true)
+          resetTimeoutRef.current = window.setTimeout(
+            () => setCopied(false),
+            2000,
+          )
+        })
       }
-      cancelMarkCopiedRaf()
-      options?.onSuccess?.()
-      markCopiedRafRef.current = requestAnimationFrame(() => {
-        markCopiedRafRef.current = null
-        setError("")
-        setCopied(true)
-        resetTimeoutRef.current = window.setTimeout(
-          () => setCopied(false),
-          2000,
-        )
-      })
-    }
 
-    const markFailed = () => {
-      if (resetTimeoutRef.current !== null) {
-        clearTimeout(resetTimeoutRef.current)
+      const markFailed = () => {
+        if (resetTimeoutRef.current !== null) {
+          clearTimeout(resetTimeoutRef.current)
+        }
+        cancelMarkCopiedRaf()
+        setCopied(false)
+        setError(COPY_TO_CLIPBOARD_ERROR)
       }
-      cancelMarkCopiedRaf()
-      setCopied(false)
-      setError(COPY_TO_CLIPBOARD_ERROR)
-    }
 
-    // Sync execCommand first (must stay in the user-gesture stack on iOS).
-    if (
-      tryCopyTextToClipboardSync(text, {
-        scrollAnchor: options?.scrollAnchor,
-        copyContainer: options?.copyContainer,
-        input: options?.input,
-      })
-    ) {
-      markCopied()
-      return true
-    }
+      // Sync execCommand first (must stay in the user-gesture stack on iOS).
+      if (
+        tryCopyTextToClipboardSync(text, {
+          scrollAnchor: options?.scrollAnchor,
+          copyContainer: options?.copyContainer,
+          input: options?.input,
+        })
+      ) {
+        markCopied()
+        return true
+      }
 
-    if (window.isSecureContext && navigator.clipboard) {
-      void copyTextWithClipboardApi(text).then(markCopied).catch(markFailed)
-      return true
-    }
+      if (window.isSecureContext && navigator.clipboard) {
+        void copyTextWithClipboardApi(text).then(markCopied).catch(markFailed)
+        return true
+      }
 
-    markFailed()
-    return false
-  }, [cancelMarkCopiedRaf])
+      markFailed()
+      return false
+    },
+    [cancelMarkCopiedRaf],
+  )
 
   const reset = useCallback(() => {
     cancelMarkCopiedRaf()

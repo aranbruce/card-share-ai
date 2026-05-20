@@ -10,6 +10,11 @@ export type MovePointerDownOptions = {
 export type DraggableNoteMoveContextValue = {
   onMovePointerDown: (e: PointerEvent, options?: MovePointerDownOptions) => void
   isMovingNote: boolean
+  /**
+   * After a completed note drag, the DOM may emit a ghost `click`. Call from the note surface
+   * click handler; returns true when that click should be ignored (and the flag is cleared).
+   */
+  consumeSuppressNextClickAfterDrag: () => boolean
 } | null
 
 export const DraggableNoteMoveContext =
@@ -26,11 +31,10 @@ export function noteMoveCursorClass(
   return move.isMovingNote ? "cursor-grabbing" : "cursor-grab"
 }
 
-/** Immediate move surfaces (e.g. GIF) — touch-action must be set before pointerdown. */
+/** Coarse pointers: touch-none on the note so vertical pans do not scroll the page before drag commits. */
 export function noteMoveTouchClass(
   move: DraggableNoteMoveContextValue,
-  options?: { deferUntilDrag?: boolean },
 ): string | undefined {
-  if (!move || options?.deferUntilDrag) return undefined
-  return "touch-none"
+  if (!move) return undefined
+  return "[@media(pointer:coarse)]:touch-none"
 }

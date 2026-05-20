@@ -66,9 +66,7 @@ const Button = React.forwardRef<
     )
   }
 
-  return (
-    <button ref={ref} data-slot="button" className={classes} {...props} />
-  )
+  return <button ref={ref} data-slot="button" className={classes} {...props} />
 })
 
 Button.displayName = "Button"
