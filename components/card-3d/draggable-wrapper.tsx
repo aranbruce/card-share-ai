@@ -598,6 +598,7 @@ export function DraggableWrapper({
         {editable && (
           <button
             type="button"
+            tabIndex={-1}
             data-note-chrome
             aria-label="Resize note"
             onPointerDown={(e) => handlePointerDown(e, "resize")}
