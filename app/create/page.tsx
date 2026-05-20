@@ -18,11 +18,6 @@ import { savePendingCard, type PendingCard } from "@/lib/pending-card-storage"
 import { Paperclip, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
-import {
-  CARD_COVER_ASPECT_RATIO_OPTIONS,
-  DEFAULT_CARD_COVER_ASPECT_RATIO,
-} from "@/lib/card-image-aspect"
-import { cn } from "@/lib/utils"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -67,9 +62,6 @@ export default function CreateCardPage() {
   const [editImageError, setEditImageError] = useState("")
   const [isGuest, setIsGuest] = useState(true)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [coverImageAspectRatio, setCoverImageAspectRatio] = useState<string>(
-    DEFAULT_CARD_COVER_ASPECT_RATIO,
-  )
 
   // Check if user is logged in
   useEffect(() => {
@@ -137,7 +129,6 @@ export default function CreateCardPage() {
         body: JSON.stringify({
           cardType: details.cardType,
           coverHeadline: cardCopy.headline,
-          aspectRatio: coverImageAspectRatio,
           ...(details.customMessage
             ? { customMessage: details.customMessage }
             : {}),
@@ -215,7 +206,6 @@ export default function CreateCardPage() {
         body: JSON.stringify({
           cardType: cardData.cardType,
           coverHeadline: cardData.headline,
-          aspectRatio: coverImageAspectRatio,
           ...(prompt ? { imagePrompt: prompt } : {}),
           ...(existingCover &&
           (!attachedImageUrl || !existingCover.startsWith("data:"))
@@ -413,31 +403,6 @@ export default function CreateCardPage() {
                       </div>
                     ) : openAiPanel === "image" ? (
                       <div className="flex flex-col gap-2">
-                        <div className="flex w-full flex-col gap-1.5">
-                          <label
-                            htmlFor="create-cover-aspect"
-                            className="text-xs font-medium text-muted-foreground"
-                          >
-                            Cover aspect ratio
-                          </label>
-                          <select
-                            id="create-cover-aspect"
-                            className={cn(
-                              "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs",
-                              "focus-visible:border-ring focus-visible:ring-1 focus-visible:outline-none dark:bg-input/30",
-                            )}
-                            value={coverImageAspectRatio}
-                            onChange={(e) =>
-                              setCoverImageAspectRatio(e.target.value)
-                            }
-                          >
-                            {CARD_COVER_ASPECT_RATIO_OPTIONS.map((o) => (
-                              <option key={o.value} value={o.value}>
-                                {o.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
                         <input
                           ref={editImageFileRef}
                           type="file"

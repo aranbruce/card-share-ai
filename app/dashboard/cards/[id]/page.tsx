@@ -36,11 +36,6 @@ import {
 } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 import { NotePanel } from "@/components/note-panel"
-import {
-  CARD_COVER_ASPECT_RATIO_OPTIONS,
-  DEFAULT_CARD_COVER_ASPECT_RATIO,
-} from "@/lib/card-image-aspect"
-import { cn } from "@/lib/utils"
 
 interface CardData {
   id: string
@@ -132,9 +127,6 @@ function CardDetailInner() {
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isReadingImageFile, setIsReadingImageFile] = useState(false)
-  const [coverImageAspectRatio, setCoverImageAspectRatio] = useState<string>(
-    DEFAULT_CARD_COVER_ASPECT_RATIO,
-  )
 
   const loadCard = useCallback(async () => {
     try {
@@ -188,11 +180,7 @@ function CardDetailInner() {
     attachedImageUrl?: string,
   ) => {
     if (!prompt.trim() && !attachedImageUrl) return
-    await studioRef.current?.regenerateImage(
-      prompt,
-      attachedImageUrl,
-      coverImageAspectRatio,
-    )
+    await studioRef.current?.regenerateImage(prompt, attachedImageUrl)
     setImagePrompt("")
     setAttachedImageDataUrl(null)
     if (editImageFileRef.current) editImageFileRef.current.value = ""
@@ -398,29 +386,6 @@ function CardDetailInner() {
             </div>
           ) : openAiPanel === "image" ? (
             <div className="flex flex-col gap-2">
-              <div className="flex w-full flex-col gap-1.5">
-                <label
-                  htmlFor="dashboard-cover-aspect-panel"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Cover aspect ratio
-                </label>
-                <select
-                  id="dashboard-cover-aspect-panel"
-                  className={cn(
-                    "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs",
-                    "focus-visible:border-ring focus-visible:ring-1 focus-visible:outline-none dark:bg-input/30",
-                  )}
-                  value={coverImageAspectRatio}
-                  onChange={(e) => setCoverImageAspectRatio(e.target.value)}
-                >
-                  {CARD_COVER_ASPECT_RATIO_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <input
                 ref={editImageFileRef}
                 type="file"
@@ -539,7 +504,6 @@ function CardDetailInner() {
             onRegeneratingImageChange={setIsRegeneratingImage}
             onRegeneratingHeadlineChange={setIsRegeneratingHeadline}
             onCardDataChange={handleCardDataChange}
-            coverImageAspectRatio={coverImageAspectRatio}
           />
         </div>
       </CardDetailLayout>

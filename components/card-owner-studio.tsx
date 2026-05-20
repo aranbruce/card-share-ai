@@ -20,7 +20,6 @@ import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
-import { DEFAULT_CARD_COVER_ASPECT_RATIO } from "@/lib/card-image-aspect"
 
 export type OwnerCard = {
   id: string
@@ -55,11 +54,7 @@ export type ActiveContributionFormattingState = {
 }
 
 export type CardOwnerStudioHandle = {
-  regenerateImage: (
-    prompt: string,
-    attachedImageUrl?: string,
-    aspectRatio?: string,
-  ) => Promise<void>
+  regenerateImage: (prompt: string, attachedImageUrl?: string) => Promise<void>
   regenerateHeadline: (prompt: string) => Promise<void>
 }
 
@@ -81,8 +76,6 @@ export type CardOwnerStudioProps = {
   onCardDataChange?: (
     updates: Partial<Pick<OwnerCard, "copy_headline" | "image_url">>,
   ) => void
-  /** Passed to `/api/generate-image` as `aspectRatio` (e.g. `4:5`). */
-  coverImageAspectRatio?: string
 }
 
 export const CardOwnerStudio = forwardRef<
@@ -97,7 +90,6 @@ export const CardOwnerStudio = forwardRef<
     onRegeneratingImageChange,
     onRegeneratingHeadlineChange,
     onCardDataChange,
-    coverImageAspectRatio = DEFAULT_CARD_COVER_ASPECT_RATIO,
   }: CardOwnerStudioProps,
   ref,
 ) {
@@ -376,7 +368,7 @@ export const CardOwnerStudio = forwardRef<
   )
 
   const handleRegenerateImage = useCallback(
-    async (prompt: string, attachedImageUrl?: string, aspectRatio?: string) => {
+    async (prompt: string, attachedImageUrl?: string) => {
       if (!card) return
       setIsRegeneratingImage(true)
       try {
@@ -386,7 +378,6 @@ export const CardOwnerStudio = forwardRef<
           {
             cardType: card.card_type,
             coverHeadline: card.copy_headline,
-            aspectRatio: aspectRatio ?? coverImageAspectRatio,
             ...(prompt ? { imagePrompt: prompt } : {}),
             ...(existingCover &&
             (!attachedImageUrl || !existingCover.startsWith("data:"))
@@ -406,14 +397,14 @@ export const CardOwnerStudio = forwardRef<
         setIsRegeneratingImage(false)
       }
     },
-    [card, coverImageAspectRatio, patchCardFields, setCard, onCardDataChange],
+    [card, patchCardFields, setCard, onCardDataChange],
   )
 
   useImperativeHandle(
     ref,
     () => ({
-      regenerateImage: (prompt, attachedImageUrl, aspectRatio) =>
-        handleRegenerateImage(prompt, attachedImageUrl, aspectRatio),
+      regenerateImage: (prompt, attachedImageUrl) =>
+        handleRegenerateImage(prompt, attachedImageUrl),
       regenerateHeadline: handleRegenerateHeadline,
     }),
     [handleRegenerateImage, handleRegenerateHeadline],

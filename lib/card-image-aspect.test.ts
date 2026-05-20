@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
-  CARD_COVER_ASPECT_RATIO_OPTIONS,
+  ALLOWED_ASPECT_RATIOS,
   parseAspectRatio,
   sizingForGenerateImage,
   DEFAULT_CARD_COVER_ASPECT_RATIO,
@@ -43,10 +43,10 @@ describe("DEFAULT_CARD_COVER_ASPECT_RATIO", () => {
   })
 })
 
-describe("CARD_COVER_ASPECT_RATIO_OPTIONS", () => {
-  it("every UI option value is accepted by parseAspectRatio", () => {
-    for (const { value } of CARD_COVER_ASPECT_RATIO_OPTIONS) {
-      expect(parseAspectRatio(value)).toBe(value)
+describe("ALLOWED_ASPECT_RATIOS", () => {
+  it("every allowlisted ratio is accepted by parseAspectRatio", () => {
+    for (const ratio of ALLOWED_ASPECT_RATIOS) {
+      expect(parseAspectRatio(ratio)).toBe(ratio)
     }
   })
 })

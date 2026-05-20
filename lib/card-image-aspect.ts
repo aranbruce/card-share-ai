@@ -3,22 +3,18 @@ const RATIO = /^\s*(\d+)\s*:\s*(\d+)\s*$/
 /** Matches greeting-card cover framing in the product UI (see dashboard card tiles). */
 export const DEFAULT_CARD_COVER_ASPECT_RATIO = "4:5" as const
 
-export const CARD_COVER_ASPECT_RATIO_OPTIONS: ReadonlyArray<{
-  value: string
-  label: string
-}> = [
-  { value: "4:5", label: "Portrait (4:5) — card cover" },
-  { value: "3:4", label: "Portrait (3:4)" },
-  { value: "9:16", label: "Tall (9:16)" },
-  { value: "1:1", label: "Square (1:1)" },
-  { value: "5:4", label: "Landscape (5:4)" },
-  { value: "4:3", label: "Landscape (4:3)" },
-  { value: "16:9", label: "Wide (16:9)" },
-]
+/** Single source of truth for API `aspectRatio` validation. */
+export const ALLOWED_ASPECT_RATIOS = [
+  "4:5",
+  "3:4",
+  "9:16",
+  "1:1",
+  "5:4",
+  "4:3",
+  "16:9",
+] as const
 
-const ALLOWED = new Set(
-  CARD_COVER_ASPECT_RATIO_OPTIONS.map((option) => option.value),
-)
+const ALLOWED = new Set<string>(ALLOWED_ASPECT_RATIOS)
 
 /** Aspect ratios @ai-sdk/fal maps without an explicit pixel `size`. */
 const FAL_NATIVE_ASPECT = new Set([
