@@ -20,6 +20,10 @@ import {
 } from "react"
 import { ArrowUp, X } from "lucide-react"
 import { CANVAS_EDGE_PADDING } from "./draggable-wrapper"
+import {
+  noteMoveCursorClass,
+  useDraggableNoteMove,
+} from "./draggable-note-context"
 
 export function RegenerateShimmerOverlay({
   tone,
@@ -126,6 +130,8 @@ export const InlineEdit = forwardRef<
   const editRef = useRef<HTMLDivElement>(null)
   const promptInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const moveDrag = useDraggableNoteMove()
+  const canDragNote = Boolean(moveDrag)
 
   useEffect(() => {
     if (onFocusChange) {
@@ -364,14 +370,24 @@ export const InlineEdit = forwardRef<
         ) : null}
         <div
           ref={editRef}
+          onPointerDown={
+            canDragNote && !isEditing
+              ? (e) => {
+                  moveDrag!.onMovePointerDown(e, { deferUntilDrag: true })
+                }
+              : undefined
+          }
           className={cn(
             "relative z-10 w-full min-w-0",
             className,
             editable && onChange && "rounded px-1",
+            canDragNote && !isEditing && noteMoveCursorClass(moveDrag),
             editable &&
               onChange &&
               !isEditing &&
-              "cursor-text transition-colors hover:bg-primary/5",
+              "transition-colors hover:bg-primary/5",
+            editable && onChange && !isEditing && !canDragNote && "cursor-text",
+            isEditing && "cursor-text",
             showShimmer &&
               regenerateShimmerTone === "cover" &&
               "ai-refine-shimmer-text-cover rounded-sm",

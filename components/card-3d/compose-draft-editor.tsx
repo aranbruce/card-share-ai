@@ -3,7 +3,7 @@
 import type { Card3DComposeDraftProps } from "./types"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
-import { useRef, useState } from "react"
+import { useRef } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
 import { InlineEdit, type InlineEditRegenerateHandle } from "./inline-edit"
 
@@ -47,21 +47,18 @@ export function ComposeDraftEditor({
   composeDraftRegenerating: boolean
   onFocusChange?: (focused: boolean) => void
 }) {
-  const [isFocused, setIsFocused] = useState(false)
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
 
   return (
     <div
       className="absolute inset-0 z-20"
       onFocus={() => {
-        setIsFocused(true)
         onFocusChange?.(true)
       }}
     >
       <DraggableWrapper
         key={`compose-draft-p${composeDraft.pageIndex}`}
         editable
-        isActive={isFocused}
         initialOffset={{
           x: composeDraft.x,
           y: composeDraft.y,
@@ -77,7 +74,6 @@ export function ComposeDraftEditor({
         }
         onFocusLeave={() => {
           messageInlineRef.current?.closeRegeneratePrompt()
-          setIsFocused(false)
           onFocusChange?.(false)
         }}
       >

@@ -91,9 +91,6 @@ export function Card3D({
     setPrevNavigateToPage(navigateToPage)
     if (navigateToPage !== undefined) setCurrentPage(navigateToPage)
   }
-  const [editingContributionId, setEditingContributionId] = useState<
-    string | null
-  >(null)
   const [gifPickerContributionId, setGifPickerContributionId] = useState<
     string | null
   >(null)
@@ -339,7 +336,6 @@ export function Card3D({
           <DraggableWrapper
             key={contrib.id}
             editable
-            isActive={editingContributionId === contrib.id}
             initialOffset={
               typeof contrib.position_x === "number" &&
               typeof contrib.position_y === "number"
@@ -365,14 +361,12 @@ export function Card3D({
               contributionInlineRegenRefs.current
                 .get(contrib.id)
                 ?.closeRegeneratePrompt()
-              setEditingContributionId((id) => (id === contrib.id ? null : id))
               onEditingContributionChange?.(null)
             }}
           >
             <div
               className="space-y-3"
               onFocus={() => {
-                setEditingContributionId(contrib.id)
                 onEditingContributionChange?.(contrib.id)
               }}
             >
