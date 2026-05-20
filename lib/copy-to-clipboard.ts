@@ -147,6 +147,20 @@ function copyWithExecCommand(
   }
 }
 
+function execCopyFromInputElement(
+  el: HTMLInputElement | HTMLTextAreaElement,
+  value: string,
+): boolean {
+  safeFocus(el)
+  el.select()
+  try {
+    el.setSelectionRange(0, value.length)
+  } catch {
+    // Some input types do not support setSelectionRange.
+  }
+  return document.execCommand("copy")
+}
+
 /**
  * Copy by selecting a visible input (last resort inside modals on iOS).
  */
@@ -162,20 +176,13 @@ export function tryCopyFromInputElement(
   const scrollSnapshot = captureScrollSnapshot(returnFocusTo ?? el)
   const wasReadOnly = el.readOnly
 
-  if (wasReadOnly) {
-    el.readOnly = false
-  }
-
   let ok = false
   try {
-    safeFocus(el)
-    el.select()
-    try {
-      el.setSelectionRange(0, value.length)
-    } catch {
-      // Some input types do not support setSelectionRange.
+    ok = execCopyFromInputElement(el, value)
+    if (!ok && wasReadOnly) {
+      el.readOnly = false
+      ok = execCopyFromInputElement(el, value)
     }
-    ok = document.execCommand("copy")
   } catch {
     ok = false
   } finally {

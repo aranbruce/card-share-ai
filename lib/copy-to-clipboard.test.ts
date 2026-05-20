@@ -81,6 +81,7 @@ describe("copy-to-clipboard", () => {
     button.focus()
 
     expect(tryCopyFromInputElement(input, button)).toBe(true)
+    expect(input.readOnly).toBe(true)
     expect(document.activeElement).toBe(button)
   })
 
