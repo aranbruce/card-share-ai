@@ -391,8 +391,15 @@ export function DraggableWrapper({
 
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
+      if (
+        !gesturePointerRef.current ||
+        gesturePhaseRef.current === "none"
+      ) {
+        return
+      }
+
       const gesture = gesturePointerRef.current
-      if (gesture && e.pointerId !== gesture.pointerId) return
+      if (e.pointerId !== gesture.pointerId) return
 
       const dx = e.clientX - startPos.current.x
       const dy = e.clientY - startPos.current.y
