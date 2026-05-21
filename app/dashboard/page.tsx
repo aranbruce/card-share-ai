@@ -499,7 +499,7 @@ export default function DashboardPage() {
                     className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
                   >
                     {/* Image */}
-                    <div className="card-preview-aspect relative overflow-hidden bg-secondary">
+                    <div className="relative card-preview-aspect overflow-hidden bg-secondary">
                       {card.image_url ? (
                         <Image
                           src={card.image_url}

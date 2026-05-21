@@ -476,9 +476,7 @@ export const CardOwnerStudio = forwardRef<
 
   if (loading || !card) {
     if (loading) {
-      return (
-        <Skeleton className="card-cover-skeleton" />
-      )
+      return <Skeleton className="card-cover-skeleton" />
     }
     return (
       <div className="flex min-h-[320px] items-center justify-center">

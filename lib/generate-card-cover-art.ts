@@ -2,10 +2,10 @@ import { Buffer } from "node:buffer"
 import { generateText, type GeneratedFile, type ModelMessage } from "ai"
 import { coverArtInstructionBlock } from "@/lib/card-image-prompt"
 import { getCardCoverImageModel } from "@/lib/card-cover-image-model"
+import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 
 /** Fixed 4:5 framing for greeting-card covers. */
 const CARD_COVER_ASPECT_RATIO = "4:5" as const
-import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 
 export type CardCoverArtContext = {
   imagePrompt: string

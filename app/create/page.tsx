@@ -575,7 +575,7 @@ export default function CreateCardPage() {
                   </div>
                 ) : (
                   /* Placeholder card — matches Card3D dimensions */
-                  <div className="card-cover-skeleton relative max-w-md overflow-hidden">
+                  <div className="relative card-cover-skeleton max-w-md overflow-hidden">
                     <div
                       className="flex h-full w-full flex-col items-center justify-center"
                       style={{
