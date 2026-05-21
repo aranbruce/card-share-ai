@@ -28,7 +28,6 @@ import { ChevronLeft, FileX2, Paperclip, Send, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 import { CopyLinkButton } from "@/components/copy-link-button"
 import { NotePanel } from "@/components/note-panel"
-import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
 
 interface CardData {
   id: string
@@ -84,7 +83,10 @@ function CardDetailSkeleton() {
           <Skeleton className="h-8 w-24 rounded-full" />
           <Skeleton className="h-8 w-24 rounded-full" />
         </div>
-        <Skeleton className={`${cardPreviewBlockClassName} rounded-2xl`} />
+        <Skeleton
+          className="w-full rounded-2xl"
+          style={{ minHeight: "500px" }}
+        />
       </div>
     </CardDetailLayout>
   )

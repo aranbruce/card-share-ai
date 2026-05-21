@@ -19,7 +19,6 @@ import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
-import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 export type OwnerCard = {
@@ -477,7 +476,12 @@ export const CardOwnerStudio = forwardRef<
 
   if (loading || !card) {
     if (loading) {
-      return <Skeleton className={`${cardPreviewBlockClassName} rounded-2xl`} />
+      return (
+        <Skeleton
+          className="w-full rounded-2xl"
+          style={{ minHeight: "500px" }}
+        />
+      )
     }
     return (
       <div className="flex min-h-[320px] items-center justify-center">

@@ -86,7 +86,7 @@ Copy `.env.local` from a team member or pull via `vercel env pull`. Key variable
 | `GIPHY_API_KEY`                 | Giphy API for GIF search                                            |
 | `AI_GATEWAY_API_KEY`            | Vercel AI Gateway key                                               |
 | `AI_TEXT_MODEL`                 | Override default text model (optional, defaults to `openai/gpt-4o`) |
-| `FAL_KEY`                       | fal.ai key for image processing                                     |
+| `AI_IMAGE_GATEWAY_MODEL`        | Override card cover image model (default `google/gemini-3.1-flash-image-preview`) |
 | `E2E_EMAIL` / `E2E_PASSWORD`    | Test account credentials for Playwright                             |
 
 ## Key Architecture Notes

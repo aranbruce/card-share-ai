@@ -15,7 +15,6 @@ import type { Contribution } from "@/lib/card-body"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/note-panel"
-import { cardPreviewBlockClassName } from "@/lib/card-image-aspect"
 import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 
 function readContributeTokensFromStorage(
@@ -643,7 +642,8 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                 <Skeleton className="mx-auto h-4 w-72 rounded-sm" />
               </div>
               <Skeleton
-                className={`mx-auto ${cardPreviewBlockClassName} rounded-2xl`}
+                className="mx-auto w-full max-w-md rounded-2xl"
+                style={{ minHeight: "500px" }}
               />
             </div>
           </main>
