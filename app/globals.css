@@ -122,6 +122,19 @@
   --color-brand-foreground: var(--brand-foreground);
 }
 
+/* Card preview layout — 4:5 covers, aligned with Card3D and generated image aspect ratio */
+@utility card-preview-frame {
+  @apply aspect-4/5 min-h-[500px] w-full;
+}
+
+@utility card-cover-skeleton {
+  @apply aspect-4/5 min-h-[500px] w-full rounded-2xl shadow-xl;
+}
+
+@utility card-preview-aspect {
+  @apply aspect-4/5 w-full;
+}
+
 /* AI refine loading — real elements (not Tailwind ::after) so it always paints */
 .ai-refine-shimmer-sweep-cover {
   background: linear-gradient(

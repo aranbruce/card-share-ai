@@ -449,7 +449,7 @@ export function Card3D({
               : contributeOverlay}
           </div>
         ) : null}
-        <div className="relative flex min-h-[500px] w-full flex-col overflow-visible rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out dark:ring-white/10">
+        <div className="card-preview-frame relative flex flex-col overflow-visible rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out dark:ring-white/10">
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-2xl">
             <div className="absolute inset-0 bg-linear-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900" />
             <div

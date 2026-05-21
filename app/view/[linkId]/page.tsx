@@ -70,10 +70,7 @@ export default function PublicCardPage() {
             <Skeleton className="mx-auto h-12 w-56 rounded-md" />
             <Skeleton className="mx-auto h-4 w-64 rounded-sm" />
           </section>
-          <Skeleton
-            className="mx-auto w-full max-w-md rounded-2xl"
-            style={{ minHeight: "500px" }}
-          />
+          <Skeleton className="card-cover-skeleton mx-auto max-w-md" />
           <div className="mt-8 flex justify-center">
             <Skeleton className="h-12 w-52 rounded-xl" />
           </div>

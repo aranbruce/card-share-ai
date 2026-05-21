@@ -477,10 +477,7 @@ export const CardOwnerStudio = forwardRef<
   if (loading || !card) {
     if (loading) {
       return (
-        <Skeleton
-          className="w-full rounded-2xl"
-          style={{ minHeight: "500px" }}
-        />
+        <Skeleton className="card-cover-skeleton" />
       )
     }
     return (

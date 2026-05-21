@@ -330,10 +330,7 @@ export default function DashboardPage() {
                 key={i}
                 className="overflow-hidden rounded-2xl border border-border bg-card"
               >
-                <Skeleton
-                  className="w-full rounded-none"
-                  style={{ aspectRatio: "4/5" }}
-                />
+                <Skeleton className="card-preview-aspect rounded-none" />
                 <div className="space-y-2 p-[18px]">
                   <div className="flex items-baseline justify-between">
                     <Skeleton className="h-[17px] w-28 rounded-sm" />
@@ -502,10 +499,7 @@ export default function DashboardPage() {
                     className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
                   >
                     {/* Image */}
-                    <div
-                      className="relative w-full overflow-hidden bg-secondary"
-                      style={{ aspectRatio: "4/5" }}
-                    >
+                    <div className="card-preview-aspect relative overflow-hidden bg-secondary">
                       {card.image_url ? (
                         <Image
                           src={card.image_url}

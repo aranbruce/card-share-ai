@@ -83,10 +83,7 @@ function CardDetailSkeleton() {
           <Skeleton className="h-8 w-24 rounded-full" />
           <Skeleton className="h-8 w-24 rounded-full" />
         </div>
-        <Skeleton
-          className="w-full rounded-2xl"
-          style={{ minHeight: "500px" }}
-        />
+        <Skeleton className="card-cover-skeleton" />
       </div>
     </CardDetailLayout>
   )
