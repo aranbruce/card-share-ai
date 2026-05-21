@@ -28,6 +28,7 @@ import { ChevronLeft, FileX2, Paperclip, Send, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 import { CopyLinkButton } from "@/components/copy-link-button"
 import { NotePanel } from "@/components/note-panel"
+import { MessageFontVariables } from "@/components/message-font-variables"
 
 interface CardData {
   id: string
@@ -51,7 +52,7 @@ function CardDetailLayout({
   panel: ReactNode
 }) {
   return (
-    <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
+    <MessageFontVariables className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
       <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
         <Button
           asChild
@@ -67,7 +68,7 @@ function CardDetailLayout({
         {children}
       </main>
       {panel}
-    </div>
+    </MessageFontVariables>
   )
 }
 
@@ -256,6 +257,7 @@ function CardDetailInner() {
               textColor: activeContribution?.textColor,
               giphyUrl: activeContribution?.giphyUrl,
               fontSize: activeContribution?.fontSize,
+              fontFamily: activeContribution?.fontFamily,
               rotationDegrees: activeContribution
                 ? Math.round(activeContribution.rotationDegrees ?? 0)
                 : 0,
@@ -269,6 +271,9 @@ function CardDetailInner() {
               activeContribution?.onTextColorChange(color)
             }
             onFontSizeChange={(px) => activeContribution?.onFontSizeChange(px)}
+            onFontFamilyChange={(id) =>
+              activeContribution?.onFontFamilyChange(id)
+            }
             onRotationChange={(deg) =>
               activeContribution?.onRotationChange(deg)
             }

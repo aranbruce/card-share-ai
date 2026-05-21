@@ -15,6 +15,10 @@ import type { Contribution } from "@/lib/card-body"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
+import {
+  storedFontFamilyFromPresetId,
+  type MessageFontPresetId,
+} from "@/lib/message-font-presets"
 import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
@@ -38,6 +42,7 @@ export type ActiveContributionFormattingState = {
   id: string
   fontSize: number
   textColor: string | null
+  fontFamily: string | null
   rotationDegrees: number
   pageIndex: number
   hasGif: boolean
@@ -45,6 +50,7 @@ export type ActiveContributionFormattingState = {
   totalInnerPages: number
   isRegeneratingMessage: boolean
   onFontSizeChange: (px: number) => void
+  onFontFamilyChange: (id: MessageFontPresetId) => void
   onTextColorChange: (hex: string | null) => void
   onRotationChange: (deg: number) => void
   onPageChange: (page: number) => void
@@ -147,12 +153,14 @@ export const CardOwnerStudio = forwardRef<
   const [draftFormatting, setDraftFormatting] = useState<{
     textColor: string | null
     fontSize: number
+    fontFamily: string | null
     rotationDegrees: number
     pageIndex: number
     giphyUrl: string | null
   }>(() => ({
     textColor: randomPresetTextColor(),
     fontSize: 16,
+    fontFamily: null,
     rotationDegrees: 0,
     pageIndex: 1,
     giphyUrl: null,
@@ -186,6 +194,7 @@ export const CardOwnerStudio = forwardRef<
         id: editingContributionId,
         fontSize: contrib.font_size ?? 16,
         textColor: contrib.text_color ?? null,
+        fontFamily: contrib.font_family ?? null,
         rotationDegrees: contrib.rotation_degrees ?? 0,
         pageIndex:
           typeof contrib.page_index === "number" ? contrib.page_index : 1,
@@ -196,6 +205,10 @@ export const CardOwnerStudio = forwardRef<
           regeneratingContributionId === editingContributionId,
         onFontSizeChange: (px) =>
           changeActiveContributionLayout({ fontSize: px }),
+        onFontFamilyChange: (id) =>
+          changeActiveContributionLayout({
+            fontFamily: storedFontFamilyFromPresetId(id),
+          }),
         onTextColorChange: (hex) =>
           changeActiveContributionLayout({ textColor: hex }),
         onRotationChange: (deg) =>
@@ -233,6 +246,7 @@ export const CardOwnerStudio = forwardRef<
         id: creatorRow.id,
         fontSize: draftFormatting.fontSize,
         textColor: draftFormatting.textColor,
+        fontFamily: draftFormatting.fontFamily,
         rotationDegrees: draftFormatting.rotationDegrees,
         pageIndex: draftFormatting.pageIndex,
         hasGif: Boolean(draftFormatting.giphyUrl),
@@ -241,6 +255,11 @@ export const CardOwnerStudio = forwardRef<
         isRegeneratingMessage: false,
         onFontSizeChange: (px) =>
           setDraftFormatting((p) => ({ ...p, fontSize: px })),
+        onFontFamilyChange: (id) =>
+          setDraftFormatting((p) => ({
+            ...p,
+            fontFamily: storedFontFamilyFromPresetId(id),
+          })),
         onTextColorChange: (hex) =>
           setDraftFormatting((p) => ({ ...p, textColor: hex })),
         onRotationChange: (deg) =>
@@ -272,6 +291,7 @@ export const CardOwnerStudio = forwardRef<
                 page_index: pos.pageIndex,
                 font_size: draftFormatting.fontSize,
                 text_color: draftFormatting.textColor,
+                font_family: draftFormatting.fontFamily,
                 rotation_degrees: draftFormatting.rotationDegrees,
                 giphy_url: draftFormatting.giphyUrl,
               }
@@ -287,6 +307,7 @@ export const CardOwnerStudio = forwardRef<
         pageIndex: pos.pageIndex,
         fontSize: draftFormatting.fontSize,
         textColor: draftFormatting.textColor,
+        fontFamily: draftFormatting.fontFamily,
         rotationDegrees: draftFormatting.rotationDegrees,
         giphyUrl: draftFormatting.giphyUrl ?? null,
       })

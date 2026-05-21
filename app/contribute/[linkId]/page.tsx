@@ -15,6 +15,11 @@ import type { Contribution } from "@/lib/card-body"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/note-panel"
+import { MessageFontVariables } from "@/components/message-font-variables"
+import {
+  storedFontFamilyFromPresetId,
+  type MessageFontPresetId,
+} from "@/lib/message-font-presets"
 import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 
 function readContributeTokensFromStorage(
@@ -79,6 +84,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
     giphyUrl: null as string | null,
     textColor: randomPresetTextColor(),
     fontSize: undefined as number | undefined,
+    fontFamily: null as string | null,
     rotationDegrees: 0,
     pageIndex: 1,
   }))
@@ -203,6 +209,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         fontSize?: number
         textColor?: string | null
         rotationDegrees?: number | null
+        fontFamily?: string | null
       },
       editToken: string,
       saveGeneration?: number,
@@ -303,6 +310,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
         fontSize?: number
         textColor?: string | null
         rotationDegrees?: number | null
+        fontFamily?: string | null
       },
     ) => {
       setContributions((prev) =>
@@ -323,6 +331,10 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                   layout.rotationDegrees === undefined
                     ? c.rotation_degrees
                     : layout.rotationDegrees,
+                font_family:
+                  layout.fontFamily === undefined
+                    ? c.font_family
+                    : layout.fontFamily,
               }
             : c,
         ),
@@ -347,6 +359,9 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
             ...(layout.rotationDegrees !== undefined && {
               rotationDegrees: layout.rotationDegrees,
             }),
+            ...(layout.fontFamily !== undefined && {
+              fontFamily: layout.fontFamily,
+            }),
           },
           token,
           saveGeneration,
@@ -362,6 +377,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       textColor?: string | null
       rotationDegrees?: number | null
       pageIndex?: number
+      fontFamily?: string | null
     }) => {
       if (!editingContributionIdResolved) return
       const contrib = contributions.find(
@@ -386,6 +402,10 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           patch.rotationDegrees !== undefined
             ? patch.rotationDegrees
             : contrib.rotation_degrees,
+        fontFamily:
+          patch.fontFamily !== undefined
+            ? patch.fontFamily
+            : contrib.font_family,
       })
       if (patch.pageIndex !== undefined) {
         setNavigateToPage(patch.pageIndex)
@@ -499,6 +519,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       giphyUrl: pre.giphyUrl,
       textColor: pre.textColor,
       fontSize: pre.fontSize,
+      fontFamily: pre.fontFamily,
       rotationDegrees: pre.rotationDegrees,
       x: 10,
       y: 15,
@@ -528,6 +549,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           pageIndex: draft.pageIndex,
           fontSize: draft.fontSize,
           textColor: draft.textColor,
+          fontFamily: draft.fontFamily,
           rotationDegrees: draft.rotationDegrees,
         }),
       })
@@ -684,7 +706,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       : "Flip to the inside to find and edit your note."
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <MessageFontVariables className="flex min-h-screen flex-col bg-background">
       {/* ── Top nav ── */}
       <AppHeader />
 
@@ -739,6 +761,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                         giphyUrl: pre.giphyUrl,
                         textColor: pre.textColor,
                         fontSize: pre.fontSize,
+                        fontFamily: pre.fontFamily,
                         rotationDegrees: pre.rotationDegrees,
                         x: pt.x,
                         y: pt.y,
@@ -776,6 +799,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                   textColor: editableContrib.text_color,
                   giphyUrl: editableContrib.giphy_url,
                   fontSize: editableContrib.font_size,
+                  fontFamily: editableContrib.font_family,
                   rotationDegrees: editableContrib.rotation_degrees,
                   pageIndex: editableContrib.page_index,
                 }
@@ -783,6 +807,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                   textColor: composeValues.textColor,
                   giphyUrl: composeValues.giphyUrl,
                   fontSize: composeValues.fontSize,
+                  fontFamily: composeValues.fontFamily,
                   rotationDegrees: composeValues.rotationDegrees,
                   pageIndex: composeValues.pageIndex,
                 }
@@ -811,6 +836,14 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
               ? changeActiveContributionLayout({ fontSize: px })
               : patchComposeValues({ fontSize: px })
           }
+          onFontFamilyChange={(id: MessageFontPresetId) => {
+            const fontFamily = storedFontFamilyFromPresetId(id)
+            if (editableContrib !== null) {
+              changeActiveContributionLayout({ fontFamily })
+            } else {
+              patchComposeValues({ fontFamily })
+            }
+          }}
           onRotationChange={(deg) =>
             editableContrib !== null
               ? changeActiveContributionLayout({ rotationDegrees: deg })
@@ -890,6 +923,6 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
           setContribGifPickerContributionId(null)
         }}
       />
-    </div>
+    </MessageFontVariables>
   )
 }

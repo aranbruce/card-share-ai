@@ -6,6 +6,7 @@ import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import { useRef } from "react"
 import { DraggableWrapper } from "./draggable-wrapper"
 import { InlineEdit, type InlineEditRegenerateHandle } from "./inline-edit"
+import { getMessageFontFamily } from "@/lib/message-font-presets"
 
 export function ComposeCanvasEmptyHint({
   variant,
@@ -48,6 +49,7 @@ export function ComposeDraftEditor({
   onFocusChange?: (focused: boolean) => void
 }) {
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
+  const messageFontFamily = getMessageFontFamily(composeDraft.fontFamily)
 
   return (
     <div
@@ -107,6 +109,7 @@ export function ComposeDraftEditor({
               ...(composeDraft.textColor
                 ? { color: composeDraft.textColor }
                 : {}),
+              ...(messageFontFamily ? { fontFamily: messageFontFamily } : {}),
             }}
             placeholder="Write your note…"
           />

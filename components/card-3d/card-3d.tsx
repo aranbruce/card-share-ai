@@ -23,6 +23,7 @@ import {
   type CommittedSpreadSnapshot,
 } from "./card-page-spread"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
+import { getMessageFontFamily } from "@/lib/message-font-presets"
 import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
@@ -326,6 +327,7 @@ export function Card3D({
       const canCanvasEdit =
         Boolean(onContributionEdit) &&
         editableContributionIds.includes(contrib.id)
+      const messageFontFamily = getMessageFontFamily(contrib.font_family)
 
       if (canCanvasEdit) {
         return (
@@ -388,6 +390,9 @@ export function Card3D({
                 style={{
                   fontSize: `${contrib.font_size ?? messageFontSize}px`,
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
+                  ...(messageFontFamily
+                    ? { fontFamily: messageFontFamily }
+                    : {}),
                 }}
                 placeholder="Type your message…"
               />
@@ -424,6 +429,9 @@ export function Card3D({
                 style={{
                   fontSize: `${contrib.font_size ?? messageFontSize}px`,
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
+                  ...(messageFontFamily
+                    ? { fontFamily: messageFontFamily }
+                    : {}),
                 }}
               >
                 {contrib.message}

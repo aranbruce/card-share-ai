@@ -9,6 +9,12 @@ import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MESSAGE_TEXT_COLOR_PRESETS } from "@/lib/message-text-color-presets"
+import {
+  activeMessageFontPresetId,
+  getMessageFontFamily,
+  MESSAGE_FONT_PRESETS,
+  type MessageFontPresetId,
+} from "@/lib/message-font-presets"
 
 const FONT_SIZE_PRESETS = [
   { px: 12, label: "Tiny" },
@@ -29,12 +35,14 @@ type NotePanelReadyProps = {
     textColor?: string | null
     giphyUrl?: string | null
     fontSize?: number | null
+    fontFamily?: string | null
     rotationDegrees?: number | null
     pageIndex?: number | null
   }
   isRegenerating: boolean
   onRegenerate: (prompt: string) => Promise<void>
   onTextColorChange: (color: string) => void
+  onFontFamilyChange: (id: MessageFontPresetId) => void
   onFontSizeChange: (px: number) => void
   onRotationChange: (degrees: number) => void
   onPageChange: (pageNum: number) => void
@@ -86,6 +94,7 @@ export function NotePanel(props: NotePanelProps) {
     isRegenerating,
     onRegenerate,
     onTextColorChange,
+    onFontFamilyChange,
     onFontSizeChange,
     onRotationChange,
     onPageChange,
@@ -97,6 +106,7 @@ export function NotePanel(props: NotePanelProps) {
   } = props
 
   const rotation = values.rotationDegrees ?? 0
+  const activeFontPresetId = activeMessageFontPresetId(values.fontFamily)
 
   return (
     <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
@@ -204,6 +214,26 @@ export function NotePanel(props: NotePanelProps) {
                 }}
                 aria-label={`Color ${color}`}
               />
+            ))}
+          </div>
+        </div>
+
+        {/* Font */}
+        <div className="flex flex-col gap-2">
+          <p className="text-xs font-medium text-muted-foreground">Font</p>
+          <div className="flex flex-wrap gap-1.5">
+            {MESSAGE_FONT_PRESETS.map(({ id, label }) => (
+              <ChipButton
+                key={id}
+                onClick={() => onFontFamilyChange(id)}
+                active={activeFontPresetId === id}
+                className="py-1 text-xs"
+                style={{
+                  fontFamily: getMessageFontFamily(id),
+                }}
+              >
+                {label}
+              </ChipButton>
             ))}
           </div>
         </div>

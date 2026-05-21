@@ -23,6 +23,7 @@ type ContributionPatchArgs = {
   fontSize?: number
   textColor?: string | null
   rotationDegrees?: number | null
+  fontFamily?: string | null
 }
 
 export function useContributions({
@@ -115,6 +116,7 @@ export function useContributions({
         fontSize?: number
         textColor?: string | null
         rotationDegrees?: number | null
+        fontFamily?: string | null
       },
     ) => {
       setContributions((prev) =>
@@ -135,6 +137,10 @@ export function useContributions({
                   layout.rotationDegrees === undefined
                     ? c.rotation_degrees
                     : layout.rotationDegrees,
+                font_family:
+                  layout.fontFamily === undefined
+                    ? c.font_family
+                    : layout.fontFamily,
               }
             : c,
         ),
@@ -157,6 +163,9 @@ export function useContributions({
             ...(layout.rotationDegrees !== undefined && {
               rotationDegrees: layout.rotationDegrees,
             }),
+            ...(layout.fontFamily !== undefined && {
+              fontFamily: layout.fontFamily,
+            }),
           },
           saveGeneration,
         )
@@ -171,6 +180,7 @@ export function useContributions({
       textColor?: string | null
       rotationDegrees?: number | null
       pageIndex?: number
+      fontFamily?: string | null
     }) => {
       if (!editingContributionId) return
       const contrib = contributions.find((c) => c.id === editingContributionId)
@@ -193,6 +203,9 @@ export function useContributions({
         }),
         ...(partial.rotationDegrees !== undefined && {
           rotationDegrees: partial.rotationDegrees,
+        }),
+        ...(partial.fontFamily !== undefined && {
+          fontFamily: partial.fontFamily,
         }),
       })
     },
