@@ -641,10 +641,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
                 <Skeleton className="mx-auto h-9 w-64 rounded-md" />
                 <Skeleton className="mx-auto h-4 w-72 rounded-sm" />
               </div>
-              <Skeleton
-                className="mx-auto w-full max-w-md rounded-2xl"
-                style={{ minHeight: "500px" }}
-              />
+              <Skeleton className="mx-auto card-cover-skeleton max-w-md" />
             </div>
           </main>
           <NotePanel loading />

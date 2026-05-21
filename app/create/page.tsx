@@ -367,10 +367,7 @@ export default function CreateCardPage() {
                       <Skeleton className="h-8 w-24 rounded-full" />
                       <Skeleton className="h-8 w-24 rounded-full" />
                     </div>
-                    <Skeleton
-                      className="w-full rounded-2xl shadow-xl"
-                      style={{ minHeight: 500 }}
-                    />
+                    <Skeleton className="card-cover-skeleton" />
                   </div>
                 ) : cardData ? (
                   <div className="flex w-full max-w-md flex-col gap-12">
@@ -578,10 +575,7 @@ export default function CreateCardPage() {
                   </div>
                 ) : (
                   /* Placeholder card — matches Card3D dimensions */
-                  <div
-                    className="relative w-full max-w-md overflow-hidden rounded-2xl shadow-xl"
-                    style={{ minHeight: 500 }}
-                  >
+                  <div className="relative card-cover-skeleton max-w-md overflow-hidden">
                     <div
                       className="flex h-full w-full flex-col items-center justify-center"
                       style={{
