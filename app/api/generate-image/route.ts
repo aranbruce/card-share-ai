@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     const headline =
       typeof coverHeadline === "string" ? coverHeadline.trim() : ""
 
-    const { imageUrl } = await generateCardCoverArt(
+    const imageUrl = await generateCardCoverArt(
       {
         imagePrompt: trimmedPrompt,
         cardType: trimmedCardType,

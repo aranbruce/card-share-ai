@@ -11,7 +11,7 @@ export async function generateCardCoverImage(params: {
     customMessage = "",
   } = params
 
-  const { imageUrl } = await generateCardCoverArt(
+  const imageUrl = await generateCardCoverArt(
     {
       imagePrompt: "",
       cardType,

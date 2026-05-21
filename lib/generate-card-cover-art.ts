@@ -1,8 +1,10 @@
 import { Buffer } from "node:buffer"
 import { generateText, type GeneratedFile, type ModelMessage } from "ai"
 import { coverArtInstructionBlock } from "@/lib/card-image-prompt"
-import { DEFAULT_CARD_COVER_ASPECT_RATIO } from "@/lib/card-image-aspect"
 import { getCardCoverImageModel } from "@/lib/card-cover-image-model"
+
+/** Fixed 4:5 framing for greeting-card covers. */
+const CARD_COVER_ASPECT_RATIO = "4:5" as const
 import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 
 export type CardCoverArtContext = {
@@ -109,7 +111,7 @@ async function generateCardCoverViaGateway(
     providerOptions: {
       google: {
         responseModalities: ["TEXT", "IMAGE"],
-        imageConfig: { aspectRatio: DEFAULT_CARD_COVER_ASPECT_RATIO },
+        imageConfig: { aspectRatio: CARD_COVER_ASPECT_RATIO },
       },
     },
   })
@@ -127,7 +129,7 @@ async function generateCardCoverViaGateway(
 export async function generateCardCoverArt(
   ctx: CardCoverArtContext,
   options?: { persist?: boolean },
-): Promise<{ imageUrl: string; imageFile: GeneratedFile }> {
+): Promise<string> {
   const persist = options?.persist !== false
   const userScene = buildUserScene(ctx)
   const model = getCardCoverImageModel()
@@ -142,5 +144,5 @@ export async function generateCardCoverArt(
     imageUrl = generatedCoverImageToDataUrl(imageFile)
   }
 
-  return { imageUrl, imageFile }
+  return imageUrl
 }
