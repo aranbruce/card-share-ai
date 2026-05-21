@@ -105,7 +105,7 @@ export default function PublicCardPage() {
   }
 
   return (
-    <MessageFontVariables>
+    <MessageFontVariables className="flex flex-1 flex-col">
       <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
         <div className="mx-auto max-w-2xl">
           <section className="mb-8 text-center">
