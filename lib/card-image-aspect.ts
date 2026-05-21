@@ -10,7 +10,7 @@ export const CARD_PREVIEW_ASPECT_RATIO = "4 / 5" as const
 export const CARD_PREVIEW_MAX_HEIGHT_PX = 500
 
 /** Tailwind classes for the card shell inside a `max-w-md` wrapper. */
-export const cardPreviewFrameClassName = "aspect-[4/5] max-h-[500px] w-full"
+export const cardPreviewFrameClassName = "aspect-[4/5]  w-full"
 
 /** Full-width preview block including `max-w-md` (skeletons, placeholders). */
 export const cardPreviewBlockClassName = `relative max-w-md ${cardPreviewFrameClassName}`
