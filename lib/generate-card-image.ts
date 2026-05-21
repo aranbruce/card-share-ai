@@ -5,11 +5,7 @@ export async function generateCardCoverImage(params: {
   coverHeadline?: string
   customMessage?: string
 }): Promise<string> {
-  const {
-    cardType = "",
-    coverHeadline = "",
-    customMessage = "",
-  } = params
+  const { cardType = "", coverHeadline = "", customMessage = "" } = params
 
   const imageUrl = await generateCardCoverArt(
     {
