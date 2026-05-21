@@ -13,7 +13,6 @@ type Card3DCoreProps = {
   contributions?: Contribution[]
   extraPages?: number
   onAddPage?: () => void | Promise<void>
-  hideEmptyCenterMessageBody?: boolean
   /** Initial spread page when the card mounts (0 = cover). */
   initialPage?: number
   /** Imperatively navigate to this page index (0 = cover). Effect fires when the value changes. */

@@ -126,7 +126,6 @@ export default function PublicCardPage() {
           recipientName={card.recipient_name || "You"}
           contributions={displayContributions}
           extraPages={card.extra_pages || 0}
-          hideEmptyCenterMessageBody={true}
         />
 
         <div className="mt-8 flex justify-center">

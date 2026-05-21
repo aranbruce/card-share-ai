@@ -79,7 +79,6 @@ export function Card3D({
   onComposeDraftRegenerateMessage,
   composeDraftRegenerating = false,
   coverOnly = false,
-  hideEmptyCenterMessageBody = false,
   suppressComposeActions = false,
   onEditingContributionChange,
   navigateToPage,
@@ -183,10 +182,7 @@ export function Card3D({
 
   const isMessagePage = !coverOnly && currentPage === validMessagePage
 
-  const showMainSpreadInnerBody =
-    !hideEmptyCenterMessageBody ||
-    message.trim().length > 0 ||
-    typeof onMessageChange === "function"
+  const showMainSpreadInnerBody = message.trim().length > 0
 
   useEffect(() => {
     if (coverOnly) return

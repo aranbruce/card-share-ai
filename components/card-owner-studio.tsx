@@ -500,7 +500,6 @@ export const CardOwnerStudio = forwardRef<
         imageUrl={card.image_url}
         headline={card.copy_headline}
         message=""
-        hideEmptyCenterMessageBody
         senderName={card.sender_name || "Someone special"}
         recipientName={card.recipient_name || "You"}
         contributions={contributions}

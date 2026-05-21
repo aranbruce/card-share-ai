@@ -720,7 +720,6 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
               contributions={displayContributions}
               extraPages={card.extra_pages || 0}
               onAddPage={handleAddPage}
-              hideEmptyCenterMessageBody
               contributeSubmitNonce={submitNonce}
               editableContributionIds={Object.keys(contributionEditTokens)}
               onContributionEdit={handleContributionEdit}
