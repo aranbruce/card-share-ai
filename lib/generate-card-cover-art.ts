@@ -1,19 +1,8 @@
 import { Buffer } from "node:buffer"
-import {
-  generateImage,
-  generateText,
-  type GeneratedFile,
-  type ModelMessage,
-} from "ai"
+import { generateText, type GeneratedFile, type ModelMessage } from "ai"
 import { coverArtInstructionBlock } from "@/lib/card-image-prompt"
-import {
-  DEFAULT_CARD_COVER_ASPECT_RATIO,
-  parseAspectRatio,
-} from "@/lib/card-image-aspect"
-import {
-  getCardCoverImageModel,
-  isGatewayMultimodalImageModel,
-} from "@/lib/card-cover-image-model"
+import { DEFAULT_CARD_COVER_ASPECT_RATIO } from "@/lib/card-image-aspect"
+import { getCardCoverImageModel } from "@/lib/card-cover-image-model"
 import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 
 export type CardCoverArtContext = {
@@ -25,8 +14,7 @@ export type CardCoverArtContext = {
   previous?: Uint8Array
 }
 
-/** Build a data URL from a generated image; prefer bytes so plain `{ uint8Array }` parts work. */
-export function generatedCoverImageToDataUrl(file: GeneratedFile): string {
+function generatedCoverImageToDataUrl(file: GeneratedFile): string {
   const mediaType = file.mediaType.split(";")[0].trim() || "image/png"
   if (file.uint8Array instanceof Uint8Array) {
     return `data:${mediaType};base64,${Buffer.from(file.uint8Array).toString("base64")}`
@@ -110,51 +98,10 @@ function buildMultimodalMessages(
   return [{ role: "user", content }]
 }
 
-function buildGenerateImagePrompt(
-  ctx: CardCoverArtContext,
-  userScene: string,
-): Parameters<typeof generateImage>[0]["prompt"] {
-  const previous = ctx.previous
-  const source = ctx.source
-
-  if (previous && source) {
-    return {
-      text: `Existing card cover image (refine the first image). Attached reference image (second image; use its style, mood, and subject as inspiration).
-
-Refine the existing card cover using the attached image as inspiration. Follow the instructions; keep layout and subject unless asked to change them.
-
-${userScene}`,
-      images: [previous, source],
-    }
-  }
-  if (previous) {
-    return {
-      text: `Existing card cover image (refine this).
-
-Refine this existing card cover image. Follow the instructions; keep layout and subject unless asked to change them.
-
-${userScene}`,
-      images: [previous],
-    }
-  }
-  if (source) {
-    return {
-      text: `Attached reference image (use its style, mood, and subject as inspiration to generate a new card cover).
-
-Generate a new greeting card cover inspired by the attached image.
-
-${userScene}`,
-      images: [source],
-    }
-  }
-  return userScene
-}
-
-async function generateViaGatewayMultimodal(
+async function generateCardCoverViaGateway(
   model: string,
   ctx: CardCoverArtContext,
   userScene: string,
-  aspectRatio: `${number}:${number}`,
 ): Promise<GeneratedFile> {
   const { files } = await generateText({
     model,
@@ -162,7 +109,7 @@ async function generateViaGatewayMultimodal(
     providerOptions: {
       google: {
         responseModalities: ["TEXT", "IMAGE"],
-        imageConfig: { aspectRatio },
+        imageConfig: { aspectRatio: DEFAULT_CARD_COVER_ASPECT_RATIO },
       },
     },
   })
@@ -175,36 +122,17 @@ async function generateViaGatewayMultimodal(
 }
 
 /**
- * Generates a greeting card cover with optional reference images and aspect ratio.
- * Gateway Gemini image models use `generateText`; other gateway image-only models use `generateImage`.
+ * Generates a greeting card cover with optional reference images (4:5 via gateway Gemini).
  */
 export async function generateCardCoverArt(
   ctx: CardCoverArtContext,
-  aspectRatioRaw?: string | undefined,
   options?: { persist?: boolean },
 ): Promise<{ imageUrl: string; imageFile: GeneratedFile }> {
   const persist = options?.persist !== false
-
-  const aspectRatio =
-    parseAspectRatio(aspectRatioRaw) ?? DEFAULT_CARD_COVER_ASPECT_RATIO
-
   const userScene = buildUserScene(ctx)
-  const prompt = buildGenerateImagePrompt(ctx, userScene)
   const model = getCardCoverImageModel()
 
-  const imageFile = isGatewayMultimodalImageModel(model)
-    ? await generateViaGatewayMultimodal(model, ctx, userScene, aspectRatio)
-    : (
-        await generateImage({
-          model,
-          prompt,
-          aspectRatio,
-        })
-      ).image
-
-  if (!imageFile) {
-    throw new Error("No image generated")
-  }
+  const imageFile = await generateCardCoverViaGateway(model, ctx, userScene)
 
   let imageUrl: string | null = null
   if (persist) {

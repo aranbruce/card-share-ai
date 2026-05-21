@@ -526,7 +526,7 @@ export function Card3D({
               </div>
             ) : (
               <div
-                className="relative flex min-h-[460px] flex-1 flex-col p-1"
+                className="relative flex min-h-[460px] flex-1 flex-col overscroll-contain p-1"
                 data-card-canvas
               >
                 <p className="mb-1 shrink-0 px-5 pt-5 text-xs font-medium tracking-wider text-muted-foreground uppercase">

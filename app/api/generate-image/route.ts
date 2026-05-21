@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateCardCoverArt } from "@/lib/generate-card-cover-art"
-import { parseAspectRatio } from "@/lib/card-image-aspect"
 import { resolveSourceImage } from "@/lib/resolve-image-for-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
       coverHeadline,
       cardType,
       customMessage,
-      aspectRatio: aspectRatioRaw,
     } = (await request.json()) as {
       imagePrompt?: string
       /** User-uploaded style/subject reference image. */
@@ -35,22 +33,6 @@ export async function POST(request: NextRequest) {
       coverHeadline?: string
       cardType?: string
       customMessage?: string
-      /** Optional `width:height` (e.g. `4:5`). Invalid values return 400. */
-      aspectRatio?: string
-    }
-
-    if (
-      aspectRatioRaw !== undefined &&
-      aspectRatioRaw !== null &&
-      String(aspectRatioRaw).trim() !== "" &&
-      parseAspectRatio(aspectRatioRaw) === undefined
-    ) {
-      return NextResponse.json(
-        {
-          error: "Invalid aspectRatio (use width:height from the allowed set)",
-        },
-        { status: 400, headers: rate.headers },
-      )
     }
 
     const trimmedPrompt =
@@ -118,7 +100,6 @@ export async function POST(request: NextRequest) {
         source,
         previous,
       },
-      typeof aspectRatioRaw === "string" ? aspectRatioRaw : undefined,
       { persist: true },
     )
 
