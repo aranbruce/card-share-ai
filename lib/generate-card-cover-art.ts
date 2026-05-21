@@ -9,11 +9,10 @@ import { coverArtInstructionBlock } from "@/lib/card-image-prompt"
 import {
   DEFAULT_CARD_COVER_ASPECT_RATIO,
   parseAspectRatio,
-  sizingForGenerateImage,
 } from "@/lib/card-image-aspect"
 import {
+  getCardCoverImageModel,
   isGatewayMultimodalImageModel,
-  resolveCardCoverImageModel,
 } from "@/lib/card-cover-image-model"
 import { persistGeneratedCardImage } from "@/lib/persist-generated-card-image"
 
@@ -114,53 +113,41 @@ function buildMultimodalMessages(
 function buildGenerateImagePrompt(
   ctx: CardCoverArtContext,
   userScene: string,
-): {
-  prompt: Parameters<typeof generateImage>[0]["prompt"]
-  inputImageCount: number
-} {
+): Parameters<typeof generateImage>[0]["prompt"] {
   const previous = ctx.previous
   const source = ctx.source
 
   if (previous && source) {
     return {
-      inputImageCount: 2,
-      prompt: {
-        text: `Existing card cover image (refine the first image). Attached reference image (second image; use its style, mood, and subject as inspiration).
+      text: `Existing card cover image (refine the first image). Attached reference image (second image; use its style, mood, and subject as inspiration).
 
 Refine the existing card cover using the attached image as inspiration. Follow the instructions; keep layout and subject unless asked to change them.
 
 ${userScene}`,
-        images: [previous, source],
-      },
+      images: [previous, source],
     }
   }
   if (previous) {
     return {
-      inputImageCount: 1,
-      prompt: {
-        text: `Existing card cover image (refine this).
+      text: `Existing card cover image (refine this).
 
 Refine this existing card cover image. Follow the instructions; keep layout and subject unless asked to change them.
 
 ${userScene}`,
-        images: [previous],
-      },
+      images: [previous],
     }
   }
   if (source) {
     return {
-      inputImageCount: 1,
-      prompt: {
-        text: `Attached reference image (use its style, mood, and subject as inspiration to generate a new card cover).
+      text: `Attached reference image (use its style, mood, and subject as inspiration to generate a new card cover).
 
 Generate a new greeting card cover inspired by the attached image.
 
 ${userScene}`,
-        images: [source],
-      },
+      images: [source],
     }
   }
-  return { inputImageCount: 0, prompt: userScene }
+  return userScene
 }
 
 async function generateViaGatewayMultimodal(
@@ -189,7 +176,7 @@ async function generateViaGatewayMultimodal(
 
 /**
  * Generates a greeting card cover with optional reference images and aspect ratio.
- * Gateway Gemini image models use `generateText`; fal and image-only gateway models use `generateImage`.
+ * Gateway Gemini image models use `generateText`; other gateway image-only models use `generateImage`.
  */
 export async function generateCardCoverArt(
   ctx: CardCoverArtContext,
@@ -202,22 +189,18 @@ export async function generateCardCoverArt(
     parseAspectRatio(aspectRatioRaw) ?? DEFAULT_CARD_COVER_ASPECT_RATIO
 
   const userScene = buildUserScene(ctx)
-  const { prompt, inputImageCount } = buildGenerateImagePrompt(ctx, userScene)
+  const prompt = buildGenerateImagePrompt(ctx, userScene)
+  const model = getCardCoverImageModel()
 
-  const { model, providerOptions, useFal } =
-    resolveCardCoverImageModel(inputImageCount)
-
-  const imageFile =
-    typeof model === "string" && isGatewayMultimodalImageModel(model)
-      ? await generateViaGatewayMultimodal(model, ctx, userScene, aspectRatio)
-      : (
-          await generateImage({
-            model,
-            prompt,
-            ...sizingForGenerateImage(aspectRatio, useFal),
-            ...(providerOptions ? { providerOptions } : {}),
-          })
-        ).image
+  const imageFile = isGatewayMultimodalImageModel(model)
+    ? await generateViaGatewayMultimodal(model, ctx, userScene, aspectRatio)
+    : (
+        await generateImage({
+          model,
+          prompt,
+          aspectRatio,
+        })
+      ).image
 
   if (!imageFile) {
     throw new Error("No image generated")

@@ -20,7 +20,6 @@
     "fix": "prettier --write . && eslint . --fix"
   },
   "dependencies": {
-    "@ai-sdk/fal": "^2.0.34",
     "@chat-adapter/slack": "^4.28.1",
     "@chat-adapter/state-pg": "^4.28.1",
     "@radix-ui/react-dialog": "1.1.15",
