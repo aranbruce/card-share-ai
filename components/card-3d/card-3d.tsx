@@ -599,23 +599,6 @@ export function Card3D({
                         />
                       )}
                   </div>
-
-                  {!isMessagePage &&
-                    !composeDraft &&
-                    !onComposeCanvasPlace &&
-                    getContributionsForPage(currentPage).length === 0 && (
-                      <div className="flex h-full min-h-[200px] flex-1 items-center justify-center">
-                        <div className="text-center text-muted-foreground">
-                          <p className="mb-2 text-lg">
-                            Space reserved for messages
-                          </p>
-                          <p className="text-sm">
-                            Share the contributor link to let others add their
-                            messages here
-                          </p>
-                        </div>
-                      </div>
-                    )}
                 </div>
               </div>
             )}
