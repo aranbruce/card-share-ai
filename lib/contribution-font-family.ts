@@ -4,7 +4,13 @@ import {
   type MessageFontPresetId,
 } from "@/lib/message-font-presets"
 
-/** Validates preset slug; `null`/empty clears; `undefined` means omit on PATCH. */
+/**
+ * Validates preset slug for storage.
+ * - `undefined`: field omitted (do not update on PATCH).
+ * - `null` / empty / default id: clear to app sans.
+ * - preset slug: store as-is.
+ * - `undefined` for non-string or unknown slug: invalid (treat as validation error when field was sent).
+ */
 export function normalizeContributionFontFamily(
   val: unknown,
 ): MessageFontPresetId | null | undefined {

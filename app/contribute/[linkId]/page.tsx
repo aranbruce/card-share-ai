@@ -16,7 +16,10 @@ import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/note-panel"
 import { MessageFontVariables } from "@/components/message-font-variables"
-import type { MessageFontPresetId } from "@/lib/message-font-presets"
+import {
+  storedFontFamilyFromPresetId,
+  type MessageFontPresetId,
+} from "@/lib/message-font-presets"
 import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 
 function readContributeTokensFromStorage(
@@ -833,15 +836,14 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
               ? changeActiveContributionLayout({ fontSize: px })
               : patchComposeValues({ fontSize: px })
           }
-          onFontFamilyChange={(id: MessageFontPresetId) =>
-            editableContrib !== null
-              ? changeActiveContributionLayout({
-                  fontFamily: id === "default" ? null : id,
-                })
-              : patchComposeValues({
-                  fontFamily: id === "default" ? null : id,
-                })
-          }
+          onFontFamilyChange={(id: MessageFontPresetId) => {
+            const fontFamily = storedFontFamilyFromPresetId(id)
+            if (editableContrib !== null) {
+              changeActiveContributionLayout({ fontFamily })
+            } else {
+              patchComposeValues({ fontFamily })
+            }
+          }}
           onRotationChange={(deg) =>
             editableContrib !== null
               ? changeActiveContributionLayout({ rotationDegrees: deg })

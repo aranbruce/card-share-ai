@@ -48,14 +48,22 @@ export function isMessageFontPresetId(
   return (MESSAGE_FONT_PRESET_IDS as readonly string[]).includes(value)
 }
 
+/** DB/API value for a panel preset selection (`null` = app default sans). */
+export function storedFontFamilyFromPresetId(
+  id: MessageFontPresetId,
+): string | null {
+  return id === DEFAULT_MESSAGE_FONT_PRESET_ID ? null : id
+}
+
 /** Resolved font-family for inline styles on canvas notes. */
 export function getMessageFontFamily(
   presetId: string | null | undefined,
 ): string | undefined {
-  if (!presetId || presetId === "default") return undefined
+  if (!presetId || presetId === DEFAULT_MESSAGE_FONT_PRESET_ID) return undefined
   const preset = PRESET_BY_ID.get(presetId as MessageFontPresetId)
   if (!preset?.cssVar) return undefined
-  return `var(${preset.cssVar}), system-ui, sans-serif`
+  // Fallback inside var() keeps the stack valid if MessageFontVariables is not mounted.
+  return `var(${preset.cssVar}, system-ui), system-ui, sans-serif`
 }
 
 /** Active preset id for panel chips (null DB → default). */

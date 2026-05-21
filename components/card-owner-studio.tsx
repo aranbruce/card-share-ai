@@ -15,7 +15,10 @@ import type { Contribution } from "@/lib/card-body"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
-import type { MessageFontPresetId } from "@/lib/message-font-presets"
+import {
+  storedFontFamilyFromPresetId,
+  type MessageFontPresetId,
+} from "@/lib/message-font-presets"
 import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
@@ -204,7 +207,7 @@ export const CardOwnerStudio = forwardRef<
           changeActiveContributionLayout({ fontSize: px }),
         onFontFamilyChange: (id) =>
           changeActiveContributionLayout({
-            fontFamily: id === "default" ? null : id,
+            fontFamily: storedFontFamilyFromPresetId(id),
           }),
         onTextColorChange: (hex) =>
           changeActiveContributionLayout({ textColor: hex }),
@@ -255,7 +258,7 @@ export const CardOwnerStudio = forwardRef<
         onFontFamilyChange: (id) =>
           setDraftFormatting((p) => ({
             ...p,
-            fontFamily: id === "default" ? null : id,
+            fontFamily: storedFontFamilyFromPresetId(id),
           })),
         onTextColorChange: (hex) =>
           setDraftFormatting((p) => ({ ...p, textColor: hex })),
