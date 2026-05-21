@@ -1,3 +1,4 @@
+// Client boundary: imported only from client pages (contribute, dashboard, view).
 "use client"
 
 import type { ReactNode } from "react"

@@ -1,26 +1,4 @@
-/** Curated message font preset slugs (stored on card_contributions.font_family). */
-export const MESSAGE_FONT_PRESET_IDS = [
-  "default",
-  "caveat",
-  "dancing-script",
-  "playfair",
-  "lora",
-  "pacifico",
-  "merriweather",
-] as const
-
-export type MessageFontPresetId = (typeof MESSAGE_FONT_PRESET_IDS)[number]
-
-export const DEFAULT_MESSAGE_FONT_PRESET_ID: MessageFontPresetId = "default"
-
-export type MessageFontPreset = {
-  id: MessageFontPresetId
-  label: string
-  /** CSS variable set by MessageFontVariables (default uses app sans). */
-  cssVar: string | null
-}
-
-export const MESSAGE_FONT_PRESETS: readonly MessageFontPreset[] = [
+const MESSAGE_FONT_PRESET_DEFS = [
   { id: "default", label: "Classic", cssVar: null },
   { id: "caveat", label: "Handwritten", cssVar: "--font-message-caveat" },
   {
@@ -38,14 +16,28 @@ export const MESSAGE_FONT_PRESETS: readonly MessageFontPreset[] = [
   },
 ] as const
 
+/** Curated message font preset slugs (stored on card_contributions.font_family). */
+export const MESSAGE_FONT_PRESETS: readonly (typeof MESSAGE_FONT_PRESET_DEFS)[number][] =
+  MESSAGE_FONT_PRESET_DEFS
+
+export const MESSAGE_FONT_PRESET_IDS = MESSAGE_FONT_PRESET_DEFS.map((p) => p.id)
+
+export type MessageFontPresetId =
+  (typeof MESSAGE_FONT_PRESET_DEFS)[number]["id"]
+
+export type MessageFontPreset = (typeof MESSAGE_FONT_PRESET_DEFS)[number]
+
+export const DEFAULT_MESSAGE_FONT_PRESET_ID: MessageFontPresetId =
+  MESSAGE_FONT_PRESET_DEFS[0].id
+
 const PRESET_BY_ID = new Map(
-  MESSAGE_FONT_PRESETS.map((p) => [p.id, p] as const),
+  MESSAGE_FONT_PRESET_DEFS.map((p) => [p.id, p] as const),
 )
 
 export function isMessageFontPresetId(
   value: string,
 ): value is MessageFontPresetId {
-  return (MESSAGE_FONT_PRESET_IDS as readonly string[]).includes(value)
+  return PRESET_BY_ID.has(value as MessageFontPresetId)
 }
 
 /** DB/API value for a panel preset selection (`null` = app default sans). */
