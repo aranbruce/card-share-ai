@@ -106,6 +106,7 @@ export function NotePanel(props: NotePanelProps) {
   } = props
 
   const rotation = values.rotationDegrees ?? 0
+  const activeFontPresetId = activeMessageFontPresetId(values.fontFamily)
 
   return (
     <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
@@ -225,7 +226,7 @@ export function NotePanel(props: NotePanelProps) {
               <ChipButton
                 key={id}
                 onClick={() => onFontFamilyChange(id)}
-                active={activeMessageFontPresetId(values.fontFamily) === id}
+                active={activeFontPresetId === id}
                 className="py-1 text-xs"
                 style={{
                   fontFamily: getMessageFontFamily(id),

@@ -49,6 +49,7 @@ export function ComposeDraftEditor({
   onFocusChange?: (focused: boolean) => void
 }) {
   const messageInlineRef = useRef<InlineEditRegenerateHandle | null>(null)
+  const messageFontFamily = getMessageFontFamily(composeDraft.fontFamily)
 
   return (
     <div
@@ -108,9 +109,7 @@ export function ComposeDraftEditor({
               ...(composeDraft.textColor
                 ? { color: composeDraft.textColor }
                 : {}),
-              ...(getMessageFontFamily(composeDraft.fontFamily)
-                ? { fontFamily: getMessageFontFamily(composeDraft.fontFamily) }
-                : {}),
+              ...(messageFontFamily ? { fontFamily: messageFontFamily } : {}),
             }}
             placeholder="Write your note…"
           />

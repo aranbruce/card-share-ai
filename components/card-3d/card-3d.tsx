@@ -327,6 +327,7 @@ export function Card3D({
       const canCanvasEdit =
         Boolean(onContributionEdit) &&
         editableContributionIds.includes(contrib.id)
+      const messageFontFamily = getMessageFontFamily(contrib.font_family)
 
       if (canCanvasEdit) {
         return (
@@ -389,8 +390,8 @@ export function Card3D({
                 style={{
                   fontSize: `${contrib.font_size ?? messageFontSize}px`,
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
-                  ...(getMessageFontFamily(contrib.font_family)
-                    ? { fontFamily: getMessageFontFamily(contrib.font_family) }
+                  ...(messageFontFamily
+                    ? { fontFamily: messageFontFamily }
                     : {}),
                 }}
                 placeholder="Type your message…"
@@ -428,8 +429,8 @@ export function Card3D({
                 style={{
                   fontSize: `${contrib.font_size ?? messageFontSize}px`,
                   ...(contrib.text_color ? { color: contrib.text_color } : {}),
-                  ...(getMessageFontFamily(contrib.font_family)
-                    ? { fontFamily: getMessageFontFamily(contrib.font_family) }
+                  ...(messageFontFamily
+                    ? { fontFamily: messageFontFamily }
                     : {}),
                 }}
               >
