@@ -18,6 +18,8 @@ export type Contribution = {
   text_color?: string | null
   /** Slight tilt in degrees; null uses no rotation */
   rotation_degrees?: number | null
+  /** Preset slug from lib/message-font-presets; null uses app default sans */
+  font_family?: string | null
 }
 
 /**

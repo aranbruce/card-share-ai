@@ -13,4 +13,6 @@ export type CardComposeDraft = {
   textColor?: string | null
   /** Slight tilt in degrees; null/omit = no rotation */
   rotationDegrees?: number | null
+  /** Preset slug; null/omit uses app default sans */
+  fontFamily?: string | null
 }

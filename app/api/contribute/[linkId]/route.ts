@@ -5,6 +5,7 @@ import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { normalizeGiphyUrl } from "@/lib/giphy-url"
 import { normalizeContributionTextColor } from "@/lib/contribution-text-color"
 import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotation"
+import { normalizeContributionFontFamily } from "@/lib/contribution-font-family"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { compactCardPages } from "@/lib/compact-card-pages"
 import { requireServiceRoleClient } from "@/lib/supabase/admin"
@@ -37,6 +38,7 @@ export async function POST(
     const textColorRaw = body.textColor as unknown
     const rotationDegreesRaw = (body.rotationDegrees ??
       body.rotation_degrees) as unknown
+    const fontFamilyRaw = (body.fontFamily ?? body.font_family) as unknown
 
     const msg = typeof message === "string" ? message.trim() : ""
     const giphy_url = normalizeGiphyUrl(giphyUrlRaw)
@@ -103,6 +105,18 @@ export async function POST(
       )
     }
 
+    let font_family: string | null = null
+    if (fontFamilyRaw !== undefined) {
+      const ff = normalizeContributionFontFamily(fontFamilyRaw)
+      if (ff === undefined) {
+        return NextResponse.json(
+          { error: "Invalid font (use a preset slug or null)" },
+          { status: 400 },
+        )
+      }
+      font_family = ff
+    }
+
     const { data: contribution, error: insertError } = await supabase
       .from("card_contributions")
       .insert({
@@ -118,6 +132,7 @@ export async function POST(
         text_color,
         rotation_degrees: rotation_degrees ?? null,
         giphy_url,
+        font_family,
       })
       .select(CONTRIBUTION_PUBLIC_COLUMNS)
       .single()
@@ -224,6 +239,9 @@ export async function PATCH(
     const hasRotationDegrees =
       Object.prototype.hasOwnProperty.call(body, "rotationDegrees") ||
       Object.prototype.hasOwnProperty.call(body, "rotation_degrees")
+    const hasFontFamily =
+      Object.prototype.hasOwnProperty.call(body, "fontFamily") ||
+      Object.prototype.hasOwnProperty.call(body, "font_family")
 
     if (
       !contributionId ||
@@ -237,7 +255,8 @@ export async function PATCH(
         fontSize === undefined &&
         !hasGiphyUrl &&
         !hasTextColor &&
-        !hasRotationDegrees)
+        !hasRotationDegrees &&
+        !hasFontFamily)
     ) {
       return NextResponse.json(
         {
@@ -311,6 +330,7 @@ export async function PATCH(
       giphy_url?: string | null
       text_color?: string | null
       rotation_degrees?: number | null
+      font_family?: string | null
     } = {}
     if (typeof message === "string") {
       const msg = message.trim()
@@ -361,6 +381,18 @@ export async function PATCH(
         )
       }
       updates.rotation_degrees = rotation
+    }
+    if (hasFontFamily) {
+      const fontRaw =
+        body.fontFamily !== undefined ? body.fontFamily : body.font_family
+      const ff = normalizeContributionFontFamily(fontRaw)
+      if (ff === undefined) {
+        return NextResponse.json(
+          { error: "Invalid font (use a preset slug or null)" },
+          { status: 400 },
+        )
+      }
+      updates.font_family = ff
     }
     const nextMessage =
       updates.message !== undefined
