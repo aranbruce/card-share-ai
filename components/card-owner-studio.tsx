@@ -363,6 +363,12 @@ export const CardOwnerStudio = forwardRef<
             ;(merged as Record<string, unknown>)[k] = v
           }
         }
+        if (
+          typeof updates.extra_pages === "number" &&
+          Number.isFinite(updates.extra_pages)
+        ) {
+          cardExtraPagesRef.current = Math.trunc(updates.extra_pages)
+        }
         return merged
       })
     },
@@ -461,6 +467,11 @@ export const CardOwnerStudio = forwardRef<
     onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
+  const cardExtraPagesRef = useRef(0)
+  useEffect(() => {
+    cardExtraPagesRef.current = card?.extra_pages ?? 0
+  }, [card?.extra_pages])
+
   const trimExtraPagesRef = useRef<"idle" | "inFlight" | "done">("idle")
   const trimExtraPagesPromiseRef = useRef<Promise<void> | null>(null)
   useEffect(() => {
@@ -500,18 +511,22 @@ export const CardOwnerStudio = forwardRef<
   const handleAddPage = useCallback(async () => {
     if (addExtraPageInFlightRef.current) return
     addExtraPageInFlightRef.current = true
-    const next = (card?.extra_pages ?? 0) + 1
     try {
-      if (trimExtraPagesPromiseRef.current) {
-        await trimExtraPagesPromiseRef.current.catch(() => {})
+      const trimWasPending = trimExtraPagesPromiseRef.current !== null
+      if (trimWasPending) {
+        await trimExtraPagesPromiseRef.current!.catch(() => {})
       }
-      await patchCardFields({ extra_pages: next })
+      const base =
+        trimWasPending && trimExtraPagesRef.current === "done"
+          ? 0
+          : cardExtraPagesRef.current
+      await patchCardFields({ extra_pages: base + 1 })
     } catch (e) {
       console.error(e)
     } finally {
       addExtraPageInFlightRef.current = false
     }
-  }, [card?.extra_pages, patchCardFields])
+  }, [patchCardFields])
 
   // Backward compat: pre-create an empty creator contribution for cards that were
   // created before this flow existed (new cards already have one from the API).
