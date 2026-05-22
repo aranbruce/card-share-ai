@@ -18,6 +18,10 @@ function contributionsFromApi(
 export function useCardData(cardId: string, reloadNonce?: number) {
   const [card, setCard] = useState<OwnerCard | null>(null)
   const [contributions, setContributions] = useState<Contribution[]>([])
+  const [displayExtraPages, setDisplayExtraPages] = useState(0)
+  const [contributionsLoaded, setContributionsLoaded] = useState(true)
+  const [unusedExtraPagesDetected, setUnusedExtraPagesDetected] =
+    useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -28,17 +32,39 @@ export function useCardData(cardId: string, reloadNonce?: number) {
       setError("")
       setCard(null)
       setContributions([])
+      setDisplayExtraPages(0)
+      setContributionsLoaded(false)
+      setUnusedExtraPagesDetected(false)
       try {
-        const { card: c, contributions: list } = await apiFetch<{
+        const {
+          card: c,
+          contributions: list,
+          contributionsLoaded,
+          displayExtraPages: display,
+          unusedExtraPagesDetected: unused,
+        } = await apiFetch<{
           card: OwnerCard
           contributions?: ApiContribution[]
+          contributionsLoaded?: boolean
+          displayExtraPages?: number
+          unusedExtraPagesDetected?: boolean
         }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
         setContributions(contributionsFromApi(list))
+        setContributionsLoaded(contributionsLoaded !== false)
+        setDisplayExtraPages(
+          typeof display === "number" && Number.isFinite(display)
+            ? Math.max(0, Math.trunc(display))
+            : (c.extra_pages ?? 0),
+        )
+        setUnusedExtraPagesDetected(unused === true)
       } catch (e) {
         if (cancelled) return
         setContributions([])
+        setContributionsLoaded(false)
+        setDisplayExtraPages(0)
+        setUnusedExtraPagesDetected(false)
         const message =
           e instanceof ApiError && e.status === 401
             ? "You need to be signed in to open this card."
@@ -55,5 +81,16 @@ export function useCardData(cardId: string, reloadNonce?: number) {
     }
   }, [cardId, reloadNonce])
 
-  return { card, setCard, contributions, setContributions, loading, error }
+  return {
+    card,
+    setCard,
+    contributions,
+    setContributions,
+    displayExtraPages,
+    setDisplayExtraPages,
+    contributionsLoaded,
+    unusedExtraPagesDetected,
+    loading,
+    error,
+  }
 }

@@ -37,3 +37,33 @@ export function hasUnusedStoredExtraPages(
   if (hasLegacyUnindexedGuestContribution(contributions)) return false
   return maxContributionPageIndex(contributions) < 2
 }
+
+export function normalizeStoredExtraPages(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(0, Math.trunc(value))
+  }
+  return 0
+}
+
+/** Owner studio display + trim signal; does not mutate stored DB `extra_pages`. */
+export function ownerExtraPagesForStudio(
+  storedExtraPages: unknown,
+  contributions: ContributionPageFields[],
+  contributionsLoaded: boolean,
+): {
+  displayExtraPages: number
+  unusedExtraPagesDetected: boolean
+} {
+  const stored = normalizeStoredExtraPages(storedExtraPages)
+  if (!contributionsLoaded) {
+    return { displayExtraPages: stored, unusedExtraPagesDetected: false }
+  }
+  const unusedExtraPagesDetected = hasUnusedStoredExtraPages(
+    stored,
+    contributions,
+  )
+  return {
+    displayExtraPages: unusedExtraPagesDetected ? 0 : stored,
+    unusedExtraPagesDetected,
+  }
+}

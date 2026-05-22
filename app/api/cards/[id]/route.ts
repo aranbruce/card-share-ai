@@ -1,27 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
-import type { Contribution } from "@/lib/card-body"
-import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
+import {
+  normalizeStoredExtraPages,
+  ownerExtraPagesForStudio,
+} from "@/lib/card-extra-pages"
 import { createClient } from "@/lib/supabase/server"
-
-function storedExtraPages(card: Record<string, unknown>): number {
-  const raw = card.extra_pages
-  if (typeof raw === "number" && Number.isFinite(raw)) {
-    return Math.max(0, Math.trunc(raw))
-  }
-  return 0
-}
-
-function cardWithEffectiveExtraPages(
-  card: Record<string, unknown>,
-  contributions: Pick<Contribution, "page_index" | "is_creator">[],
-) {
-  const stored = storedExtraPages(card)
-  const extra_pages = hasUnusedStoredExtraPages(stored, contributions)
-    ? 0
-    : stored
-  return { ...card, extra_pages }
-}
 
 function extractAllowedCardUpdates(raw: unknown): Record<string, unknown> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -92,18 +75,32 @@ export async function GET(
       .eq("card_id", id)
       .order("created_at", { ascending: true })
 
+    const card = {
+      ...data,
+      extra_pages: normalizeStoredExtraPages(data.extra_pages),
+    }
+
     if (contribErr) {
       console.error("[GET /api/cards/[id]] contributions:", contribErr)
       return NextResponse.json({
-        card: { ...data, extra_pages: storedExtraPages(data) },
+        card,
         contributions: [],
+        contributionsLoaded: false,
+        displayExtraPages: card.extra_pages,
+        unusedExtraPagesDetected: false,
       })
     }
 
     const rows = contributions ?? []
+    const { displayExtraPages, unusedExtraPagesDetected } =
+      ownerExtraPagesForStudio(card.extra_pages, rows, true)
+
     return NextResponse.json({
-      card: cardWithEffectiveExtraPages(data, rows),
+      card,
       contributions: rows,
+      contributionsLoaded: true,
+      displayExtraPages,
+      unusedExtraPagesDetected,
     })
   } catch (error) {
     console.error("Error fetching card:", error)

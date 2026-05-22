@@ -104,8 +104,18 @@ export const CardOwnerStudio = forwardRef<
   }: CardOwnerStudioProps,
   ref,
 ) {
-  const { card, setCard, contributions, setContributions, loading, error } =
-    useCardData(cardId, reloadNonce)
+  const {
+    card,
+    setCard,
+    contributions,
+    setContributions,
+    displayExtraPages,
+    setDisplayExtraPages,
+    contributionsLoaded,
+    unusedExtraPagesDetected,
+    loading,
+    error,
+  } = useCardData(cardId, reloadNonce)
 
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
@@ -192,10 +202,10 @@ export const CardOwnerStudio = forwardRef<
       false,
       1,
       contributions,
-      card?.extra_pages ?? 0,
+      displayExtraPages,
     )
     return Math.max(1, spread.totalPages - 1)
-  }, [contributions, card?.extra_pages])
+  }, [contributions, displayExtraPages])
 
   const activeContributionFormattingState =
     useMemo((): ActiveContributionFormattingState | null => {
@@ -354,10 +364,16 @@ export const CardOwnerStudio = forwardRef<
             ;(merged as Record<string, unknown>)[k] = v
           }
         }
+        if (
+          typeof updates.extra_pages === "number" &&
+          Number.isFinite(updates.extra_pages)
+        ) {
+          setDisplayExtraPages(Math.max(0, Math.trunc(updates.extra_pages)))
+        }
         return merged
       })
     },
-    [cardId, setCard],
+    [cardId, setCard, setDisplayExtraPages],
   )
 
   const handleHeadlineChange = useCallback(
@@ -452,19 +468,53 @@ export const CardOwnerStudio = forwardRef<
     onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
+  const trimmedUnusedExtraPagesRef = useRef(false)
+  useEffect(() => {
+    trimmedUnusedExtraPagesRef.current = false
+  }, [cardId, reloadNonce])
+
+  useEffect(() => {
+    if (
+      loading ||
+      !card ||
+      !contributionsLoaded ||
+      !unusedExtraPagesDetected ||
+      trimmedUnusedExtraPagesRef.current
+    ) {
+      return
+    }
+    trimmedUnusedExtraPagesRef.current = true
+    void patchCardFields({ extra_pages: 0 })
+      .then(() => setDisplayExtraPages(0))
+      .catch((e) => {
+        console.error(e)
+        trimmedUnusedExtraPagesRef.current = false
+      })
+  }, [
+    loading,
+    card,
+    cardId,
+    reloadNonce,
+    contributionsLoaded,
+    unusedExtraPagesDetected,
+    patchCardFields,
+    setDisplayExtraPages,
+  ])
+
   const addExtraPageInFlightRef = useRef(false)
   const handleAddPage = useCallback(async () => {
     if (addExtraPageInFlightRef.current) return
     addExtraPageInFlightRef.current = true
-    const next = (card?.extra_pages ?? 0) + 1
+    const next = displayExtraPages + 1
     try {
       await patchCardFields({ extra_pages: next })
+      setDisplayExtraPages(next)
     } catch (e) {
       console.error(e)
     } finally {
       addExtraPageInFlightRef.current = false
     }
-  }, [card?.extra_pages, patchCardFields])
+  }, [displayExtraPages, patchCardFields, setDisplayExtraPages])
 
   // Backward compat: pre-create an empty creator contribution for cards that were
   // created before this flow existed (new cards already have one from the API).
@@ -550,7 +600,7 @@ export const CardOwnerStudio = forwardRef<
           if (id !== null) setEditingContributionId(id)
         }}
         navigateToPage={navigateToPage}
-        extraPages={card.extra_pages ?? 0}
+        extraPages={displayExtraPages}
         onAddPage={handleAddPage}
         initialPage={initialCardPage}
         editableContributionIds={editableContributionIds}

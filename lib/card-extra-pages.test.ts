@@ -4,6 +4,7 @@ import {
   hasLegacyUnindexedGuestContribution,
   hasUnusedStoredExtraPages,
   maxContributionPageIndex,
+  ownerExtraPagesForStudio,
 } from "@/lib/card-extra-pages"
 import type { Contribution } from "@/lib/card-body"
 
@@ -70,6 +71,31 @@ describe("card-extra-pages", () => {
     ]
     expect(hasLegacyUnindexedGuestContribution(rows)).toBe(true)
     expect(hasUnusedStoredExtraPages(1, rows)).toBe(false)
+  })
+
+  it("ownerExtraPagesForStudio keeps stored extra_pages when contributions fail to load", () => {
+    expect(
+      ownerExtraPagesForStudio(2, [], false),
+    ).toEqual({
+      displayExtraPages: 2,
+      unusedExtraPagesDetected: false,
+    })
+  })
+
+  it("ownerExtraPagesForStudio trims display but flags unused when loaded", () => {
+    const rows: Contribution[] = [
+      {
+        id: "creator",
+        message: null,
+        created_at: "2024-01-01T00:00:00.000Z",
+        is_creator: true,
+        page_index: 1,
+      },
+    ]
+    expect(ownerExtraPagesForStudio(1, rows, true)).toEqual({
+      displayExtraPages: 0,
+      unusedExtraPagesDetected: true,
+    })
   })
 
   it("ignores unindexed creator rows (compose pre-place)", () => {
