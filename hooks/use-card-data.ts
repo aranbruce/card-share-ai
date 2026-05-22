@@ -8,6 +8,7 @@ import { ApiError, apiFetch } from "@/lib/api-client"
 export function useCardData(cardId: string, reloadNonce?: number) {
   const [card, setCard] = useState<OwnerCard | null>(null)
   const [contributions, setContributions] = useState<Contribution[]>([])
+  const [contributionsLoaded, setContributionsLoaded] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -17,13 +18,16 @@ export function useCardData(cardId: string, reloadNonce?: number) {
       setLoading(true)
       setError("")
       try {
-        const { card: c, contributions: list } = await apiFetch<{
-          card: OwnerCard
-          contributions?: Contribution[]
-        }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
+        const { card: c, contributions: list, contributionsLoaded } =
+          await apiFetch<{
+            card: OwnerCard
+            contributions?: Contribution[]
+            contributionsLoaded?: boolean
+          }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
         setContributions(list ?? [])
+        setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
         const message =
@@ -54,13 +58,16 @@ export function useCardData(cardId: string, reloadNonce?: number) {
       setLoading(true)
       setError("")
       try {
-        const { card: c, contributions: list } = await apiFetch<{
-          card: OwnerCard
-          contributions?: Contribution[]
-        }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
+        const { card: c, contributions: list, contributionsLoaded } =
+          await apiFetch<{
+            card: OwnerCard
+            contributions?: Contribution[]
+            contributionsLoaded?: boolean
+          }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
         setContributions(list ?? [])
+        setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
         const message =
@@ -79,5 +86,13 @@ export function useCardData(cardId: string, reloadNonce?: number) {
     }
   }, [reloadNonce, cardId])
 
-  return { card, setCard, contributions, setContributions, loading, error }
+  return {
+    card,
+    setCard,
+    contributions,
+    setContributions,
+    contributionsLoaded,
+    loading,
+    error,
+  }
 }

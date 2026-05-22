@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { createClient } from "@/lib/supabase/server"
 
@@ -73,10 +74,18 @@ export async function GET(
 
     if (contribErr) {
       console.error("[GET /api/cards/[id]] contributions:", contribErr)
-      return NextResponse.json({ card: data, contributions: [] })
+      return NextResponse.json({
+        card: data,
+        contributions: [],
+        contributionsLoaded: false,
+      })
     }
 
-    return NextResponse.json({ card: data, contributions: contributions ?? [] })
+    return NextResponse.json({
+      card: data,
+      contributions: contributions ?? [],
+      contributionsLoaded: true,
+    })
   } catch (error) {
     console.error("Error fetching card:", error)
     return NextResponse.json({ error: "Failed to fetch card" }, { status: 500 })
@@ -173,7 +182,43 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ card: cardRow })
+    let responseCard = cardRow
+    if (!("extra_pages" in updates)) {
+      const storedExtra =
+        typeof cardRow.extra_pages === "number" && cardRow.extra_pages > 0
+          ? cardRow.extra_pages
+          : 0
+      if (storedExtra > 0) {
+        const { data: rows, error: contribErr } = await supabase
+          .from("card_contributions")
+          .select(CONTRIBUTION_PUBLIC_COLUMNS)
+          .eq("card_id", id)
+          .order("created_at", { ascending: true })
+        if (!contribErr && rows && rows.length > 0) {
+          if (hasUnusedStoredExtraPages(storedExtra, rows)) {
+            const { data: trimmed, error: trimErr } = await supabase
+              .from("cards")
+              .update({
+                extra_pages: 0,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", id)
+              .eq("user_id", user.id)
+              .select()
+              .single()
+            if (trimErr) {
+              console.error("[PATCH /api/cards/[id]] trim extra_pages:", trimErr)
+            } else if (trimmed) {
+              responseCard = trimmed
+            } else {
+              responseCard = { ...cardRow, extra_pages: 0 }
+            }
+          }
+        }
+      }
+    }
+
+    return NextResponse.json({ card: responseCard })
   } catch (error) {
     console.error("Error updating card:", error)
     return NextResponse.json(

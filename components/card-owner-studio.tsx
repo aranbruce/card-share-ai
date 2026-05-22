@@ -105,8 +105,15 @@ export const CardOwnerStudio = forwardRef<
   }: CardOwnerStudioProps,
   ref,
 ) {
-  const { card, setCard, contributions, setContributions, loading, error } =
-    useCardData(cardId, reloadNonce)
+  const {
+    card,
+    setCard,
+    contributions,
+    setContributions,
+    contributionsLoaded,
+    loading,
+    error,
+  } = useCardData(cardId, reloadNonce)
 
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
@@ -483,6 +490,10 @@ export const CardOwnerStudio = forwardRef<
   // so a user-initiated "Add Page" is not immediately undone.
   useEffect(() => {
     if (loading || !card || trimExtraPagesRef.current !== "idle") return
+    if (!contributionsLoaded || contributions.length === 0) {
+      trimExtraPagesRef.current = "done"
+      return
+    }
     const stored = card.extra_pages ?? 0
     if (!hasUnusedStoredExtraPages(stored, contributions)) {
       trimExtraPagesRef.current = "done"
