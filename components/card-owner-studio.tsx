@@ -25,7 +25,10 @@ import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
 import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
-import { contributionHasCanvasPosition } from "@/lib/contribution-layout"
+import {
+  contributionHasCanvasPosition,
+  contributionPageIndex,
+} from "@/lib/contribution-layout"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 export type OwnerCard = {
@@ -209,8 +212,7 @@ export const CardOwnerStudio = forwardRef<
         textColor: contrib.text_color ?? null,
         fontFamily: contrib.font_family ?? null,
         rotationDegrees: contrib.rotation_degrees ?? 0,
-        pageIndex:
-          typeof contrib.page_index === "number" ? contrib.page_index : 1,
+        pageIndex: contributionPageIndex(contrib, 1),
         hasGif: Boolean(contrib.giphy_url),
         giphyUrl: contrib.giphy_url,
         totalInnerPages,
@@ -460,8 +462,10 @@ export const CardOwnerStudio = forwardRef<
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
   const trimExtraPagesRef = useRef<"idle" | "inFlight" | "done">("idle")
+  const trimExtraPagesPromiseRef = useRef<Promise<void> | null>(null)
   useEffect(() => {
     trimExtraPagesRef.current = "idle"
+    trimExtraPagesPromiseRef.current = null
   }, [cardId, reloadNonce])
 
   // Trim stale extra_pages once per load — not on every card/contributions update,
@@ -474,7 +478,7 @@ export const CardOwnerStudio = forwardRef<
       return
     }
     trimExtraPagesRef.current = "inFlight"
-    void patchCardFields({ extra_pages: 0 })
+    const trimPromise = patchCardFields({ extra_pages: 0 })
       .then(() => {
         trimExtraPagesRef.current = "done"
       })
@@ -482,6 +486,12 @@ export const CardOwnerStudio = forwardRef<
         console.error(e)
         trimExtraPagesRef.current = "idle"
       })
+      .finally(() => {
+        if (trimExtraPagesPromiseRef.current === trimPromise) {
+          trimExtraPagesPromiseRef.current = null
+        }
+      })
+    trimExtraPagesPromiseRef.current = trimPromise
     // card + contributions read when loading flips false; omit from deps intentionally.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- trim once per cardId/reloadNonce
   }, [loading, cardId, reloadNonce, patchCardFields])
@@ -492,6 +502,9 @@ export const CardOwnerStudio = forwardRef<
     addExtraPageInFlightRef.current = true
     const next = (card?.extra_pages ?? 0) + 1
     try {
+      if (trimExtraPagesPromiseRef.current) {
+        await trimExtraPagesPromiseRef.current.catch(() => {})
+      }
       await patchCardFields({ extra_pages: next })
     } catch (e) {
       console.error(e)
