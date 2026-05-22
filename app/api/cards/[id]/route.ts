@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { createClient } from "@/lib/supabase/server"
 
@@ -77,30 +76,7 @@ export async function GET(
       return NextResponse.json({ card: data, contributions: [] })
     }
 
-    const rows = contributions ?? []
-    let card = data
-    const storedExtra =
-      typeof card.extra_pages === "number" && card.extra_pages > 0
-        ? card.extra_pages
-        : 0
-    if (hasUnusedStoredExtraPages(storedExtra, rows)) {
-      const { data: trimmed, error: trimErr } = await supabase
-        .from("cards")
-        .update({ extra_pages: 0, updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .eq("user_id", user.id)
-        .select("*")
-        .single()
-      if (trimErr) {
-        console.error("[GET /api/cards/[id]] trim extra_pages:", trimErr)
-      } else if (trimmed) {
-        card = trimmed
-      } else {
-        card = { ...card, extra_pages: 0 }
-      }
-    }
-
-    return NextResponse.json({ card, contributions: rows })
+    return NextResponse.json({ card: data, contributions: contributions ?? [] })
   } catch (error) {
     console.error("Error fetching card:", error)
     return NextResponse.json({ error: "Failed to fetch card" }, { status: 500 })
