@@ -1,5 +1,8 @@
 import type { Card3DProps } from "./types"
-import { toFiniteLayoutNumber } from "@/lib/contribution-layout"
+import {
+  toFiniteLayoutNumber,
+  toLayoutPageIndex,
+} from "@/lib/contribution-layout"
 
 const MIN_FULL_CARD_SPREAD_PAGES = 2
 
@@ -23,8 +26,8 @@ export function computeNaturalPageSpread(
   const rows = contributions ?? []
   const messagePageLowerBound = Math.max(1, messagePageIndex)
   const maxExplicitContributionPage = rows.reduce((max, c) => {
-    const page = toFiniteLayoutNumber(c.page_index)
-    if (page !== null && page >= 0) {
+    const page = toLayoutPageIndex(c.page_index)
+    if (page !== null) {
       return Math.max(max, page)
     }
     return max

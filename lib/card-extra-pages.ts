@@ -1,5 +1,8 @@
 import type { Contribution } from "@/lib/card-body"
-import { toFiniteLayoutNumber } from "@/lib/contribution-layout"
+import {
+  toFiniteLayoutNumber,
+  toLayoutPageIndex,
+} from "@/lib/contribution-layout"
 
 type ContributionPageFields = Pick<Contribution, "page_index" | "is_creator">
 
@@ -17,8 +20,8 @@ export function maxContributionPageIndex(
   contributions: ContributionPageFields[],
 ): number {
   return contributions.reduce((max, c) => {
-    const page = toFiniteLayoutNumber(c.page_index)
-    if (page !== null && page >= 0) {
+    const page = toLayoutPageIndex(c.page_index)
+    if (page !== null) {
       return Math.max(max, page)
     }
     return max

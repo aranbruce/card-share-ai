@@ -182,16 +182,11 @@ export function Card3D({
 
   const effectiveContributionPage = (
     contrib: (typeof contributions)[number],
-  ) => {
-    const page = toFiniteLayoutNumber(contrib.page_index)
-    if (page !== null && page >= 0) {
-      return page
-    }
-    if (contrib.is_creator) {
-      return validMessagePage
-    }
-    return validMessagePage + 1
-  }
+  ) =>
+    contributionPageIndex(
+      contrib,
+      contrib.is_creator ? validMessagePage : validMessagePage + 1,
+    )
 
   const isMessagePage = !coverOnly && currentPage === validMessagePage
 
