@@ -1,4 +1,11 @@
-import type { Contribution } from "@/lib/card-body"
+/** Layout numeric fields as returned from Supabase/JSON (may arrive as strings). */
+export type LayoutNumberValue = number | string | null | undefined
+
+export type ContributionLayoutFields = {
+  position_x?: LayoutNumberValue
+  position_y?: LayoutNumberValue
+  page_index?: LayoutNumberValue
+}
 
 /** Coerce Supabase/JSON layout numbers (may arrive as strings). */
 export function toFiniteLayoutNumber(value: unknown): number | null {
@@ -11,7 +18,7 @@ export function toFiniteLayoutNumber(value: unknown): number | null {
 }
 
 export function contributionHasCanvasPosition(
-  contribution: Pick<Contribution, "position_x" | "position_y">,
+  contribution: Pick<ContributionLayoutFields, "position_x" | "position_y">,
 ): boolean {
   return (
     toFiniteLayoutNumber(contribution.position_x) !== null &&
@@ -20,7 +27,7 @@ export function contributionHasCanvasPosition(
 }
 
 export function contributionPageIndex(
-  contribution: Pick<Contribution, "page_index">,
+  contribution: Pick<ContributionLayoutFields, "page_index">,
   fallback: number,
 ): number {
   const page = toFiniteLayoutNumber(contribution.page_index)
