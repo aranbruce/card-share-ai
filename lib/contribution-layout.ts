@@ -35,7 +35,9 @@ function normalizePageIndexField(
 }
 
 /** Coerce API layout numbers before storing contributions in client state. */
-export function normalizeContributionFromApi(row: ApiContribution): Contribution {
+export function normalizeContributionFromApi(
+  row: ApiContribution,
+): Contribution {
   return {
     ...row,
     position_x: normalizeLayoutField(row.position_x),

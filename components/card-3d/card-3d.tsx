@@ -180,9 +180,7 @@ export function Card3D({
     })
   }, [coverOnly, totalPages, extraPages])
 
-  const effectiveContributionPage = (
-    contrib: (typeof contributions)[number],
-  ) =>
+  const effectiveContributionPage = (contrib: (typeof contributions)[number]) =>
     contributionPageIndex(
       contrib,
       contrib.is_creator ? validMessagePage : validMessagePage + 1,

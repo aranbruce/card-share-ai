@@ -31,12 +31,15 @@ export function useCardData(cardId: string, reloadNonce?: number) {
       setContributions([])
       setContributionsLoaded(false)
       try {
-        const { card: c, contributions: list, contributionsLoaded } =
-          await apiFetch<{
-            card: OwnerCard
-            contributions?: ApiContribution[]
-            contributionsLoaded?: boolean
-          }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
+        const {
+          card: c,
+          contributions: list,
+          contributionsLoaded,
+        } = await apiFetch<{
+          card: OwnerCard
+          contributions?: ApiContribution[]
+          contributionsLoaded?: boolean
+        }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
         setContributions(contributionsFromApi(list))
@@ -76,12 +79,15 @@ export function useCardData(cardId: string, reloadNonce?: number) {
       setContributions([])
       setContributionsLoaded(false)
       try {
-        const { card: c, contributions: list, contributionsLoaded } =
-          await apiFetch<{
-            card: OwnerCard
-            contributions?: ApiContribution[]
-            contributionsLoaded?: boolean
-          }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
+        const {
+          card: c,
+          contributions: list,
+          contributionsLoaded,
+        } = await apiFetch<{
+          card: OwnerCard
+          contributions?: ApiContribution[]
+          contributionsLoaded?: boolean
+        }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
         setContributions(contributionsFromApi(list))

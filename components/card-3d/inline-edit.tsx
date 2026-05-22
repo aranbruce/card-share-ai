@@ -166,8 +166,14 @@ export const InlineEdit = forwardRef<
     }
   }
 
+  const didFocusForEditSessionRef = useRef(false)
   useLayoutEffect(() => {
-    if (!isEditing || !editRef.current) return
+    if (!isEditing) {
+      didFocusForEditSessionRef.current = false
+      return
+    }
+    if (!editRef.current || didFocusForEditSessionRef.current) return
+    didFocusForEditSessionRef.current = true
 
     let cancelled = false
 
@@ -188,7 +194,8 @@ export const InlineEdit = forwardRef<
     }
 
     // Defer past the placement click so the canvas overlay does not keep focus.
-    if (autoFocus) {
+    const shouldDeferFocus = autoFocus
+    if (shouldDeferFocus) {
       let outerId = 0
       let innerId = 0
       outerId = requestAnimationFrame(() => {
