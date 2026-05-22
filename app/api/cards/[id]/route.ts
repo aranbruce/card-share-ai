@@ -194,7 +194,7 @@ export async function PATCH(
           .select(CONTRIBUTION_PUBLIC_COLUMNS)
           .eq("card_id", id)
           .order("created_at", { ascending: true })
-        if (!contribErr && rows && rows.length > 0) {
+        if (!contribErr && rows) {
           if (hasUnusedStoredExtraPages(storedExtra, rows)) {
             const { data: trimmed, error: trimErr } = await supabase
               .from("cards")

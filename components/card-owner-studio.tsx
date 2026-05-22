@@ -490,7 +490,7 @@ export const CardOwnerStudio = forwardRef<
   // so a user-initiated "Add Page" is not immediately undone.
   useEffect(() => {
     if (loading || !card || trimExtraPagesRef.current !== "idle") return
-    if (!contributionsLoaded || contributions.length === 0) {
+    if (!contributionsLoaded) {
       trimExtraPagesRef.current = "done"
       return
     }
