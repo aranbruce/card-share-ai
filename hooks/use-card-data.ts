@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import type { Contribution } from "@/lib/card-body"
 import type { OwnerCard } from "@/components/card-owner-studio"
 import { ApiError, apiFetch } from "@/lib/api-client"
+import { normalizeContributionFromApi } from "@/lib/contribution-layout"
+
+function contributionsFromApi(list: Contribution[] | undefined): Contribution[] {
+  return (list ?? []).map(normalizeContributionFromApi)
+}
 
 export function useCardData(cardId: string, reloadNonce?: number) {
   const [card, setCard] = useState<OwnerCard | null>(null)
@@ -29,7 +34,7 @@ export function useCardData(cardId: string, reloadNonce?: number) {
           }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
-        setContributions(list ?? [])
+        setContributions(contributionsFromApi(list))
         setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
@@ -75,7 +80,7 @@ export function useCardData(cardId: string, reloadNonce?: number) {
           }>(`/api/cards/${encodeURIComponent(cardId)}`, { cache: "no-store" })
         if (cancelled) return
         setCard(c)
-        setContributions(list ?? [])
+        setContributions(contributionsFromApi(list))
         setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return

@@ -1,3 +1,5 @@
+import type { Contribution } from "@/lib/card-body"
+
 /** Layout numeric fields as returned from Supabase/JSON (may arrive as strings). */
 export type LayoutNumberValue = number | string | null | undefined
 
@@ -5,6 +7,30 @@ export type ContributionLayoutFields = {
   position_x?: LayoutNumberValue
   position_y?: LayoutNumberValue
   page_index?: LayoutNumberValue
+  width_percent?: LayoutNumberValue
+  font_size?: LayoutNumberValue
+  rotation_degrees?: LayoutNumberValue
+}
+
+function normalizeLayoutField(
+  value: LayoutNumberValue,
+): number | null | undefined {
+  if (value === undefined) return undefined
+  if (value === null) return null
+  return toFiniteLayoutNumber(value)
+}
+
+/** Coerce API layout numbers before storing contributions in client state. */
+export function normalizeContributionFromApi(row: Contribution): Contribution {
+  return {
+    ...row,
+    position_x: normalizeLayoutField(row.position_x),
+    position_y: normalizeLayoutField(row.position_y),
+    width_percent: normalizeLayoutField(row.width_percent),
+    page_index: normalizeLayoutField(row.page_index),
+    font_size: normalizeLayoutField(row.font_size),
+    rotation_degrees: normalizeLayoutField(row.rotation_degrees),
+  }
 }
 
 /** Coerce Supabase/JSON layout numbers (may arrive as strings). */
