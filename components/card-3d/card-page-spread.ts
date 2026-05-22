@@ -71,7 +71,10 @@ function floorFullCardSpreadPages(
   }
   return {
     totalPages: MIN_FULL_CARD_SPREAD_PAGES,
-    validMessagePage: Math.max(1, Math.min(validMessagePage, MIN_FULL_CARD_SPREAD_PAGES - 1)),
+    validMessagePage: Math.max(
+      1,
+      Math.min(validMessagePage, MIN_FULL_CARD_SPREAD_PAGES - 1),
+    ),
   }
 }
 
