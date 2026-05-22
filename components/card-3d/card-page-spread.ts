@@ -1,8 +1,5 @@
 import type { Card3DProps } from "./types"
-import {
-  toFiniteLayoutNumber,
-  toLayoutPageIndex,
-} from "@/lib/contribution-layout"
+import { toLayoutPageIndex } from "@/lib/contribution-layout"
 
 const MIN_FULL_CARD_SPREAD_PAGES = 2
 
@@ -34,7 +31,7 @@ export function computeNaturalPageSpread(
   }, 0)
   // Pre-place creator rows use page_index: null for compose mode — not legacy guests.
   const hasLegacyUnindexedContribution = rows.some(
-    (c) => toFiniteLayoutNumber(c.page_index) === null && !c.is_creator,
+    (c) => toLayoutPageIndex(c.page_index) === null && !c.is_creator,
   )
 
   let lastContentPage = Math.max(

@@ -47,6 +47,19 @@ describe("card-extra-pages", () => {
     expect(hasUnusedStoredExtraPages(1, rows)).toBe(false)
   })
 
+  it("treats negative guest page_index as unindexed for trim decisions", () => {
+    const rows: Contribution[] = [
+      {
+        id: "guest",
+        message: "Hi!",
+        created_at: "2024-01-01T00:00:00.000Z",
+        page_index: -1,
+      },
+    ]
+    expect(hasLegacyUnindexedGuestContribution(rows)).toBe(true)
+    expect(hasUnusedStoredExtraPages(1, rows)).toBe(false)
+  })
+
   it("does not trim when legacy guest rows omit page_index", () => {
     const rows: Contribution[] = [
       {

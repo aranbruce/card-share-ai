@@ -1,8 +1,5 @@
 import type { Contribution } from "@/lib/card-body"
-import {
-  toFiniteLayoutNumber,
-  toLayoutPageIndex,
-} from "@/lib/contribution-layout"
+import { toLayoutPageIndex } from "@/lib/contribution-layout"
 
 type ContributionPageFields = Pick<Contribution, "page_index" | "is_creator">
 
@@ -11,7 +8,7 @@ export function hasLegacyUnindexedGuestContribution(
   contributions: ContributionPageFields[],
 ): boolean {
   return contributions.some(
-    (c) => toFiniteLayoutNumber(c.page_index) === null && !c.is_creator,
+    (c) => toLayoutPageIndex(c.page_index) === null && !c.is_creator,
   )
 }
 
