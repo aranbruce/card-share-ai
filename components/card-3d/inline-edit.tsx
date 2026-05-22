@@ -219,6 +219,9 @@ export const InlineEdit = forwardRef<
     }
     const el = editRef.current
     if (!el) return
+    if (didFocusForEditSessionRef.current && !autoFocus) {
+      return
+    }
     if (didFocusForEditSessionRef.current && isEditableSurfaceFocused(el)) {
       return
     }
