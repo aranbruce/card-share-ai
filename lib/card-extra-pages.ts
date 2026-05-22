@@ -3,7 +3,7 @@ import { toLayoutPageIndex } from "@/lib/contribution-layout"
 
 type ContributionPageFields = {
   page_index?: LayoutNumberValue
-  is_creator?: boolean
+  is_creator?: boolean | null
 }
 
 /** Guest rows saved before `page_index` existed; spread logic places them past page 1. */
