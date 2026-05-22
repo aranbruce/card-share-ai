@@ -338,11 +338,22 @@ export const CardOwnerStudio = forwardRef<
     [creatorRow, draftFormatting, saveContributionPatch, setContributions],
   )
 
+  // One-shot: keep autoFocus true through initial mount/focus, then clear so page
+  // navigation does not re-trigger autofocus when the note remounts.
   useEffect(() => {
-    if (!editingContributionId) {
-      setAutoFocusContributionId(null)
+    if (!autoFocusContributionId) return
+    let outerId = 0
+    let innerId = 0
+    outerId = requestAnimationFrame(() => {
+      innerId = requestAnimationFrame(() => {
+        setAutoFocusContributionId(null)
+      })
+    })
+    return () => {
+      cancelAnimationFrame(outerId)
+      cancelAnimationFrame(innerId)
     }
-  }, [editingContributionId])
+  }, [autoFocusContributionId])
 
   useEffect(() => {
     onActiveContributionChange?.(
@@ -366,7 +377,7 @@ export const CardOwnerStudio = forwardRef<
         const serverRow = next as Record<string, unknown>
         for (const [k, v] of Object.entries(updates)) {
           if (v === undefined) continue
-          if (!Object.hasOwn(serverRow, k)) {
+          if (!Object.prototype.hasOwnProperty.call(serverRow, k)) {
             ;(merged as Record<string, unknown>)[k] = v
           }
         }
