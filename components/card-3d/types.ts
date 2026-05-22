@@ -69,6 +69,8 @@ type Card3DContributionEditProps = {
     },
   ) => void
   contributionRegeneratingId?: string | null
+  /** Focus the message field when this contribution first appears on the canvas (e.g. after click-to-place). */
+  autoFocusContributionId?: string | null
 }
 
 // ── Compose draft (guest contribution flow) ───────────────────────────────────

@@ -171,6 +171,9 @@ export const CardOwnerStudio = forwardRef<
     giphyUrl: null,
   }))
   const [draftGifPickerOpen, setDraftGifPickerOpen] = useState(false)
+  const [autoFocusContributionId, setAutoFocusContributionId] = useState<
+    string | null
+  >(null)
 
   const editableContributionIds = useMemo(
     () => (creatorRow && !showCompose ? [creatorRow.id] : []),
@@ -310,6 +313,7 @@ export const CardOwnerStudio = forwardRef<
       )
       setNavigateToPage(pos.pageIndex)
       setEditingContributionId(creatorRow.id)
+      setAutoFocusContributionId(creatorRow.id)
       void saveContributionPatch(creatorRow.id, {
         positionX: pos.x,
         positionY: pos.y,
@@ -324,6 +328,12 @@ export const CardOwnerStudio = forwardRef<
     },
     [creatorRow, draftFormatting, saveContributionPatch, setContributions],
   )
+
+  useEffect(() => {
+    if (!autoFocusContributionId) return
+    const t = window.setTimeout(() => setAutoFocusContributionId(null), 0)
+    return () => clearTimeout(t)
+  }, [autoFocusContributionId])
 
   useEffect(() => {
     onActiveContributionChange?.(
@@ -563,6 +573,7 @@ export const CardOwnerStudio = forwardRef<
         onContributionGifChange={handleContributionGifChange}
         onContributionLayoutChange={handleContributionLayoutChange}
         contributionRegeneratingId={regeneratingContributionId}
+        autoFocusContributionId={autoFocusContributionId}
       />
       <GiphyPicker
         open={Boolean(contribGifPickerContributionId)}

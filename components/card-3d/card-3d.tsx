@@ -74,6 +74,7 @@ export function Card3D({
   onContributionGifChange,
   onContributionLayoutChange,
   contributionRegeneratingId = null,
+  autoFocusContributionId = null,
   composeDraft = null,
   onComposeDraftChange,
   onComposeDraftGifChange,
@@ -416,6 +417,7 @@ export function Card3D({
                     : {}),
                 }}
                 placeholder="Type your message…"
+                autoFocus={contrib.id === autoFocusContributionId}
               />
             </div>
           </DraggableWrapper>
