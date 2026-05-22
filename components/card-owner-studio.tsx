@@ -4,6 +4,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -486,7 +487,7 @@ export const CardOwnerStudio = forwardRef<
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
   const cardExtraPagesRef = useRef(0)
-  useEffect(() => {
+  useLayoutEffect(() => {
     cardExtraPagesRef.current = card?.extra_pages ?? 0
   }, [card?.extra_pages])
 
