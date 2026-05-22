@@ -169,7 +169,10 @@ export const InlineEdit = forwardRef<
   useLayoutEffect(() => {
     if (!isEditing || !editRef.current) return
 
+    let cancelled = false
+
     const focusEdit = () => {
+      if (cancelled) return
       const el = editRef.current
       if (!el) return
       el.focus()
@@ -179,19 +182,30 @@ export const InlineEdit = forwardRef<
       sel?.removeAllRanges()
       sel?.addRange(range)
       queueMicrotask(() => {
+        if (cancelled) return
         setEditSurfaceEmpty(!(editRef.current?.innerText || "").trim())
       })
     }
 
     // Defer past the placement click so the canvas overlay does not keep focus.
     if (autoFocus) {
-      const id = requestAnimationFrame(() => {
-        requestAnimationFrame(focusEdit)
+      let outerId = 0
+      let innerId = 0
+      outerId = requestAnimationFrame(() => {
+        if (cancelled) return
+        innerId = requestAnimationFrame(focusEdit)
       })
-      return () => cancelAnimationFrame(id)
+      return () => {
+        cancelled = true
+        cancelAnimationFrame(outerId)
+        cancelAnimationFrame(innerId)
+      }
     }
 
     focusEdit()
+    return () => {
+      cancelled = true
+    }
   }, [isEditing, autoFocus])
 
   useEffect(() => {

@@ -459,13 +459,24 @@ export const CardOwnerStudio = forwardRef<
     onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
-  const trimmedExtraPagesRef = useRef(false)
+  const trimExtraPagesRef = useRef<"idle" | "inFlight" | "done">("idle")
   useEffect(() => {
-    if (loading || !card || trimmedExtraPagesRef.current) return
-    trimmedExtraPagesRef.current = true
+    trimExtraPagesRef.current = "idle"
+  }, [cardId, reloadNonce])
+
+  useEffect(() => {
+    if (loading || !card || trimExtraPagesRef.current !== "idle") return
     const stored = card.extra_pages ?? 0
     if (!hasUnusedStoredExtraPages(stored, contributions)) return
-    void patchCardFields({ extra_pages: 0 }).catch(console.error)
+    trimExtraPagesRef.current = "inFlight"
+    void patchCardFields({ extra_pages: 0 })
+      .then(() => {
+        trimExtraPagesRef.current = "done"
+      })
+      .catch((e) => {
+        console.error(e)
+        trimExtraPagesRef.current = "idle"
+      })
   }, [loading, card, contributions, patchCardFields])
 
   const addExtraPageInFlightRef = useRef(false)
