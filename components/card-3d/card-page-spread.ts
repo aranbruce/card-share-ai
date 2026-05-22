@@ -24,6 +24,8 @@ export function computeNaturalPageSpread(
   extraPages: number,
 ): NaturalPageSpread {
   const rows = contributions ?? []
+  const safeExtraPages =
+    Number.isFinite(extraPages) && extraPages >= 0 ? Math.trunc(extraPages) : 0
   const messagePageLowerBound = Math.max(1, messagePageIndex)
   const maxExplicitContributionPage = maxContributionPageIndex(rows)
   const hasLegacyUnindexedContribution =
@@ -35,7 +37,7 @@ export function computeNaturalPageSpread(
     hasLegacyUnindexedContribution ? messagePageLowerBound + 1 : 0,
     1,
   )
-  let totalPages = coverOnly ? 1 : lastContentPage + 1 + extraPages
+  let totalPages = coverOnly ? 1 : lastContentPage + 1 + safeExtraPages
 
   let validMessagePage = coverOnly
     ? -1
@@ -43,7 +45,7 @@ export function computeNaturalPageSpread(
 
   if (!coverOnly && hasLegacyUnindexedContribution) {
     lastContentPage = Math.max(lastContentPage, validMessagePage + 1)
-    totalPages = lastContentPage + 1 + extraPages
+    totalPages = lastContentPage + 1 + safeExtraPages
     validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
   }
 

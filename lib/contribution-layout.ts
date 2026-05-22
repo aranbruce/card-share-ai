@@ -66,13 +66,19 @@ export function toLayoutPageIndex(value: unknown): number | null {
   return Math.trunc(page)
 }
 
+export function contributionCanvasOffset(
+  contribution: Pick<ContributionLayoutFields, "position_x" | "position_y">,
+): { x: number; y: number } | undefined {
+  const x = toFiniteLayoutNumber(contribution.position_x)
+  const y = toFiniteLayoutNumber(contribution.position_y)
+  if (x === null || y === null) return undefined
+  return { x, y }
+}
+
 export function contributionHasCanvasPosition(
   contribution: Pick<ContributionLayoutFields, "position_x" | "position_y">,
 ): boolean {
-  return (
-    toFiniteLayoutNumber(contribution.position_x) !== null &&
-    toFiniteLayoutNumber(contribution.position_y) !== null
-  )
+  return contributionCanvasOffset(contribution) !== undefined
 }
 
 export function contributionPageIndex(

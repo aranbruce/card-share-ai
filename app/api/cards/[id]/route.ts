@@ -4,14 +4,19 @@ import type { Contribution } from "@/lib/card-body"
 import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { createClient } from "@/lib/supabase/server"
 
+function storedExtraPages(card: Record<string, unknown>): number {
+  const raw = card.extra_pages
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return Math.max(0, Math.trunc(raw))
+  }
+  return 0
+}
+
 function cardWithEffectiveExtraPages(
   card: Record<string, unknown>,
   contributions: Pick<Contribution, "page_index" | "is_creator">[],
 ) {
-  const stored =
-    typeof card.extra_pages === "number" && Number.isFinite(card.extra_pages)
-      ? Math.trunc(card.extra_pages)
-      : 0
+  const stored = storedExtraPages(card)
   const extra_pages = hasUnusedStoredExtraPages(stored, contributions)
     ? 0
     : stored
@@ -90,18 +95,15 @@ export async function GET(
     if (contribErr) {
       console.error("[GET /api/cards/[id]] contributions:", contribErr)
       return NextResponse.json({
-        card: cardWithEffectiveExtraPages(data, []),
+        card: { ...data, extra_pages: storedExtraPages(data) },
         contributions: [],
       })
     }
 
-    const rows = (contributions ?? []) as Pick<
-      Contribution,
-      "page_index" | "is_creator"
-    >[]
+    const rows = contributions ?? []
     return NextResponse.json({
       card: cardWithEffectiveExtraPages(data, rows),
-      contributions: contributions ?? [],
+      contributions: rows,
     })
   } catch (error) {
     console.error("Error fetching card:", error)

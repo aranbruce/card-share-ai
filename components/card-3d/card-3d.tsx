@@ -23,8 +23,10 @@ import {
   type CommittedSpreadSnapshot,
 } from "./card-page-spread"
 import {
+  contributionCanvasOffset,
   contributionHasCanvasPosition,
   contributionPageIndex,
+  toFiniteLayoutNumber,
 } from "@/lib/contribution-layout"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
 import { getMessageFontFamily } from "@/lib/message-font-presets"
@@ -351,15 +353,10 @@ export function Card3D({
           <DraggableWrapper
             key={contrib.id}
             editable
-            initialOffset={
-              contributionHasCanvasPosition(contrib)
-                ? {
-                    x: contrib.position_x!,
-                    y: contrib.position_y!,
-                  }
-                : undefined
+            initialOffset={contributionCanvasOffset(contrib)}
+            initialWidthPercent={
+              toFiniteLayoutNumber(contrib.width_percent) ?? undefined
             }
-            initialWidthPercent={contrib.width_percent ?? undefined}
             rotationDegrees={contrib.rotation_degrees ?? 0}
             onLayoutCommit={
               onContributionLayoutChange
@@ -427,15 +424,10 @@ export function Card3D({
       return (
         <DraggableWrapper
           key={contrib.id}
-          initialOffset={
-            contributionHasCanvasPosition(contrib)
-              ? {
-                  x: contrib.position_x!,
-                  y: contrib.position_y!,
-                }
-              : undefined
+          initialOffset={contributionCanvasOffset(contrib)}
+          initialWidthPercent={
+            toFiniteLayoutNumber(contrib.width_percent) ?? undefined
           }
-          initialWidthPercent={contrib.width_percent ?? undefined}
           rotationDegrees={contrib.rotation_degrees ?? 0}
         >
           <div className="space-y-3">

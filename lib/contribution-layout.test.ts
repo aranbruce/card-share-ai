@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   type ApiContribution,
+  contributionCanvasOffset,
   contributionHasCanvasPosition,
   contributionPageIndex,
   normalizeContributionFromApi,
@@ -15,6 +16,9 @@ describe("contribution-layout", () => {
     expect(
       contributionHasCanvasPosition({ position_x: "12", position_y: "8" }),
     ).toBe(true)
+    expect(
+      contributionCanvasOffset({ position_x: "12", position_y: "8" }),
+    ).toEqual({ x: 12, y: 8 })
     expect(contributionPageIndex({ page_index: "1" }, 0)).toBe(1)
     expect(contributionPageIndex({ page_index: "1.9" }, 0)).toBe(1)
     expect(toLayoutPageIndex("2.8")).toBe(2)

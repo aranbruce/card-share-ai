@@ -1,7 +1,10 @@
-import type { Contribution } from "@/lib/card-body"
+import type { LayoutNumberValue } from "@/lib/contribution-layout"
 import { toLayoutPageIndex } from "@/lib/contribution-layout"
 
-type ContributionPageFields = Pick<Contribution, "page_index" | "is_creator">
+type ContributionPageFields = {
+  page_index?: LayoutNumberValue
+  is_creator?: boolean
+}
 
 /** Guest rows saved before `page_index` existed; spread logic places them past page 1. */
 export function hasLegacyUnindexedGuestContribution(
