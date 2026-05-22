@@ -340,8 +340,17 @@ export const CardOwnerStudio = forwardRef<
 
   useEffect(() => {
     if (!autoFocusContributionId) return
-    const t = window.setTimeout(() => setAutoFocusContributionId(null), 0)
-    return () => clearTimeout(t)
+    let outerId = 0
+    let innerId = 0
+    outerId = requestAnimationFrame(() => {
+      innerId = requestAnimationFrame(() => {
+        setAutoFocusContributionId(null)
+      })
+    })
+    return () => {
+      cancelAnimationFrame(outerId)
+      cancelAnimationFrame(innerId)
+    }
   }, [autoFocusContributionId])
 
   useEffect(() => {

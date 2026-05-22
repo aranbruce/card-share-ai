@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
 import { createClient } from "@/lib/supabase/server"
 
@@ -182,43 +181,7 @@ export async function PATCH(
       }
     }
 
-    let responseCard = cardRow
-    if (!("extra_pages" in updates)) {
-      const storedExtra =
-        typeof cardRow.extra_pages === "number" && cardRow.extra_pages > 0
-          ? cardRow.extra_pages
-          : 0
-      if (storedExtra > 0) {
-        const { data: rows, error: contribErr } = await supabase
-          .from("card_contributions")
-          .select(CONTRIBUTION_PUBLIC_COLUMNS)
-          .eq("card_id", id)
-          .order("created_at", { ascending: true })
-        if (!contribErr && rows) {
-          if (hasUnusedStoredExtraPages(storedExtra, rows)) {
-            const { data: trimmed, error: trimErr } = await supabase
-              .from("cards")
-              .update({
-                extra_pages: 0,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", id)
-              .eq("user_id", user.id)
-              .select()
-              .single()
-            if (trimErr) {
-              console.error("[PATCH /api/cards/[id]] trim extra_pages:", trimErr)
-            } else if (trimmed) {
-              responseCard = trimmed
-            } else {
-              responseCard = { ...cardRow, extra_pages: 0 }
-            }
-          }
-        }
-      }
-    }
-
-    return NextResponse.json({ card: responseCard })
+    return NextResponse.json({ card: cardRow })
   } catch (error) {
     console.error("Error updating card:", error)
     return NextResponse.json(

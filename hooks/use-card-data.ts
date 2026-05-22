@@ -17,6 +17,9 @@ export function useCardData(cardId: string, reloadNonce?: number) {
     void (async () => {
       setLoading(true)
       setError("")
+      setCard(null)
+      setContributions([])
+      setContributionsLoaded(false)
       try {
         const { card: c, contributions: list, contributionsLoaded } =
           await apiFetch<{
@@ -30,6 +33,9 @@ export function useCardData(cardId: string, reloadNonce?: number) {
         setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
+        setCard(null)
+        setContributions([])
+        setContributionsLoaded(false)
         const message =
           e instanceof ApiError && e.status === 401
             ? "You need to be signed in to open this card."
@@ -57,6 +63,9 @@ export function useCardData(cardId: string, reloadNonce?: number) {
     void (async () => {
       setLoading(true)
       setError("")
+      setCard(null)
+      setContributions([])
+      setContributionsLoaded(false)
       try {
         const { card: c, contributions: list, contributionsLoaded } =
           await apiFetch<{
@@ -70,6 +79,9 @@ export function useCardData(cardId: string, reloadNonce?: number) {
         setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
+        setCard(null)
+        setContributions([])
+        setContributionsLoaded(false)
         const message =
           e instanceof ApiError && e.status === 401
             ? "You need to be signed in to open this card."
