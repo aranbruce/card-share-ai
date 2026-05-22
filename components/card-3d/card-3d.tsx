@@ -22,6 +22,11 @@ import {
   capSpreadToCommitted,
   type CommittedSpreadSnapshot,
 } from "./card-page-spread"
+import {
+  contributionHasCanvasPosition,
+  contributionPageIndex,
+  toFiniteLayoutNumber,
+} from "@/lib/contribution-layout"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
 import { getMessageFontFamily } from "@/lib/message-font-presets"
 import { GiphyPicker } from "./giphy-picker"
@@ -176,10 +181,16 @@ export function Card3D({
 
   const effectiveContributionPage = (
     contrib: (typeof contributions)[number],
-  ) =>
-    typeof contrib.page_index === "number" && contrib.page_index >= 0
-      ? contrib.page_index
-      : validMessagePage + 1
+  ) => {
+    const page = toFiniteLayoutNumber(contrib.page_index)
+    if (page !== null && page >= 0) {
+      return page
+    }
+    if (contrib.is_creator) {
+      return validMessagePage
+    }
+    return validMessagePage + 1
+  }
 
   const isMessagePage = !coverOnly && currentPage === validMessagePage
 
@@ -194,10 +205,10 @@ export function Card3D({
     const last = contributions[contributions.length - 1]
     if (!last) return
 
-    const pageIdx =
-      typeof last.page_index === "number" && last.page_index >= 0
-        ? last.page_index
-        : validMessagePage + 1
+    const pageIdx = contributionPageIndex(
+      last,
+      last.is_creator ? validMessagePage : validMessagePage + 1,
+    )
     const maxPage = Math.max(0, totalPages - 1)
     queueMicrotask(() => {
       setCurrentPage(Math.min(Math.max(0, pageIdx), maxPage))
@@ -309,10 +320,20 @@ export function Card3D({
     [contributions, gifPickerContributionId],
   )
 
+  const isContributionPlacedOnCanvas = contributionHasCanvasPosition
+
   const getContributionsForPage = (pageIdx: number) =>
     contributions.filter(
-      (contribution) => effectiveContributionPage(contribution) === pageIdx,
+      (contribution) =>
+        isContributionPlacedOnCanvas(contribution) &&
+        effectiveContributionPage(contribution) === pageIdx,
     )
+
+  const showComposePlaceHint =
+    !composeDraft &&
+    onComposeCanvasPlace &&
+    currentPage > 0 &&
+    getContributionsForPage(currentPage).length === 0
 
   const renderContributionsForPage = (pageIdx: number) => {
     const editableSet = new Set(editableContributionIds)
@@ -335,15 +356,15 @@ export function Card3D({
             key={contrib.id}
             editable
             initialOffset={
-              typeof contrib.position_x === "number" &&
-              typeof contrib.position_y === "number"
-                ? { x: contrib.position_x, y: contrib.position_y }
+              contributionHasCanvasPosition(contrib)
+                ? {
+                    x: toFiniteLayoutNumber(contrib.position_x)!,
+                    y: toFiniteLayoutNumber(contrib.position_y)!,
+                  }
                 : undefined
             }
             initialWidthPercent={
-              typeof contrib.width_percent === "number"
-                ? contrib.width_percent
-                : undefined
+              toFiniteLayoutNumber(contrib.width_percent) ?? undefined
             }
             rotationDegrees={contrib.rotation_degrees ?? 0}
             onLayoutCommit={
@@ -405,15 +426,15 @@ export function Card3D({
         <DraggableWrapper
           key={contrib.id}
           initialOffset={
-            typeof contrib.position_x === "number" &&
-            typeof contrib.position_y === "number"
-              ? { x: contrib.position_x, y: contrib.position_y }
+            contributionHasCanvasPosition(contrib)
+              ? {
+                  x: toFiniteLayoutNumber(contrib.position_x)!,
+                  y: toFiniteLayoutNumber(contrib.position_y)!,
+                }
               : undefined
           }
           initialWidthPercent={
-            typeof contrib.width_percent === "number"
-              ? contrib.width_percent
-              : undefined
+            toFiniteLayoutNumber(contrib.width_percent) ?? undefined
           }
           rotationDegrees={contrib.rotation_degrees ?? 0}
         >
@@ -547,17 +568,15 @@ export function Card3D({
                     />
                   )}
 
-                  {!composeDraft &&
-                    onComposeCanvasPlace &&
-                    getContributionsForPage(currentPage).length === 0 && (
-                      <ComposeCanvasEmptyHint
-                        variant={
-                          isMessagePage && showMainSpreadInnerBody
-                            ? "anchored"
-                            : "centered"
-                        }
-                      />
-                    )}
+                  {showComposePlaceHint ? (
+                    <ComposeCanvasEmptyHint
+                      variant={
+                        isMessagePage && showMainSpreadInnerBody
+                          ? "anchored"
+                          : "centered"
+                      }
+                    />
+                  ) : null}
 
                   {isMessagePage && showMainSpreadInnerBody ? (
                     <div className="pointer-events-none relative z-10 flex min-h-[360px] flex-col justify-center *:pointer-events-auto">

@@ -1,4 +1,7 @@
 import type { Card3DProps } from "./types"
+import { toFiniteLayoutNumber } from "@/lib/contribution-layout"
+
+const MIN_FULL_CARD_SPREAD_PAGES = 2
 
 export type CommittedSpreadSnapshot = {
   totalPages: number
@@ -20,13 +23,15 @@ export function computeNaturalPageSpread(
   const rows = contributions ?? []
   const messagePageLowerBound = Math.max(1, messagePageIndex)
   const maxExplicitContributionPage = rows.reduce((max, c) => {
-    if (typeof c.page_index === "number" && c.page_index >= 0) {
-      return Math.max(max, c.page_index)
+    const page = toFiniteLayoutNumber(c.page_index)
+    if (page !== null && page >= 0) {
+      return Math.max(max, page)
     }
     return max
   }, 0)
+  // Pre-place creator rows use page_index: null for compose mode — not legacy guests.
   const hasLegacyUnindexedContribution = rows.some(
-    (c) => !(typeof c.page_index === "number" && c.page_index >= 0),
+    (c) => toFiniteLayoutNumber(c.page_index) === null && !c.is_creator,
   )
 
   let lastContentPage = Math.max(
@@ -47,7 +52,27 @@ export function computeNaturalPageSpread(
     validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
   }
 
+  if (!coverOnly && totalPages < MIN_FULL_CARD_SPREAD_PAGES) {
+    totalPages = MIN_FULL_CARD_SPREAD_PAGES
+    lastContentPage = Math.max(lastContentPage, 1)
+    validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
+  }
+
   return { lastContentPage, totalPages, validMessagePage }
+}
+
+function floorFullCardSpreadPages(
+  coverOnly: boolean,
+  totalPages: number,
+  validMessagePage: number,
+): { totalPages: number; validMessagePage: number } {
+  if (coverOnly || totalPages >= MIN_FULL_CARD_SPREAD_PAGES) {
+    return { totalPages, validMessagePage }
+  }
+  return {
+    totalPages: MIN_FULL_CARD_SPREAD_PAGES,
+    validMessagePage: Math.max(1, Math.min(validMessagePage, MIN_FULL_CARD_SPREAD_PAGES - 1)),
+  }
 }
 
 export function capSpreadToCommitted(
@@ -58,22 +83,32 @@ export function capSpreadToCommitted(
   coverOnly: boolean,
 ): { totalPages: number; validMessagePage: number } {
   if (coverOnly) {
-    return {
-      totalPages: natural.totalPages,
-      validMessagePage: natural.validMessagePage,
-    }
+    return floorFullCardSpreadPages(
+      true,
+      natural.totalPages,
+      natural.validMessagePage,
+    )
+  }
+  if (committed && natural.totalPages < committed.totalPages) {
+    return floorFullCardSpreadPages(
+      false,
+      natural.totalPages,
+      natural.validMessagePage,
+    )
   }
   if (!committed || committed.extraPages !== extraPages) {
-    return {
-      totalPages: natural.totalPages,
-      validMessagePage: natural.validMessagePage,
-    }
+    return floorFullCardSpreadPages(
+      false,
+      natural.totalPages,
+      natural.validMessagePage,
+    )
   }
   if (natural.totalPages <= committed.totalPages) {
-    return {
-      totalPages: natural.totalPages,
-      validMessagePage: natural.validMessagePage,
-    }
+    return floorFullCardSpreadPages(
+      false,
+      natural.totalPages,
+      natural.validMessagePage,
+    )
   }
   if (natural.lastContentPage <= committed.totalPages - 1) {
     const totalPages = committed.totalPages
@@ -81,10 +116,11 @@ export function capSpreadToCommitted(
       1,
       Math.min(messagePageIndex, totalPages - 1),
     )
-    return { totalPages, validMessagePage }
+    return floorFullCardSpreadPages(false, totalPages, validMessagePage)
   }
-  return {
-    totalPages: natural.totalPages,
-    validMessagePage: natural.validMessagePage,
-  }
+  return floorFullCardSpreadPages(
+    false,
+    natural.totalPages,
+    natural.validMessagePage,
+  )
 }

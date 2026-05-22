@@ -23,6 +23,9 @@ import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
+import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
+import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
+import { contributionHasCanvasPosition } from "@/lib/contribution-layout"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 export type OwnerCard = {
@@ -148,7 +151,9 @@ export const CardOwnerStudio = forwardRef<
   )
 
   // Show compose draft mode when the creator note hasn't been placed yet (no position).
-  const showCompose = Boolean(creatorRow && creatorRow.position_x === null)
+  const showCompose = Boolean(
+    creatorRow && !contributionHasCanvasPosition(creatorRow),
+  )
 
   const [draftFormatting, setDraftFormatting] = useState<{
     textColor: string | null
@@ -179,10 +184,15 @@ export const CardOwnerStudio = forwardRef<
     }
   }, [creatorRow, showCompose, editingContributionId])
 
-  const totalInnerPages = useMemo(
-    () => 1 + (card?.extra_pages ?? 0),
-    [card?.extra_pages],
-  )
+  const totalInnerPages = useMemo(() => {
+    const spread = computeNaturalPageSpread(
+      false,
+      1,
+      contributions,
+      card?.extra_pages ?? 0,
+    )
+    return Math.max(1, spread.totalPages - 1)
+  }, [contributions, card?.extra_pages])
 
   const activeContributionFormattingState =
     useMemo((): ActiveContributionFormattingState | null => {
@@ -438,6 +448,15 @@ export const CardOwnerStudio = forwardRef<
   useEffect(() => {
     onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
+
+  const trimmedExtraPagesRef = useRef(false)
+  useEffect(() => {
+    if (loading || !card || trimmedExtraPagesRef.current) return
+    trimmedExtraPagesRef.current = true
+    const stored = card.extra_pages ?? 0
+    if (!hasUnusedStoredExtraPages(stored, contributions)) return
+    void patchCardFields({ extra_pages: 0 }).catch(console.error)
+  }, [loading, card, contributions, patchCardFields])
 
   const addExtraPageInFlightRef = useRef(false)
   const handleAddPage = useCallback(async () => {
