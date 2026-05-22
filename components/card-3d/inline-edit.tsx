@@ -19,6 +19,10 @@ import {
   useState,
 } from "react"
 import { ArrowUp, X } from "lucide-react"
+import {
+  focusEditableSurface,
+  isEditableSurfaceFocused,
+} from "@/lib/focus-editable-surface"
 import { CANVAS_EDGE_PADDING } from "./draggable-wrapper"
 import {
   noteMoveCursorClass,
@@ -167,53 +171,86 @@ export const InlineEdit = forwardRef<
   }
 
   const didFocusForEditSessionRef = useRef(false)
+
+  const syncEditEmptyAfterFocus = useCallback(() => {
+    queueMicrotask(() => {
+      setEditSurfaceEmpty(!(editRef.current?.innerText || "").trim())
+    })
+  }, [])
+
+  const runEditFocus = useCallback(() => {
+    const el = editRef.current
+    if (!el) return false
+    focusEditableSurface(el)
+    syncEditEmptyAfterFocus()
+    return isEditableSurfaceFocused(el)
+  }, [syncEditEmptyAfterFocus])
+
+  const markFocusedIfActive = useCallback(() => {
+    const el = editRef.current
+    if (el && isEditableSurfaceFocused(el)) {
+      didFocusForEditSessionRef.current = true
+      return true
+    }
+    return false
+  }, [])
+
+  const assignEditRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      editRef.current = el
+      if (
+        !el ||
+        !isEditing ||
+        !autoFocus ||
+        didFocusForEditSessionRef.current
+      ) {
+        return
+      }
+      runEditFocus()
+      markFocusedIfActive()
+    },
+    [autoFocus, isEditing, markFocusedIfActive, runEditFocus],
+  )
+
   useLayoutEffect(() => {
     if (!isEditing) {
       didFocusForEditSessionRef.current = false
       return
     }
-    if (!editRef.current || didFocusForEditSessionRef.current) return
-    didFocusForEditSessionRef.current = true
-
-    let cancelled = false
-
-    const focusEdit = () => {
-      if (cancelled) return
-      const el = editRef.current
-      if (!el) return
-      el.focus()
-      const range = document.createRange()
-      range.selectNodeContents(el)
-      const sel = window.getSelection()
-      sel?.removeAllRanges()
-      sel?.addRange(range)
-      queueMicrotask(() => {
-        if (cancelled) return
-        setEditSurfaceEmpty(!(editRef.current?.innerText || "").trim())
-      })
+    const el = editRef.current
+    if (!el) return
+    if (didFocusForEditSessionRef.current && isEditableSurfaceFocused(el)) {
+      return
     }
 
-    // Defer past the placement click so the canvas overlay does not keep focus.
-    const shouldDeferFocus = autoFocus
-    if (shouldDeferFocus) {
-      let outerId = 0
-      let innerId = 0
-      outerId = requestAnimationFrame(() => {
-        if (cancelled) return
-        innerId = requestAnimationFrame(focusEdit)
-      })
+    let cancelled = false
+    let outerId = 0
+    let innerId = 0
+
+    const tryFocus = () => {
+      if (cancelled) return
+      runEditFocus()
+      markFocusedIfActive()
+    }
+
+    tryFocus()
+    if (!autoFocus || isEditableSurfaceFocused(el)) {
       return () => {
         cancelled = true
-        cancelAnimationFrame(outerId)
-        cancelAnimationFrame(innerId)
       }
     }
 
-    focusEdit()
+    outerId = requestAnimationFrame(() => {
+      if (cancelled) return
+      innerId = requestAnimationFrame(tryFocus)
+    })
+
     return () => {
       cancelled = true
+      cancelAnimationFrame(outerId)
+      cancelAnimationFrame(innerId)
     }
-  }, [isEditing, autoFocus])
+  }, [isEditing, autoFocus, markFocusedIfActive, runEditFocus])
 
   useEffect(() => {
     const syncEmptyFromValue = () => setEditSurfaceEmpty(!value.trim())
@@ -407,7 +444,7 @@ export const InlineEdit = forwardRef<
           </span>
         ) : null}
         <div
-          ref={editRef}
+          ref={assignEditRef}
           onPointerDown={
             canDragNote && !isEditing
               ? (e) => {

@@ -339,19 +339,10 @@ export const CardOwnerStudio = forwardRef<
   )
 
   useEffect(() => {
-    if (!autoFocusContributionId) return
-    let outerId = 0
-    let innerId = 0
-    outerId = requestAnimationFrame(() => {
-      innerId = requestAnimationFrame(() => {
-        setAutoFocusContributionId(null)
-      })
-    })
-    return () => {
-      cancelAnimationFrame(outerId)
-      cancelAnimationFrame(innerId)
+    if (!editingContributionId) {
+      setAutoFocusContributionId(null)
     }
-  }, [autoFocusContributionId])
+  }, [editingContributionId])
 
   useEffect(() => {
     onActiveContributionChange?.(
