@@ -493,14 +493,14 @@ export const CardOwnerStudio = forwardRef<
 
   const trimExtraPagesRef = useRef<"idle" | "inFlight" | "done">("idle")
   const trimExtraPagesPromiseRef = useRef<Promise<void> | null>(null)
-  useEffect(() => {
+  useLayoutEffect(() => {
     trimExtraPagesRef.current = "idle"
     trimExtraPagesPromiseRef.current = null
   }, [cardId, reloadNonce])
 
   // Trim stale extra_pages once per load — not on every card/contributions update,
   // so a user-initiated "Add Page" is not immediately undone.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (loading || !card || trimExtraPagesRef.current !== "idle") return
     if (!contributionsLoaded) {
       trimExtraPagesRef.current = "done"
