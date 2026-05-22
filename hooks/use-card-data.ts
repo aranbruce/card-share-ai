@@ -43,7 +43,6 @@ export function useCardData(cardId: string, reloadNonce?: number) {
         setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
-        setCard(null)
         setContributions([])
         setContributionsLoaded(false)
         const message =
@@ -89,7 +88,6 @@ export function useCardData(cardId: string, reloadNonce?: number) {
         setContributionsLoaded(contributionsLoaded !== false)
       } catch (e) {
         if (cancelled) return
-        setCard(null)
         setContributions([])
         setContributionsLoaded(false)
         const message =

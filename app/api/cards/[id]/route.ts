@@ -71,6 +71,8 @@ export async function GET(
       .eq("card_id", id)
       .order("created_at", { ascending: true })
 
+    // Unused extra_pages trimming is client-side (CardOwnerStudio PATCH). GET stays
+    // side-effect free; contributionsLoaded signals when the contributions query failed.
     if (contribErr) {
       console.error("[GET /api/cards/[id]] contributions:", contribErr)
       return NextResponse.json({

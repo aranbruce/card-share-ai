@@ -41,6 +41,12 @@ describe("contribution-layout", () => {
       font_size: 18,
       rotation_degrees: 3,
     })
+    expect(
+      normalizeContributionFromApi({ ...row, page_index: "1.9" }).page_index,
+    ).toBe(1)
+    expect(
+      normalizeContributionFromApi({ ...row, page_index: "-1" }).page_index,
+    ).toBeNull()
   })
 
   it("treats missing positions as not placed", () => {

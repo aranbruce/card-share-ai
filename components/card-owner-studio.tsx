@@ -590,15 +590,8 @@ export const CardOwnerStudio = forwardRef<
       })
   }, [loading, creatorRow, card, cardId, setContributions])
 
-  if (loading || !card) {
-    if (loading) {
-      return <Skeleton className="card-cover-skeleton" />
-    }
-    return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <p className="text-sm text-muted-foreground">Card not found</p>
-      </div>
-    )
+  if (loading) {
+    return <Skeleton className="card-cover-skeleton" />
   }
 
   if (error) {
@@ -606,6 +599,14 @@ export const CardOwnerStudio = forwardRef<
       <Alert variant="destructive">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
+    )
+  }
+
+  if (!card) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Card not found</p>
+      </div>
     )
   }
 
