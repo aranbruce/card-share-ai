@@ -25,7 +25,6 @@ import {
 import {
   contributionHasCanvasPosition,
   contributionPageIndex,
-  toFiniteLayoutNumber,
 } from "@/lib/contribution-layout"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
 import { getMessageFontFamily } from "@/lib/message-font-presets"
@@ -74,7 +73,7 @@ export function Card3D({
   onContributionGifChange,
   onContributionLayoutChange,
   contributionRegeneratingId = null,
-  autoFocusContributionId = null,
+  creatorPlaceGeneration = 0,
   composeDraft = null,
   onComposeDraftChange,
   onComposeDraftGifChange,
@@ -355,14 +354,12 @@ export function Card3D({
             initialOffset={
               contributionHasCanvasPosition(contrib)
                 ? {
-                    x: toFiniteLayoutNumber(contrib.position_x)!,
-                    y: toFiniteLayoutNumber(contrib.position_y)!,
+                    x: contrib.position_x!,
+                    y: contrib.position_y!,
                   }
                 : undefined
             }
-            initialWidthPercent={
-              toFiniteLayoutNumber(contrib.width_percent) ?? undefined
-            }
+            initialWidthPercent={contrib.width_percent ?? undefined}
             rotationDegrees={contrib.rotation_degrees ?? 0}
             onLayoutCommit={
               onContributionLayoutChange
@@ -392,6 +389,11 @@ export function Card3D({
                 </div>
               ) : null}
               <InlineEdit
+                key={
+                  contrib.is_creator
+                    ? `${contrib.id}-place-${creatorPlaceGeneration}`
+                    : contrib.id
+                }
                 ref={(el) => {
                   if (el) {
                     contributionInlineRegenRefs.current.set(contrib.id, el)
@@ -413,7 +415,9 @@ export function Card3D({
                     : {}),
                 }}
                 placeholder="Type your message…"
-                autoFocus={contrib.id === autoFocusContributionId}
+                autoFocus={Boolean(
+                  contrib.is_creator && creatorPlaceGeneration > 0,
+                )}
               />
             </div>
           </DraggableWrapper>
@@ -426,14 +430,12 @@ export function Card3D({
           initialOffset={
             contributionHasCanvasPosition(contrib)
               ? {
-                  x: toFiniteLayoutNumber(contrib.position_x)!,
-                  y: toFiniteLayoutNumber(contrib.position_y)!,
+                  x: contrib.position_x!,
+                  y: contrib.position_y!,
                 }
               : undefined
           }
-          initialWidthPercent={
-            toFiniteLayoutNumber(contrib.width_percent) ?? undefined
-          }
+          initialWidthPercent={contrib.width_percent ?? undefined}
           rotationDegrees={contrib.rotation_degrees ?? 0}
         >
           <div className="space-y-3">

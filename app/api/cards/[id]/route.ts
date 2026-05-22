@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
+import type { Contribution } from "@/lib/card-body"
+import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { createClient } from "@/lib/supabase/server"
+
+function cardWithEffectiveExtraPages(
+  card: Record<string, unknown>,
+  contributions: Pick<Contribution, "page_index" | "is_creator">[],
+) {
+  const stored =
+    typeof card.extra_pages === "number" && Number.isFinite(card.extra_pages)
+      ? Math.trunc(card.extra_pages)
+      : 0
+  const extra_pages = hasUnusedStoredExtraPages(stored, contributions)
+    ? 0
+    : stored
+  return { ...card, extra_pages }
+}
 
 function extractAllowedCardUpdates(raw: unknown): Record<string, unknown> {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -71,21 +87,21 @@ export async function GET(
       .eq("card_id", id)
       .order("created_at", { ascending: true })
 
-    // Unused extra_pages trimming is client-side (CardOwnerStudio PATCH). GET stays
-    // side-effect free; contributionsLoaded signals when the contributions query failed.
     if (contribErr) {
       console.error("[GET /api/cards/[id]] contributions:", contribErr)
       return NextResponse.json({
-        card: data,
+        card: cardWithEffectiveExtraPages(data, []),
         contributions: [],
-        contributionsLoaded: false,
       })
     }
 
+    const rows = (contributions ?? []) as Pick<
+      Contribution,
+      "page_index" | "is_creator"
+    >[]
     return NextResponse.json({
-      card: data,
+      card: cardWithEffectiveExtraPages(data, rows),
       contributions: contributions ?? [],
-      contributionsLoaded: true,
     })
   } catch (error) {
     console.error("Error fetching card:", error)

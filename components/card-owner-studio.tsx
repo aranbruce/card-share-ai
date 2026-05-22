@@ -4,7 +4,6 @@ import {
   forwardRef,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -24,7 +23,6 @@ import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
-import { hasUnusedStoredExtraPages } from "@/lib/card-extra-pages"
 import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
 import {
   contributionHasCanvasPosition,
@@ -106,15 +104,8 @@ export const CardOwnerStudio = forwardRef<
   }: CardOwnerStudioProps,
   ref,
 ) {
-  const {
-    card,
-    setCard,
-    contributions,
-    setContributions,
-    contributionsLoaded,
-    loading,
-    error,
-  } = useCardData(cardId, reloadNonce)
+  const { card, setCard, contributions, setContributions, loading, error } =
+    useCardData(cardId, reloadNonce)
 
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
@@ -182,9 +173,7 @@ export const CardOwnerStudio = forwardRef<
     giphyUrl: null,
   }))
   const [draftGifPickerOpen, setDraftGifPickerOpen] = useState(false)
-  const [autoFocusContributionId, setAutoFocusContributionId] = useState<
-    string | null
-  >(null)
+  const [creatorPlaceGeneration, setCreatorPlaceGeneration] = useState(0)
 
   const editableContributionIds = useMemo(
     () => (creatorRow && !showCompose ? [creatorRow.id] : []),
@@ -323,7 +312,7 @@ export const CardOwnerStudio = forwardRef<
       )
       setNavigateToPage(pos.pageIndex)
       setEditingContributionId(creatorRow.id)
-      setAutoFocusContributionId(creatorRow.id)
+      setCreatorPlaceGeneration((g) => g + 1)
       void saveContributionPatch(creatorRow.id, {
         positionX: pos.x,
         positionY: pos.y,
@@ -338,23 +327,6 @@ export const CardOwnerStudio = forwardRef<
     },
     [creatorRow, draftFormatting, saveContributionPatch, setContributions],
   )
-
-  // One-shot: keep autoFocus true through initial mount/focus, then clear so page
-  // navigation does not re-trigger autofocus when the note remounts.
-  useEffect(() => {
-    if (!autoFocusContributionId) return
-    let outerId = 0
-    let innerId = 0
-    outerId = requestAnimationFrame(() => {
-      innerId = requestAnimationFrame(() => {
-        setAutoFocusContributionId(null)
-      })
-    })
-    return () => {
-      cancelAnimationFrame(outerId)
-      cancelAnimationFrame(innerId)
-    }
-  }, [autoFocusContributionId])
 
   useEffect(() => {
     onActiveContributionChange?.(
@@ -381,12 +353,6 @@ export const CardOwnerStudio = forwardRef<
           if (!Object.prototype.hasOwnProperty.call(serverRow, k)) {
             ;(merged as Record<string, unknown>)[k] = v
           }
-        }
-        if (
-          typeof updates.extra_pages === "number" &&
-          Number.isFinite(updates.extra_pages)
-        ) {
-          cardExtraPagesRef.current = Math.trunc(updates.extra_pages)
         }
         return merged
       })
@@ -486,70 +452,19 @@ export const CardOwnerStudio = forwardRef<
     onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
-  const cardExtraPagesRef = useRef(0)
-  useLayoutEffect(() => {
-    cardExtraPagesRef.current = card?.extra_pages ?? 0
-  }, [card?.extra_pages])
-
-  const trimExtraPagesRef = useRef<"idle" | "inFlight" | "done">("idle")
-  const trimExtraPagesPromiseRef = useRef<Promise<void> | null>(null)
-  useLayoutEffect(() => {
-    trimExtraPagesRef.current = "idle"
-    trimExtraPagesPromiseRef.current = null
-  }, [cardId, reloadNonce])
-
-  // Trim stale extra_pages once per load — not on every card/contributions update,
-  // so a user-initiated "Add Page" is not immediately undone.
-  useLayoutEffect(() => {
-    if (loading || !card || trimExtraPagesRef.current !== "idle") return
-    if (!contributionsLoaded) {
-      trimExtraPagesRef.current = "done"
-      return
-    }
-    const stored = card.extra_pages ?? 0
-    if (!hasUnusedStoredExtraPages(stored, contributions)) {
-      trimExtraPagesRef.current = "done"
-      return
-    }
-    trimExtraPagesRef.current = "inFlight"
-    const trimPromise = patchCardFields({ extra_pages: 0 })
-      .then(() => {
-        trimExtraPagesRef.current = "done"
-      })
-      .catch((e) => {
-        console.error(e)
-        trimExtraPagesRef.current = "idle"
-      })
-      .finally(() => {
-        if (trimExtraPagesPromiseRef.current === trimPromise) {
-          trimExtraPagesPromiseRef.current = null
-        }
-      })
-    trimExtraPagesPromiseRef.current = trimPromise
-    // card + contributions read when loading flips false; omit from deps intentionally.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- trim once per cardId/reloadNonce
-  }, [loading, cardId, reloadNonce, patchCardFields])
-
   const addExtraPageInFlightRef = useRef(false)
   const handleAddPage = useCallback(async () => {
     if (addExtraPageInFlightRef.current) return
     addExtraPageInFlightRef.current = true
+    const next = (card?.extra_pages ?? 0) + 1
     try {
-      const trimWasPending = trimExtraPagesPromiseRef.current !== null
-      if (trimWasPending) {
-        await trimExtraPagesPromiseRef.current!.catch(() => {})
-      }
-      const base =
-        trimWasPending && trimExtraPagesRef.current === "done"
-          ? 0
-          : cardExtraPagesRef.current
-      await patchCardFields({ extra_pages: base + 1 })
+      await patchCardFields({ extra_pages: next })
     } catch (e) {
       console.error(e)
     } finally {
       addExtraPageInFlightRef.current = false
     }
-  }, [patchCardFields])
+  }, [card?.extra_pages, patchCardFields])
 
   // Backward compat: pre-create an empty creator contribution for cards that were
   // created before this flow existed (new cards already have one from the API).
@@ -643,7 +558,7 @@ export const CardOwnerStudio = forwardRef<
         onContributionGifChange={handleContributionGifChange}
         onContributionLayoutChange={handleContributionLayoutChange}
         contributionRegeneratingId={regeneratingContributionId}
-        autoFocusContributionId={autoFocusContributionId}
+        creatorPlaceGeneration={creatorPlaceGeneration}
       />
       <GiphyPicker
         open={Boolean(contribGifPickerContributionId)}

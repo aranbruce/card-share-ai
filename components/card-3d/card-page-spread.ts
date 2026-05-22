@@ -1,5 +1,8 @@
 import type { Card3DProps } from "./types"
-import { toLayoutPageIndex } from "@/lib/contribution-layout"
+import {
+  hasLegacyUnindexedGuestContribution,
+  maxContributionPageIndex,
+} from "@/lib/card-extra-pages"
 
 const MIN_FULL_CARD_SPREAD_PAGES = 2
 
@@ -22,17 +25,9 @@ export function computeNaturalPageSpread(
 ): NaturalPageSpread {
   const rows = contributions ?? []
   const messagePageLowerBound = Math.max(1, messagePageIndex)
-  const maxExplicitContributionPage = rows.reduce((max, c) => {
-    const page = toLayoutPageIndex(c.page_index)
-    if (page !== null) {
-      return Math.max(max, page)
-    }
-    return max
-  }, 0)
-  // Pre-place creator rows use page_index: null for compose mode — not legacy guests.
-  const hasLegacyUnindexedContribution = rows.some(
-    (c) => toLayoutPageIndex(c.page_index) === null && !c.is_creator,
-  )
+  const maxExplicitContributionPage = maxContributionPageIndex(rows)
+  const hasLegacyUnindexedContribution =
+    hasLegacyUnindexedGuestContribution(rows)
 
   let lastContentPage = Math.max(
     messagePageLowerBound,
@@ -92,28 +87,14 @@ export function capSpreadToCommitted(
       natural.validMessagePage,
     )
   }
-  if (committed && natural.totalPages < committed.totalPages) {
-    return floorFullCardSpreadPages(
-      false,
-      natural.totalPages,
-      natural.validMessagePage,
-    )
-  }
-  if (!committed || committed.extraPages !== extraPages) {
-    return floorFullCardSpreadPages(
-      false,
-      natural.totalPages,
-      natural.validMessagePage,
-    )
-  }
-  if (natural.totalPages <= committed.totalPages) {
-    return floorFullCardSpreadPages(
-      false,
-      natural.totalPages,
-      natural.validMessagePage,
-    )
-  }
-  if (natural.lastContentPage <= committed.totalPages - 1) {
+
+  const useCommittedTotal =
+    committed &&
+    committed.extraPages === extraPages &&
+    natural.totalPages > committed.totalPages &&
+    natural.lastContentPage <= committed.totalPages - 1
+
+  if (useCommittedTotal) {
     const totalPages = committed.totalPages
     const validMessagePage = Math.max(
       1,
@@ -121,6 +102,7 @@ export function capSpreadToCommitted(
     )
     return floorFullCardSpreadPages(false, totalPages, validMessagePage)
   }
+
   return floorFullCardSpreadPages(
     false,
     natural.totalPages,
