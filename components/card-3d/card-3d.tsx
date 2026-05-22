@@ -321,12 +321,15 @@ export function Card3D({
     [contributions, gifPickerContributionId],
   )
 
-  const isContributionPlacedOnCanvas = contributionHasCanvasPosition
+  const isRenderableCanvasContribution = (
+    contribution: (typeof contributions)[number],
+  ) =>
+    !(contribution.is_creator && !contributionHasCanvasPosition(contribution))
 
   const getContributionsForPage = (pageIdx: number) =>
     contributions.filter(
       (contribution) =>
-        isContributionPlacedOnCanvas(contribution) &&
+        isRenderableCanvasContribution(contribution) &&
         effectiveContributionPage(contribution) === pageIdx,
     )
 

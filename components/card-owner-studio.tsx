@@ -464,10 +464,15 @@ export const CardOwnerStudio = forwardRef<
     trimExtraPagesRef.current = "idle"
   }, [cardId, reloadNonce])
 
+  // Trim stale extra_pages once per load — not on every card/contributions update,
+  // so a user-initiated "Add Page" is not immediately undone.
   useEffect(() => {
     if (loading || !card || trimExtraPagesRef.current !== "idle") return
     const stored = card.extra_pages ?? 0
-    if (!hasUnusedStoredExtraPages(stored, contributions)) return
+    if (!hasUnusedStoredExtraPages(stored, contributions)) {
+      trimExtraPagesRef.current = "done"
+      return
+    }
     trimExtraPagesRef.current = "inFlight"
     void patchCardFields({ extra_pages: 0 })
       .then(() => {
@@ -477,7 +482,9 @@ export const CardOwnerStudio = forwardRef<
         console.error(e)
         trimExtraPagesRef.current = "idle"
       })
-  }, [loading, card, contributions, patchCardFields])
+    // card + contributions read when loading flips false; omit from deps intentionally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trim once per cardId/reloadNonce
+  }, [loading, cardId, reloadNonce, patchCardFields])
 
   const addExtraPageInFlightRef = useRef(false)
   const handleAddPage = useCallback(async () => {
