@@ -69,6 +69,8 @@ type Card3DContributionEditProps = {
     },
   ) => void
   contributionRegeneratingId?: string | null
+  /** Bumped when the creator note is click-to-placed so InlineEdit remounts with autofocus. */
+  creatorPlaceGeneration?: number
 }
 
 // ── Compose draft (guest contribution flow) ───────────────────────────────────

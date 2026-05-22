@@ -1,4 +1,10 @@
 import type { Card3DProps } from "./types"
+import {
+  hasLegacyUnindexedGuestContribution,
+  maxContributionPageIndex,
+} from "@/lib/card-extra-pages"
+
+const MIN_FULL_CARD_SPREAD_PAGES = 2
 
 export type CommittedSpreadSnapshot = {
   totalPages: number
@@ -18,16 +24,12 @@ export function computeNaturalPageSpread(
   extraPages: number,
 ): NaturalPageSpread {
   const rows = contributions ?? []
+  const safeExtraPages =
+    Number.isFinite(extraPages) && extraPages >= 0 ? Math.trunc(extraPages) : 0
   const messagePageLowerBound = Math.max(1, messagePageIndex)
-  const maxExplicitContributionPage = rows.reduce((max, c) => {
-    if (typeof c.page_index === "number" && c.page_index >= 0) {
-      return Math.max(max, c.page_index)
-    }
-    return max
-  }, 0)
-  const hasLegacyUnindexedContribution = rows.some(
-    (c) => !(typeof c.page_index === "number" && c.page_index >= 0),
-  )
+  const maxExplicitContributionPage = maxContributionPageIndex(rows)
+  const hasLegacyUnindexedContribution =
+    hasLegacyUnindexedGuestContribution(rows)
 
   let lastContentPage = Math.max(
     messagePageLowerBound,
@@ -35,7 +37,7 @@ export function computeNaturalPageSpread(
     hasLegacyUnindexedContribution ? messagePageLowerBound + 1 : 0,
     1,
   )
-  let totalPages = coverOnly ? 1 : lastContentPage + 1 + extraPages
+  let totalPages = coverOnly ? 1 : lastContentPage + 1 + safeExtraPages
 
   let validMessagePage = coverOnly
     ? -1
@@ -43,11 +45,34 @@ export function computeNaturalPageSpread(
 
   if (!coverOnly && hasLegacyUnindexedContribution) {
     lastContentPage = Math.max(lastContentPage, validMessagePage + 1)
-    totalPages = lastContentPage + 1 + extraPages
+    totalPages = lastContentPage + 1 + safeExtraPages
+    validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
+  }
+
+  if (!coverOnly && totalPages < MIN_FULL_CARD_SPREAD_PAGES) {
+    totalPages = MIN_FULL_CARD_SPREAD_PAGES
+    lastContentPage = Math.max(lastContentPage, 1)
     validMessagePage = Math.max(1, Math.min(messagePageIndex, totalPages - 1))
   }
 
   return { lastContentPage, totalPages, validMessagePage }
+}
+
+function floorFullCardSpreadPages(
+  coverOnly: boolean,
+  totalPages: number,
+  validMessagePage: number,
+): { totalPages: number; validMessagePage: number } {
+  if (coverOnly || totalPages >= MIN_FULL_CARD_SPREAD_PAGES) {
+    return { totalPages, validMessagePage }
+  }
+  return {
+    totalPages: MIN_FULL_CARD_SPREAD_PAGES,
+    validMessagePage: Math.max(
+      1,
+      Math.min(validMessagePage, MIN_FULL_CARD_SPREAD_PAGES - 1),
+    ),
+  }
 }
 
 export function capSpreadToCommitted(
@@ -58,33 +83,31 @@ export function capSpreadToCommitted(
   coverOnly: boolean,
 ): { totalPages: number; validMessagePage: number } {
   if (coverOnly) {
-    return {
-      totalPages: natural.totalPages,
-      validMessagePage: natural.validMessagePage,
-    }
+    return floorFullCardSpreadPages(
+      true,
+      natural.totalPages,
+      natural.validMessagePage,
+    )
   }
-  if (!committed || committed.extraPages !== extraPages) {
-    return {
-      totalPages: natural.totalPages,
-      validMessagePage: natural.validMessagePage,
-    }
-  }
-  if (natural.totalPages <= committed.totalPages) {
-    return {
-      totalPages: natural.totalPages,
-      validMessagePage: natural.validMessagePage,
-    }
-  }
-  if (natural.lastContentPage <= committed.totalPages - 1) {
+
+  const useCommittedTotal =
+    committed &&
+    committed.extraPages === extraPages &&
+    natural.totalPages > committed.totalPages &&
+    natural.lastContentPage <= committed.totalPages - 1
+
+  if (useCommittedTotal) {
     const totalPages = committed.totalPages
     const validMessagePage = Math.max(
       1,
       Math.min(messagePageIndex, totalPages - 1),
     )
-    return { totalPages, validMessagePage }
+    return floorFullCardSpreadPages(false, totalPages, validMessagePage)
   }
-  return {
-    totalPages: natural.totalPages,
-    validMessagePage: natural.validMessagePage,
-  }
+
+  return floorFullCardSpreadPages(
+    false,
+    natural.totalPages,
+    natural.validMessagePage,
+  )
 }

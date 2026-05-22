@@ -23,6 +23,11 @@ import { useCardData } from "@/hooks/use-card-data"
 import { useContributions } from "@/hooks/use-contributions"
 import { useDebouncedSave } from "@/hooks/use-debounced-save"
 import { apiPatch, apiPost } from "@/lib/api-client"
+import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
+import {
+  contributionHasCanvasPosition,
+  contributionPageIndex,
+} from "@/lib/contribution-layout"
 import { sourceImageUrlForRefineRequest } from "@/lib/source-image-limits"
 
 export type OwnerCard = {
@@ -99,8 +104,18 @@ export const CardOwnerStudio = forwardRef<
   }: CardOwnerStudioProps,
   ref,
 ) {
-  const { card, setCard, contributions, setContributions, loading, error } =
-    useCardData(cardId, reloadNonce)
+  const {
+    card,
+    setCard,
+    contributions,
+    setContributions,
+    displayExtraPages,
+    setDisplayExtraPages,
+    contributionsLoaded,
+    unusedExtraPagesDetected,
+    loading,
+    error,
+  } = useCardData(cardId, reloadNonce)
 
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false)
@@ -148,7 +163,9 @@ export const CardOwnerStudio = forwardRef<
   )
 
   // Show compose draft mode when the creator note hasn't been placed yet (no position).
-  const showCompose = Boolean(creatorRow && creatorRow.position_x === null)
+  const showCompose = Boolean(
+    creatorRow && !contributionHasCanvasPosition(creatorRow),
+  )
 
   const [draftFormatting, setDraftFormatting] = useState<{
     textColor: string | null
@@ -166,6 +183,7 @@ export const CardOwnerStudio = forwardRef<
     giphyUrl: null,
   }))
   const [draftGifPickerOpen, setDraftGifPickerOpen] = useState(false)
+  const [creatorPlaceGeneration, setCreatorPlaceGeneration] = useState(0)
 
   const editableContributionIds = useMemo(
     () => (creatorRow && !showCompose ? [creatorRow.id] : []),
@@ -179,10 +197,15 @@ export const CardOwnerStudio = forwardRef<
     }
   }, [creatorRow, showCompose, editingContributionId])
 
-  const totalInnerPages = useMemo(
-    () => 1 + (card?.extra_pages ?? 0),
-    [card?.extra_pages],
-  )
+  const totalInnerPages = useMemo(() => {
+    const spread = computeNaturalPageSpread(
+      false,
+      1,
+      contributions,
+      displayExtraPages,
+    )
+    return Math.max(1, spread.totalPages - 1)
+  }, [contributions, displayExtraPages])
 
   const activeContributionFormattingState =
     useMemo((): ActiveContributionFormattingState | null => {
@@ -196,8 +219,7 @@ export const CardOwnerStudio = forwardRef<
         textColor: contrib.text_color ?? null,
         fontFamily: contrib.font_family ?? null,
         rotationDegrees: contrib.rotation_degrees ?? 0,
-        pageIndex:
-          typeof contrib.page_index === "number" ? contrib.page_index : 1,
+        pageIndex: contributionPageIndex(contrib, 1),
         hasGif: Boolean(contrib.giphy_url),
         giphyUrl: contrib.giphy_url,
         totalInnerPages,
@@ -300,6 +322,7 @@ export const CardOwnerStudio = forwardRef<
       )
       setNavigateToPage(pos.pageIndex)
       setEditingContributionId(creatorRow.id)
+      setCreatorPlaceGeneration((g) => g + 1)
       void saveContributionPatch(creatorRow.id, {
         positionX: pos.x,
         positionY: pos.y,
@@ -337,14 +360,20 @@ export const CardOwnerStudio = forwardRef<
         const serverRow = next as Record<string, unknown>
         for (const [k, v] of Object.entries(updates)) {
           if (v === undefined) continue
-          if (!Object.hasOwn(serverRow, k)) {
+          if (!Object.prototype.hasOwnProperty.call(serverRow, k)) {
             ;(merged as Record<string, unknown>)[k] = v
           }
+        }
+        if (
+          typeof updates.extra_pages === "number" &&
+          Number.isFinite(updates.extra_pages)
+        ) {
+          setDisplayExtraPages(Math.max(0, Math.trunc(updates.extra_pages)))
         }
         return merged
       })
     },
-    [cardId, setCard],
+    [cardId, setCard, setDisplayExtraPages],
   )
 
   const handleHeadlineChange = useCallback(
@@ -439,19 +468,53 @@ export const CardOwnerStudio = forwardRef<
     onRegeneratingHeadlineChange?.(isRegeneratingHeadline)
   }, [isRegeneratingHeadline, onRegeneratingHeadlineChange])
 
+  const trimmedUnusedExtraPagesRef = useRef(false)
+  useEffect(() => {
+    trimmedUnusedExtraPagesRef.current = false
+  }, [cardId, reloadNonce])
+
+  useEffect(() => {
+    if (
+      loading ||
+      !card ||
+      !contributionsLoaded ||
+      !unusedExtraPagesDetected ||
+      trimmedUnusedExtraPagesRef.current
+    ) {
+      return
+    }
+    trimmedUnusedExtraPagesRef.current = true
+    void patchCardFields({ extra_pages: 0 })
+      .then(() => setDisplayExtraPages(0))
+      .catch((e) => {
+        console.error(e)
+        trimmedUnusedExtraPagesRef.current = false
+      })
+  }, [
+    loading,
+    card,
+    cardId,
+    reloadNonce,
+    contributionsLoaded,
+    unusedExtraPagesDetected,
+    patchCardFields,
+    setDisplayExtraPages,
+  ])
+
   const addExtraPageInFlightRef = useRef(false)
   const handleAddPage = useCallback(async () => {
     if (addExtraPageInFlightRef.current) return
     addExtraPageInFlightRef.current = true
-    const next = (card?.extra_pages ?? 0) + 1
+    const next = displayExtraPages + 1
     try {
       await patchCardFields({ extra_pages: next })
+      setDisplayExtraPages(next)
     } catch (e) {
       console.error(e)
     } finally {
       addExtraPageInFlightRef.current = false
     }
-  }, [card?.extra_pages, patchCardFields])
+  }, [displayExtraPages, patchCardFields, setDisplayExtraPages])
 
   // Backward compat: pre-create an empty creator contribution for cards that were
   // created before this flow existed (new cards already have one from the API).
@@ -495,15 +558,8 @@ export const CardOwnerStudio = forwardRef<
       })
   }, [loading, creatorRow, card, cardId, setContributions])
 
-  if (loading || !card) {
-    if (loading) {
-      return <Skeleton className="card-cover-skeleton" />
-    }
-    return (
-      <div className="flex min-h-[320px] items-center justify-center">
-        <p className="text-sm text-muted-foreground">Card not found</p>
-      </div>
-    )
+  if (loading) {
+    return <Skeleton className="card-cover-skeleton" />
   }
 
   if (error) {
@@ -511,6 +567,14 @@ export const CardOwnerStudio = forwardRef<
       <Alert variant="destructive">
         <AlertDescription>{error}</AlertDescription>
       </Alert>
+    )
+  }
+
+  if (!card) {
+    return (
+      <div className="flex min-h-[320px] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Card not found</p>
+      </div>
     )
   }
 
@@ -536,7 +600,7 @@ export const CardOwnerStudio = forwardRef<
           if (id !== null) setEditingContributionId(id)
         }}
         navigateToPage={navigateToPage}
-        extraPages={card.extra_pages ?? 0}
+        extraPages={displayExtraPages}
         onAddPage={handleAddPage}
         initialPage={initialCardPage}
         editableContributionIds={editableContributionIds}
@@ -544,6 +608,7 @@ export const CardOwnerStudio = forwardRef<
         onContributionGifChange={handleContributionGifChange}
         onContributionLayoutChange={handleContributionLayoutChange}
         contributionRegeneratingId={regeneratingContributionId}
+        creatorPlaceGeneration={creatorPlaceGeneration}
       />
       <GiphyPicker
         open={Boolean(contribGifPickerContributionId)}
