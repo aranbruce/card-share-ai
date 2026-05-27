@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { RecipientViewLinkCopy } from "@/components/recipient-view-link-copy"
 import { useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
@@ -15,17 +16,22 @@ import {
 } from "@/components/ui/dialog"
 import { apiPatch, apiPost } from "@/lib/api-client"
 
-interface ShareModalProps {
+interface ShareModalBaseProps {
   cardId: string
-  recipientName: string
-  recipientEmail: string
   contributorLinkId: string
   isOpen: boolean
   onClose: () => void
+}
+
+interface RecipientShareModalProps extends ShareModalBaseProps {
+  recipientName: string
+  recipientEmail: string
   onEmailUpdate?: (email: string) => void
   /** Called after the card is first marked shared (sent_at set server-side). */
   onSentAtRecorded?: (sentAt: string) => void
 }
+
+type ContributorShareModalProps = ShareModalBaseProps
 
 function buildViewLink(contributorLinkId: string): string {
   const path = `/view/${contributorLinkId}`
@@ -39,7 +45,20 @@ function buildContributorLink(contributorLinkId: string): string {
   return `${window.location.origin}${path}`
 }
 
-export function ShareModal({
+function validateEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function parseContributorEmails(raw: string): string[] {
+  const parts = raw.split(/[\s,;]+/).map((part) => part.trim())
+  const unique = new Set<string>()
+  for (const part of parts) {
+    if (part) unique.add(part)
+  }
+  return [...unique]
+}
+
+export function RecipientShareModal({
   cardId,
   recipientName,
   recipientEmail: initialEmail,
@@ -48,21 +67,15 @@ export function ShareModal({
   onClose,
   onEmailUpdate,
   onSentAtRecorded,
-}: ShareModalProps) {
+}: RecipientShareModalProps) {
   const [recipientSending, setRecipientSending] = useState(false)
-  const [contributorSending, setContributorSending] = useState(false)
   const [recipientEmailSent, setRecipientEmailSent] = useState(false)
-  const [contributorEmailSent, setContributorEmailSent] = useState(false)
   const [recipientEmail, setRecipientEmail] = useState(initialEmail || "")
-  const [contributorEmail, setContributorEmail] = useState("")
   const [recipientEmailError, setRecipientEmailError] = useState("")
-  const [contributorEmailError, setContributorEmailError] = useState("")
   const [savingEmail, setSavingEmail] = useState(false)
 
   const viewLink = isOpen ? buildViewLink(contributorLinkId) : ""
-  const contributorLink = isOpen ? buildContributorLink(contributorLinkId) : ""
   const getViewLink = () => buildViewLink(contributorLinkId)
-  const getContributorLink = () => buildContributorLink(contributorLinkId)
 
   const recordSharedAt = async () => {
     const sentAt = new Date().toISOString()
@@ -76,10 +89,6 @@ export function ShareModal({
 
   const handleLinkCopied = () => {
     void recordSharedAt()
-  }
-
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   }
 
   const handleSaveEmail = async () => {
@@ -143,32 +152,6 @@ export function ShareModal({
     }
   }
 
-  const handleSendContributorEmail = async () => {
-    if (!contributorEmail.trim()) {
-      setContributorEmailError("Please enter an email address")
-      return
-    }
-    if (!validateEmail(contributorEmail)) {
-      setContributorEmailError("Please enter a valid email address")
-      return
-    }
-
-    setContributorEmailError("")
-    setContributorSending(true)
-
-    try {
-      await apiPost(`/api/cards/${cardId}/send-email`, {
-        kind: "contributor",
-        email: contributorEmail,
-      })
-      setContributorEmailSent(true)
-    } catch {
-      setContributorEmailError("Failed to send contributor email")
-    } finally {
-      setContributorSending(false)
-    }
-  }
-
   return (
     <Dialog
       open={isOpen}
@@ -179,9 +162,9 @@ export function ShareModal({
       <DialogContent className="overflow-hidden p-0 sm:max-w-md">
         <div className="p-6 pb-0">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Send Card</DialogTitle>
+            <DialogTitle className="text-2xl">Send to recipient</DialogTitle>
             <DialogDescription>
-              Deliver the finished card directly to {recipientName}.
+              Share the finished card with {recipientName}.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -190,7 +173,7 @@ export function ShareModal({
           <div className="space-y-3">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <LinkIcon className="size-4" />
-              Direct Link
+              Recipient link
             </h4>
             <RecipientViewLinkCopy
               viewLink={viewLink}
@@ -203,27 +186,12 @@ export function ShareModal({
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <LinkIcon className="size-4" />
-              Contributor Link
-            </h4>
-            <RecipientViewLinkCopy
-              viewLink={contributorLink}
-              getViewLink={getContributorLink}
-            />
-            <p className="text-xs text-muted-foreground">
-              Copy and share this link with contributors so they can add their
-              messages.
-            </p>
-          </div>
-
           <div className="h-px bg-border/50" />
 
           <div className="space-y-3">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <MailIcon className="size-4" />
-              Send Recipient Link via Email
+              Send via email
             </h4>
 
             {recipientEmailSent ? (
@@ -303,20 +271,115 @@ export function ShareModal({
               </div>
             )}
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export function ContributorShareModal({
+  cardId,
+  contributorLinkId,
+  isOpen,
+  onClose,
+}: ContributorShareModalProps) {
+  const [contributorSending, setContributorSending] = useState(false)
+  const [contributorEmailSent, setContributorEmailSent] = useState(false)
+  const [contributorEmails, setContributorEmails] = useState("")
+  const [contributorEmailError, setContributorEmailError] = useState("")
+  const [sentCount, setSentCount] = useState(0)
+
+  const contributorLink = isOpen ? buildContributorLink(contributorLinkId) : ""
+  const getContributorLink = () => buildContributorLink(contributorLinkId)
+
+  const handleSendContributorEmails = async () => {
+    const emails = parseContributorEmails(contributorEmails)
+    if (emails.length === 0) {
+      setContributorEmailError("Please enter at least one email address")
+      return
+    }
+
+    const invalid = emails.filter((email) => !validateEmail(email))
+    if (invalid.length > 0) {
+      setContributorEmailError(
+        invalid.length === 1
+          ? `Invalid email: ${invalid[0]}`
+          : "Please enter valid email addresses",
+      )
+      return
+    }
+
+    setContributorEmailError("")
+    setContributorSending(true)
+
+    try {
+      const response = await apiPost<{ sentCount?: number }>(
+        `/api/cards/${cardId}/send-email`,
+        {
+          kind: "contributor",
+          emails,
+        },
+      )
+      setSentCount(response.sentCount ?? emails.length)
+      setContributorEmailSent(true)
+    } catch {
+      setContributorEmailError("Failed to send contributor emails")
+    } finally {
+      setContributorSending(false)
+    }
+  }
+
+  return (
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
+      <DialogContent className="overflow-hidden p-0 sm:max-w-md">
+        <div className="p-6 pb-0">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              Share with contributors
+            </DialogTitle>
+            <DialogDescription>
+              Invite people to add their messages before you send the card.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <div className="space-y-6 p-6">
+          <div className="space-y-3">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <LinkIcon className="size-4" />
+              Contributor link
+            </h4>
+            <RecipientViewLinkCopy
+              viewLink={contributorLink}
+              getViewLink={getContributorLink}
+            />
+            <p className="text-xs text-muted-foreground">
+              Copy and share this link so contributors can add their messages.
+            </p>
+          </div>
 
           <div className="h-px bg-border/50" />
 
           <div className="space-y-3">
             <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <MailIcon className="size-4" />
-              Send Contributor Link via Email
+              Send via email
             </h4>
 
             {contributorEmailSent ? (
               <div className="space-y-3 rounded-2xl border border-primary/10 bg-primary/5 p-4">
                 <div className="flex items-center gap-2 font-medium text-primary">
                   <CheckIcon className="size-5" />
-                  <p>Contributor email sent.</p>
+                  <p>
+                    {sentCount === 1
+                      ? "Contributor email sent."
+                      : `${sentCount} contributor emails sent.`}
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   The contributor link has been emailed successfully.
@@ -329,14 +392,14 @@ export function ShareModal({
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Input
-                    type="email"
-                    placeholder="contributor@example.com"
-                    value={contributorEmail}
+                  <Textarea
+                    placeholder="contributor@example.com, friend@example.com"
+                    value={contributorEmails}
                     onChange={(e) => {
-                      setContributorEmail(e.target.value)
+                      setContributorEmails(e.target.value)
                       setContributorEmailError("")
                     }}
+                    rows={3}
                     aria-invalid={!!contributorEmailError}
                   />
                   {contributorEmailError ? (
@@ -346,28 +409,26 @@ export function ShareModal({
                   ) : null}
                 </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    className="flex-1"
-                    onClick={handleSendContributorEmail}
-                    disabled={contributorSending || !contributorEmail.trim()}
-                  >
-                    {contributorSending ? (
-                      <>
-                        <Spinner />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <SendIcon />
-                        Send email
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  className="w-full"
+                  onClick={handleSendContributorEmails}
+                  disabled={contributorSending || !contributorEmails.trim()}
+                >
+                  {contributorSending ? (
+                    <>
+                      <Spinner />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <SendIcon />
+                      Send emails
+                    </>
+                  )}
+                </Button>
                 <p className="text-center text-xs text-muted-foreground">
-                  We&apos;ll email a contributor link so they can add a message.
+                  Separate multiple addresses with commas, spaces, or new lines.
                 </p>
               </div>
             )}

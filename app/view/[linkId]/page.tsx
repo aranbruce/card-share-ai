@@ -138,7 +138,7 @@ export default function PublicCardPage() {
 
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground">
-              Created with CardsAI
+              Created with cardshareai
             </p>
           </div>
         </div>

@@ -7,10 +7,23 @@ import {
   sendRecipientCardEmail,
 } from "@/lib/email/resend"
 
-const bodySchema = z.object({
-  kind: z.enum(["recipient", "contributor"]),
+const recipientBodySchema = z.object({
+  kind: z.literal("recipient"),
   email: z.string().trim().email(),
 })
+
+const contributorBodySchema = z.object({
+  kind: z.literal("contributor"),
+  emails: z
+    .array(z.string().trim().email())
+    .min(1, "At least one email is required")
+    .max(20, "You can send to at most 20 contributors at once"),
+})
+
+const bodySchema = z.discriminatedUnion("kind", [
+  recipientBodySchema,
+  contributorBodySchema,
+])
 
 export async function POST(
   request: NextRequest,
@@ -29,12 +42,17 @@ export async function POST(
 
     const parsed = bodySchema.safeParse(await request.json())
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request payload" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Invalid request payload" },
+        { status: 400 },
+      )
     }
 
     const { data: card, error: cardError } = await supabase
       .from("cards")
-      .select("id, recipient_name, sender_name, recipient_email, contributor_link_id, sent_at")
+      .select(
+        "id, recipient_name, sender_name, recipient_email, contributor_link_id, sent_at",
+      )
       .eq("id", id)
       .eq("user_id", user.id)
       .maybeSingle()
@@ -50,9 +68,9 @@ export async function POST(
     }
 
     const baseUrl = getAppUrl()
-    const destinationEmail = parsed.data.email.trim()
 
     if (parsed.data.kind === "recipient") {
+      const destinationEmail = parsed.data.email.trim()
       const recipientName = (card.recipient_name ?? "there").trim()
       const senderName = (card.sender_name ?? "Someone").trim()
       const link = `${baseUrl}/view/${card.contributor_link_id}`
@@ -79,7 +97,10 @@ export async function POST(
         .eq("id", id)
         .eq("user_id", user.id)
       if (updateError) {
-        console.error("[POST /api/cards/[id]/send-email] card update:", updateError)
+        console.error(
+          "[POST /api/cards/[id]/send-email] card update:",
+          updateError,
+        )
       }
 
       return NextResponse.json({
@@ -91,18 +112,31 @@ export async function POST(
     const recipientName = (card.recipient_name ?? "your recipient").trim()
     const senderName = (card.sender_name ?? "Someone").trim()
     const link = `${baseUrl}/contribute/${card.contributor_link_id}`
+    const uniqueEmails = [...new Set(parsed.data.emails.map((e) => e.trim()))]
 
-    const sendResult = await sendContributorInviteEmail({
-      to: destinationEmail,
-      recipientName,
-      senderName,
-      link,
-    })
-    if (!sendResult.ok) {
-      return NextResponse.json({ error: sendResult.error }, { status: 500 })
+    let sentCount = 0
+    for (const destinationEmail of uniqueEmails) {
+      const sendResult = await sendContributorInviteEmail({
+        to: destinationEmail,
+        recipientName,
+        senderName,
+        link,
+      })
+      if (!sendResult.ok) {
+        return NextResponse.json(
+          {
+            error:
+              sentCount > 0
+                ? `Sent ${sentCount} of ${uniqueEmails.length} emails before failure: ${sendResult.error}`
+                : sendResult.error,
+          },
+          { status: 500 },
+        )
+      }
+      sentCount += 1
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, sentCount })
   } catch (error) {
     console.error("[POST /api/cards/[id]/send-email]:", error)
     return NextResponse.json({ error: "Failed to send email" }, { status: 500 })

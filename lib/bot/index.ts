@@ -140,7 +140,7 @@ export function getBot(): Chat<BotAdapters> {
 
   if (!_pgPool) _pgPool = createPgPool()
   _bot = new Chat<BotAdapters>({
-    userName: "CardsAI",
+    userName: "cardshareAI",
     adapters: {
       slack: getSlackAdapter(),
     },
@@ -154,21 +154,21 @@ export function getBot(): Chat<BotAdapters> {
 
 function registerHandlers(bot: Chat<BotAdapters>): void {
   // /createcard slash command → open modal
-  bot.onSlashCommand("/cardsai", async (event: SlashCommandEvent) => {
+  bot.onSlashCommand("/cardshareai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
     const teamId = getSlackTeamId(event)
     try {
       const linked = await findLinkedUser(platform, event.user.userId, teamId)
       if (!linked) {
         const linkUrl = await createLinkUrl(platform, event.user.userId, teamId)
-        const msg = `You need to connect your CardsAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
+        const msg = `You need to connect your cardshareAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
         try {
           await event.channel.postEphemeral(event.user, msg, {
             fallbackToDM: false,
           })
         } catch (ephemeralErr) {
           console.error(
-            `[cardsai] ephemeral FAIL: ${ephemeralErr instanceof Error ? ephemeralErr.message : String(ephemeralErr)} — falling back to DM`,
+            `[cardshareai] ephemeral FAIL: ${ephemeralErr instanceof Error ? ephemeralErr.message : String(ephemeralErr)} — falling back to DM`,
           )
           const dm = await bot.openDM(event.user)
           await dm.post(msg)
@@ -177,7 +177,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       }
     } catch (err) {
       console.error(
-        `[cardsai] account check FAIL: ${err instanceof Error ? err.message : String(err)}`,
+        `[cardshareai] account check FAIL: ${err instanceof Error ? err.message : String(err)}`,
       )
       const errMsg =
         "Something went wrong checking your account. Please try again."
@@ -255,7 +255,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       })
     } catch (err) {
       console.error(
-        `[cardsai] openModal FAIL: ${err instanceof Error ? err.message : String(err)}`,
+        `[cardshareai] openModal FAIL: ${err instanceof Error ? err.message : String(err)}`,
       )
       try {
         await event.channel.postEphemeral(
@@ -277,15 +277,15 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
   })
 
   // /link slash command
-  bot.onSlashCommand("/cardsai-link", async (event: SlashCommandEvent) => {
+  bot.onSlashCommand("/cardshareai-link", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
     const userId = event.user.userId
     const teamId = getSlackTeamId(event)
     try {
       const existing = await findLinkedUser(platform, userId, teamId)
       const msg = existing
-        ? "Your CardsAI account is already connected! Use `/cardsai` to create a card."
-        : `Connect your CardsAI account:\n${await createLinkUrl(platform, userId, teamId)}\n\n_This link expires in 15 minutes._`
+        ? "Your cardshareAI account is already connected! Use `/cardshareai` to create a card."
+        : `Connect your cardshareAI account:\n${await createLinkUrl(platform, userId, teamId)}\n\n_This link expires in 15 minutes._`
       try {
         await event.channel.postEphemeral(event.user, msg, {
           fallbackToDM: false,
@@ -296,7 +296,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       }
     } catch (err) {
       console.error(
-        `[cardsai-link] FAIL: ${err instanceof Error ? err.message : String(err)}`,
+        `[cardshareai-link] FAIL: ${err instanceof Error ? err.message : String(err)}`,
       )
       try {
         await event.channel.postEphemeral(
@@ -357,7 +357,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       try {
         const linkUrl = await createLinkUrl(platform, user.userId, teamId)
         const dm = await bot.openDM(user)
-        await dm.post(`Connect your CardsAI account first:\n${linkUrl}`)
+        await dm.post(`Connect your cardshareAI account first:\n${linkUrl}`)
       } catch (err) {
         console.error(`[modal/createLinkUrl] FAIL:`, err)
       }

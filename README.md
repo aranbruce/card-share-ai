@@ -1,4 +1,4 @@
-# CardsAI - Virtual Greeting Card Creator
+# CardShareAI - Virtual Greeting Card Creator
 
 An AI-powered app for creating and sharing personalized virtual greeting cards with group contribution features.
 

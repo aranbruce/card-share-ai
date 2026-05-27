@@ -18,15 +18,25 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { ShareModal } from "@/components/share-modal"
+import {
+  ContributorShareModal,
+  RecipientShareModal,
+} from "@/components/share-modal"
 import {
   CardOwnerStudio,
   type ActiveContributionFormattingState,
   type CardOwnerStudioHandle,
 } from "@/components/card-owner-studio"
-import { ChevronLeft, FileX2, Paperclip, Send, Sparkles, X } from "lucide-react"
+import {
+  ChevronLeft,
+  FileX2,
+  Paperclip,
+  Send,
+  Share2,
+  Sparkles,
+  X,
+} from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
-import { CopyLinkButton } from "@/components/copy-link-button"
 import { NotePanel } from "@/components/note-panel"
 import { MessageFontVariables } from "@/components/message-font-variables"
 
@@ -99,7 +109,9 @@ function CardDetailInner() {
   const [card, setCard] = useState<CardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [showShareModal, setShowShareModal] = useState(false)
+  const [showContributorShareModal, setShowContributorShareModal] =
+    useState(false)
+  const [showRecipientShareModal, setShowRecipientShareModal] = useState(false)
   const [activeContribution, setActiveContribution] =
     useState<ActiveContributionFormattingState | null>(null)
   const [isRefining, setIsRefining] = useState(false)
@@ -295,15 +307,18 @@ function CardDetailInner() {
                     directly to {card.recipient_name}.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <CopyLinkButton
-                      getLink={() =>
-                        `${window.location.origin}/contribute/${card.contributor_link_id}`
-                      }
-                      label="Copy share link"
-                    />
                     <Button
                       size="default"
-                      onClick={() => setShowShareModal(true)}
+                      variant="outline"
+                      onClick={() => setShowContributorShareModal(true)}
+                      className="w-full"
+                    >
+                      <Share2 />
+                      Share with contributors
+                    </Button>
+                    <Button
+                      size="default"
+                      onClick={() => setShowRecipientShareModal(true)}
                       className="w-full"
                     >
                       <Send />
@@ -486,14 +501,20 @@ function CardDetailInner() {
         </div>
       </CardDetailLayout>
 
-      <ShareModal
+      <ContributorShareModal
+        cardId={cardId}
+        contributorLinkId={card.contributor_link_id}
+        isOpen={showContributorShareModal}
+        onClose={() => setShowContributorShareModal(false)}
+      />
+      <RecipientShareModal
         cardId={cardId}
         recipientName={card.recipient_name}
         recipientEmail={card.recipient_email || ""}
         contributorLinkId={card.contributor_link_id}
-        isOpen={showShareModal}
+        isOpen={showRecipientShareModal}
         onClose={() => {
-          setShowShareModal(false)
+          setShowRecipientShareModal(false)
           void loadCard()
         }}
         onEmailUpdate={(email) =>

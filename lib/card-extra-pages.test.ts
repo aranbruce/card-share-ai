@@ -74,9 +74,7 @@ describe("card-extra-pages", () => {
   })
 
   it("ownerExtraPagesForStudio keeps stored extra_pages when contributions fail to load", () => {
-    expect(
-      ownerExtraPagesForStudio(2, [], false),
-    ).toEqual({
+    expect(ownerExtraPagesForStudio(2, [], false)).toEqual({
       displayExtraPages: 2,
       unusedExtraPagesDetected: false,
     })
