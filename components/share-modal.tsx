@@ -108,12 +108,18 @@ export function RecipientShareModal({
 
     setSavingCardStatus(true)
     try {
-      await apiPatch(`/api/cards/${cardId}`, {
+      const { card } = await apiPatch<{
+        card: { recipient_email?: string; sent_at?: string | null }
+      }>(`/api/cards/${cardId}`, {
         recipient_email: email,
         sent_at: pendingSentAt,
       })
-      onEmailUpdate?.(email)
-      onSentAtRecorded?.(pendingSentAt)
+      const savedEmail = card.recipient_email?.trim() || email
+      const savedSentAt = card.sent_at ?? pendingSentAt
+      onEmailUpdate?.(savedEmail)
+      if (savedSentAt) {
+        onSentAtRecorded?.(savedSentAt)
+      }
       setRecipientPersistenceWarning(null)
       setPendingSentAt(null)
     } catch (err) {
