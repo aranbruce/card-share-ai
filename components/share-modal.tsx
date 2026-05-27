@@ -82,6 +82,9 @@ export function RecipientShareModal({
   const [savingEmail, setSavingEmail] = useState(false)
   const [savingCardStatus, setSavingCardStatus] = useState(false)
 
+  const recipientEmailInputId = `recipient-email-${cardId}`
+  const recipientEmailErrorId = `recipient-email-error-${cardId}`
+
   const viewLink = isOpen ? buildViewLink(contributorLinkId) : ""
   const getViewLink = () => buildViewLink(contributorLinkId)
 
@@ -293,7 +296,11 @@ export function RecipientShareModal({
             ) : (
               <div className="space-y-4">
                 <div className="space-y-2">
+                  <label htmlFor={recipientEmailInputId} className="sr-only">
+                    Recipient email address
+                  </label>
                   <Input
+                    id={recipientEmailInputId}
                     type="email"
                     placeholder="recipient@example.com"
                     value={recipientEmail}
@@ -302,9 +309,16 @@ export function RecipientShareModal({
                       setRecipientEmailError("")
                     }}
                     aria-invalid={!!recipientEmailError}
+                    aria-describedby={
+                      recipientEmailError ? recipientEmailErrorId : undefined
+                    }
                   />
                   {recipientEmailError ? (
-                    <p className="text-xs text-destructive">
+                    <p
+                      id={recipientEmailErrorId}
+                      role="alert"
+                      className="text-xs text-destructive"
+                    >
                       {recipientEmailError}
                     </p>
                   ) : null}
@@ -368,7 +382,14 @@ export function ContributorShareModal({
   const [contributorEmailSent, setContributorEmailSent] = useState(false)
   const [contributorEmails, setContributorEmails] = useState("")
   const [contributorEmailError, setContributorEmailError] = useState("")
+  const [contributorPartialNotice, setContributorPartialNotice] = useState<
+    string | null
+  >(null)
   const [sentCount, setSentCount] = useState(0)
+
+  const contributorEmailsInputId = `contributor-emails-${cardId}`
+  const contributorEmailsErrorId = `contributor-emails-error-${cardId}`
+  const contributorPartialNoticeId = `contributor-partial-notice-${cardId}`
 
   const contributorLink = isOpen ? buildContributorLink(contributorLinkId) : ""
   const getContributorLink = () => buildContributorLink(contributorLinkId)
@@ -395,16 +416,30 @@ export function ContributorShareModal({
     }
 
     setContributorEmailError("")
+    setContributorPartialNotice(null)
     setContributorSending(true)
 
     try {
-      const response = await apiPost<{ sentCount?: number }>(
-        `/api/cards/${cardId}/send-email`,
-        {
-          kind: "contributor",
-          emails,
-        },
-      )
+      const response = await apiPost<{
+        sentCount?: number
+        partial?: boolean
+        failedEmails?: { email: string; error: string }[]
+      }>(`/api/cards/${cardId}/send-email`, {
+        kind: "contributor",
+        emails,
+      })
+
+      if (response.partial && response.failedEmails?.length) {
+        setSentCount(response.sentCount ?? 0)
+        setContributorEmails(
+          response.failedEmails.map((entry) => entry.email).join(", "),
+        )
+        setContributorPartialNotice(
+          `Sent ${response.sentCount ?? 0} invite(s). ${response.failedEmails.length} could not be sent — update and retry below.`,
+        )
+        return
+      }
+
       setSentCount(response.sentCount ?? emails.length)
       setContributorEmailSent(true)
     } catch (err) {
@@ -482,19 +517,46 @@ export function ContributorShareModal({
               </div>
             ) : (
               <div className="space-y-4">
+                {contributorPartialNotice ? (
+                  <p
+                    id={contributorPartialNoticeId}
+                    className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-950 dark:text-amber-50"
+                  >
+                    {contributorPartialNotice}
+                  </p>
+                ) : null}
                 <div className="space-y-2">
+                  <label htmlFor={contributorEmailsInputId} className="sr-only">
+                    Contributor email addresses
+                  </label>
                   <Textarea
+                    id={contributorEmailsInputId}
                     placeholder="contributor@example.com, friend@example.com"
                     value={contributorEmails}
                     onChange={(e) => {
                       setContributorEmails(e.target.value)
                       setContributorEmailError("")
+                      setContributorPartialNotice(null)
                     }}
                     rows={3}
                     aria-invalid={!!contributorEmailError}
+                    aria-describedby={
+                      [
+                        contributorPartialNotice
+                          ? contributorPartialNoticeId
+                          : null,
+                        contributorEmailError ? contributorEmailsErrorId : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" ") || undefined
+                    }
                   />
                   {contributorEmailError ? (
-                    <p className="text-xs text-destructive">
+                    <p
+                      id={contributorEmailsErrorId}
+                      role="alert"
+                      className="text-xs text-destructive"
+                    >
                       {contributorEmailError}
                     </p>
                   ) : null}

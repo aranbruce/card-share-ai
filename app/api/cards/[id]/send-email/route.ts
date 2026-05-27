@@ -5,7 +5,6 @@ import { getAppUrl } from "@/lib/app-url"
 import {
   sendContributorInviteEmail,
   sendRecipientCardEmail,
-  type SendEmailResult,
 } from "@/lib/email/resend"
 import {
   MAX_CONTRIBUTOR_EMAILS,
@@ -38,12 +37,13 @@ function jsonWithRateLimit(
   rateLimitHeaders: Record<string, string>,
   init?: ResponseInit,
 ): NextResponse {
+  const headers = new Headers(init?.headers)
+  for (const [key, value] of Object.entries(rateLimitHeaders)) {
+    headers.set(key, value)
+  }
   return NextResponse.json(body, {
     ...init,
-    headers: {
-      ...rateLimitHeaders,
-      ...init?.headers,
-    },
+    headers,
   })
 }
 
@@ -213,34 +213,50 @@ export async function POST(
     const link = `${baseUrl}/contribute/${card.contributor_link_id}`
     const uniqueEmails = [...new Set(parsed.data.emails.map((e) => e.trim()))]
 
-    const results = await mapWithConcurrency<string, SendEmailResult>(
+    const results = await mapWithConcurrency(
       uniqueEmails,
       CONTRIBUTOR_EMAIL_CONCURRENCY,
-      (destinationEmail) =>
-        sendContributorInviteEmail({
+      async (destinationEmail) => ({
+        email: destinationEmail,
+        result: await sendContributorInviteEmail({
           to: destinationEmail,
           recipientName,
           senderName,
           link,
         }),
+      }),
     )
 
-    const sentCount = results.filter((result) => result.ok).length
-    const failed = results.find((result) => !result.ok)
-    if (failed) {
+    const succeeded = results.filter((entry) => entry.result.ok)
+    const failed = results.filter((entry) => !entry.result.ok)
+
+    if (failed.length === 0) {
       return jsonWithRateLimit(
-        {
-          error:
-            sentCount > 0
-              ? `Sent ${sentCount} of ${uniqueEmails.length} emails before failure: ${failed.error}`
-              : failed.error,
-        },
+        { ok: true, sentCount: succeeded.length },
+        rateLimitHeaders,
+      )
+    }
+
+    if (succeeded.length === 0) {
+      return jsonWithRateLimit(
+        { error: failed[0]?.result.error ?? "Failed to send email" },
         rateLimitHeaders,
         { status: 500 },
       )
     }
 
-    return jsonWithRateLimit({ ok: true, sentCount }, rateLimitHeaders)
+    return jsonWithRateLimit(
+      {
+        ok: true,
+        sentCount: succeeded.length,
+        partial: true,
+        failedEmails: failed.map((entry) => ({
+          email: entry.email,
+          error: entry.result.error,
+        })),
+      },
+      rateLimitHeaders,
+    )
   } catch (error) {
     console.error("[POST /api/cards/[id]/send-email]:", error)
     return jsonWithRateLimit(
