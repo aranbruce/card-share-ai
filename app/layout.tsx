@@ -15,7 +15,7 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Card Share AI",
+  title: "CardShareAI",
   description: "Create beautiful greeting cards with AI",
   icons: {
     icon: [

@@ -508,6 +508,11 @@ function CardDetailInner() {
         onClose={() => setShowContributorShareModal(false)}
       />
       <RecipientShareModal
+        key={
+          showRecipientShareModal
+            ? `recipient-share-${cardId}-${card.recipient_email ?? ""}`
+            : `recipient-share-${cardId}-closed`
+        }
         cardId={cardId}
         recipientName={card.recipient_name}
         recipientEmail={card.recipient_email || ""}

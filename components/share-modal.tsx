@@ -130,19 +130,26 @@ export function RecipientShareModal({
     setRecipientSending(true)
 
     try {
-      const response = await apiPost<{ sentAt?: string }>(
-        `/api/cards/${cardId}/send-email`,
-        {
-          kind: "recipient",
-          email: recipientEmail,
-        },
-      )
+      const response = await apiPost<{
+        sentAt?: string | null
+        persistenceFailed?: boolean
+      }>(`/api/cards/${cardId}/send-email`, {
+        kind: "recipient",
+        email: recipientEmail,
+      })
 
       if (response.sentAt) {
         onSentAtRecorded?.(response.sentAt)
-      } else {
+      } else if (!response.persistenceFailed) {
         void recordSharedAt()
       }
+      if (response.persistenceFailed) {
+        setRecipientEmailError(
+          "Email sent, but we could not save the card status. Please try again.",
+        )
+        return
+      }
+
       onEmailUpdate?.(recipientEmail)
       setRecipientEmailSent(true)
     } catch {

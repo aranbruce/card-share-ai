@@ -6,6 +6,7 @@ import {
   sendContributorInviteEmail,
   sendRecipientCardEmail,
 } from "@/lib/email/resend"
+import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 const recipientBodySchema = z.object({
   kind: z.literal("recipient"),
@@ -29,6 +30,18 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const rateLimit = checkFixedWindowRateLimit(request, {
+    namespace: "api:cards:send-email",
+    maxRequests: 15,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: rateLimit.headers },
+    )
+  }
+
   try {
     const { id } = await params
     const supabase = await createClient()
@@ -40,7 +53,14 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const parsed = bodySchema.safeParse(await request.json())
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+    }
+
+    const parsed = bodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid request payload" },
@@ -101,6 +121,12 @@ export async function POST(
           "[POST /api/cards/[id]/send-email] card update:",
           updateError,
         )
+        return NextResponse.json({
+          ok: true,
+          emailSent: true,
+          persistenceFailed: true,
+          sentAt: card.sent_at ?? null,
+        })
       }
 
       return NextResponse.json({
