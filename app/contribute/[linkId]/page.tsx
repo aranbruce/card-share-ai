@@ -655,7 +655,7 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <AppHeader />
-        <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
+        <div className="flex flex-1 flex-col md:grid md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_420px]">
           <main className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14">
             <div className="w-full max-w-xl space-y-8">
               <div className="space-y-2 text-center">
@@ -711,9 +711,9 @@ function ContributeCardPageInner({ linkId }: { linkId: string }) {
       <AppHeader />
 
       {/* ── Body ── */}
-      <div className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
+      <div className="flex flex-1 flex-col md:grid md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_420px]">
         {/* ── Left: card ── */}
-        <main className="flex flex-col items-center px-4 py-10 md:px-8 md:py-14 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
+        <main className="flex flex-col items-center px-4 py-10 md:h-[calc(100dvh-56px)] md:overflow-y-auto md:px-8 md:py-14">
           <div className="w-full max-w-xl space-y-8">
             {/* Page heading */}
             <div className="text-center">

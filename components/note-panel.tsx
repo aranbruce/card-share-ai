@@ -61,8 +61,8 @@ export function NotePanel(props: NotePanelProps) {
 
   if (props.loading) {
     return (
-      <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 lg:p-7">
+      <aside className="flex flex-col border-t border-border bg-muted/20 md:fixed md:top-14 md:right-0 md:h-[calc(100dvh-56px)] md:w-[320px] md:border-t-0 md:border-l lg:w-[420px]">
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
           <div className="space-y-1.5">
             <Skeleton className="h-2.5 w-16 rounded-sm" />
             <Skeleton className="h-7 w-40 rounded-md" />
@@ -109,8 +109,8 @@ export function NotePanel(props: NotePanelProps) {
   const activeFontPresetId = activeMessageFontPresetId(values.fontFamily)
 
   return (
-    <aside className="flex flex-col border-t border-border bg-muted/20 lg:fixed lg:top-14 lg:right-0 lg:h-[calc(100dvh-56px)] lg:w-[420px] lg:border-t-0 lg:border-l">
-      <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 lg:p-7">
+    <aside className="flex flex-col border-t border-border bg-muted/20 md:fixed md:top-14 md:right-0 md:h-[calc(100dvh-56px)] md:w-[320px] md:border-t-0 md:border-l lg:w-[420px]">
+      <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
         <div>
           <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
             Your note
