@@ -15,8 +15,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ApiError, apiPatch, apiPost } from "@/lib/api-client"
-
-const MAX_CONTRIBUTOR_EMAILS = 20
+import {
+  MAX_CONTRIBUTOR_EMAILS,
+  MAX_CONTRIBUTOR_EMAILS_ERROR,
+} from "@/lib/email/constants"
 
 interface ShareModalBaseProps {
   cardId: string
@@ -74,7 +76,11 @@ export function RecipientShareModal({
   const [recipientEmailSent, setRecipientEmailSent] = useState(false)
   const [recipientEmail, setRecipientEmail] = useState(initialEmail || "")
   const [recipientEmailError, setRecipientEmailError] = useState("")
+  const [recipientPersistenceWarning, setRecipientPersistenceWarning] =
+    useState<string | null>(null)
+  const [pendingSentAt, setPendingSentAt] = useState<string | null>(null)
   const [savingEmail, setSavingEmail] = useState(false)
+  const [savingCardStatus, setSavingCardStatus] = useState(false)
 
   const viewLink = isOpen ? buildViewLink(contributorLinkId) : ""
   const getViewLink = () => buildViewLink(contributorLinkId)
@@ -91,6 +97,31 @@ export function RecipientShareModal({
 
   const handleLinkCopied = () => {
     void recordSharedAt()
+  }
+
+  const handleRetrySaveCardStatus = async () => {
+    const email = recipientEmail.trim()
+    if (!email || !pendingSentAt) return
+
+    setSavingCardStatus(true)
+    try {
+      await apiPatch(`/api/cards/${cardId}`, {
+        recipient_email: email,
+        sent_at: pendingSentAt,
+      })
+      onEmailUpdate?.(email)
+      onSentAtRecorded?.(pendingSentAt)
+      setRecipientPersistenceWarning(null)
+      setPendingSentAt(null)
+    } catch (err) {
+      setRecipientPersistenceWarning(
+        err instanceof ApiError
+          ? err.message
+          : "Could not save card status. Refresh the page and try again.",
+      )
+    } finally {
+      setSavingCardStatus(false)
+    }
   }
 
   const handleSaveEmail = async () => {
@@ -148,19 +179,25 @@ export function RecipientShareModal({
         email,
       })
 
-      if (response.sentAt) {
-        onSentAtRecorded?.(response.sentAt)
-      } else if (!response.persistenceFailed) {
-        void recordSharedAt()
-      }
       if (response.persistenceFailed) {
-        setRecipientEmailError(
-          "Email sent, but we could not save the card status. Please try again.",
+        onEmailUpdate?.(email)
+        setPendingSentAt(response.sentAt ?? new Date().toISOString())
+        setRecipientPersistenceWarning(
+          "Email was sent. We could not save the card status — use Save card status below.",
         )
+        setRecipientEmailSent(true)
         return
       }
 
+      if (response.sentAt) {
+        onSentAtRecorded?.(response.sentAt)
+      } else {
+        void recordSharedAt()
+      }
+
       onEmailUpdate?.(email)
+      setRecipientPersistenceWarning(null)
+      setPendingSentAt(null)
       setRecipientEmailSent(true)
     } catch (err) {
       setRecipientEmailError(
@@ -224,6 +261,29 @@ export function RecipientShareModal({
                 <p className="text-sm text-muted-foreground">
                   The final card link has been sent successfully.
                 </p>
+                {recipientPersistenceWarning ? (
+                  <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                    <p className="text-sm text-amber-950 dark:text-amber-50">
+                      {recipientPersistenceWarning}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetrySaveCardStatus}
+                      disabled={savingCardStatus}
+                    >
+                      {savingCardStatus ? (
+                        <>
+                          <Spinner />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save card status"
+                      )}
+                    </Button>
+                  </div>
+                ) : null}
                 <RecipientViewLinkCopy
                   viewLink={viewLink}
                   getViewLink={getViewLink}
@@ -330,9 +390,7 @@ export function ContributorShareModal({
       return
     }
     if (emails.length > MAX_CONTRIBUTOR_EMAILS) {
-      setContributorEmailError(
-        `You can send to at most ${MAX_CONTRIBUTOR_EMAILS} contributors at once`,
-      )
+      setContributorEmailError(MAX_CONTRIBUTOR_EMAILS_ERROR)
       return
     }
 

@@ -7,6 +7,10 @@ import {
   sendRecipientCardEmail,
   type SendEmailResult,
 } from "@/lib/email/resend"
+import {
+  MAX_CONTRIBUTOR_EMAILS,
+  MAX_CONTRIBUTOR_EMAILS_ERROR,
+} from "@/lib/email/constants"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 const CONTRIBUTOR_EMAIL_CONCURRENCY = 5
@@ -21,7 +25,7 @@ const contributorBodySchema = z.object({
   emails: z
     .array(z.string().trim().email())
     .min(1, "At least one email is required")
-    .max(20, "You can send to at most 20 contributors at once"),
+    .max(MAX_CONTRIBUTOR_EMAILS, MAX_CONTRIBUTOR_EMAILS_ERROR),
 })
 
 const bodySchema = z.discriminatedUnion("kind", [
@@ -189,7 +193,7 @@ export async function POST(
             ok: true,
             emailSent: true,
             persistenceFailed: true,
-            sentAt: card.sent_at ?? null,
+            sentAt: updates.sent_at ?? card.sent_at ?? null,
           },
           rateLimitHeaders,
         )
