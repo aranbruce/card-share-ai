@@ -38,7 +38,7 @@ SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=your_github_oauth_app_client_id
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 GIPHY_API_KEY=your_giphy_api_key
 RESEND_API_KEY=your_resend_api_key
-RESEND_FROM_EMAIL="CardShareAI <noreply@your-domain.com>"
+RESEND_FROM_EMAIL=CardShareAI <noreply@your-domain.com>
 
 # Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to openai/gpt-4o via the gateway.
 # AI_TEXT_MODEL=openai/gpt-4o
