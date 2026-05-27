@@ -515,7 +515,7 @@ function CardDetailInner() {
       <RecipientShareModal
         key={
           showRecipientShareModal
-            ? `recipient-share-${cardId}-${card.recipient_email ?? ""}`
+            ? `recipient-share-${cardId}-open`
             : `recipient-share-${cardId}-closed`
         }
         cardId={cardId}

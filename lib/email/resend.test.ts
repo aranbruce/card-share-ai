@@ -5,8 +5,20 @@ import {
   buildContributorInviteHtml,
   buildRecipientCardHtml,
   escapeHtml,
+  sanitizeEmailHeaderValue,
   sendRecipientCardEmail,
 } from "./resend"
+
+describe("sanitizeEmailHeaderValue", () => {
+  it("strips CR/LF and collapses whitespace", () => {
+    expect(sanitizeEmailHeaderValue("  Alice\r\nEvil  ")).toBe("Alice Evil")
+    expect(sanitizeEmailHeaderValue("Bob\n\nSmith")).toBe("Bob Smith")
+  })
+
+  it("caps length to avoid oversized headers", () => {
+    expect(sanitizeEmailHeaderValue("a".repeat(250))).toHaveLength(200)
+  })
+})
 
 describe("escapeHtml", () => {
   it("escapes HTML special characters", () => {

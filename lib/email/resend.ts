@@ -11,6 +11,16 @@ export type SendEmailResult =
   | { ok: true; id: string | null }
   | { ok: false; error: string }
 
+const EMAIL_HEADER_VALUE_MAX_LENGTH = 200
+
+export function sanitizeEmailHeaderValue(value: string): string {
+  return value
+    .trim()
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .slice(0, EMAIL_HEADER_VALUE_MAX_LENGTH)
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -93,7 +103,7 @@ export async function sendRecipientCardEmail({
     const { data, error } = await resend.emails.send({
       from,
       to,
-      subject: `${senderName} sent you a card`,
+      subject: `${sanitizeEmailHeaderValue(senderName)} sent you a card`,
       text: `Hi ${recipientName},\n\n${senderName} sent you a card.\n\nOpen your card: ${link}\n\nEnjoy!`,
       html: buildRecipientCardHtml({ recipientName, senderName, link }),
     })
@@ -118,7 +128,7 @@ export async function sendContributorInviteEmail({
     const { data, error } = await resend.emails.send({
       from,
       to,
-      subject: `Contribute to ${recipientName}'s card`,
+      subject: `Contribute to ${sanitizeEmailHeaderValue(recipientName)}'s card`,
       text: `Hi there,\n\n${senderName} invited you to contribute to ${recipientName}'s card.\n\nAdd your message: ${link}\n\nThanks!`,
       html: buildContributorInviteHtml({ recipientName, senderName, link }),
     })
