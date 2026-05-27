@@ -149,8 +149,10 @@ export function RecipientShareModal({
         recipient_email: email,
       })
       onEmailUpdate?.(email)
-    } catch {
-      setRecipientEmailError("Failed to save email")
+    } catch (err) {
+      setRecipientEmailError(
+        err instanceof ApiError ? err.message : "Failed to save email",
+      )
     } finally {
       setSavingEmail(false)
     }
@@ -175,7 +177,7 @@ export function RecipientShareModal({
 
     try {
       const response = await apiPost<{
-        sentAt?: string | null
+        sentAt: string
         persistenceFailed?: boolean
       }>(`/api/cards/${cardId}/send-email`, {
         kind: "recipient",
@@ -192,12 +194,7 @@ export function RecipientShareModal({
         return
       }
 
-      if (response.sentAt) {
-        onSentAtRecorded?.(response.sentAt)
-      } else {
-        void recordSharedAt()
-      }
-
+      onSentAtRecorded?.(response.sentAt)
       onEmailUpdate?.(email)
       setRecipientPersistenceWarning(null)
       setPendingSentAt(null)

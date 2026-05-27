@@ -14,6 +14,14 @@ import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 const CONTRIBUTOR_EMAIL_CONCURRENCY = 5
 
+function displayName(
+  value: string | null | undefined,
+  fallback: string,
+): string {
+  const trimmed = value?.trim()
+  return trimmed || fallback
+}
+
 function normalizeContributorEmails(emails: unknown): string[] {
   if (!Array.isArray(emails)) return []
 
@@ -177,8 +185,8 @@ export async function POST(
 
     if (parsed.data.kind === "recipient") {
       const destinationEmail = parsed.data.email.trim()
-      const recipientName = (card.recipient_name ?? "there").trim()
-      const senderName = (card.sender_name ?? "Someone").trim()
+      const recipientName = displayName(card.recipient_name, "there")
+      const senderName = displayName(card.sender_name, "Someone")
       const link = `${baseUrl}/view/${card.contributor_link_id}`
 
       const sendResult = await sendRecipientCardEmail({
@@ -215,7 +223,7 @@ export async function POST(
             ok: true,
             emailSent: true,
             persistenceFailed: true,
-            sentAt: card.sent_at ?? null,
+            sentAt: card.sent_at ?? now,
           },
           rateLimitHeaders,
         )
@@ -291,8 +299,8 @@ export async function POST(
       )
     }
 
-    const recipientName = (card.recipient_name ?? "your recipient").trim()
-    const senderName = (card.sender_name ?? "Someone").trim()
+    const recipientName = displayName(card.recipient_name, "your recipient")
+    const senderName = displayName(card.sender_name, "Someone")
     const link = `${baseUrl}/contribute/${card.contributor_link_id}`
     const uniqueEmails = parsed.data.emails
 
