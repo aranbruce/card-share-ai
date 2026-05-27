@@ -243,11 +243,9 @@ export async function POST(
         firstFailure && !firstFailure.ok
           ? firstFailure.error
           : "Failed to send email"
-      return jsonWithRateLimit(
-        { error: errorMessage },
-        rateLimitHeaders,
-        { status: 500 },
-      )
+      return jsonWithRateLimit({ error: errorMessage }, rateLimitHeaders, {
+        status: 500,
+      })
     }
 
     return jsonWithRateLimit(
