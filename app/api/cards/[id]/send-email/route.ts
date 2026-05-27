@@ -238,8 +238,13 @@ export async function POST(
     }
 
     if (succeeded.length === 0) {
+      const firstFailure = failed[0]?.result
+      const errorMessage =
+        firstFailure && !firstFailure.ok
+          ? firstFailure.error
+          : "Failed to send email"
       return jsonWithRateLimit(
-        { error: failed[0]?.result.error ?? "Failed to send email" },
+        { error: errorMessage },
         rateLimitHeaders,
         { status: 500 },
       )
@@ -252,7 +257,7 @@ export async function POST(
         partial: true,
         failedEmails: failed.map((entry) => ({
           email: entry.email,
-          error: entry.result.error,
+          error: !entry.result.ok ? entry.result.error : "Failed to send email",
         })),
       },
       rateLimitHeaders,
