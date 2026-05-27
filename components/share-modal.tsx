@@ -14,7 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { apiPatch, apiPost } from "@/lib/api-client"
+import { ApiError, apiPatch, apiPost } from "@/lib/api-client"
+
+const MAX_CONTRIBUTOR_EMAILS = 20
 
 interface ShareModalBaseProps {
   cardId: string
@@ -92,13 +94,17 @@ export function RecipientShareModal({
   }
 
   const handleSaveEmail = async () => {
-    if (!recipientEmail.trim()) {
+    const email = recipientEmail.trim()
+    if (!email) {
       setRecipientEmailError("Please enter an email address")
       return
     }
-    if (!validateEmail(recipientEmail)) {
+    if (!validateEmail(email)) {
       setRecipientEmailError("Please enter a valid email address")
       return
+    }
+    if (email !== recipientEmail) {
+      setRecipientEmail(email)
     }
 
     setRecipientEmailError("")
@@ -106,9 +112,9 @@ export function RecipientShareModal({
 
     try {
       await apiPatch(`/api/cards/${cardId}`, {
-        recipient_email: recipientEmail,
+        recipient_email: email,
       })
-      onEmailUpdate?.(recipientEmail)
+      onEmailUpdate?.(email)
     } catch {
       setRecipientEmailError("Failed to save email")
     } finally {
@@ -117,13 +123,17 @@ export function RecipientShareModal({
   }
 
   const handleSendRecipientEmail = async () => {
-    if (!recipientEmail.trim()) {
+    const email = recipientEmail.trim()
+    if (!email) {
       setRecipientEmailError("Please enter an email address")
       return
     }
-    if (!validateEmail(recipientEmail)) {
+    if (!validateEmail(email)) {
       setRecipientEmailError("Please enter a valid email address")
       return
+    }
+    if (email !== recipientEmail) {
+      setRecipientEmail(email)
     }
 
     setRecipientEmailError("")
@@ -135,7 +145,7 @@ export function RecipientShareModal({
         persistenceFailed?: boolean
       }>(`/api/cards/${cardId}/send-email`, {
         kind: "recipient",
-        email: recipientEmail,
+        email,
       })
 
       if (response.sentAt) {
@@ -150,10 +160,14 @@ export function RecipientShareModal({
         return
       }
 
-      onEmailUpdate?.(recipientEmail)
+      onEmailUpdate?.(email)
       setRecipientEmailSent(true)
-    } catch {
-      setRecipientEmailError("Failed to send recipient email")
+    } catch (err) {
+      setRecipientEmailError(
+        err instanceof ApiError
+          ? err.message
+          : "Failed to send recipient email",
+      )
     } finally {
       setRecipientSending(false)
     }
@@ -315,6 +329,12 @@ export function ContributorShareModal({
       )
       return
     }
+    if (emails.length > MAX_CONTRIBUTOR_EMAILS) {
+      setContributorEmailError(
+        `You can send to at most ${MAX_CONTRIBUTOR_EMAILS} contributors at once`,
+      )
+      return
+    }
 
     setContributorEmailError("")
     setContributorSending(true)
@@ -329,8 +349,12 @@ export function ContributorShareModal({
       )
       setSentCount(response.sentCount ?? emails.length)
       setContributorEmailSent(true)
-    } catch {
-      setContributorEmailError("Failed to send contributor emails")
+    } catch (err) {
+      setContributorEmailError(
+        err instanceof ApiError
+          ? err.message
+          : "Failed to send contributor emails",
+      )
     } finally {
       setContributorSending(false)
     }
@@ -435,7 +459,8 @@ export function ContributorShareModal({
                   )}
                 </Button>
                 <p className="text-center text-xs text-muted-foreground">
-                  Separate multiple addresses with commas, spaces, or new lines.
+                  Separate multiple addresses with commas, spaces, or new lines
+                  (up to {MAX_CONTRIBUTOR_EMAILS}).
                 </p>
               </div>
             )}
