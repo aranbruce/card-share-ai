@@ -502,6 +502,11 @@ function CardDetailInner() {
       </CardDetailLayout>
 
       <ContributorShareModal
+        key={
+          showContributorShareModal
+            ? `contributor-share-${cardId}-open`
+            : `contributor-share-${cardId}-closed`
+        }
         cardId={cardId}
         contributorLinkId={card.contributor_link_id}
         isOpen={showContributorShareModal}

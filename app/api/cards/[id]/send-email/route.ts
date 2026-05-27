@@ -5,8 +5,11 @@ import { getAppUrl } from "@/lib/app-url"
 import {
   sendContributorInviteEmail,
   sendRecipientCardEmail,
+  type SendEmailResult,
 } from "@/lib/email/resend"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
+
+const CONTRIBUTOR_EMAIL_CONCURRENCY = 5
 
 const recipientBodySchema = z.object({
   kind: z.literal("recipient"),
@@ -26,6 +29,49 @@ const bodySchema = z.discriminatedUnion("kind", [
   contributorBodySchema,
 ])
 
+function jsonWithRateLimit(
+  body: unknown,
+  rateLimitHeaders: Record<string, string>,
+  init?: ResponseInit,
+): NextResponse {
+  return NextResponse.json(body, {
+    ...init,
+    headers: {
+      ...rateLimitHeaders,
+      ...init?.headers,
+    },
+  })
+}
+
+function formatZodError(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Invalid request payload"
+}
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return []
+
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+
+  async function worker() {
+    while (true) {
+      const index = nextIndex
+      nextIndex += 1
+      if (index >= items.length) break
+      results[index] = await mapper(items[index])
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
+  )
+  return results
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -35,10 +81,13 @@ export async function POST(
     maxRequests: 15,
     windowMs: 10 * 60 * 1000,
   })
+  const rateLimitHeaders = rateLimit.headers
+
   if (!rateLimit.allowed) {
-    return NextResponse.json(
+    return jsonWithRateLimit(
       { error: "Too many requests. Please try again later." },
-      { status: 429, headers: rateLimit.headers },
+      rateLimitHeaders,
+      { status: 429 },
     )
   }
 
@@ -50,20 +99,27 @@ export async function POST(
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return jsonWithRateLimit({ error: "Unauthorized" }, rateLimitHeaders, {
+        status: 401,
+      })
     }
 
     let body: unknown
     try {
       body = await request.json()
     } catch {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+      return jsonWithRateLimit(
+        { error: "Invalid JSON body" },
+        rateLimitHeaders,
+        { status: 400 },
+      )
     }
 
     const parsed = bodySchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid request payload" },
+      return jsonWithRateLimit(
+        { error: formatZodError(parsed.error) },
+        rateLimitHeaders,
         { status: 400 },
       )
     }
@@ -78,11 +134,14 @@ export async function POST(
       .maybeSingle()
 
     if (cardError || !card) {
-      return NextResponse.json({ error: "Card not found" }, { status: 404 })
+      return jsonWithRateLimit({ error: "Card not found" }, rateLimitHeaders, {
+        status: 404,
+      })
     }
     if (!card.contributor_link_id) {
-      return NextResponse.json(
+      return jsonWithRateLimit(
         { error: "Card link is unavailable" },
+        rateLimitHeaders,
         { status: 400 },
       )
     }
@@ -102,7 +161,11 @@ export async function POST(
         link,
       })
       if (!sendResult.ok) {
-        return NextResponse.json({ error: sendResult.error }, { status: 500 })
+        return jsonWithRateLimit(
+          { error: sendResult.error },
+          rateLimitHeaders,
+          { status: 500 },
+        )
       }
 
       const updates: Record<string, string> = {
@@ -121,18 +184,24 @@ export async function POST(
           "[POST /api/cards/[id]/send-email] card update:",
           updateError,
         )
-        return NextResponse.json({
-          ok: true,
-          emailSent: true,
-          persistenceFailed: true,
-          sentAt: card.sent_at ?? null,
-        })
+        return jsonWithRateLimit(
+          {
+            ok: true,
+            emailSent: true,
+            persistenceFailed: true,
+            sentAt: card.sent_at ?? null,
+          },
+          rateLimitHeaders,
+        )
       }
 
-      return NextResponse.json({
-        ok: true,
-        sentAt: updates.sent_at ?? card.sent_at,
-      })
+      return jsonWithRateLimit(
+        {
+          ok: true,
+          sentAt: updates.sent_at ?? card.sent_at,
+        },
+        rateLimitHeaders,
+      )
     }
 
     const recipientName = (card.recipient_name ?? "your recipient").trim()
@@ -140,31 +209,40 @@ export async function POST(
     const link = `${baseUrl}/contribute/${card.contributor_link_id}`
     const uniqueEmails = [...new Set(parsed.data.emails.map((e) => e.trim()))]
 
-    let sentCount = 0
-    for (const destinationEmail of uniqueEmails) {
-      const sendResult = await sendContributorInviteEmail({
-        to: destinationEmail,
-        recipientName,
-        senderName,
-        link,
-      })
-      if (!sendResult.ok) {
-        return NextResponse.json(
-          {
-            error:
-              sentCount > 0
-                ? `Sent ${sentCount} of ${uniqueEmails.length} emails before failure: ${sendResult.error}`
-                : sendResult.error,
-          },
-          { status: 500 },
-        )
-      }
-      sentCount += 1
+    const results = await mapWithConcurrency<string, SendEmailResult>(
+      uniqueEmails,
+      CONTRIBUTOR_EMAIL_CONCURRENCY,
+      (destinationEmail) =>
+        sendContributorInviteEmail({
+          to: destinationEmail,
+          recipientName,
+          senderName,
+          link,
+        }),
+    )
+
+    const sentCount = results.filter((result) => result.ok).length
+    const failed = results.find((result) => !result.ok)
+    if (failed) {
+      return jsonWithRateLimit(
+        {
+          error:
+            sentCount > 0
+              ? `Sent ${sentCount} of ${uniqueEmails.length} emails before failure: ${failed.error}`
+              : failed.error,
+        },
+        rateLimitHeaders,
+        { status: 500 },
+      )
     }
 
-    return NextResponse.json({ ok: true, sentCount })
+    return jsonWithRateLimit({ ok: true, sentCount }, rateLimitHeaders)
   } catch (error) {
     console.error("[POST /api/cards/[id]/send-email]:", error)
-    return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
+    return jsonWithRateLimit(
+      { error: "Failed to send email" },
+      rateLimitHeaders,
+      { status: 500 },
+    )
   }
 }
