@@ -1,4 +1,4 @@
-# CardsAI - Virtual Greeting Card Creator
+# CardShareAI - Virtual Greeting Card Creator
 
 An AI-powered app for creating and sharing personalized virtual greeting cards with group contribution features.
 
@@ -8,7 +8,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 - **Multiple Card Types**: Birthday, Thank You, Congratulations, Holiday, and Custom cards
 - **Group Contributions**: Share unique links with friends and family to add messages and optional GIFs before sending
 - **Card Editing**: Manually edit generated text or regenerate using AI
-- **Easy Sharing**: Share via link or (future) email integration
+- **Easy Sharing**: Share via link copy or email delivery
 - **User Accounts**: Secure authentication with Supabase to save and manage cards
 
 ## Tech Stack
@@ -37,6 +37,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_key
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=your_github_oauth_app_client_id
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 GIPHY_API_KEY=your_giphy_api_key
+RESEND_API_KEY=your_resend_api_key
+RESEND_FROM_EMAIL="CardShareAI <noreply@your-domain.com>"
 
 # Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to openai/gpt-4o via the gateway.
 # AI_TEXT_MODEL=openai/gpt-4o
@@ -162,7 +164,6 @@ lib/
 
 ## Future Enhancements
 
-- Email integration (Resend)
 - PDF download with all messages
 - Card sharing on social media
 - Premium templates and designs

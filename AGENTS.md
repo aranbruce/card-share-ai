@@ -2,7 +2,7 @@
 
 ### Overview
 
-CardsAI is a single Next.js 16 app (App Router, React 19) for creating AI-powered greeting cards. There is no monorepo; everything lives in one `package.json`.
+CardShareAI is a single Next.js 16 app (App Router, React 19) for creating AI-powered greeting cards. There is no monorepo; everything lives in one `package.json`.
 
 ### Running services
 

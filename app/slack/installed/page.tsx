@@ -16,7 +16,8 @@ function InstalledContent() {
           Something went wrong
         </h1>
         <p className="text-muted-foreground">
-          CardsAI couldn&apos;t be added to your workspace. Please try again.
+          cardshareAI couldn&apos;t be added to your workspace. Please try
+          again.
         </p>
         <a
           href="/slack/install"
@@ -31,15 +32,17 @@ function InstalledContent() {
   return (
     <main className="mx-auto flex max-w-lg flex-col items-center gap-6 px-6 py-24 text-center">
       <h1 className="text-2xl font-bold tracking-tight">
-        CardsAI added{team ? ` to ${team}` : ""}!
+        cardshareAI added{team ? ` to ${team}` : ""}!
       </h1>
       <p className="text-muted-foreground">
         Use{" "}
         <code className="rounded bg-muted px-1 py-0.5 text-sm">
-          /cardsai-link
+          /cardshareai-link
         </code>{" "}
-        to connect your CardsAI account, then{" "}
-        <code className="rounded bg-muted px-1 py-0.5 text-sm">/cardsai</code>{" "}
+        to connect your cardshareAI account, then{" "}
+        <code className="rounded bg-muted px-1 py-0.5 text-sm">
+          /cardshareai
+        </code>{" "}
         to create your first card.
       </p>
       <div className="flex flex-col items-center gap-2">

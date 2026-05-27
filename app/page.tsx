@@ -396,14 +396,14 @@ export default function HomePage() {
                 Create cards without leaving Slack
               </h2>
               <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
-                Install the CardsAI bot and send a personalised card in seconds
-                — directly from any channel or DM.
+                Install the cardshareAI bot and send a personalised card in
+                seconds — directly from any channel or DM.
               </p>
               <ol className="mt-8 flex flex-col gap-5">
                 {[
                   {
                     n: "01",
-                    title: "Type /cardsai in any channel",
+                    title: "Type /cardshareai in any channel",
                     desc: "A form opens inline. Choose the card type, add the recipient's name, pick a tone, and drop in any context.",
                   },
                   {
@@ -470,7 +470,7 @@ export default function HomePage() {
                       </span>
                     </div>
                     <p className="mt-0.5 font-mono text-muted-foreground">
-                      /cardsai
+                      /cardshareai
                     </p>
                   </div>
                 </div>
@@ -482,7 +482,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold">CardsAI</span>
+                      <span className="font-semibold">cardshareAI</span>
                       <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
                         APP
                       </span>
@@ -505,7 +505,7 @@ export default function HomePage() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold">CardsAI</span>
+                      <span className="font-semibold">cardshareAI</span>
                       <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
                         APP
                       </span>
