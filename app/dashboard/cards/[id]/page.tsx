@@ -32,8 +32,8 @@ import {
   FileX2,
   Paperclip,
   Send,
-  Share2,
   Sparkles,
+  UserPlus,
   X,
 } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
@@ -313,7 +313,7 @@ function CardDetailInner() {
                       onClick={() => setShowContributorShareModal(true)}
                       className="w-full"
                     >
-                      <Share2 />
+                      <UserPlus />
                       Share with contributors
                     </Button>
                     <Button
