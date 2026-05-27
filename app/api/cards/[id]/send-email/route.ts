@@ -152,7 +152,15 @@ export async function POST(
       .eq("user_id", user.id)
       .maybeSingle()
 
-    if (cardError || !card) {
+    if (cardError) {
+      console.error("[POST /api/cards/[id]/send-email] card lookup:", cardError)
+      return jsonWithRateLimit(
+        { error: "Failed to load card" },
+        rateLimitHeaders,
+        { status: 500 },
+      )
+    }
+    if (!card) {
       return jsonWithRateLimit({ error: "Card not found" }, rateLimitHeaders, {
         status: 404,
       })
