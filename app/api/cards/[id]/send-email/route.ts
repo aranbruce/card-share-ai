@@ -172,37 +172,97 @@ export async function POST(
         )
       }
 
-      const updates: Record<string, string> = {
-        recipient_email: destinationEmail,
-        updated_at: new Date().toISOString(),
-      }
-      if (!card.sent_at) updates.sent_at = new Date().toISOString()
-
-      const { error: updateError } = await supabase
+      const now = new Date().toISOString()
+      const { error: emailUpdateError } = await supabase
         .from("cards")
-        .update(updates)
+        .update({
+          recipient_email: destinationEmail,
+          updated_at: now,
+        })
         .eq("id", id)
         .eq("user_id", user.id)
-      if (updateError) {
+
+      if (emailUpdateError) {
         console.error(
-          "[POST /api/cards/[id]/send-email] card update:",
-          updateError,
+          "[POST /api/cards/[id]/send-email] recipient_email update:",
+          emailUpdateError,
         )
         return jsonWithRateLimit(
           {
             ok: true,
             emailSent: true,
             persistenceFailed: true,
-            sentAt: updates.sent_at ?? card.sent_at ?? null,
+            sentAt: card.sent_at ?? null,
           },
           rateLimitHeaders,
         )
       }
 
+      let sentAt = card.sent_at
+      if (!card.sent_at) {
+        const attemptedSentAt = new Date().toISOString()
+        const { data: sentRows, error: sentUpdateError } = await supabase
+          .from("cards")
+          .update({
+            sent_at: attemptedSentAt,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .eq("user_id", user.id)
+          .is("sent_at", null)
+          .select("sent_at")
+
+        if (sentUpdateError) {
+          console.error(
+            "[POST /api/cards/[id]/send-email] sent_at update:",
+            sentUpdateError,
+          )
+          return jsonWithRateLimit(
+            {
+              ok: true,
+              emailSent: true,
+              persistenceFailed: true,
+              sentAt: attemptedSentAt,
+            },
+            rateLimitHeaders,
+          )
+        }
+
+        const persistedSentAt = sentRows?.[0]?.sent_at
+        if (persistedSentAt) {
+          sentAt = persistedSentAt
+        } else {
+          const { data: refreshed, error: refreshError } = await supabase
+            .from("cards")
+            .select("sent_at")
+            .eq("id", id)
+            .eq("user_id", user.id)
+            .maybeSingle()
+
+          if (refreshError) {
+            console.error(
+              "[POST /api/cards/[id]/send-email] sent_at refresh:",
+              refreshError,
+            )
+            return jsonWithRateLimit(
+              {
+                ok: true,
+                emailSent: true,
+                persistenceFailed: true,
+                sentAt: attemptedSentAt,
+              },
+              rateLimitHeaders,
+            )
+          }
+
+          sentAt = refreshed?.sent_at ?? attemptedSentAt
+        }
+      }
+
       return jsonWithRateLimit(
         {
           ok: true,
-          sentAt: updates.sent_at ?? card.sent_at,
+          sentAt,
         },
         rateLimitHeaders,
       )
