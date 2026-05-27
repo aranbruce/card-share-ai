@@ -342,7 +342,7 @@ export default function CreateCardPage() {
 
       {/* Studio — full-width two-column layout */}
       {step === "details" && (
-        <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[420px_1fr]">
+        <div className="grid min-h-dvh grid-cols-1 md:grid-cols-[320px_1fr] lg:grid-cols-[420px_1fr]">
           <CardDetailsForm
             cardType={selectedType}
             onSubmit={handleDetailsSubmit}
@@ -354,7 +354,7 @@ export default function CreateCardPage() {
           />
 
           {/* Right panel — live preview */}
-          <main className="flex items-center justify-center bg-background px-10 py-12">
+          <main className="flex min-w-0 items-center justify-center bg-background px-10 py-12">
             <div className="w-full max-w-xl text-center">
               <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
                 Live preview

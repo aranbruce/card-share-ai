@@ -62,8 +62,8 @@ function CardDetailLayout({
   panel: ReactNode
 }) {
   return (
-    <MessageFontVariables className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_420px]">
-      <main className="flex flex-col gap-7 px-10 py-10 md:px-12 lg:h-[calc(100dvh-56px)] lg:overflow-y-auto">
+    <MessageFontVariables className="flex flex-1 flex-col md:grid md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_420px]">
+      <main className="flex flex-col gap-7 px-10 py-10 md:h-[calc(100dvh-56px)] md:overflow-y-auto md:px-12">
         <Button
           asChild
           variant="outline"

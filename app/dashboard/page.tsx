@@ -289,7 +289,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex flex-1">
-        <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
+        <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background md:flex">
           <div className="flex-1 space-y-1 px-5 py-7">
             {Array.from({ length: 7 }).map((_, i) => (
               <div
@@ -324,7 +324,7 @@ export default function DashboardPage() {
             </div>
             <Skeleton className="h-9 w-28 rounded-lg" />
           </div>
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
@@ -352,7 +352,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-1">
       {/* ── Left sidebar ── */}
-      <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background lg:flex">
+      <aside className="sticky top-14 hidden h-[calc(100dvh-56px)] w-[240px] shrink-0 flex-col border-r border-border bg-background md:flex">
         <div className="flex-1 overflow-y-auto px-5 py-7">
           {/* Nav items */}
           {[
@@ -487,7 +487,7 @@ export default function DashboardPage() {
 
         {/* Cards grid */}
         {filteredCards.length > 0 && (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
             {filteredCards.map((card, index) => {
               const hue = TYPE_HUE[card.card_type] ?? 40
               const isConfirming = confirmDeleteId === card.id
