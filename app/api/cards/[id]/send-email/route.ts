@@ -14,6 +14,18 @@ import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 
 const CONTRIBUTOR_EMAIL_CONCURRENCY = 5
 
+function normalizeContributorEmails(emails: unknown): string[] {
+  if (!Array.isArray(emails)) return []
+
+  const unique = new Set<string>()
+  for (const entry of emails) {
+    if (typeof entry !== "string") continue
+    const trimmed = entry.trim()
+    if (trimmed) unique.add(trimmed)
+  }
+  return [...unique]
+}
+
 const recipientBodySchema = z.object({
   kind: z.literal("recipient"),
   email: z.string().trim().email(),
@@ -21,10 +33,13 @@ const recipientBodySchema = z.object({
 
 const contributorBodySchema = z.object({
   kind: z.literal("contributor"),
-  emails: z
-    .array(z.string().trim().email())
-    .min(1, "At least one email is required")
-    .max(MAX_CONTRIBUTOR_EMAILS, MAX_CONTRIBUTOR_EMAILS_ERROR),
+  emails: z.preprocess(
+    normalizeContributorEmails,
+    z
+      .array(z.string().email())
+      .min(1, "At least one email is required")
+      .max(MAX_CONTRIBUTOR_EMAILS, MAX_CONTRIBUTOR_EMAILS_ERROR),
+  ),
 })
 
 const bodySchema = z.discriminatedUnion("kind", [
@@ -271,7 +286,7 @@ export async function POST(
     const recipientName = (card.recipient_name ?? "your recipient").trim()
     const senderName = (card.sender_name ?? "Someone").trim()
     const link = `${baseUrl}/contribute/${card.contributor_link_id}`
-    const uniqueEmails = [...new Set(parsed.data.emails.map((e) => e.trim()))]
+    const uniqueEmails = parsed.data.emails
 
     const results = await mapWithConcurrency(
       uniqueEmails,
