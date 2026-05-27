@@ -8,6 +8,7 @@ interface RecipientViewLinkCopyProps {
   viewLink: string
   getViewLink: () => string
   onCopied?: () => void
+  ariaLabel?: string
 }
 
 /** Read-only view URL + copy button (shared by Direct Link and Ready to send). */
@@ -15,6 +16,7 @@ export function RecipientViewLinkCopy({
   viewLink,
   getViewLink,
   onCopied,
+  ariaLabel = "Recipient view link",
 }: RecipientViewLinkCopyProps) {
   const copyContainerRef = useRef<HTMLDivElement>(null)
   const linkInputRef = useRef<HTMLInputElement>(null)
@@ -28,7 +30,7 @@ export function RecipientViewLinkCopy({
         value={viewLink}
         readOnly
         variant="readonly"
-        aria-label="Recipient view link"
+        aria-label={ariaLabel}
       />
       <CopyLinkButton
         getLink={getViewLink}

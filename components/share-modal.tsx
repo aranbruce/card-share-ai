@@ -388,6 +388,7 @@ export function ContributorShareModal({
             <RecipientViewLinkCopy
               viewLink={contributorLink}
               getViewLink={getContributorLink}
+              ariaLabel="Contributor link"
             />
             <p className="text-xs text-muted-foreground">
               Copy and share this link so contributors can add their messages.
@@ -418,6 +419,7 @@ export function ContributorShareModal({
                 <RecipientViewLinkCopy
                   viewLink={contributorLink}
                   getViewLink={getContributorLink}
+                  ariaLabel="Contributor link"
                 />
               </div>
             ) : (
