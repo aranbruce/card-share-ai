@@ -34,8 +34,8 @@ function LinkChatContent() {
         } = await supabase.auth.getUser()
 
         if (!user) {
-          const redirect = encodeURIComponent(`/auth/link-chat?token=${token}`)
-          router.replace(`/auth/login?redirect=${redirect}`)
+          const redirect = encodeURIComponent(`/link-chat?token=${token}`)
+          router.replace(`/login?redirect=${redirect}`)
           return
         }
 

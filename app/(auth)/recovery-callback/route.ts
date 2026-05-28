@@ -1,36 +1,28 @@
 import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
-import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-function resolveSafeNextPath(
-  nextParam: string | null,
-  type: string | null,
-): string {
-  const fallback = type === "recovery" ? "/auth/reset-password" : "/dashboard"
-  return resolveSafePostAuthRedirectPath(nextParam, fallback)
-}
-
+/**
+ * Password-reset emails should use redirect_to → this URL (path only, no query).
+ * PKCE exchange + Set-Cookie must run on a Route Handler with cookies on the response.
+ */
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
-  const type = requestUrl.searchParams.get("type")
-  const nextParam = requestUrl.searchParams.get("next")
-  const next = resolveSafeNextPath(nextParam, type)
 
   const errorParam = requestUrl.searchParams.get("error")
   const errorDescription = requestUrl.searchParams.get("error_description")
   if (errorParam) {
     return NextResponse.redirect(
       new URL(
-        `/auth/login?error=${encodeURIComponent(errorDescription ?? errorParam)}`,
+        `/login?error=${encodeURIComponent(errorDescription ?? errorParam)}`,
         requestUrl.origin,
       ),
     )
   }
 
+  const code = requestUrl.searchParams.get("code")
   if (code) {
-    const redirectUrl = new URL(next, requestUrl.origin)
+    const redirectUrl = new URL("/reset-password", requestUrl.origin)
     const response = NextResponse.redirect(redirectUrl)
     const supabase = createSupabaseRouteHandlerClient(request, response)
     const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -39,13 +31,13 @@ export async function GET(request: NextRequest) {
     }
     return NextResponse.redirect(
       new URL(
-        `/auth/login?error=${encodeURIComponent(error.message)}`,
+        `/login?error=${encodeURIComponent(error.message)}`,
         requestUrl.origin,
       ),
     )
   }
 
   return NextResponse.redirect(
-    new URL("/auth/login?error=auth_callback_failed", requestUrl.origin),
+    new URL("/login?error=auth_callback_failed", requestUrl.origin),
   )
 }

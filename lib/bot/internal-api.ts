@@ -49,7 +49,7 @@ export async function createLinkUrl(
   }
 
   const appUrl = getAppUrl()
-  return `${appUrl}/auth/link-chat?token=${encodeURIComponent(token)}`
+  return `${appUrl}/link-chat?token=${encodeURIComponent(token)}`
 }
 
 export async function generateHeadline(params: {

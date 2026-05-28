@@ -109,11 +109,8 @@ function SignUpForm() {
     const nextParams = new URLSearchParams({ oauth: provider, redirect })
     if (action) nextParams.set("action", action)
 
-    const callbackUrl = new URL("/auth/callback", window.location.origin)
-    callbackUrl.searchParams.set(
-      "next",
-      `/auth/sign-up?${nextParams.toString()}`,
-    )
+    const callbackUrl = new URL("/callback", window.location.origin)
+    callbackUrl.searchParams.set("next", `/sign-up?${nextParams.toString()}`)
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -136,7 +133,7 @@ function SignUpForm() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/callback`,
         },
       })
 
@@ -164,7 +161,7 @@ function SignUpForm() {
         }
       } else {
         // Email confirmation required - store pending card info and redirect to success
-        router.push("/auth/sign-up-success")
+        router.push("/sign-up-success")
       }
     } catch {
       setError("An unexpected error occurred")
@@ -182,9 +179,7 @@ function SignUpForm() {
           Already have one?{" "}
           <Link
             href={
-              hasPendingCard
-                ? "/auth/login?redirect=/create&action=save"
-                : "/auth/login"
+              hasPendingCard ? "/login?redirect=/create&action=save" : "/login"
             }
             className="font-medium text-brand hover:underline"
           >

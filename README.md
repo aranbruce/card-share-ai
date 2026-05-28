@@ -61,7 +61,7 @@ RESEND_FROM_EMAIL="CardShareAI <noreply@your-domain.com>"
    - Paste the GitHub OAuth app client ID and secret
 5. In Supabase Dashboard → **Authentication** → **URL Configuration**, ensure your app URL(s) are present in:
    - Site URL
-   - Redirect URLs (e.g. `http://localhost:3000/auth/callback`)
+   - Redirect URLs (e.g. `http://localhost:3000/callback`)
 
 ### Leaked password protection (Security Advisor)
 
@@ -125,7 +125,7 @@ which is then reused by authenticated tests (e.g. dashboard smoke coverage).
 
 ```
 app/
-  ├── auth/                 # Authentication pages
+  ├── (auth)/               # Authentication pages (/login, /sign-up, /callback, …)
   ├── create/               # Card creation flow
   ├── contribute/           # Group contribution page
   ├── dashboard/            # Card management dashboard

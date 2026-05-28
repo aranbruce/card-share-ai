@@ -117,8 +117,8 @@ function LoginForm() {
     const nextParams = new URLSearchParams({ oauth: provider, redirect })
     if (action) nextParams.set("action", action)
 
-    const callbackUrl = new URL("/auth/callback", window.location.origin)
-    callbackUrl.searchParams.set("next", `/auth/login?${nextParams.toString()}`)
+    const callbackUrl = new URL("/callback", window.location.origin)
+    callbackUrl.searchParams.set("next", `/login?${nextParams.toString()}`)
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -178,8 +178,8 @@ function LoginForm() {
           <Link
             href={
               hasPendingCard
-                ? "/auth/sign-up?redirect=/create&action=save"
-                : "/auth/sign-up"
+                ? "/sign-up?redirect=/create&action=save"
+                : "/sign-up"
             }
             className="font-medium text-brand hover:underline"
           >
@@ -260,7 +260,7 @@ function LoginForm() {
               Password
             </label>
             <Link
-              href="/auth/forgot-password"
+              href="/forgot-password"
               className="text-xs text-brand hover:underline"
             >
               Forgot?

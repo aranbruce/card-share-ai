@@ -152,7 +152,7 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              href="/auth/login"
+              href="/login"
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               Sign in
@@ -191,7 +191,7 @@ export default function HomePage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/auth/login">Sign in</Link>
+                <Link href="/login">Sign in</Link>
               </Button>
             </div>
             {/* <div className="mt-10 flex flex-wrap items-center gap-5 font-mono text-xs tracking-[0.15em] text-muted-foreground/60 uppercase">
@@ -561,7 +561,7 @@ export default function HomePage() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/auth/sign-up">Create an account</Link>
+              <Link href="/sign-up">Create an account</Link>
             </Button>
           </div>
         </div>

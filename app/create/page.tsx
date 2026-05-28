@@ -301,7 +301,7 @@ export default function CreateCardPage() {
   const handleAuthRedirect = (type: "login" | "signup") => {
     storePendingCard()
     router.push(
-      `/auth/${type === "login" ? "login" : "sign-up"}?redirect=/create&action=save`,
+      `/${type === "login" ? "login" : "sign-up"}?redirect=/create&action=save`,
     )
   }
 

@@ -44,9 +44,7 @@ export default function ResetPassword() {
       }
 
       // Password updated successfully, redirect to login
-      router.push(
-        "/auth/login?message=Password reset successful. Please log in.",
-      )
+      router.push("/login?message=Password reset successful. Please log in.")
     } catch {
       setError("An unexpected error occurred")
       setLoading(false)

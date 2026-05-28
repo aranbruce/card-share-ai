@@ -2,13 +2,13 @@ import { type NextRequest, NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
 export async function proxy(request: NextRequest) {
-  // PKCE recovery links often land here as /auth/reset-password?code=…
-  // The code must be exchanged on /auth/callback or there is no session for updateUser.
+  // PKCE recovery links often land here as /reset-password?code=…
+  // The code must be exchanged on /recovery-callback or there is no session for updateUser.
   const url = request.nextUrl
-  if (url.pathname === "/auth/reset-password") {
+  if (url.pathname === "/reset-password") {
     const code = url.searchParams.get("code")
     if (code) {
-      const redirect = new URL("/auth/recovery-callback", request.url)
+      const redirect = new URL("/recovery-callback", request.url)
       redirect.searchParams.set("code", code)
       return NextResponse.redirect(redirect)
     }

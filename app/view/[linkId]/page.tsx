@@ -98,7 +98,7 @@ export default function PublicCardPage() {
           </div>
         </div>
         <Button asChild>
-          <Link href="/auth/sign-up">Create your own card</Link>
+          <Link href="/sign-up">Create your own card</Link>
         </Button>
       </main>
     )
@@ -132,7 +132,7 @@ export default function PublicCardPage() {
 
           <div className="mt-8 flex justify-center">
             <Button size="xl" asChild>
-              <Link href="/auth/sign-up">Create your own card</Link>
+              <Link href="/sign-up">Create your own card</Link>
             </Button>
           </div>
 

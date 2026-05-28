@@ -253,7 +253,7 @@ export default function DashboardPage() {
         data: { user: u },
       } = await supabase.auth.getUser()
       if (!u) {
-        router.push("/auth/login")
+        router.push("/login")
         return
       }
       setUser(u)

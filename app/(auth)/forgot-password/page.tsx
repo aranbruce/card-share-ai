@@ -23,9 +23,9 @@ export default function ForgotPassword() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        // Must hit /auth/recovery-callback so PKCE is exchanged and session cookies are set on the response.
+        // Must hit /recovery-callback so PKCE is exchanged and session cookies are set on the response.
         // Path-only URL keeps PKCE redirect_uri aligned with Supabase allowlist entries.
-        redirectTo: `${window.location.origin}/auth/recovery-callback`,
+        redirectTo: `${window.location.origin}/recovery-callback`,
       })
 
       if (error) {
@@ -65,7 +65,7 @@ export default function ForgotPassword() {
           fullWidth
           className="mt-4 border-border/50 hover:bg-secondary/50"
         >
-          <Link href="/auth/login">Back to Login</Link>
+          <Link href="/login">Back to Login</Link>
         </Button>
       </>
     )
@@ -120,7 +120,7 @@ export default function ForgotPassword() {
       <p className="mt-8 text-center text-sm text-muted-foreground">
         Remember your password?{" "}
         <Link
-          href="/auth/login"
+          href="/login"
           className="font-medium text-primary hover:underline"
         >
           Log in
