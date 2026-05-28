@@ -14,7 +14,7 @@ test("authenticate via login form", async ({ page }) => {
     )
   }
 
-  await page.goto("/auth/login")
+  await page.goto("/login")
   await expect(
     page.getByRole("heading", { name: /welcome back/i }),
   ).toBeVisible()

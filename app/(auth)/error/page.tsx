@@ -13,7 +13,7 @@ export default function AuthError() {
 
         <div className="space-y-3">
           <Button asChild fullWidth variant="outline">
-            <Link href="/auth/login">Back to Login</Link>
+            <Link href="/login">Back to Login</Link>
           </Button>
           <Button asChild fullWidth>
             <Link href="/">Return Home</Link>
