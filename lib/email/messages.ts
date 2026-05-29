@@ -1,3 +1,4 @@
+import { getAppUrl } from "@/lib/app-url"
 import { buildEmailLayout, buildPlainTextEmail } from "@/lib/email/template"
 import { escapeHtml, sanitizeEmailHeaderValue } from "@/lib/email/utils"
 
@@ -110,6 +111,164 @@ export function buildEmailVerificationEmail({
       ctaUrl: link,
       footerNote:
         "You received this because someone signed up for CardShareAI with this email address.",
+    }),
+  }
+}
+
+export function buildMagicLinkEmail({ link }: AuthEmailInput): EmailContent {
+  const heading = "Sign in to CardShareAI"
+  const body =
+    "Use the link below to sign in. It expires shortly and can only be used once."
+  const bodyHtml = `<p style="margin:0;">Use the link below to sign in. It expires shortly and can only be used once.</p>`
+
+  return {
+    subject: "Your CardShareAI sign-in link",
+    html: buildEmailLayout({
+      preheader: "Sign in to CardShareAI",
+      heading,
+      bodyHtml,
+      ctaLabel: "Sign in",
+      ctaUrl: link,
+      footerNote:
+        "You received this because a sign-in was requested for your CardShareAI account.",
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "Sign in",
+      ctaUrl: link,
+      footerNote:
+        "You received this because a sign-in was requested for your CardShareAI account.",
+    }),
+  }
+}
+
+export function buildInviteEmail({ link }: AuthEmailInput): EmailContent {
+  const heading = "You're invited to CardShareAI"
+  const body = "You've been invited to create a CardShareAI account."
+  const bodyHtml = `<p style="margin:0;">You&apos;ve been invited to create a CardShareAI account.</p>`
+
+  return {
+    subject: "You're invited to CardShareAI",
+    html: buildEmailLayout({
+      preheader: "Accept your CardShareAI invitation",
+      heading,
+      bodyHtml,
+      ctaLabel: "Accept invitation",
+      ctaUrl: link,
+      footerNote:
+        "You received this because someone invited you to join CardShareAI.",
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "Accept invitation",
+      ctaUrl: link,
+      footerNote:
+        "You received this because someone invited you to join CardShareAI.",
+    }),
+  }
+}
+
+export function buildEmailChangeEmail({
+  link,
+  newEmail,
+}: AuthEmailInput & { newEmail?: string }): EmailContent {
+  const safeNewEmail = newEmail ? escapeHtml(newEmail) : "your new address"
+  const heading = "Confirm your new email"
+  const body = newEmail
+    ? `Confirm ${newEmail} as the new email for your CardShareAI account.`
+    : "Confirm your new email address for your CardShareAI account."
+  const bodyHtml = newEmail
+    ? `<p style="margin:0;">Confirm <strong style="color:#111110;">${safeNewEmail}</strong> as the new email for your CardShareAI account.</p>`
+    : `<p style="margin:0;">Confirm your new email address for your CardShareAI account.</p>`
+
+  return {
+    subject: "Confirm your new CardShareAI email",
+    html: buildEmailLayout({
+      preheader: "Confirm your new email address",
+      heading,
+      bodyHtml,
+      ctaLabel: "Confirm email",
+      ctaUrl: link,
+      footerNote:
+        "You received this because an email change was requested for your CardShareAI account.",
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "Confirm email",
+      ctaUrl: link,
+      footerNote:
+        "You received this because an email change was requested for your CardShareAI account.",
+    }),
+  }
+}
+
+export function buildReauthenticationEmail({
+  token,
+}: {
+  token: string
+}): EmailContent {
+  const heading = "Your verification code"
+  const body = `Use this code to continue: ${token}\n\nIt expires shortly.`
+  const bodyHtml = `<p style="margin:0 0 12px 0;">Use this code to continue:</p><p style="margin:0;font-size:24px;font-weight:700;letter-spacing:0.2em;color:#111110;">${escapeHtml(token)}</p><p style="margin:12px 0 0 0;">It expires shortly.</p>`
+  const appUrl = getAppUrl()
+
+  return {
+    subject: "Your CardShareAI verification code",
+    html: buildEmailLayout({
+      preheader: "Your CardShareAI verification code",
+      heading,
+      bodyHtml,
+      ctaLabel: "Open CardShareAI",
+      ctaUrl: appUrl,
+      footerNote:
+        "You received this because additional verification was requested for your CardShareAI account.",
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "Open CardShareAI",
+      ctaUrl: appUrl,
+      footerNote:
+        "You received this because additional verification was requested for your CardShareAI account.",
+    }),
+  }
+}
+
+export type AuthSecurityNotificationInput = {
+  subject: string
+  heading: string
+  body: string
+  footerNote: string
+}
+
+export function buildAuthSecurityNotificationEmail({
+  subject,
+  heading,
+  body,
+  footerNote,
+}: AuthSecurityNotificationInput): EmailContent {
+  const bodyHtml = `<p style="margin:0;">${escapeHtml(body)}</p>`
+  const appUrl = getAppUrl()
+
+  return {
+    subject,
+    html: buildEmailLayout({
+      preheader: heading,
+      heading,
+      bodyHtml,
+      ctaLabel: "Open CardShareAI",
+      ctaUrl: appUrl,
+      footerNote,
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "Open CardShareAI",
+      ctaUrl: appUrl,
+      footerNote,
     }),
   }
 }
