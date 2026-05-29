@@ -132,7 +132,16 @@
 }
 
 @utility card-preview-aspect {
-  @apply aspect-4/5 w-full;
+  @apply aspect-4/5 w-full @container;
+}
+
+@utility card-preview-headline {
+  font-size: clamp(0.875rem, 6.5cqw, 1.75rem);
+  line-height: 1.25;
+}
+
+@utility card-preview-headline-inset {
+  padding: clamp(0.75rem, 4cqw, 1.5rem);
 }
 
 /* AI refine loading — real elements (not Tailwind ::after) so it always paints */
