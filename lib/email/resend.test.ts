@@ -8,6 +8,7 @@ import {
   sanitizeEmailHeaderValue,
   sendRecipientCardEmail,
 } from "./resend"
+import { EMAIL_BRAND } from "./template"
 
 describe("sanitizeEmailHeaderValue", () => {
   it("strips CR/LF and collapses whitespace", () => {
@@ -55,10 +56,10 @@ describe("buildRecipientCardHtml", () => {
       senderName: `Bob "Evil"`,
       link: "https://example.com/view/abc",
     })
-    expect(html).not.toContain("<img")
-    expect(html).toContain("&lt;img")
+    expect(html).toContain("&lt;img onerror=alert(1)&gt;")
     expect(html).toContain("Bob &quot;Evil&quot;")
     expect(html).toContain('href="https://example.com/view/abc"')
+    expect(html).toContain(EMAIL_BRAND.brand)
   })
 })
 
@@ -69,7 +70,7 @@ describe("buildContributorInviteHtml", () => {
       senderName: "Sam",
       link: "https://example.com/contribute/abc",
     })
-    expect(html).toContain("Pat&lt;script&gt;&apos;s card")
+    expect(html).toContain("Pat&lt;script&gt;&apos;s group card")
     expect(html).not.toContain("<script>")
   })
 })

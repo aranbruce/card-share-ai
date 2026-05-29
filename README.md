@@ -39,6 +39,7 @@ SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 GIPHY_API_KEY=your_giphy_api_key
 RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL="CardShareAI <noreply@your-domain.com>"
+SEND_EMAIL_HOOK_SECRET="v1,whsec_<secret-from-supabase-dashboard>"
 
 # Optional: text routes (`generate-card-copy`, `regenerate-text`). Defaults to openai/gpt-4o via the gateway.
 # AI_TEXT_MODEL=openai/gpt-4o
@@ -62,6 +63,20 @@ RESEND_FROM_EMAIL="CardShareAI <noreply@your-domain.com>"
 5. In Supabase Dashboard → **Authentication** → **URL Configuration**, ensure your app URL(s) are present in:
    - Site URL
    - Redirect URLs (e.g. `http://localhost:3000/callback`)
+
+### Branded auth emails (password reset and email verification)
+
+Card and contributor emails are sent through Resend from the app. Password reset and signup verification emails use the same branded templates once you enable Supabase's **Send Email** auth hook.
+
+1. Deploy the app so `{NEXT_PUBLIC_APP_URL}/api/auth/send-email` is publicly reachable (Supabase cannot call `localhost`).
+2. In Supabase Dashboard → **Authentication** → **Hooks**, create a **Send Email** hook.
+3. Hook type: **HTTPS**
+4. URL: `https://<your-domain>/api/auth/send-email`
+5. Click **Generate Secret** and set the value as `SEND_EMAIL_HOOK_SECRET` in Vercel or `.env.local`.
+6. Ensure `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `NEXT_PUBLIC_SUPABASE_URL` are set.
+7. Verify your sending domain in Resend (SPF, DKIM, DMARC).
+
+Until the hook is enabled, auth emails continue using Supabase's default templates. Card and contributor emails use the branded layout immediately after deploy.
 
 ### Leaked password protection (Security Advisor)
 
