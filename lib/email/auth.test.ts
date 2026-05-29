@@ -114,7 +114,7 @@ describe("resolveAuthEmailDeliveries", () => {
     )
   })
 
-  it("sends secure email change messages to current and new addresses", () => {
+  it("maps secure email-change hashes per Supabase hook docs", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
 
     const deliveries = resolveAuthEmailDeliveries(
@@ -122,13 +122,22 @@ describe("resolveAuthEmailDeliveries", () => {
       {
         ...baseEmailData,
         email_action_type: "email_change",
-        token_hash_new: "current-hash",
+        token_hash: "new-address-hash",
+        token_hash_new: "current-address-hash",
       },
     )
 
     expect(deliveries).toHaveLength(2)
     expect(deliveries?.[0]?.to).toBe("current@example.com")
     expect(deliveries?.[1]?.to).toBe("new@example.com")
+
+    const currentLink = new URL(deliveries![0]!.content.text.match(/https?:\/\/\S+/)![0])
+    const newLink = new URL(deliveries![1]!.content.text.match(/https?:\/\/\S+/)![0])
+
+    expect(currentLink.searchParams.get("token")).toBe("current-address-hash")
+    expect(newLink.searchParams.get("token")).toBe("new-address-hash")
+    expect(currentLink.searchParams.get("type")).toBe("email_change")
+    expect(newLink.searchParams.get("type")).toBe("email_change")
   })
 })
 

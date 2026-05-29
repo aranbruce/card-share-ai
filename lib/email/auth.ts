@@ -150,6 +150,8 @@ function resolveEmailChangeDeliveries(
     Boolean(emailData.token_hash_new) && Boolean(emailData.token_hash)
 
   if (secureChange) {
+    // Supabase names are backwards-compat: token_hash_new goes to the *current*
+    // email and token_hash goes to the *new* email. See Send Email hook docs.
     const deliveries: AuthEmailDelivery[] = [
       {
         to: user.email,
