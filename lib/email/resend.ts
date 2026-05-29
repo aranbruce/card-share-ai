@@ -2,6 +2,7 @@ import { Resend } from "resend"
 import {
   buildContributorInviteEmail,
   buildRecipientCardEmail,
+  type EmailContent,
 } from "@/lib/email/messages"
 
 export {
@@ -51,6 +52,13 @@ function toResult(
   return { ok: true, id: data?.id ?? null }
 }
 
+function toSendEmailError(error: unknown): SendEmailResult {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : "Failed to send email",
+  }
+}
+
 export async function sendEmailViaResend({
   to,
   subject,
@@ -74,10 +82,19 @@ export async function sendEmailViaResend({
     })
     return toResult(data, error)
   } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Failed to send email",
-    }
+    return toSendEmailError(error)
+  }
+}
+
+async function sendEmailWithContent(
+  to: string,
+  buildContent: () => EmailContent,
+): Promise<SendEmailResult> {
+  try {
+    const content = buildContent()
+    return sendEmailViaResend({ to, ...content })
+  } catch (error) {
+    return toSendEmailError(error)
   }
 }
 
@@ -87,12 +104,9 @@ export async function sendRecipientCardEmail({
   senderName,
   link,
 }: SendEmailInput): Promise<SendEmailResult> {
-  const content = buildRecipientCardEmail({
-    recipientName,
-    senderName,
-    link,
-  })
-  return sendEmailViaResend({ to, ...content })
+  return sendEmailWithContent(to, () =>
+    buildRecipientCardEmail({ recipientName, senderName, link }),
+  )
 }
 
 export async function sendContributorInviteEmail({
@@ -101,10 +115,7 @@ export async function sendContributorInviteEmail({
   senderName,
   link,
 }: SendEmailInput): Promise<SendEmailResult> {
-  const content = buildContributorInviteEmail({
-    recipientName,
-    senderName,
-    link,
-  })
-  return sendEmailViaResend({ to, ...content })
+  return sendEmailWithContent(to, () =>
+    buildContributorInviteEmail({ recipientName, senderName, link }),
+  )
 }

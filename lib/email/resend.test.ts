@@ -6,6 +6,7 @@ import {
   buildRecipientCardHtml,
   escapeHtml,
   sanitizeEmailHeaderValue,
+  sendContributorInviteEmail,
   sendRecipientCardEmail,
 } from "./resend"
 import { EMAIL_BRAND } from "./template"
@@ -104,5 +105,29 @@ describe("sendRecipientCardEmail", () => {
     })
 
     expect(result).toEqual({ ok: false, error: "Missing RESEND_API_KEY" })
+  })
+
+  it("returns an error when the card link URL is invalid", async () => {
+    const result = await sendRecipientCardEmail({
+      to: "friend@example.com",
+      recipientName: "Friend",
+      senderName: "Sender",
+      link: "javascript:alert(1)",
+    })
+
+    expect(result).toEqual({ ok: false, error: "Invalid link URL" })
+  })
+})
+
+describe("sendContributorInviteEmail", () => {
+  it("returns an error when the invite link URL is invalid", async () => {
+    const result = await sendContributorInviteEmail({
+      to: "friend@example.com",
+      recipientName: "Friend",
+      senderName: "Sender",
+      link: "not-a-url",
+    })
+
+    expect(result).toEqual({ ok: false, error: "Invalid link URL" })
   })
 })
