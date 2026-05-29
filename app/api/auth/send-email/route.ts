@@ -5,31 +5,42 @@ import {
   type SupabaseAuthEmailUser,
   type SupabaseEmailData,
 } from "@/lib/email/auth"
-
-function getHookSecret(): string {
-  const secret = process.env.SEND_EMAIL_HOOK_SECRET
-  if (!secret) {
-    throw new Error("Missing SEND_EMAIL_HOOK_SECRET")
-  }
-  return secret.replace(/^v1,whsec_/, "")
-}
+import {
+  getSendEmailHookSecretFromEnv,
+  getStandardWebhookHeaders,
+} from "@/lib/email/send-email-hook"
 
 export async function POST(request: NextRequest) {
+  const hookSecret = getSendEmailHookSecretFromEnv()
+  if (!hookSecret) {
+    console.error(
+      "[POST /api/auth/send-email] Missing SEND_EMAIL_HOOK_SECRET env var",
+    )
+    return NextResponse.json(
+      { error: { message: "Email hook is not configured" } },
+      { status: 500 },
+    )
+  }
+
   const payload = await request.text()
-  const headers = Object.fromEntries(request.headers)
+  const headers = getStandardWebhookHeaders(request)
 
   let user: SupabaseAuthEmailUser
   let email_data: SupabaseEmailData
 
   try {
-    const wh = new Webhook(getHookSecret())
+    const wh = new Webhook(hookSecret)
     const verified = wh.verify(payload, headers) as {
       user: SupabaseAuthEmailUser
       email_data: SupabaseEmailData
     }
     user = verified.user
     email_data = verified.email_data
-  } catch {
+  } catch (error) {
+    console.error(
+      "[POST /api/auth/send-email] Webhook verification failed:",
+      error,
+    )
     return NextResponse.json(
       { error: { message: "Invalid webhook signature" } },
       { status: 401 },
