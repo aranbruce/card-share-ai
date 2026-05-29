@@ -132,7 +132,7 @@
 }
 
 @utility card-preview-aspect {
-  @apply aspect-4/5 w-full @container;
+  @apply @container aspect-4/5 w-full;
 }
 
 @utility card-preview-headline {
