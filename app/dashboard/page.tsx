@@ -19,6 +19,7 @@ interface CardItem {
   recipient_name: string
   sender_name: string
   card_type: string
+  copy_headline: string
   image_url: string
   created_at: string
 }
@@ -499,11 +500,14 @@ export default function DashboardPage() {
                     className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
                   >
                     {/* Image */}
-                    <div className="relative card-preview-aspect overflow-hidden bg-secondary">
+                    <div className="card-preview-aspect relative overflow-hidden bg-secondary">
                       {card.image_url ? (
                         <Image
                           src={card.image_url}
-                          alt={`${card.recipient_name}'s card`}
+                          alt={
+                            card.copy_headline ||
+                            `${card.recipient_name}'s card`
+                          }
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
                           loading={index === 0 ? "eager" : "lazy"}
@@ -519,6 +523,15 @@ export default function DashboardPage() {
                           }}
                         />
                       )}
+
+                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+                      {card.copy_headline ? (
+                        <div className="absolute right-0 bottom-0 left-0 card-preview-headline-inset text-center text-white">
+                          <p className="card-preview-headline font-bold">
+                            {card.copy_headline}
+                          </p>
+                        </div>
+                      ) : null}
 
                       {/* Type badge — top left */}
                       <div className="absolute top-3.5 left-3.5">
