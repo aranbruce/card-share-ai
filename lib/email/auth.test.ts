@@ -131,8 +131,12 @@ describe("resolveAuthEmailDeliveries", () => {
     expect(deliveries?.[0]?.to).toBe("current@example.com")
     expect(deliveries?.[1]?.to).toBe("new@example.com")
 
-    const currentLink = new URL(deliveries![0]!.content.text.match(/https?:\/\/\S+/)![0])
-    const newLink = new URL(deliveries![1]!.content.text.match(/https?:\/\/\S+/)![0])
+    const currentLink = new URL(
+      deliveries![0]!.content.text.match(/https?:\/\/\S+/)![0],
+    )
+    const newLink = new URL(
+      deliveries![1]!.content.text.match(/https?:\/\/\S+/)![0],
+    )
 
     expect(currentLink.searchParams.get("token")).toBe("current-address-hash")
     expect(newLink.searchParams.get("token")).toBe("new-address-hash")
