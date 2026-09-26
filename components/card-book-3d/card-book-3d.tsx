@@ -27,6 +27,7 @@ import {
   type RefObject,
 } from "react"
 import {
+  BoxGeometry,
   CanvasTexture,
   Mesh,
   MeshBasicMaterial,
@@ -46,13 +47,24 @@ import {
   PAGE_WIDTH_PX,
   type BookContent,
 } from "./page-painter"
-import { createPageMaterial, type PageMaterial } from "./page-shader"
+import {
+  createPageMaterial,
+  LEAF_THICKNESS,
+  type PageMaterial,
+} from "./page-shader"
 
 /** World units: one page is 1 wide; height keeps the 4:5 card ratio. */
 const PAGE_W = 1
 const PAGE_H = (PAGE_W * PAGE_HEIGHT_PX) / PAGE_WIDTH_PX
 /** Gap between stacked leaves so they never z-fight. */
-const LEAF_GAP = 0.003
+const LEAF_GAP = LEAF_THICKNESS + 0.0015
+/** Gloss on the printed covers; inside pages are matte card stock. */
+const COVER_GLOSS = 0.35
+const PAGE_GLOSS = 0.03
+/** How far the camera swings round a closed card so its thickness shows. */
+const CLOSED_YAW = 0.32
+/** Peak darkening a lifted page casts on the page beneath it. */
+const TURN_SHADOW = 0.38
 const CAMERA_FOV = 30
 const FRAME_MARGIN_W = 1.14
 const FRAME_MARGIN_H = 1.2
@@ -323,7 +335,15 @@ export function CardBook3D({
     })
     sceneRef.current = { faceCanvases, faceTextures }
 
-    const leafGeometry = new PlaneGeometry(PAGE_W, PAGE_H, 48, 1)
+    // A thin box so pages have real edges; the shader bends it around the spine.
+    const leafGeometry = new BoxGeometry(
+      PAGE_W,
+      PAGE_H,
+      LEAF_THICKNESS,
+      48,
+      1,
+      1,
+    )
     leafGeometry.translate(PAGE_W / 2, 0, 0)
     const leaves: Leaf[] = []
     for (let i = 0; i < leafTotal; i++) {
@@ -331,6 +351,10 @@ export function CardBook3D({
         faceTextures[i * 2],
         faceTextures[i * 2 + 1],
         PAGE_W,
+        {
+          front: i === 0 ? COVER_GLOSS : PAGE_GLOSS,
+          back: i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS,
+        },
       )
       const mesh = new Mesh(leafGeometry, material)
       // Vertices move in the shader; the static bounds would cull turning pages.
@@ -389,12 +413,21 @@ export function CardBook3D({
         }
       }
 
+      // The leaf mid-turn shades the page it is lifting off and the one it is landing on.
+      const turningLeaf = Math.floor(state.flip)
+      const turnT = state.flip - turningLeaf
+      const lift = Math.sin(Math.PI * turnT)
       leaves.forEach(({ material }, i) => {
         const p = leafProgress(state.flip, i)
-        material.uniforms.uProgress.value = p
+        const u = material.uniforms
+        u.uProgress.value = p
         const restZ = -i * LEAF_GAP
         const turnedZ = -(leafTotal - 1 - i) * LEAF_GAP
-        material.uniforms.uLift.value = restZ + (turnedZ - restZ) * p
+        u.uLift.value = restZ + (turnedZ - restZ) * p
+        u.uShadowFront.value =
+          i === turningLeaf + 1 ? TURN_SHADOW * lift * (1 - turnT) : 0
+        u.uShadowBack.value =
+          i === turningLeaf - 1 ? TURN_SHADOW * lift * turnT : 0
       })
 
       // Frame the visible pages: the whole spread on wide screens, one page on narrow ones.
@@ -452,8 +485,11 @@ export function CardBook3D({
 
       if (!moving) return
 
-      const left = -Math.min(1, state.flip) * PAGE_W
-      const right = Math.min(1, leafTotal - state.flip) * PAGE_W
+      // Only pages lying flat cast the ground shadow; a lifting page grows it as it lands.
+      const settled = (t: number) =>
+        t >= 1 ? 1 : Math.max(0, Math.min(1, (t - 0.75) / 0.25)) ** 2
+      const left = -settled(state.flip) * PAGE_W
+      const right = settled(leafTotal - state.flip) * PAGE_W
       const shadowWidth = Math.max(0.001, right - left)
       shadow.position.x = (left + right) / 2
       shadow.position.y = -0.02
@@ -466,8 +502,11 @@ export function CardBook3D({
       // Pull back a little mid-turn: the lifted page is closer to the camera and looks larger.
       const turning = Math.sin(Math.PI * (state.flip - Math.floor(state.flip)))
       const distance = Math.max(distH, distW) * (1 + 0.2 * turning)
-      const yaw = state.tilt.x * 0.22
-      const pitch = 0.08 - state.tilt.y * 0.12
+      // A closed card is seen a little from the side (and from above) so it reads as an object.
+      const closed = 1 - openness(state.flip, leafTotal)
+      const closedSide = state.flip < leafTotal / 2 ? 1 : -1
+      const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
+      const pitch = 0.08 + 0.1 * closed - state.tilt.y * 0.12
       camera.position.set(
         state.camX + distance * Math.sin(yaw) * Math.cos(pitch),
         distance * Math.sin(pitch),

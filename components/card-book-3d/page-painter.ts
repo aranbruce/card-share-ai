@@ -11,7 +11,7 @@ import {
 export const PAGE_WIDTH_PX = 448
 export const PAGE_HEIGHT_PX = 560
 /** Texture supersampling so text stays crisp when the camera zooms in. */
-export const PAGE_TEXTURE_SCALE = 2
+export const PAGE_TEXTURE_SCALE = 3
 
 /** Offsets that mirror the flat card canvas: `p-1` frame + "Messages" label block. */
 const CANVAS_INSET_PX = 4
