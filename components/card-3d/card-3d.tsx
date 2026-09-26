@@ -47,6 +47,8 @@ import {
 } from "react"
 
 const MESSAGES_SECTION_LABEL = "Messages"
+/** Stable default so memos and effects keyed on contributions do not re-run every render. */
+const NO_CONTRIBUTIONS: NonNullable<Card3DProps["contributions"]> = []
 const COMPOSE_DRAFT_GIF_TARGET = "__compose__"
 
 export function Card3D({
@@ -56,7 +58,7 @@ export function Card3D({
   recipientName,
   isGeneratingImage,
   isGeneratingHeadline = false,
-  contributions = [],
+  contributions = NO_CONTRIBUTIONS,
   editable = false,
   onHeadlineChange,
   onMessageChange,

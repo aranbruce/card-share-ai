@@ -85,6 +85,9 @@ const GIF_REPAINT_MS = 150
 
 type Side = "left" | "right"
 
+/** Stable default: a fresh `[]` per render would rebuild content (and re-run effects) forever. */
+const NO_CONTRIBUTIONS: Contribution[] = []
+
 export type CardBook3DProps = {
   imageUrl: string
   headline: string
@@ -187,7 +190,7 @@ export function CardBook3D({
   headline,
   message,
   recipientName,
-  contributions = [],
+  contributions = NO_CONTRIBUTIONS,
   extraPages = 0,
   messageFontSize = 18,
   messagePageIndex = 1,
@@ -313,13 +316,21 @@ export function CardBook3D({
     return resolved ? `${resolved}, ${base}` : base
   }, [])
 
-  // Canvas text only uses a web font once it has loaded; repaint when they arrive.
+  // Canvas text only uses a web font once it has loaded; repaint when they arrive. Keyed on
+  // the preset ids in use so ordinary edits do not restart font loading.
+  const fontPresetKey = useMemo(() => {
+    const ids = new Set<string>()
+    for (const notes of content.notesByPage.values()) {
+      for (const n of notes) ids.add(n.fontPresetId ?? "")
+    }
+    return [...ids].sort().join(",")
+  }, [content])
   useEffect(() => {
     if (typeof document === "undefined" || !document.fonts) return
     let cancelled = false
     const families = new Set<string>([fontFamily(null)])
-    for (const notes of content.notesByPage.values()) {
-      for (const n of notes) families.add(fontFamily(n.fontPresetId))
+    for (const id of fontPresetKey.split(",")) {
+      families.add(fontFamily(id || null))
     }
     const loads = [...families].flatMap((family) => [
       document.fonts.load(`400 18px ${family}`),
@@ -331,7 +342,7 @@ export function CardBook3D({
     return () => {
       cancelled = true
     }
-  }, [content, fontFamily])
+  }, [fontPresetKey, fontFamily])
 
   useEffect(() => {
     live.current.target = flipTarget
@@ -749,9 +760,18 @@ export function CardBook3D({
   )
 
   /** Open a card page for editing (null closes the editor). */
+  const editorRef = useRef<HTMLDivElement>(null)
   const editPageAt = useCallback(
     (page: number | null) => {
       if (page === null) {
+        // Inline fields save on blur; blur first so closing never drops an unsaved edit.
+        const active = document.activeElement
+        if (
+          active instanceof HTMLElement &&
+          editorRef.current?.contains(active)
+        ) {
+          active.blur()
+        }
         setEditPage(null)
         return
       }
@@ -966,6 +986,7 @@ export function CardBook3D({
         </div>
         {renderPageEditor && editPage !== null && editLayout ? (
           <div
+            ref={editorRef}
             className={cn(
               "absolute z-10 transition-opacity duration-200 motion-reduce:transition-none",
               overlayReady ? "opacity-100" : "pointer-events-none opacity-0",

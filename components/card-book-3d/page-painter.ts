@@ -112,7 +112,8 @@ export function faceSignature(
   if (face.kind === "cover") {
     return JSON.stringify({
       ...base,
-      img: content.imageUrl,
+      // Generated covers are multi-megabyte data URLs; a length + tail fingerprint is enough.
+      img: `${content.imageUrl.length}:${content.imageUrl.slice(-64)}`,
       headline: content.headline,
       recipient: content.recipientName,
     })
