@@ -9,6 +9,7 @@ import {
   leafProgress,
   openness,
   settleFlipTarget,
+  spreadForPage,
 } from "@/lib/card-book"
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
@@ -71,6 +72,16 @@ export type CardBook3DProps = {
   contributions?: Contribution[]
   extraPages?: number
   messageFontSize?: number
+  /** Inside page that carries the creator message (matches `Card3D`). */
+  messagePageIndex?: number
+  /** Card page to open at (0 = cover). */
+  initialPage?: number
+  /** Turn to this card page whenever the value changes (0 = cover). */
+  navigateToPage?: number
+  /** Card page the reader is looking at (left page of an open spread on wide screens). */
+  onPageChange?: (page: number) => void
+  /** Only the cover exists yet (create flow): a single leaf with a back. */
+  coverOnly?: boolean
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -110,7 +121,8 @@ type LiveState = {
  * A greeting card rendered with Three.js: leaves hinge on a spine and can be turned by
  * dragging, clicking either half, the arrow keys, or the controls underneath.
  *
- * Read-only by design; editing stays on the DOM-based `Card3D`.
+ * Read-only by design; editing stays on the DOM-based `Card3D`. Content changes repaint live,
+ * so it doubles as a preview next to editing controls.
  */
 export function CardBook3D({
   imageUrl,
@@ -120,6 +132,11 @@ export function CardBook3D({
   contributions = [],
   extraPages = 0,
   messageFontSize = 18,
+  messagePageIndex = 1,
+  initialPage = 0,
+  coverOnly = false,
+  navigateToPage,
+  onPageChange,
   className,
   fallback = null,
 }: CardBook3DProps) {
@@ -131,18 +148,28 @@ export function CardBook3D({
   const gifFacesRef = useRef<number[]>([])
 
   const [webglFailed, setWebglFailed] = useState(false)
-  const [flipTarget, setFlipTarget] = useState(0)
-  const [focus, setFocus] = useState<Side>("right")
+  const initialFlip = coverOnly ? 0 : spreadForPage(initialPage)
+  const initialFocus: Side = initialPage % 2 === 1 ? "left" : "right"
+  const [flipTarget, setFlipTarget] = useState(initialFlip)
+  const [focus, setFocus] = useState<Side>(initialFocus)
+  const [prevNavigateToPage, setPrevNavigateToPage] = useState(navigateToPage)
+  if (navigateToPage !== prevNavigateToPage) {
+    setPrevNavigateToPage(navigateToPage)
+    if (navigateToPage !== undefined && !coverOnly) {
+      setFlipTarget(spreadForPage(navigateToPage))
+      setFocus(navigateToPage % 2 === 1 ? "left" : "right")
+    }
+  }
   const [narrow, setNarrow] = useState(false)
   const [fontsVersion, setFontsVersion] = useState(0)
 
   const live = useRef<LiveState>({
-    flip: 0,
-    target: 0,
-    focus: "right",
+    flip: initialFlip,
+    target: initialFlip,
+    focus: initialFocus,
     narrow: false,
     reducedMotion: false,
-    camX: PAGE_W / 2,
+    camX: initialFlip === 0 ? PAGE_W / 2 : 0,
     fitW: PAGE_W,
     tilt: { x: 0, y: 0 },
     tiltTarget: { x: 0, y: 0 },
@@ -151,8 +178,16 @@ export function CardBook3D({
   })
 
   const { totalPages, validMessagePage } = useMemo(
-    () => computeNaturalPageSpread(false, 1, contributions, extraPages),
-    [contributions, extraPages],
+    () =>
+      coverOnly
+        ? { totalPages: 1, validMessagePage: -1 }
+        : computeNaturalPageSpread(
+            false,
+            messagePageIndex,
+            contributions,
+            extraPages,
+          ),
+    [coverOnly, messagePageIndex, contributions, extraPages],
   )
   const faces = useMemo(() => buildBookFaces(totalPages), [totalPages])
   const leafCount = leafCountForFaces(faces)
@@ -335,7 +370,7 @@ export function CardBook3D({
 
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick)
-      const dt = Math.min(0.05, (now - last) / 1000)
+      const dt = Math.min(0.1, (now - last) / 1000)
       last = now
       let moving = state.dirty
       state.dirty = false
@@ -483,6 +518,22 @@ export function CardBook3D({
   // ── Navigation ─────────────────────────────────────────────────────────────
   const currentSide: Side =
     flipTarget <= 0 ? "right" : flipTarget >= leafCount ? "left" : focus
+
+  const visiblePage = Math.min(
+    totalPages - 1,
+    flipTarget <= 0
+      ? 0
+      : narrow && currentSide === "right"
+        ? flipTarget * 2
+        : flipTarget * 2 - 1,
+  )
+  const onPageChangeRef = useRef(onPageChange)
+  useEffect(() => {
+    onPageChangeRef.current = onPageChange
+  }, [onPageChange])
+  useEffect(() => {
+    onPageChangeRef.current?.(visiblePage)
+  }, [visiblePage])
   const canGoPrev = flipTarget > 0
   const canGoNext = flipTarget < leafCount
 
@@ -605,7 +656,10 @@ export function CardBook3D({
         aria-roledescription="3D card"
         aria-label={`Card for ${recipientName}. Use the arrow keys or drag to turn pages.`}
         tabIndex={0}
-        className="relative aspect-4/5 w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing sm:aspect-4/3"
+        className={cn(
+          "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
+          coverOnly ? "aspect-4/5" : "aspect-4/5 sm:aspect-4/3",
+        )}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={(e) => endPointer(e, false)}

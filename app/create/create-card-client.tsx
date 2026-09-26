@@ -7,6 +7,11 @@ import { CardTypeSelector } from "@/components/card-type-selector"
 import { CardDetailsForm } from "@/components/card-details-form"
 import { AuthGateModal } from "@/components/auth-gate-modal"
 import { Card3D } from "@/components/card-3d"
+import { CardBook3D } from "@/components/card-book-3d"
+import {
+  CardViewToggle,
+  type CardViewMode,
+} from "@/components/card-view-toggle"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Spinner } from "@/components/ui/spinner"
@@ -60,6 +65,7 @@ export function CreateCardPageClient() {
   const [recipientName, setRecipientName] = useState("")
   const [cardData, setCardData] = useState<CardData | null>(null)
   const [isGeneratingHeadline, setIsGeneratingHeadline] = useState(false)
+  const [coverView, setCoverView] = useState<CardViewMode>("flat")
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
@@ -341,6 +347,25 @@ export function CreateCardPageClient() {
     setSelectedType("")
   }
 
+  // Headline editing and generation shimmer live on the flat card; 3D is a preview.
+  const flatCover = cardData ? (
+    <Card3D
+      imageUrl={cardData.imageUrl}
+      headline={cardData.headline}
+      message=""
+      recipientName={recipientName}
+      isGeneratingImage={isGeneratingImage}
+      isGeneratingHeadline={isGeneratingHeadline}
+      editable
+      coverOnly
+      onHeadlineChange={(value) =>
+        setCardData({ ...cardData, headline: value })
+      }
+      isRegeneratingHeadline={isRegeneratingHeadline}
+      isRegeneratingImage={isRegeneratingImage}
+    />
+  ) : null
+
   return (
     <div className="min-h-screen bg-background">
       {/* Select type — logo + back above content, no sidebar */}
@@ -587,21 +612,30 @@ export function CreateCardPageClient() {
                         </Button>
                       </div>
                     )}
-                    <Card3D
-                      imageUrl={cardData.imageUrl}
-                      headline={cardData.headline}
-                      message=""
-                      recipientName={recipientName}
-                      isGeneratingImage={isGeneratingImage}
-                      isGeneratingHeadline={isGeneratingHeadline}
-                      editable
-                      coverOnly
-                      onHeadlineChange={(value) =>
-                        setCardData({ ...cardData, headline: value })
-                      }
-                      isRegeneratingHeadline={isRegeneratingHeadline}
-                      isRegeneratingImage={isRegeneratingImage}
-                    />
+                    {cardData.imageUrl &&
+                    !isGeneratingImage &&
+                    !isGeneratingHeadline ? (
+                      <CardViewToggle
+                        value={coverView}
+                        onChange={setCoverView}
+                        flatLabel="Edit"
+                      />
+                    ) : null}
+                    {coverView === "3d" &&
+                    cardData.imageUrl &&
+                    !isGeneratingImage &&
+                    !isRegeneratingImage ? (
+                      <CardBook3D
+                        imageUrl={cardData.imageUrl}
+                        headline={cardData.headline}
+                        message=""
+                        recipientName={recipientName}
+                        coverOnly
+                        fallback={flatCover}
+                      />
+                    ) : (
+                      flatCover
+                    )}
                   </div>
                 ) : (
                   /* Placeholder card — matches Card3D dimensions */

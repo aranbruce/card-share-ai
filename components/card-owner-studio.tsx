@@ -15,6 +15,11 @@ import { EmptyContent } from "@/components/empty-content"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
+import { CardBook3D } from "@/components/card-book-3d"
+import {
+  CardViewToggle,
+  type CardViewMode,
+} from "@/components/card-view-toggle"
 import type { Contribution } from "@/lib/card-body"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
@@ -145,6 +150,10 @@ export const CardOwnerStudio = forwardRef<
   const [navigateToPage, setNavigateToPage] = useState<number | undefined>(
     undefined,
   )
+
+  const [view, setView] = useState<CardViewMode>("3d")
+  // Page last seen in 3D, so switching to Edit opens on the same page.
+  const [viewPage, setViewPage] = useState(initialCardPage)
 
   const scheduleHeadlineSave = useDebouncedSave(600)
 
@@ -605,37 +614,59 @@ export const CardOwnerStudio = forwardRef<
     )
   }
 
+  // Editing needs the DOM card; the 3D card (default) is a live read-only preview.
+  const flatCard = (
+    <Card3D
+      key={`${cardId}-${initialCardPage}`}
+      imageUrl={card.image_url}
+      headline={card.copy_headline}
+      message=""
+      recipientName={card.recipient_name || "You"}
+      contributions={contributions}
+      editable
+      onHeadlineChange={handleHeadlineChange}
+      isRegeneratingHeadline={isRegeneratingHeadline}
+      isRegeneratingImage={isRegeneratingImage}
+      suppressComposeActions
+      onComposeCanvasPlace={showCompose ? handleComposeCanvasPlace : undefined}
+      onEditingContributionChange={(id) => {
+        if (id !== null) setEditingContributionId(id)
+      }}
+      navigateToPage={navigateToPage}
+      extraPages={displayExtraPages}
+      onAddPage={handleAddPage}
+      initialPage={viewPage}
+      editableContributionIds={editableContributionIds}
+      onContributionEdit={handleContributionEdit}
+      onContributionGifChange={handleContributionGifChange}
+      onContributionLayoutChange={handleContributionLayoutChange}
+      contributionRegeneratingId={regeneratingContributionId}
+      creatorPlaceGeneration={creatorPlaceGeneration}
+    />
+  )
+
   return (
     <div className="w-full space-y-6">
-      <Card3D
-        key={`${cardId}-${initialCardPage}`}
-        imageUrl={card.image_url}
-        headline={card.copy_headline}
-        message=""
-        recipientName={card.recipient_name || "You"}
-        contributions={contributions}
-        editable
-        onHeadlineChange={handleHeadlineChange}
-        isRegeneratingHeadline={isRegeneratingHeadline}
-        isRegeneratingImage={isRegeneratingImage}
-        suppressComposeActions
-        onComposeCanvasPlace={
-          showCompose ? handleComposeCanvasPlace : undefined
-        }
-        onEditingContributionChange={(id) => {
-          if (id !== null) setEditingContributionId(id)
-        }}
-        navigateToPage={navigateToPage}
-        extraPages={displayExtraPages}
-        onAddPage={handleAddPage}
-        initialPage={initialCardPage}
-        editableContributionIds={editableContributionIds}
-        onContributionEdit={handleContributionEdit}
-        onContributionGifChange={handleContributionGifChange}
-        onContributionLayoutChange={handleContributionLayoutChange}
-        contributionRegeneratingId={regeneratingContributionId}
-        creatorPlaceGeneration={creatorPlaceGeneration}
-      />
+      {showCompose ? null : (
+        <CardViewToggle value={view} onChange={setView} flatLabel="Edit" />
+      )}
+      {view === "3d" && !showCompose ? (
+        <CardBook3D
+          key={`${cardId}-${initialCardPage}`}
+          imageUrl={card.image_url}
+          headline={card.copy_headline}
+          message=""
+          recipientName={card.recipient_name || "You"}
+          contributions={contributions}
+          extraPages={displayExtraPages}
+          initialPage={initialCardPage}
+          navigateToPage={navigateToPage}
+          onPageChange={setViewPage}
+          fallback={flatCard}
+        />
+      ) : (
+        flatCard
+      )}
       <GiphyPicker
         open={Boolean(contribGifPickerContributionId)}
         onOpenChange={(open) => {
