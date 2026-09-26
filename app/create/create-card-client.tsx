@@ -65,7 +65,7 @@ export function CreateCardPageClient() {
   const [recipientName, setRecipientName] = useState("")
   const [cardData, setCardData] = useState<CardData | null>(null)
   const [isGeneratingHeadline, setIsGeneratingHeadline] = useState(false)
-  const [coverView, setCoverView] = useState<CardViewMode>("flat")
+  const [coverView, setCoverView] = useState<CardViewMode>("3d")
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isRegeneratingHeadline, setIsRegeneratingHeadline] = useState(false)
@@ -618,7 +618,7 @@ export function CreateCardPageClient() {
                       <CardViewToggle
                         value={coverView}
                         onChange={setCoverView}
-                        flatLabel="Edit"
+                        mode="edit"
                       />
                     ) : null}
                     {coverView === "3d" &&
@@ -631,6 +631,7 @@ export function CreateCardPageClient() {
                         message=""
                         recipientName={recipientName}
                         coverOnly
+                        onRequestEdit={() => setCoverView("flat")}
                         fallback={flatCover}
                       />
                     ) : (

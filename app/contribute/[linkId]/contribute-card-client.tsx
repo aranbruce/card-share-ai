@@ -835,7 +835,7 @@ function ContributeCardPageInner({
             </div>
 
             {/* Card */}
-            <CardViewToggle value={view} onChange={setView} flatLabel="Edit" />
+            <CardViewToggle value={view} onChange={setView} mode="edit" />
             {view === "3d" ? (
               <CardBook3D
                 imageUrl={card.image_url}
@@ -847,6 +847,8 @@ function ContributeCardPageInner({
                 initialPage={viewPage}
                 onPageChange={setViewPage}
                 navigateToPage={navigateToPage}
+                onRequestEdit={() => setView("flat")}
+                editLabel="Add your note"
                 fallback={flatCard}
               />
             ) : (

@@ -648,7 +648,7 @@ export const CardOwnerStudio = forwardRef<
   return (
     <div className="w-full space-y-6">
       {showCompose ? null : (
-        <CardViewToggle value={view} onChange={setView} flatLabel="Edit" />
+        <CardViewToggle value={view} onChange={setView} mode="edit" />
       )}
       {view === "3d" && !showCompose ? (
         <CardBook3D
@@ -662,6 +662,7 @@ export const CardOwnerStudio = forwardRef<
           initialPage={initialCardPage}
           navigateToPage={navigateToPage}
           onPageChange={setViewPage}
+          onRequestEdit={() => setView("flat")}
           fallback={flatCard}
         />
       ) : (

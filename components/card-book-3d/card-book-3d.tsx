@@ -14,7 +14,7 @@ import {
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, ArrowRight } from "lucide-react"
+import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -90,6 +90,13 @@ export type CardBook3DProps = {
   initialPage?: number
   /** Turn to this card page whenever the value changes (0 = cover). */
   navigateToPage?: number
+  /**
+   * Shows an "Edit card" button on the card (editing surfaces). The 3D card itself is
+   * read-only, so this is how people get from the preview to the editor.
+   */
+  onRequestEdit?: () => void
+  /** Label for the edit button; defaults to "Edit card". */
+  editLabel?: string
   /** Card page the reader is looking at (left page of an open spread on wide screens). */
   onPageChange?: (page: number) => void
   /** Only the cover exists yet (create flow): a single leaf with a back. */
@@ -149,6 +156,8 @@ export function CardBook3D({
   coverOnly = false,
   navigateToPage,
   onPageChange,
+  onRequestEdit,
+  editLabel = "Edit card",
   className,
   fallback = null,
 }: CardBook3DProps) {
@@ -689,31 +698,45 @@ export function CardBook3D({
 
   return (
     <div className={cn("flex w-full flex-col items-center gap-6", className)}>
-      <div
-        ref={containerRef}
-        role="group"
-        aria-roledescription="3D card"
-        aria-label={`Card for ${recipientName}. Use the arrow keys or drag to turn pages.`}
-        tabIndex={0}
-        className={cn(
-          "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
-          coverOnly ? "aspect-4/5" : "aspect-4/5 sm:aspect-4/3",
-        )}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={(e) => endPointer(e, false)}
-        onPointerCancel={(e) => endPointer(e, true)}
-        onPointerLeave={() => {
-          live.current.tiltTarget = { x: 0, y: 0 }
-        }}
-        onKeyDown={onKeyDown}
-      >
-        <span ref={fontProbeRef} className="hidden" aria-hidden />
+      <div className="relative w-full">
         <div
-          ref={imageHostRef}
-          className="pointer-events-none absolute top-0 left-0 h-px w-px overflow-hidden opacity-0"
-          aria-hidden
-        />
+          ref={containerRef}
+          role="group"
+          aria-roledescription="3D card"
+          aria-label={`Card for ${recipientName}. Use the arrow keys or drag to turn pages.`}
+          tabIndex={0}
+          className={cn(
+            "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
+            coverOnly ? "aspect-4/5" : "aspect-4/5 sm:aspect-4/3",
+          )}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={(e) => endPointer(e, false)}
+          onPointerCancel={(e) => endPointer(e, true)}
+          onPointerLeave={() => {
+            live.current.tiltTarget = { x: 0, y: 0 }
+          }}
+          onKeyDown={onKeyDown}
+        >
+          <span ref={fontProbeRef} className="hidden" aria-hidden />
+          <div
+            ref={imageHostRef}
+            className="pointer-events-none absolute top-0 left-0 h-px w-px overflow-hidden opacity-0"
+            aria-hidden
+          />
+        </div>
+        {onRequestEdit ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={onRequestEdit}
+            className="absolute top-3 right-3 z-10 rounded-full shadow-sm"
+          >
+            <Pencil />
+            {editLabel}
+          </Button>
+        ) : null}
       </div>
 
       <div className="flex items-center justify-center gap-4">
