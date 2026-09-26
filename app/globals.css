@@ -183,6 +183,61 @@
   }
 }
 
+/* 3D card loading: the card floats and sways while its cover is generated */
+@keyframes card-3d-float {
+  0%,
+  100% {
+    transform: translateY(0) rotateX(7deg) rotateY(-18deg);
+  }
+  50% {
+    transform: translateY(-10px) rotateX(4deg) rotateY(-9deg);
+  }
+}
+
+@keyframes card-3d-float-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scaleX(0.86);
+    opacity: 0.18;
+  }
+}
+
+/* Cover eases open a little and closes again, hinting at the pages inside */
+@keyframes card-3d-peek {
+  0%,
+  55%,
+  100% {
+    transform: rotateY(0deg);
+  }
+  75% {
+    transform: rotateY(-24deg);
+  }
+}
+
+.card-3d-float {
+  animation: card-3d-float 4.5s ease-in-out infinite;
+}
+
+.card-3d-float-shadow {
+  animation: card-3d-float-shadow 4.5s ease-in-out infinite;
+}
+
+.card-3d-peek {
+  animation: card-3d-peek 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-3d-float,
+  .card-3d-float-shadow,
+  .card-3d-peek {
+    animation: none;
+  }
+}
+
 /* AI refine — shimmer on the glyphs (background-clip: text), not a full-bleed overlay */
 .ai-refine-shimmer-text-cover {
   background-image: linear-gradient(

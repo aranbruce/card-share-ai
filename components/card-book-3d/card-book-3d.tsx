@@ -14,7 +14,7 @@ import {
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Pencil, Plus } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -41,6 +41,7 @@ import {
   buildNotesByPage,
   faceHasGif,
   faceImageUrls,
+  faceSignature,
   paintFace,
   PAGE_HEIGHT_PX,
   PAGE_TEXTURE_SCALE,
@@ -79,7 +80,8 @@ const FRAME_MARGIN_H = 1.2
 const DRAG_THRESHOLD_PX = 8
 /** Horizontal drag distance (in page widths) for one full turn. */
 const DRAG_PAGES_PER_TURN = 1.6
-const GIF_REPAINT_MS = 90
+/** GIF frames are re-uploaded as whole page textures, so keep the rate modest. */
+const GIF_REPAINT_MS = 150
 
 type Side = "left" | "right"
 
@@ -204,6 +206,8 @@ export function CardBook3D({
   const fontProbeRef = useRef<HTMLSpanElement>(null)
   const sceneRef = useRef<SceneHandle | null>(null)
   const paintFaceRef = useRef<(faceIndex: number) => void>(() => {})
+  /** Signature each face was last painted with; cleared when the scene is rebuilt. */
+  const paintedRef = useRef<Map<number, string>>(new Map())
   const gifFacesRef = useRef<number[]>([])
 
   const [webglFailed, setWebglFailed] = useState(false)
@@ -403,6 +407,7 @@ export function CardBook3D({
       return texture
     })
     sceneRef.current = { faceCanvases, faceTextures }
+    paintedRef.current = new Map()
 
     // A thin box so pages have real edges; the shader bends it around the spine.
     const leafGeometry = new BoxGeometry(
@@ -578,7 +583,8 @@ export function CardBook3D({
       }
 
       // Animated GIFs: repaint the faces near the current spread.
-      const gifFaces = gifFacesRef.current
+      // While a page is open for editing the DOM editor shows the live GIFs instead.
+      const gifFaces = state.editing ? [] : gifFacesRef.current
       if (gifFaces.length > 0 && now - lastGifPaint > GIF_REPAINT_MS) {
         lastGifPaint = now
         const lo = Math.floor(state.flip) * 2 - 1
@@ -695,8 +701,16 @@ export function CardBook3D({
     gifFacesRef.current = faces.flatMap((face, i) =>
       faceHasGif(face, content) ? [i] : [],
     )
-    faces.forEach((_, i) => paint(i))
-    live.current.dirty = true
+    // Only repaint (and re-upload) faces whose content actually changed.
+    let painted = false
+    faces.forEach((face, i) => {
+      const signature = `${fontsVersion}|${faceSignature(face, content, resources)}`
+      if (paintedRef.current.get(i) === signature) return
+      paintedRef.current.set(i, signature)
+      paint(i)
+      painted = true
+    })
+    if (painted) live.current.dirty = true
   }, [faces, content, images, fontFamily, fontsVersion])
 
   // ── Navigation ─────────────────────────────────────────────────────────────
@@ -777,8 +791,11 @@ export function CardBook3D({
   /** The card page under a click, or null for the back cover and padding pages. */
   const pageAtClick = (xFraction: number): number | null => {
     let page: number
-    if (flipTarget <= 0) page = 0
-    else if (flipTarget >= leafCount) return null
+    // A closed card opens on click; the cover has its own "Edit cover" button.
+    if (flipTarget <= 0) {
+      if (!coverOnly) return null
+      page = 0
+    } else if (flipTarget >= leafCount) return null
     else if (narrow) page = visiblePage
     else page = xFraction < 0.5 ? flipTarget * 2 - 1 : flipTarget * 2
     return page < totalPages ? page : null
@@ -973,9 +990,25 @@ export function CardBook3D({
           </div>
         ) : null}
         {editable && editPage === null ? (
-          <p className="pointer-events-none absolute inset-x-0 bottom-3 z-10 text-center text-xs text-muted-foreground">
-            Click a page to edit it
-          </p>
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            {flipTarget <= 0 && !coverOnly ? (
+              <>
+                <span>Click the card to open it</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="pointer-events-auto h-7 rounded-full px-2.5 text-xs"
+                  onClick={() => editPageAt(0)}
+                >
+                  <Pencil />
+                  Edit cover
+                </Button>
+              </>
+            ) : (
+              <span>Click a page to edit it</span>
+            )}
+          </div>
         ) : null}
       </div>
 

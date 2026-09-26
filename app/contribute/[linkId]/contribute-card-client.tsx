@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { Card3D, type Card3DProps } from "@/components/card-3d"
 import { CardBook3D } from "@/components/card-book-3d"
+import { CardLoading3D } from "@/components/card-loading-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
@@ -702,7 +703,7 @@ function ContributeCardPageInner({
                 <Skeleton className="mx-auto h-9 w-64 rounded-md" />
                 <Skeleton className="mx-auto h-4 w-72 rounded-sm" />
               </div>
-              <Skeleton className="mx-auto card-cover-skeleton max-w-md" />
+              <CardLoading3D label="Opening the card…" className="mx-auto" />
             </div>
           </main>
           <NotePanel loading />

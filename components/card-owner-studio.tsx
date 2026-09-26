@@ -16,8 +16,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card3D, type Card3DProps } from "@/components/card-3d"
 import { CardBook3D } from "@/components/card-book-3d"
+import { CardLoading3D } from "@/components/card-loading-3d"
 import type { Contribution } from "@/lib/card-body"
-import { Skeleton } from "@/components/ui/skeleton"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { DEFAULT_PRESET_TEXT_COLOR } from "@/lib/message-text-color-presets"
 import {
@@ -566,7 +566,7 @@ export const CardOwnerStudio = forwardRef<
   }, [loading, creatorRow, card, cardId, setContributions])
 
   if (loading) {
-    return <Skeleton className="card-cover-skeleton" />
+    return <CardLoading3D label="Opening your card…" className="mx-auto" />
   }
 
   if (cardNotFound || !card) {

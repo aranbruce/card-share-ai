@@ -11,7 +11,7 @@ import {
 export const PAGE_WIDTH_PX = 448
 export const PAGE_HEIGHT_PX = 560
 /** Texture supersampling so text stays crisp when the camera zooms in. */
-export const PAGE_TEXTURE_SCALE = 3
+export const PAGE_TEXTURE_SCALE = 2
 
 /** Offsets that mirror the flat card canvas: `p-1` frame + "Messages" label block. */
 const CANVAS_INSET_PX = 4
@@ -99,6 +99,32 @@ export function faceImageUrls(face: BookFace, content: BookContent): string[] {
     .filter((u): u is string => Boolean(u))
 }
 
+/** Everything a face's pixels depend on, to skip repainting faces that did not change. */
+export function faceSignature(
+  face: BookFace,
+  content: BookContent,
+  resources: PaintResources,
+): string {
+  const loaded = faceImageUrls(face, content).map((u) =>
+    resources.images.has(u) ? 1 : 0,
+  )
+  const base = { face, w: content.layoutWidth ?? 0, loaded }
+  if (face.kind === "cover") {
+    return JSON.stringify({
+      ...base,
+      img: content.imageUrl,
+      headline: content.headline,
+      recipient: content.recipientName,
+    })
+  }
+  if (face.kind !== "page") return JSON.stringify(base)
+  return JSON.stringify({
+    ...base,
+    body: face.pageIndex === content.messagePage ? content.bodyMessage : "",
+    notes: content.notesByPage.get(face.pageIndex) ?? [],
+  })
+}
+
 export function faceHasGif(face: BookFace, content: BookContent): boolean {
   return face.kind === "page" && faceImageUrls(face, content).length > 0
 }
@@ -136,7 +162,31 @@ export function paintFace(
   }
 }
 
+const paperCache = new Map<string, HTMLCanvasElement>()
+
+/**
+ * Paper background (gradient, speckle, fibres) is identical on every inside page, so it is
+ * drawn once per size and blitted; repainting it per face made edits and GIF frames slow.
+ */
 function paintPaper(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  const pxW = PAGE_WIDTH_PX * PAGE_TEXTURE_SCALE
+  const pxH = PAGE_HEIGHT_PX * PAGE_TEXTURE_SCALE
+  const key = `${W}x${H}`
+  let paper = paperCache.get(key)
+  if (!paper) {
+    paper = document.createElement("canvas")
+    paper.width = pxW
+    paper.height = pxH
+    const paperCtx = paper.getContext("2d")
+    if (!paperCtx) return drawPaper(ctx, W, H)
+    paperCtx.setTransform(pxW / W, 0, 0, pxH / H, 0, 0)
+    drawPaper(paperCtx, W, H)
+    paperCache.set(key, paper)
+  }
+  ctx.drawImage(paper, 0, 0, W, H)
+}
+
+function drawPaper(ctx: CanvasRenderingContext2D, W: number, H: number) {
   const g = ctx.createLinearGradient(0, 0, W, H)
   g.addColorStop(0, "#fffbeb")
   g.addColorStop(1, "#fff7ed")

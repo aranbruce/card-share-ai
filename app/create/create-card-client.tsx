@@ -8,6 +8,7 @@ import { CardDetailsForm } from "@/components/card-details-form"
 import { AuthGateModal } from "@/components/auth-gate-modal"
 import { Card3D } from "@/components/card-3d"
 import { CardBook3D } from "@/components/card-book-3d"
+import { CardLoading3D } from "@/components/card-loading-3d"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Spinner } from "@/components/ui/spinner"
@@ -417,7 +418,11 @@ export function CreateCardPageClient() {
                       <Skeleton className="h-8 w-24 rounded-full" />
                       <Skeleton className="h-8 w-24 rounded-full" />
                     </div>
-                    <Skeleton className="card-cover-skeleton" />
+                    <CardLoading3D
+                      hue={TYPE_HUE[selectedType] ?? 40}
+                      label="Writing your headline…"
+                      className="mx-auto"
+                    />
                   </div>
                 ) : cardData ? (
                   <div className="flex w-full max-w-md flex-col gap-12">
@@ -622,39 +627,27 @@ export function CreateCardPageClient() {
                         renderPageEditor={() => renderCover(true)}
                         fallback={renderCover(false)}
                       />
+                    ) : isGeneratingImage || isRegeneratingImage ? (
+                      <CardLoading3D
+                        hue={TYPE_HUE[selectedType] ?? 40}
+                        imageUrl={
+                          isRegeneratingImage ? cardData.imageUrl : null
+                        }
+                        label={
+                          isRegeneratingImage
+                            ? "Painting a new cover…"
+                            : "Designing your cover…"
+                        }
+                      />
                     ) : (
                       renderCover(false)
                     )}
                   </div>
                 ) : (
-                  /* Placeholder card — matches Card3D dimensions */
-                  <div className="relative card-cover-skeleton max-w-md overflow-hidden">
-                    <div
-                      className="flex h-full w-full flex-col items-center justify-center"
-                      style={{
-                        background: `linear-gradient(135deg, oklch(0.92 0.07 ${TYPE_HUE[selectedType] ?? 40}) 0%, oklch(0.82 0.12 ${(TYPE_HUE[selectedType] ?? 40) - 15}) 100%)`,
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-3 px-6 text-center">
-                        <div
-                          className="flex h-10 w-10 items-center justify-center rounded-xl opacity-60"
-                          style={{
-                            background: `oklch(0.7 0.14 ${TYPE_HUE[selectedType] ?? 40})`,
-                          }}
-                        >
-                          <Sparkles className="h-5 w-5 stroke-white" />
-                        </div>
-                        <p
-                          className="text-xs leading-relaxed opacity-70"
-                          style={{
-                            color: `oklch(0.25 0.06 ${TYPE_HUE[selectedType] ?? 40})`,
-                          }}
-                        >
-                          Fill in the details and hit Generate to see your card
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <CardLoading3D
+                    variant="placeholder"
+                    hue={TYPE_HUE[selectedType] ?? 40}
+                  />
                 )}
               </div>
             </div>
