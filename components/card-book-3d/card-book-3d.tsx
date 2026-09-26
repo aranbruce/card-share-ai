@@ -14,7 +14,7 @@ import {
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Plus } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -63,6 +63,14 @@ const COVER_GLOSS = 0.35
 const PAGE_GLOSS = 0.03
 /** How far the camera swings round a closed card so its thickness shows. */
 const CLOSED_YAW = 0.32
+/**
+ * An open card rests with its pages angled up slightly (radians, as a fraction of a half
+ * turn), like a card standing open on a table. Pages flatten while one is being edited.
+ */
+const REST_FOLD = 0.085
+/** Largest editor page (CSS px); matches the flat card's max width. */
+const MAX_EDIT_PAGE_WIDTH = PAGE_WIDTH_PX
+const EDIT_PAGE_MARGIN = 24
 /** Peak darkening a lifted page casts on the page beneath it. */
 const TURN_SHADOW = 0.38
 const CAMERA_FOV = 30
@@ -91,12 +99,14 @@ export type CardBook3DProps = {
   /** Turn to this card page whenever the value changes (0 = cover). */
   navigateToPage?: number
   /**
-   * Shows an "Edit card" button on the card (editing surfaces). The 3D card itself is
-   * read-only, so this is how people get from the preview to the editor.
+   * Makes the card editable in place. Clicking a page swings the camera round to face it and
+   * this editor (one page of the flat card, embedded) is laid exactly over the 3D page.
    */
-  onRequestEdit?: () => void
-  /** Label for the edit button; defaults to "Edit card". */
-  editLabel?: string
+  renderPageEditor?: (args: PageEditorArgs) => ReactNode
+  /** Page to open for editing when the card mounts (e.g. a note still to be placed). */
+  autoEditPage?: number
+  /** Adds a page after the last one; offered on the pager while editing the last page. */
+  onAddPage?: () => void | Promise<void>
   /** Card page the reader is looking at (left page of an open spread on wide screens). */
   onPageChange?: (page: number) => void
   /** Only the cover exists yet (create flow): a single leaf with a back. */
@@ -104,6 +114,24 @@ export type CardBook3DProps = {
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
+}
+
+export type PageEditorArgs = {
+  /** Card page being edited (0 = cover). */
+  page: number
+  /** Exact on-screen size of the page in CSS px (4:5). */
+  width: number
+  height: number
+  /** Call when the editor moves to another page so the 3D card follows. */
+  onPageChange: (page: number) => void
+}
+
+type EditLayout = {
+  /** Editor page size in CSS px. */
+  width: number
+  height: number
+  containerWidth: number
+  containerHeight: number
 }
 
 type Leaf = { mesh: Mesh; material: PageMaterial }
@@ -125,6 +153,14 @@ type LiveState = {
   tilt: { x: number; y: number }
   tiltTarget: { x: number; y: number }
   dirty: boolean
+  /** A page is open for editing: camera faces it head-on at exact editor size. */
+  editing: boolean
+  /** 0 = browsing camera, 1 = editing camera (eased). */
+  editBlend: number
+  /** Container height and editor page height in px, to size the editing camera. */
+  viewH: number
+  editH: number
+  overlayReady: boolean
   pointer: {
     id: number
     startX: number
@@ -140,8 +176,9 @@ type LiveState = {
  * A greeting card rendered with Three.js: leaves hinge on a spine and can be turned by
  * dragging, clicking either half, the arrow keys, or the controls underneath.
  *
- * Read-only by design; editing stays on the DOM-based `Card3D`. Content changes repaint live,
- * so it doubles as a preview next to editing controls.
+ * With `renderPageEditor` the card is edited in place: clicking a page swings the camera to
+ * face it and the flat editor for that page is laid exactly over it. Content changes repaint
+ * the 3D pages live.
  */
 export function CardBook3D({
   imageUrl,
@@ -156,8 +193,9 @@ export function CardBook3D({
   coverOnly = false,
   navigateToPage,
   onPageChange,
-  onRequestEdit,
-  editLabel = "Edit card",
+  renderPageEditor,
+  autoEditPage,
+  onAddPage,
   className,
   fallback = null,
 }: CardBook3DProps) {
@@ -169,8 +207,15 @@ export function CardBook3D({
   const gifFacesRef = useRef<number[]>([])
 
   const [webglFailed, setWebglFailed] = useState(false)
-  const initialFlip = coverOnly ? 0 : spreadForPage(initialPage)
-  const initialFocus: Side = initialPage % 2 === 1 ? "left" : "right"
+  const editable = Boolean(renderPageEditor)
+  const [editPage, setEditPage] = useState<number | null>(
+    editable && autoEditPage !== undefined ? autoEditPage : null,
+  )
+  const [overlayReady, setOverlayReady] = useState(false)
+  const [editLayout, setEditLayout] = useState<EditLayout | null>(null)
+  const startPage = editPage ?? initialPage
+  const initialFlip = coverOnly ? 0 : spreadForPage(startPage)
+  const initialFocus: Side = startPage % 2 === 1 ? "left" : "right"
   const [flipTarget, setFlipTarget] = useState(initialFlip)
   const [focus, setFocus] = useState<Side>(initialFocus)
   const [prevNavigateToPage, setPrevNavigateToPage] = useState(navigateToPage)
@@ -179,6 +224,8 @@ export function CardBook3D({
     if (navigateToPage !== undefined && !coverOnly) {
       setFlipTarget(spreadForPage(navigateToPage))
       setFocus(navigateToPage % 2 === 1 ? "left" : "right")
+      // On editing surfaces, navigating (e.g. from a side panel) opens that page to edit.
+      if (editable) setEditPage(navigateToPage)
     }
   }
   const [narrow, setNarrow] = useState(false)
@@ -195,6 +242,11 @@ export function CardBook3D({
     tilt: { x: 0, y: 0 },
     tiltTarget: { x: 0, y: 0 },
     dirty: true,
+    editing: editPage !== null,
+    editBlend: editPage !== null ? 1 : 0,
+    viewH: 0,
+    editH: 0,
+    overlayReady: false,
     pointer: null,
   })
 
@@ -215,6 +267,7 @@ export function CardBook3D({
 
   const content = useMemo<BookContent>(
     () => ({
+      layoutWidth: editable ? editLayout?.width : undefined,
       imageUrl,
       headline,
       recipientName,
@@ -227,6 +280,8 @@ export function CardBook3D({
       ),
     }),
     [
+      editable,
+      editLayout?.width,
       imageUrl,
       headline,
       recipientName,
@@ -284,6 +339,11 @@ export function CardBook3D({
     live.current.narrow = narrow
     live.current.dirty = true
   }, [narrow])
+
+  useEffect(() => {
+    live.current.editing = editPage !== null
+    live.current.dirty = true
+  }, [editPage])
 
   // Keep the target in range when the page count changes.
   useEffect(() => {
@@ -391,6 +451,29 @@ export function CardBook3D({
       camera.aspect = width / height
       camera.updateProjectionMatrix()
       setNarrow(width / height < 1)
+      const editWidth = Math.floor(
+        Math.min(
+          MAX_EDIT_PAGE_WIDTH,
+          width - EDIT_PAGE_MARGIN,
+          (height - EDIT_PAGE_MARGIN) / (PAGE_H / PAGE_W),
+        ),
+      )
+      const editHeight = editWidth * (PAGE_H / PAGE_W)
+      state.viewH = height
+      state.editH = editHeight
+      setEditLayout((prev) =>
+        prev &&
+        prev.width === editWidth &&
+        prev.containerWidth === width &&
+        prev.containerHeight === height
+          ? prev
+          : {
+              width: editWidth,
+              height: editHeight,
+              containerWidth: width,
+              containerHeight: height,
+            },
+      )
       state.dirty = true
     }
     resize()
@@ -426,10 +509,25 @@ export function CardBook3D({
       const turningLeaf = Math.floor(state.flip)
       const turnT = state.flip - turningLeaf
       const lift = Math.sin(Math.PI * turnT)
+      // Ease between browsing and the head-on editing camera.
+      const editGoal = state.editing ? 1 : 0
+      if (Math.abs(editGoal - state.editBlend) > 0.002) {
+        const rate = state.reducedMotion ? 30 : 5
+        state.editBlend +=
+          (editGoal - state.editBlend) * (1 - Math.exp(-dt * rate))
+        moving = true
+      } else if (state.editBlend !== editGoal) {
+        state.editBlend = editGoal
+        moving = true
+      }
+
+      // Open pages rest slightly raised off the table; they flatten for editing.
+      const fold =
+        REST_FOLD * openness(state.flip, leafTotal) * (1 - state.editBlend)
       leaves.forEach(({ material }, i) => {
         const p = leafProgress(state.flip, i)
         const u = material.uniforms
-        u.uProgress.value = p
+        u.uProgress.value = fold + p * (1 - 2 * fold)
         const restZ = -i * LEAF_GAP
         const turnedZ = -(leafTotal - 1 - i) * LEAF_GAP
         u.uLift.value = restZ + (turnedZ - restZ) * p
@@ -467,7 +565,8 @@ export function CardBook3D({
         moving = true
       }
 
-      const tiltTarget = state.reducedMotion ? { x: 0, y: 0 } : state.tiltTarget
+      const tiltTarget =
+        state.reducedMotion || state.editing ? { x: 0, y: 0 } : state.tiltTarget
       const tiltFollow = 1 - Math.exp(-dt * 4)
       if (
         Math.abs(tiltTarget.x - state.tilt.x) > 1e-4 ||
@@ -492,7 +591,12 @@ export function CardBook3D({
         }
       }
 
-      if (!moving) return
+      if (!moving) {
+        if (state.overlayReady !== (state.editing && state.editBlend === 1)) {
+          state.dirty = true
+        }
+        return
+      }
 
       // Only pages lying flat cast the ground shadow; a lifting page grows it as it lands.
       const settled = (t: number) =>
@@ -516,13 +620,45 @@ export function CardBook3D({
       const closedSide = state.flip < leafTotal / 2 ? 1 : -1
       const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
       const pitch = 0.08 + 0.1 * closed - state.tilt.y * 0.12
+      const browseX = state.camX + distance * Math.sin(yaw) * Math.cos(pitch)
+      const browseY = distance * Math.sin(pitch)
+      const browseZ = distance * Math.cos(yaw) * Math.cos(pitch)
+
+      // Editing camera: square on to the page being edited, at the distance where the page
+      // spans exactly the editor's pixel height, so the DOM editor lines up with it.
+      const editSide: Side =
+        state.target <= 0
+          ? "right"
+          : state.target >= leafTotal
+            ? "left"
+            : state.focus
+      const editX = editSide === "right" ? PAGE_W / 2 : -PAGE_W / 2
+      const editLeaf = editSide === "right" ? state.target : state.target - 1
+      const faceZ =
+        (editSide === "right"
+          ? -editLeaf * LEAF_GAP
+          : -(leafTotal - 1 - editLeaf) * LEAF_GAP) +
+        LEAF_THICKNESS / 2
+      const editDistance =
+        state.editH > 0
+          ? (PAGE_H * state.viewH) / (2 * Math.tan(halfFov) * state.editH)
+          : distance
+      const b = state.editBlend * state.editBlend * (3 - 2 * state.editBlend)
+      const mix = (a: number, c: number) => a + (c - a) * b
       camera.position.set(
-        state.camX + distance * Math.sin(yaw) * Math.cos(pitch),
-        distance * Math.sin(pitch),
-        distance * Math.cos(yaw) * Math.cos(pitch),
+        mix(browseX, editX),
+        mix(browseY, 0),
+        mix(browseZ, faceZ + editDistance),
       )
-      camera.lookAt(state.camX, 0, 0)
+      camera.lookAt(mix(state.camX, editX), 0, mix(0, faceZ))
       renderer.render(scene, camera)
+
+      const ready =
+        state.editing && state.editBlend === 1 && state.flip === state.target
+      if (ready !== state.overlayReady) {
+        state.overlayReady = ready
+        setOverlayReady(ready)
+      }
     }
     frame = requestAnimationFrame(tick)
 
@@ -567,14 +703,16 @@ export function CardBook3D({
   const currentSide: Side =
     flipTarget <= 0 ? "right" : flipTarget >= leafCount ? "left" : focus
 
-  const visiblePage = Math.min(
-    totalPages - 1,
-    flipTarget <= 0
-      ? 0
-      : narrow && currentSide === "right"
-        ? flipTarget * 2
-        : flipTarget * 2 - 1,
-  )
+  const visiblePage =
+    editPage ??
+    Math.min(
+      totalPages - 1,
+      flipTarget <= 0
+        ? 0
+        : narrow && currentSide === "right"
+          ? flipTarget * 2
+          : flipTarget * 2 - 1,
+    )
   const onPageChangeRef = useRef(onPageChange)
   useEffect(() => {
     onPageChangeRef.current = onPageChange
@@ -595,6 +733,56 @@ export function CardBook3D({
     },
     [leafCount],
   )
+
+  /** Open a card page for editing (null closes the editor). */
+  const editPageAt = useCallback(
+    (page: number | null) => {
+      if (page === null) {
+        setEditPage(null)
+        return
+      }
+      const clamped = Math.min(totalPages - 1, Math.max(0, page))
+      setEditPage(clamped)
+      goTo(spreadForPage(clamped), clamped % 2 === 1 ? "left" : "right")
+    },
+    [totalPages, goTo],
+  )
+
+  // Keep the edited page in range if pages are removed; open a newly added page.
+  const pendingAddedPageRef = useRef<number | null>(null)
+  useEffect(() => {
+    const pending = pendingAddedPageRef.current
+    if (pending !== null) {
+      if (totalPages > pending) {
+        pendingAddedPageRef.current = null
+        queueMicrotask(() => editPageAt(pending))
+      }
+      return
+    }
+    if (editPage !== null && editPage >= totalPages) {
+      queueMicrotask(() => editPageAt(totalPages - 1))
+    }
+  }, [totalPages, editPage, editPageAt])
+
+  const addPage = async () => {
+    if (!onAddPage) return
+    pendingAddedPageRef.current = totalPages
+    try {
+      await onAddPage()
+    } catch {
+      pendingAddedPageRef.current = null
+    }
+  }
+
+  /** The card page under a click, or null for the back cover and padding pages. */
+  const pageAtClick = (xFraction: number): number | null => {
+    let page: number
+    if (flipTarget <= 0) page = 0
+    else if (flipTarget >= leafCount) return null
+    else if (narrow) page = visiblePage
+    else page = xFraction < 0.5 ? flipTarget * 2 - 1 : flipTarget * 2
+    return page < totalPages ? page : null
+  }
 
   const step = useCallback(
     (dir: 1 | -1) => {
@@ -634,6 +822,7 @@ export function CardBook3D({
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     const state = live.current
     const rect = e.currentTarget.getBoundingClientRect()
+    if (state.editing) return
     if (e.pointerType === "mouse") {
       state.tiltTarget = {
         x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
@@ -680,17 +869,41 @@ export function CardBook3D({
       return
     }
     if (cancelled) return
+    // Clicking around the page being edited closes the editor.
+    if (editPage !== null) {
+      editPageAt(null)
+      return
+    }
     const rect = e.currentTarget.getBoundingClientRect()
-    step(e.clientX - rect.left < rect.width / 2 ? -1 : 1)
+    const xFraction = (e.clientX - rect.left) / rect.width
+    const page = editable ? pageAtClick(xFraction) : null
+    if (page !== null) editPageAt(page)
+    else step(xFraction < 0.5 ? -1 : 1)
+  }
+
+  const canEditPrev = editPage !== null && editPage > 0
+  const canEditNext =
+    editPage !== null && (editPage < totalPages - 1 || Boolean(onAddPage))
+  const prev = () => {
+    if (editPage !== null) editPageAt(editPage - 1)
+    else step(-1)
+  }
+  const next = () => {
+    if (editPage === null) step(1)
+    else if (editPage < totalPages - 1) editPageAt(editPage + 1)
+    else void addPage()
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "ArrowRight") {
       e.preventDefault()
-      step(1)
+      next()
     } else if (e.key === "ArrowLeft") {
       e.preventDefault()
-      step(-1)
+      prev()
+    } else if (e.key === "Escape" && editPage !== null) {
+      e.preventDefault()
+      editPageAt(null)
     }
   }
 
@@ -703,11 +916,20 @@ export function CardBook3D({
           ref={containerRef}
           role="group"
           aria-roledescription="3D card"
-          aria-label={`Card for ${recipientName}. Use the arrow keys or drag to turn pages.`}
+          aria-label={
+            editable
+              ? `Card for ${recipientName}. Click a page to edit it; use the arrow keys to move between pages and Escape to finish.`
+              : `Card for ${recipientName}. Use the arrow keys or drag to turn pages.`
+          }
           tabIndex={0}
           className={cn(
             "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
-            coverOnly ? "aspect-4/5" : "aspect-4/5 sm:aspect-4/3",
+            coverOnly
+              ? "aspect-4/5"
+              : editable
+                ? "aspect-4/5 sm:aspect-auto sm:h-[560px]"
+                : "aspect-4/5 sm:aspect-4/3",
+            editable && editPage === null && "cursor-pointer",
           )}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -725,17 +947,35 @@ export function CardBook3D({
             aria-hidden
           />
         </div>
-        {onRequestEdit ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={onRequestEdit}
-            className="absolute top-3 right-3 z-10 rounded-full shadow-sm"
+        {renderPageEditor && editPage !== null && editLayout ? (
+          <div
+            className={cn(
+              "absolute z-10 transition-opacity duration-200 motion-reduce:transition-none",
+              overlayReady ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+            style={{
+              left: (editLayout.containerWidth - editLayout.width) / 2,
+              top: (editLayout.containerHeight - editLayout.height) / 2,
+              width: editLayout.width,
+              height: editLayout.height,
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") editPageAt(null)
+            }}
           >
-            <Pencil />
-            {editLabel}
-          </Button>
+            <PageEditorHost
+              render={renderPageEditor}
+              page={editPage}
+              width={editLayout.width}
+              height={editLayout.height}
+              onPageChange={editPageAt}
+            />
+          </div>
+        ) : null}
+        {editable && editPage === null ? (
+          <p className="pointer-events-none absolute inset-x-0 bottom-3 z-10 text-center text-xs text-muted-foreground">
+            Click a page to edit it
+          </p>
         ) : null}
       </div>
 
@@ -743,36 +983,56 @@ export function CardBook3D({
         <Button
           variant="outline"
           size="icon-sm"
-          onClick={() => step(-1)}
-          disabled={!canGoPrev}
+          onClick={prev}
+          disabled={editPage !== null ? !canEditPrev : !canGoPrev}
           aria-label="Previous page"
         >
           <ArrowLeft />
         </Button>
-        <div className="flex items-center gap-2">
-          {Array.from({ length: leafCount + 1 }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => goTo(i, i === 0 ? "right" : "left")}
-              className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
-                i === flipTarget
-                  ? "bg-primary"
-                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              }`}
-              aria-label={spreadLabel(i, leafCount)}
-              aria-current={i === flipTarget ? "true" : undefined}
-            />
-          ))}
-        </div>
+        {editPage !== null ? (
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => editPageAt(null)}
+            className="rounded-full"
+          >
+            <Check />
+            Done
+          </Button>
+        ) : (
+          <div className="flex items-center gap-2">
+            {Array.from({ length: leafCount + 1 }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => goTo(i, i === 0 ? "right" : "left")}
+                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                  i === flipTarget
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                }`}
+                aria-label={spreadLabel(i, leafCount)}
+                aria-current={i === flipTarget ? "true" : undefined}
+              />
+            ))}
+          </div>
+        )}
         <Button
           variant="outline"
           size="icon-sm"
-          onClick={() => step(1)}
-          disabled={!canGoNext}
-          aria-label="Next page"
+          onClick={next}
+          disabled={editPage !== null ? !canEditNext : !canGoNext}
+          aria-label={
+            editPage !== null && editPage >= totalPages - 1 && onAddPage
+              ? "Add a page"
+              : "Next page"
+          }
         >
-          <ArrowRight />
+          {editPage !== null && editPage >= totalPages - 1 && onAddPage ? (
+            <Plus />
+          ) : (
+            <ArrowRight />
+          )}
         </Button>
       </div>
 
@@ -787,6 +1047,13 @@ export function CardBook3D({
       />
     </div>
   )
+}
+
+function PageEditorHost({
+  render,
+  ...args
+}: PageEditorArgs & { render: (args: PageEditorArgs) => ReactNode }) {
+  return <>{render(args)}</>
 }
 
 function spreadLabel(spread: number, leafCount: number): string {

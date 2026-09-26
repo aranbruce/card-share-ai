@@ -5,12 +5,8 @@ import { ArrowLeft, ArrowUp, FileX2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import { Card3D } from "@/components/card-3d"
+import { Card3D, type Card3DProps } from "@/components/card-3d"
 import { CardBook3D } from "@/components/card-book-3d"
-import {
-  CardViewToggle,
-  type CardViewMode,
-} from "@/components/card-view-toggle"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
@@ -143,9 +139,6 @@ function ContributeCardPageInner({
   const [editingContributionId, setEditingContributionId] = useState<
     string | null
   >(null)
-  // Signing happens on the editable card; 3D is a read-only preview of the saved card.
-  const [view, setView] = useState<CardViewMode>("flat")
-  const [viewPage, setViewPage] = useState(0)
   const [navigateToPage, setNavigateToPage] = useState<number | undefined>(
     undefined,
   )
@@ -745,16 +738,14 @@ function ContributeCardPageInner({
     )
   }
 
-  const instructionLine =
-    view === "3d"
-      ? "Drag or tap the card to turn the pages. Switch to Edit to add your note"
-      : card.sent_at
-        ? "The card may already be with the recipient. You can still edit your note from this device"
-        : canPlaceNewGuestMessage
-          ? "Flip to the inside and click anywhere to place your note"
-          : "Flip to the inside to find and edit your note"
+  const instructionLine = card.sent_at
+    ? "The card may already be with the recipient. You can still edit your note from this device"
+    : canPlaceNewGuestMessage
+      ? "Open the card, click an inside page, then click anywhere on it to place your note"
+      : "Open the card and click the page with your note to edit it"
 
-  const flatCard = (
+  // The flat editor, used on its own without WebGL and embedded over the 3D page otherwise.
+  const renderEditor = (overrides: Partial<Card3DProps>) => (
     <Card3D
       imageUrl={card.image_url}
       headline={card.copy_headline}
@@ -803,7 +794,7 @@ function ContributeCardPageInner({
         if (id !== null) setEditingContributionId(id)
       }}
       navigateToPage={navigateToPage}
-      initialPage={viewPage}
+      {...overrides}
     />
   )
 
@@ -835,25 +826,25 @@ function ContributeCardPageInner({
             </div>
 
             {/* Card */}
-            <CardViewToggle value={view} onChange={setView} mode="edit" />
-            {view === "3d" ? (
-              <CardBook3D
-                imageUrl={card.image_url}
-                headline={card.copy_headline}
-                message={bodyMessage}
-                recipientName={card.recipient_name || "You"}
-                contributions={displayContributions}
-                extraPages={card.extra_pages || 0}
-                initialPage={viewPage}
-                onPageChange={setViewPage}
-                navigateToPage={navigateToPage}
-                onRequestEdit={() => setView("flat")}
-                editLabel="Add your note"
-                fallback={flatCard}
-              />
-            ) : (
-              flatCard
-            )}
+            <CardBook3D
+              imageUrl={card.image_url}
+              headline={card.copy_headline}
+              message={bodyMessage}
+              recipientName={card.recipient_name || "You"}
+              contributions={displayContributions}
+              extraPages={card.extra_pages || 0}
+              navigateToPage={navigateToPage}
+              onAddPage={handleAddPage}
+              renderPageEditor={({ page, onPageChange }) =>
+                renderEditor({
+                  embedded: true,
+                  initialPage: page,
+                  navigateToPage: page,
+                  onCurrentPageChange: onPageChange,
+                })
+              }
+              fallback={renderEditor({})}
+            />
           </div>
         </main>
 

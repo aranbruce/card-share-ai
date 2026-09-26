@@ -16,8 +16,6 @@ export const PAGE_TEXTURE_SCALE = 3
 /** Offsets that mirror the flat card canvas: `p-1` frame + "Messages" label block. */
 const CANVAS_INSET_PX = 4
 const NOTE_AREA_TOP_PX = CANVAS_INSET_PX + 20 + 16 + 4
-const NOTE_AREA_WIDTH_PX = PAGE_WIDTH_PX - CANVAS_INSET_PX * 2
-const NOTE_AREA_HEIGHT_PX = PAGE_HEIGHT_PX - NOTE_AREA_TOP_PX - CANVAS_INSET_PX
 const NOTE_GIF_GAP_PX = 12
 const NOTE_GIF_MAX_HEIGHT_PX = 280
 const LINE_HEIGHT = 1.625
@@ -38,6 +36,12 @@ export type PageNote = {
 }
 
 export type BookContent = {
+  /**
+   * Width (CSS px) of the page the notes were laid out on. Note positions are pixels, so an
+   * editor narrower than 448px lays them out on a smaller page; painting at that width keeps
+   * the texture identical to the editor sitting on top of it.
+   */
+  layoutWidth?: number
   imageUrl: string
   headline: string
   recipientName: string
@@ -107,33 +111,37 @@ export function paintFace(
 ) {
   const ctx = canvas.getContext("2d")
   if (!ctx) return
-  ctx.setTransform(PAGE_TEXTURE_SCALE, 0, 0, PAGE_TEXTURE_SCALE, 0, 0)
-  ctx.clearRect(0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+  const W = content.layoutWidth || PAGE_WIDTH_PX
+  const H = W * (PAGE_HEIGHT_PX / PAGE_WIDTH_PX)
+  // The canvas is always PAGE_WIDTH_PX wide (x scale); lay out in a W-wide page.
+  const scale = (PAGE_TEXTURE_SCALE * PAGE_WIDTH_PX) / W
+  ctx.setTransform(scale, 0, 0, scale, 0, 0)
+  ctx.clearRect(0, 0, W, H)
 
   switch (face.kind) {
     case "cover":
-      paintCover(ctx, content, resources)
+      paintCover(ctx, content, resources, W, H)
       break
     case "page":
-      paintPaper(ctx)
-      paintMessagesPage(ctx, face.pageIndex, content, resources)
+      paintPaper(ctx, W, H)
+      paintMessagesPage(ctx, face.pageIndex, content, resources, W, H)
       break
     case "back":
-      paintPaper(ctx)
-      paintBackCover(ctx, resources)
+      paintPaper(ctx, W, H)
+      paintBackCover(ctx, resources, W, H)
       break
     case "blank":
-      paintPaper(ctx)
+      paintPaper(ctx, W, H)
       break
   }
 }
 
-function paintPaper(ctx: CanvasRenderingContext2D) {
-  const g = ctx.createLinearGradient(0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+function paintPaper(ctx: CanvasRenderingContext2D, W: number, H: number) {
+  const g = ctx.createLinearGradient(0, 0, W, H)
   g.addColorStop(0, "#fffbeb")
   g.addColorStop(1, "#fff7ed")
   ctx.fillStyle = g
-  ctx.fillRect(0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+  ctx.fillRect(0, 0, W, H)
 
   // Deterministic speckle so the paper reads as card stock rather than flat colour.
   let seed = 7
@@ -143,7 +151,32 @@ function paintPaper(ctx: CanvasRenderingContext2D) {
     const x = (seed % 10000) / 10000
     seed = (seed * 16807) % 2147483647
     const y = (seed % 10000) / 10000
-    ctx.fillRect(x * PAGE_WIDTH_PX, y * PAGE_HEIGHT_PX, 1, 1)
+    ctx.fillRect(x * W, y * H, 1, 1)
+  }
+
+  // Faint fibres, as in cotton card stock.
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647
+    return (seed % 10000) / 10000
+  }
+  ctx.lineWidth = 0.5
+  ctx.lineCap = "round"
+  for (let i = 0; i < 160; i++) {
+    const x = rand() * W
+    const y = rand() * H
+    const angle = rand() * Math.PI
+    const length = 4 + rand() * 10
+    const bend = (rand() - 0.5) * 4
+    ctx.strokeStyle = `rgba(150, 120, 90, ${0.05 + rand() * 0.05})`
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.quadraticCurveTo(
+      x + Math.cos(angle) * length * 0.5 - Math.sin(angle) * bend,
+      y + Math.sin(angle) * length * 0.5 + Math.cos(angle) * bend,
+      x + Math.cos(angle) * length,
+      y + Math.sin(angle) * length,
+    )
+    ctx.stroke()
   }
 }
 
@@ -151,46 +184,43 @@ function paintCover(
   ctx: CanvasRenderingContext2D,
   content: BookContent,
   resources: PaintResources,
+  W: number,
+  H: number,
 ) {
   const img = content.imageUrl
     ? resources.images.get(content.imageUrl)
     : undefined
   if (img) {
-    drawImageCover(ctx, img, 0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+    drawImageCover(ctx, img, 0, 0, W, H)
   } else {
-    const g = ctx.createLinearGradient(0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+    const g = ctx.createLinearGradient(0, 0, W, H)
     g.addColorStop(0, "#f59e0b")
     g.addColorStop(1, "#b45309")
     ctx.fillStyle = g
-    ctx.fillRect(0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+    ctx.fillRect(0, 0, W, H)
   }
 
   // Matches `bg-linear-to-t from-black/80 via-black/20 to-transparent`.
-  const shade = ctx.createLinearGradient(0, PAGE_HEIGHT_PX, 0, 0)
+  const shade = ctx.createLinearGradient(0, H, 0, 0)
   shade.addColorStop(0, "rgba(0,0,0,0.8)")
   shade.addColorStop(0.5, "rgba(0,0,0,0.2)")
   shade.addColorStop(1, "rgba(0,0,0,0)")
   ctx.fillStyle = shade
-  ctx.fillRect(0, 0, PAGE_WIDTH_PX, PAGE_HEIGHT_PX)
+  ctx.fillRect(0, 0, W, H)
 
   const family = resources.fontFamily(null)
   const padding = 24
-  const maxWidth = PAGE_WIDTH_PX - padding * 2
+  const maxWidth = W - padding * 2
   ctx.textAlign = "center"
   ctx.textBaseline = "top"
   ctx.fillStyle = "#ffffff"
 
   const forFontSize = 14
   const forLineHeight = 20
-  let y = PAGE_HEIGHT_PX - padding - forLineHeight
+  let y = H - padding - forLineHeight
   ctx.globalAlpha = 0.8
   ctx.font = `400 ${forFontSize}px ${family}`
-  ctx.fillText(
-    `For ${content.recipientName}`,
-    PAGE_WIDTH_PX / 2,
-    y + 3,
-    maxWidth,
-  )
+  ctx.fillText(`For ${content.recipientName}`, W / 2, y + 3, maxWidth)
   ctx.globalAlpha = 1
 
   const headlineSize = 30
@@ -199,7 +229,7 @@ function paintCover(
   const lines = wrapText(ctx, content.headline.trim(), maxWidth)
   y -= 8 + lines.length * headlineLineHeight
   for (const line of lines) {
-    ctx.fillText(line, PAGE_WIDTH_PX / 2, y + 3, maxWidth)
+    ctx.fillText(line, W / 2, y + 3, maxWidth)
     y += headlineLineHeight
   }
 }
@@ -207,12 +237,14 @@ function paintCover(
 function paintBackCover(
   ctx: CanvasRenderingContext2D,
   resources: PaintResources,
+  W: number,
+  H: number,
 ) {
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
   ctx.fillStyle = MUTED_TEXT_COLOR
   ctx.font = `500 12px ${resources.fontFamily(null)}`
-  ctx.fillText("Made with CardShare.ai", PAGE_WIDTH_PX / 2, PAGE_HEIGHT_PX - 48)
+  ctx.fillText("Made with CardShare.ai", W / 2, H - 48)
 }
 
 function paintMessagesPage(
@@ -220,7 +252,11 @@ function paintMessagesPage(
   pageIndex: number,
   content: BookContent,
   resources: PaintResources,
+  W: number,
+  H: number,
 ) {
+  const noteAreaWidth = W - CANVAS_INSET_PX * 2
+  const noteAreaHeight = H - NOTE_AREA_TOP_PX - CANVAS_INSET_PX
   const baseFamily = resources.fontFamily(null)
   ctx.textAlign = "left"
   ctx.textBaseline = "top"
@@ -235,16 +271,16 @@ function paintMessagesPage(
   if (pageIndex === content.messagePage && body) {
     const fontSize = 18
     ctx.font = `400 ${fontSize}px ${baseFamily}`
-    const lines = wrapText(ctx, body, NOTE_AREA_WIDTH_PX - 32)
+    const lines = wrapText(ctx, body, noteAreaWidth - 32)
     const blockHeight = lines.length * fontSize * LINE_HEIGHT
-    const top = Math.max(0, (NOTE_AREA_HEIGHT_PX - blockHeight) / 2)
+    const top = Math.max(0, (noteAreaHeight - blockHeight) / 2)
     ctx.fillStyle = DEFAULT_TEXT_COLOR
     drawLines(ctx, lines, 16, top, fontSize)
   }
 
   let flowY = 0
   for (const note of content.notesByPage.get(pageIndex) ?? []) {
-    const width = (NOTE_AREA_WIDTH_PX * note.widthPercent) / 100
+    const width = (noteAreaWidth * note.widthPercent) / 100
     const x = note.offset?.x ?? 0
     const y = note.offset?.y ?? flowY
     const height = paintNote(ctx, note, x, y, width, resources)

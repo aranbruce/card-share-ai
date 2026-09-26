@@ -33,6 +33,7 @@ import { getMessageFontFamily } from "@/lib/message-font-presets"
 import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
+import { cn } from "@/lib/utils"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import {
   useState,
@@ -89,6 +90,8 @@ export function Card3D({
   suppressComposeActions = false,
   onEditingContributionChange,
   navigateToPage,
+  embedded = false,
+  onCurrentPageChange,
 }: Card3DProps) {
   const [currentPage, setCurrentPage] = useState(coverOnly ? 0 : initialPage)
   const [prevNavigateToPage, setPrevNavigateToPage] = useState(navigateToPage)
@@ -99,7 +102,9 @@ export function Card3D({
   const [gifPickerContributionId, setGifPickerContributionId] = useState<
     string | null
   >(null)
-  const lastContributeSubmitNavNonce = useRef(0)
+  // Seeded with the current value so remounting (e.g. reopening the embedded editor) does not
+  // re-run the jump for a submit that already happened.
+  const lastContributeSubmitNavNonce = useRef(contributeSubmitNonce)
   const contributionInlineRegenRefs = useRef(
     new Map<string, InlineEditRegenerateHandle>(),
   )
@@ -184,6 +189,14 @@ export function Card3D({
       contrib,
       contrib.is_creator ? validMessagePage : validMessagePage + 1,
     )
+
+  const onCurrentPageChangeRef = useRef(onCurrentPageChange)
+  useEffect(() => {
+    onCurrentPageChangeRef.current = onCurrentPageChange
+  }, [onCurrentPageChange])
+  useEffect(() => {
+    onCurrentPageChangeRef.current?.(currentPage)
+  }, [currentPage])
 
   const isMessagePage = !coverOnly && currentPage === validMessagePage
 
@@ -455,8 +468,13 @@ export function Card3D({
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-12">
-      <div className="relative w-full max-w-md">
+    <div
+      className={cn(
+        "flex w-full flex-col items-center",
+        embedded ? "h-full" : "gap-12",
+      )}
+    >
+      <div className={cn("relative w-full", !embedded && "max-w-md")}>
         {contributeOverlay ? (
           <div className="pointer-events-none absolute inset-0 z-30 flex flex-col">
             {typeof contributeOverlay === "function"
@@ -464,8 +482,20 @@ export function Card3D({
               : contributeOverlay}
           </div>
         ) : null}
-        <div className="relative flex card-preview-frame flex-col overflow-visible rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out dark:ring-white/10">
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-2xl">
+        <div
+          className={cn(
+            "relative flex flex-col overflow-visible",
+            embedded
+              ? "aspect-4/5 w-full"
+              : "card-preview-frame rounded-2xl shadow-xl ring-1 ring-black/5 transition-transform duration-500 ease-out dark:ring-white/10",
+          )}
+        >
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 z-0 overflow-hidden",
+              !embedded && "rounded-2xl",
+            )}
+          >
             <div className="absolute inset-0 bg-linear-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900" />
             <div
               className="absolute inset-0 opacity-[0.04] mix-blend-multiply dark:opacity-[0.02] dark:mix-blend-overlay"
@@ -484,7 +514,12 @@ export function Card3D({
               <div className="relative flex flex-1 flex-col">
                 <>
                   {isGeneratingImage && !imageUrl ? (
-                    <div className="relative min-h-[280px] w-full flex-1 overflow-hidden rounded-2xl bg-border">
+                    <div
+                      className={cn(
+                        "relative w-full flex-1 overflow-hidden bg-border",
+                        !embedded && "min-h-[280px] rounded-2xl",
+                      )}
+                    >
                       <RegenerateShimmerOverlay
                         tone="cover"
                         className="z-10 rounded-2xl"
@@ -492,7 +527,12 @@ export function Card3D({
                     </div>
                   ) : imageUrl ? (
                     <div
-                      className={`group/image relative w-full flex-1 overflow-hidden rounded-2xl transition-all ${isRegeneratingImage || isGeneratingImage ? "opacity-90" : ""}`}
+                      className={cn(
+                        "group/image relative w-full flex-1 overflow-hidden transition-all",
+                        !embedded && "rounded-2xl",
+                        (isRegeneratingImage || isGeneratingImage) &&
+                          "opacity-90",
+                      )}
                     >
                       <Image
                         key={
@@ -541,14 +581,22 @@ export function Card3D({
               </div>
             ) : (
               <div
-                className="relative flex min-h-[460px] flex-1 flex-col overscroll-contain p-1"
+                className={cn(
+                  "relative flex flex-1 flex-col overscroll-contain p-1",
+                  !embedded && "min-h-[460px]",
+                )}
                 data-card-canvas
               >
                 <p className="mb-1 shrink-0 px-5 pt-5 text-xs font-medium tracking-wider text-muted-foreground uppercase">
                   {MESSAGES_SECTION_LABEL}
                 </p>
 
-                <div className="relative min-h-[380px] flex-1">
+                <div
+                  className={cn(
+                    "relative flex-1",
+                    !embedded && "min-h-[380px]",
+                  )}
+                >
                   {!composeDraft && onComposeCanvasPlace && (
                     <button
                       type="button"
@@ -569,7 +617,12 @@ export function Card3D({
                   ) : null}
 
                   {isMessagePage && showMainSpreadInnerBody ? (
-                    <div className="pointer-events-none relative z-10 flex min-h-[360px] flex-col justify-center *:pointer-events-auto">
+                    <div
+                      className={cn(
+                        "pointer-events-none relative z-10 flex flex-col justify-center *:pointer-events-auto",
+                        embedded ? "h-full" : "min-h-[360px]",
+                      )}
+                    >
                       <DraggableWrapper editable={editable}>
                         <div className="space-y-3">
                           <InlineEdit
@@ -619,7 +672,7 @@ export function Card3D({
         </div>
       </div>
 
-      {totalPages > 1 ? (
+      {totalPages > 1 && !embedded ? (
         <div className="flex items-center justify-center gap-4">
           <Button
             variant="outline"

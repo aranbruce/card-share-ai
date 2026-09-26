@@ -20,6 +20,13 @@ type Card3DCoreProps = {
   contributeOverlay?: ReactNode | ((ctx: { currentPage: number }) => ReactNode)
   /** Increment after a successful contribution submit to flip to the messages page. */
   contributeSubmitNonce?: number
+  /**
+   * Render only the page itself (no frame chrome, pagination or minimum heights) at an exact
+   * 4:5 size, for hosting the editor on top of a page of the 3D card.
+   */
+  embedded?: boolean
+  /** Fires whenever the visible page changes, including internal navigation. */
+  onCurrentPageChange?: (page: number) => void
 }
 
 // ── Headline / image editing (only meaningful with editable=true) ─────────────

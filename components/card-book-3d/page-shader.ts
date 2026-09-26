@@ -86,9 +86,10 @@ const fragmentShader = /* glsl */ `
       color = uEdgeColor;
     }
 
-    vec3 lightDir = normalize(vec3(-0.35, 0.55, 1.0));
+    // Soft, mostly frontal key light so facing pages read evenly bright.
+    vec3 lightDir = normalize(vec3(-0.2, 0.5, 1.0));
     float diffuse = max(dot(n, lightDir), 0.0);
-    float light = 0.58 + 0.47 * diffuse;
+    float light = 0.66 + 0.38 * diffuse;
 
     if (isFace) {
       // Crease shading along the fold and a faint falloff at the fore-edge.

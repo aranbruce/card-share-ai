@@ -1,23 +1,19 @@
 "use client"
 
-import { Box, Pencil, RectangleVertical } from "lucide-react"
+import { Box, RectangleVertical } from "lucide-react"
 
 export type CardViewMode = "3d" | "flat"
 
-/** Pill switch between the Three.js card and the flat (editable) card. */
+/** Pill switch between the Three.js card and the flat card for recipients. */
 export function CardViewToggle({
   value,
   onChange,
-  mode = "view",
   className,
 }: {
   value: CardViewMode
   onChange: (mode: CardViewMode) => void
-  /** "edit" labels the DOM card as the editor; "view" calls it the flat card. */
-  mode?: "edit" | "view"
   className?: string
 }) {
-  const FlatIcon = mode === "edit" ? Pencil : RectangleVertical
   return (
     <div className={`flex justify-center${className ? ` ${className}` : ""}`}>
       <div
@@ -44,8 +40,8 @@ export function CardViewToggle({
               </>
             ) : (
               <>
-                <FlatIcon aria-hidden />
-                {mode === "edit" ? "Edit" : "Flat"}
+                <RectangleVertical aria-hidden />
+                Flat
               </>
             )}
           </button>
