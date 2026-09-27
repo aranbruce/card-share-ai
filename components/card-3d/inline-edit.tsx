@@ -9,6 +9,7 @@ import type {
   KeyboardEvent,
   MouseEvent,
 } from "react"
+import { createPortal } from "react-dom"
 import {
   useCallback,
   useEffect,
@@ -428,50 +429,54 @@ export const InlineEdit = forwardRef<
         </div>
       </div>
 
-      {showPromptInput && !toolbarExternal ? (
-        <div
-          data-regenerate-area
-          className="fixed z-100"
-          style={{
-            top: promptPosition.top,
-            left: promptPosition.left,
-            width: Math.max(promptPosition.width, 300),
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-xl">
-            <input
-              ref={promptInputRef}
-              type="text"
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              onKeyDown={handlePromptKeyDown}
-              placeholder="Describe the change you want..."
-              className="min-w-0 flex-1 border-none bg-transparent px-2 py-1 text-base text-foreground outline-none sm:text-sm"
-              disabled={isRegenerating}
-            />
-            <Button
-              variant="primary"
-              size="icon-sm"
-              onClick={() => void handleRegenerate()}
-              disabled={isRegenerating || !promptText.trim()}
-              className="rounded-full"
-              title="Generate"
+      {showPromptInput && !toolbarExternal && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              data-regenerate-area
+              className="fixed z-100"
+              style={{
+                top: promptPosition.top,
+                left: promptPosition.left,
+                width: Math.max(promptPosition.width, 300),
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {isRegenerating ? <Spinner /> : <ArrowUp />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={closeRegeneratePrompt}
-              className="rounded-full"
-              title="Cancel"
-            >
-              <X className="text-muted-foreground" />
-            </Button>
-          </div>
-        </div>
-      ) : null}
+              <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-xl">
+                <input
+                  ref={promptInputRef}
+                  type="text"
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  onKeyDown={handlePromptKeyDown}
+                  placeholder="Describe the change you want..."
+                  className="min-w-0 flex-1 border-none bg-transparent px-2 py-1 text-base text-foreground outline-none sm:text-sm"
+                  disabled={isRegenerating}
+                />
+                <Button
+                  variant="primary"
+                  size="icon-sm"
+                  onClick={() => void handleRegenerate()}
+                  disabled={isRegenerating || !promptText.trim()}
+                  className="rounded-full"
+                  title="Generate"
+                >
+                  {isRegenerating ? <Spinner /> : <ArrowUp />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={closeRegeneratePrompt}
+                  className="rounded-full"
+                  title="Cancel"
+                >
+                  <X className="text-muted-foreground" />
+                </Button>
+              </div>
+            </div>,
+            // Portalled so a transformed ancestor (the 3D card) cannot offset this fixed box.
+            document.body,
+          )
+        : null}
     </div>
   )
 })

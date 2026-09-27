@@ -20,6 +20,7 @@ import {
   DraggableNoteMoveContext,
   type DraggableNoteMoveContextValue,
 } from "./draggable-note-context"
+import { useCardCanvasScale } from "./canvas-scale-context"
 
 /** Used to center the compose block on click before first layout (field + controls). */
 export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
@@ -58,10 +59,22 @@ function clampNotePositionInBounds(args: {
   padding: number
   x: number
   y: number
+  /** On-screen px per layout px (see `CardCanvasScaleContext`). */
+  scale: number
 }): { x: number; y: number } {
-  const boundsRect = args.bounds.getBoundingClientRect()
-  const outerRect = args.containerEl.getBoundingClientRect()
-  const rotatedRect = args.rotatedInnerEl?.getBoundingClientRect()
+  // Measure on screen, then convert to layout px so a scaled (3D) canvas clamps correctly.
+  const toLayout = (rect: DOMRect) => ({
+    left: rect.left / args.scale,
+    top: rect.top / args.scale,
+    right: rect.right / args.scale,
+    bottom: rect.bottom / args.scale,
+    width: rect.width / args.scale,
+    height: rect.height / args.scale,
+  })
+  const boundsRect = toLayout(args.bounds.getBoundingClientRect())
+  const outerRect = toLayout(args.containerEl.getBoundingClientRect())
+  const rotatedDomRect = args.rotatedInnerEl?.getBoundingClientRect()
+  const rotatedRect = rotatedDomRect ? toLayout(rotatedDomRect) : undefined
 
   let minX = args.padding
   let maxX = boundsRect.width - outerRect.width - args.padding
@@ -117,6 +130,12 @@ export function DraggableWrapper({
    */
   onFocusLeave?: () => void
 }) {
+  // Pointer deltas are screen px; divide by this to get canvas (layout) px.
+  const canvasScale = useCardCanvasScale()
+  const canvasScaleRef = useRef(canvasScale)
+  useEffect(() => {
+    canvasScaleRef.current = canvasScale
+  }, [canvasScale])
   const [position, setPosition] = useState<{
     x: number | null
     y: number | null
@@ -220,7 +239,7 @@ export function DraggableWrapper({
       }
       const boundsRect = bounds.getBoundingClientRect()
       const cr = el.getBoundingClientRect()
-      const leftInBounds = cr.left - boundsRect.left
+      const leftInBounds = (cr.left - boundsRect.left) / canvasScaleRef.current
       setFooterPlacement({
         left: CANVAS_PADDING - leftInBounds,
         width: Math.max(0, bounds.clientWidth - 2 * CANVAS_PADDING),
@@ -396,8 +415,9 @@ export function DraggableWrapper({
         if (bounds) {
           const boundsRect = bounds.getBoundingClientRect()
           const selfRect = containerRef.current.getBoundingClientRect()
-          currentPosX = selfRect.left - boundsRect.left
-          currentPosY = selfRect.top - boundsRect.top
+          currentPosX =
+            (selfRect.left - boundsRect.left) / canvasScaleRef.current
+          currentPosY = (selfRect.top - boundsRect.top) / canvasScaleRef.current
           setPosition({ x: currentPosX, y: currentPosY })
           syncLayoutSnapshot({ x: currentPosX, y: currentPosY })
         } else {
@@ -458,12 +478,14 @@ export function DraggableWrapper({
       const gesture = gesturePointerRef.current
       if (e.pointerId !== gesture.pointerId) return
 
-      const dx = e.clientX - startPos.current.x
-      const dy = e.clientY - startPos.current.y
+      const screenDx = e.clientX - startPos.current.x
+      const screenDy = e.clientY - startPos.current.y
+      const dx = screenDx / canvasScaleRef.current
+      const dy = screenDy / canvasScaleRef.current
       let phase = gesturePhaseRef.current
 
       if (phase === "pending") {
-        if (!pastDragThreshold(dx, dy, e.pointerType)) return
+        if (!pastDragThreshold(screenDx, screenDy, e.pointerType)) return
         acquirePointerCapture()
         e.preventDefault()
         window.getSelection()?.removeAllRanges()
@@ -490,6 +512,7 @@ export function DraggableWrapper({
               padding: CANVAS_PADDING,
               x: nextX,
               y: nextY,
+              scale: canvasScaleRef.current,
             })
             syncLayoutSnapshot({ x: clamped.x, y: clamped.y })
             setPosition(clamped)
@@ -564,6 +587,7 @@ export function DraggableWrapper({
       padding: CANVAS_PADDING,
       x: position.x,
       y: position.y,
+      scale: canvasScaleRef.current,
     })
 
     if (clamped.x !== position.x || clamped.y !== position.y) {

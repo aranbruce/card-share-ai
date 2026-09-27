@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { CardCanvasScaleContext } from "@/components/card-3d/canvas-scale-context"
 import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
 import {
   bookCenterOffset,
@@ -8,11 +9,13 @@ import {
   leafCountForFaces,
   leafProgress,
   openness,
+  PAGE_CURL_RADIANS,
   settleFlipTarget,
   spreadForPage,
 } from "@/lib/card-book"
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
+import { quadToMatrix3d, type Point2 } from "@/lib/quad-transform"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, ArrowRight, Check, Pencil, Plus } from "lucide-react"
 import {
@@ -35,6 +38,7 @@ import {
   PlaneGeometry,
   Scene,
   SRGBColorSpace,
+  Vector3,
   WebGLRenderer,
 } from "three"
 import {
@@ -66,12 +70,20 @@ const PAGE_GLOSS = 0.03
 const CLOSED_YAW = 0.32
 /**
  * An open card rests with its pages angled up slightly (radians, as a fraction of a half
- * turn), like a card standing open on a table. Pages flatten while one is being edited.
+ * turn), like a card standing open on a table. Pages settle a little while one is edited.
  */
 const REST_FOLD = 0.085
-/** Largest editor page (CSS px); matches the flat card's max width. */
-const MAX_EDIT_PAGE_WIDTH = PAGE_WIDTH_PX
-const EDIT_PAGE_MARGIN = 24
+/** Share of the rest fold removed while editing. */
+const EDIT_FLATTEN = 0.5
+/**
+ * While editing, the camera looks at the page from a little off its normal (towards the spine
+ * and from above) so it still reads as a card, not a flat form.
+ */
+const EDIT_YAW = 0.26
+const EDIT_PITCH = 0.14
+/** Room around the edited page, as a multiple of its size. */
+const EDIT_FRAME_W = 1.2
+const EDIT_FRAME_H = 1.16
 /** Peak darkening a lifted page casts on the page beneath it. */
 const TURN_SHADOW = 0.38
 const CAMERA_FOV = 30
@@ -131,14 +143,6 @@ export type PageEditorArgs = {
   onPageChange: (page: number) => void
 }
 
-type EditLayout = {
-  /** Editor page size in CSS px. */
-  width: number
-  height: number
-  containerWidth: number
-  containerHeight: number
-}
-
 type Leaf = { mesh: Mesh; material: PageMaterial }
 
 type SceneHandle = {
@@ -158,14 +162,16 @@ type LiveState = {
   tilt: { x: number; y: number }
   tiltTarget: { x: number; y: number }
   dirty: boolean
-  /** A page is open for editing: camera faces it head-on at exact editor size. */
+  /** A page is open for editing: the camera closes in on it and the editor is mapped onto it. */
   editing: boolean
   /** 0 = browsing camera, 1 = editing camera (eased). */
   editBlend: number
-  /** Container height and editor page height in px, to size the editing camera. */
+  /** Container size in CSS px, for projecting the edited page to the screen. */
+  viewW: number
   viewH: number
-  editH: number
   overlayReady: boolean
+  /** On-screen px per editor px last reported to React. */
+  editScale: number
   pointer: {
     id: number
     startX: number
@@ -219,7 +225,9 @@ export function CardBook3D({
     editable && autoEditPage !== undefined ? autoEditPage : null,
   )
   const [overlayReady, setOverlayReady] = useState(false)
-  const [editLayout, setEditLayout] = useState<EditLayout | null>(null)
+  const [editScale, setEditScale] = useState(1)
+  /** The editor element, mapped onto the 3D page every frame by the render loop. */
+  const editorRef = useRef<HTMLDivElement>(null)
   const startPage = editPage ?? initialPage
   const initialFlip = coverOnly ? 0 : spreadForPage(startPage)
   const initialFocus: Side = startPage % 2 === 1 ? "left" : "right"
@@ -251,9 +259,10 @@ export function CardBook3D({
     dirty: true,
     editing: editPage !== null,
     editBlend: editPage !== null ? 1 : 0,
+    viewW: 0,
     viewH: 0,
-    editH: 0,
     overlayReady: false,
+    editScale: 1,
     pointer: null,
   })
 
@@ -274,7 +283,6 @@ export function CardBook3D({
 
   const content = useMemo<BookContent>(
     () => ({
-      layoutWidth: editable ? editLayout?.width : undefined,
       imageUrl,
       headline,
       recipientName,
@@ -287,8 +295,6 @@ export function CardBook3D({
       ),
     }),
     [
-      editable,
-      editLayout?.width,
       imageUrl,
       headline,
       recipientName,
@@ -467,35 +473,15 @@ export function CardBook3D({
       camera.aspect = width / height
       camera.updateProjectionMatrix()
       setNarrow(width / height < 1)
-      const editWidth = Math.floor(
-        Math.min(
-          MAX_EDIT_PAGE_WIDTH,
-          width - EDIT_PAGE_MARGIN,
-          (height - EDIT_PAGE_MARGIN) / (PAGE_H / PAGE_W),
-        ),
-      )
-      const editHeight = editWidth * (PAGE_H / PAGE_W)
+      state.viewW = width
       state.viewH = height
-      state.editH = editHeight
-      setEditLayout((prev) =>
-        prev &&
-        prev.width === editWidth &&
-        prev.containerWidth === width &&
-        prev.containerHeight === height
-          ? prev
-          : {
-              width: editWidth,
-              height: editHeight,
-              containerWidth: width,
-              containerHeight: height,
-            },
-      )
       state.dirty = true
     }
     resize()
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(container)
 
+    const projected = new Vector3()
     let frame = 0
     let last = performance.now()
     let lastGifPaint = 0
@@ -537,9 +523,20 @@ export function CardBook3D({
         moving = true
       }
 
-      // Open pages rest slightly raised off the table; they flatten for editing.
+      // The page being edited (or about to be): the focused side of the target spread.
+      const editSide: Side =
+        state.target <= 0
+          ? "right"
+          : state.target >= leafTotal
+            ? "left"
+            : state.focus
+      const editLeaf = editSide === "right" ? state.target : state.target - 1
+
+      // Open pages rest slightly raised off the table, settling a little for editing.
       const fold =
-        REST_FOLD * openness(state.flip, leafTotal) * (1 - state.editBlend)
+        REST_FOLD *
+        openness(state.flip, leafTotal) *
+        (1 - EDIT_FLATTEN * state.editBlend)
       leaves.forEach(({ material }, i) => {
         const p = leafProgress(state.flip, i)
         const u = material.uniforms
@@ -551,6 +548,11 @@ export function CardBook3D({
           i === turningLeaf + 1 ? TURN_SHADOW * lift * (1 - turnT) : 0
         u.uShadowBack.value =
           i === turningLeaf - 1 ? TURN_SHADOW * lift * turnT : 0
+        // The edited page lies flat so the editor maps onto it exactly.
+        u.uCurl.value =
+          i === editLeaf
+            ? PAGE_CURL_RADIANS * (1 - state.editBlend)
+            : PAGE_CURL_RADIANS
       })
 
       // Frame the visible pages: the whole spread on wide screens, one page on narrow ones.
@@ -641,34 +643,82 @@ export function CardBook3D({
       const browseY = distance * Math.sin(pitch)
       const browseZ = distance * Math.cos(yaw) * Math.cos(pitch)
 
-      // Editing camera: square on to the page being edited, at the distance where the page
-      // spans exactly the editor's pixel height, so the DOM editor lines up with it.
-      const editSide: Side =
-        state.target <= 0
-          ? "right"
-          : state.target >= leafTotal
-            ? "left"
-            : state.focus
-      const editX = editSide === "right" ? PAGE_W / 2 : -PAGE_W / 2
-      const editLeaf = editSide === "right" ? state.target : state.target - 1
-      const faceZ =
-        (editSide === "right"
-          ? -editLeaf * LEAF_GAP
-          : -(leafTotal - 1 - editLeaf) * LEAF_GAP) +
-        LEAF_THICKNESS / 2
-      const editDistance =
-        state.editH > 0
-          ? (PAGE_H * state.viewH) / (2 * Math.tan(halfFov) * state.editH)
-          : distance
+      // Editing camera: close in on the edited page, seen a little from the side and above.
+      const edited = leaves[editLeaf]?.material.uniforms
+      const page = edited
+        ? editedPageFrame(edited.uProgress.value, edited.uLift.value, editSide)
+        : null
       const b = state.editBlend * state.editBlend * (3 - 2 * state.editBlend)
       const mix = (a: number, c: number) => a + (c - a) * b
-      camera.position.set(
-        mix(browseX, editX),
-        mix(browseY, 0),
-        mix(browseZ, faceZ + editDistance),
-      )
-      camera.lookAt(mix(state.camX, editX), 0, mix(0, faceZ))
+      if (page) {
+        const editDistance = Math.max(
+          (PAGE_H * EDIT_FRAME_H) / 2 / Math.tan(halfFov),
+          (PAGE_W * EDIT_FRAME_W) / 2 / (Math.tan(halfFov) * camera.aspect),
+        )
+        // Swing the page normal towards the spine, then raise it.
+        const yaw = editSide === "right" ? -EDIT_YAW : EDIT_YAW
+        const nx = page.normal.x * Math.cos(yaw) + page.normal.z * Math.sin(yaw)
+        const nz =
+          -page.normal.x * Math.sin(yaw) + page.normal.z * Math.cos(yaw)
+        const view = new Vector3(
+          nx * Math.cos(EDIT_PITCH),
+          Math.sin(EDIT_PITCH),
+          nz * Math.cos(EDIT_PITCH),
+        )
+        const c = page.center
+        camera.position.set(
+          mix(browseX, c.x + view.x * editDistance),
+          mix(browseY, c.y + view.y * editDistance),
+          mix(browseZ, c.z + view.z * editDistance),
+        )
+        camera.lookAt(mix(state.camX, c.x), mix(0, c.y), mix(0, c.z))
+      } else {
+        camera.position.set(browseX, browseY, browseZ)
+        camera.lookAt(state.camX, 0, 0)
+      }
       renderer.render(scene, camera)
+
+      // Map the DOM editor onto the page as rendered this frame.
+      const editorEl = editorRef.current
+      if (state.editing && page && editorEl) {
+        camera.updateMatrixWorld()
+        const toScreen = (u: number, v: number): Point2 => {
+          projected.copy(page.at(u, v)).project(camera)
+          return {
+            x: ((projected.x + 1) / 2) * state.viewW,
+            y: ((1 - projected.y) / 2) * state.viewH,
+          }
+        }
+        const quad = [
+          toScreen(0, 0),
+          toScreen(1, 0),
+          toScreen(1, 1),
+          toScreen(0, 1),
+        ] as const
+        editorEl.style.transform = quadToMatrix3d(
+          PAGE_WIDTH_PX,
+          PAGE_HEIGHT_PX,
+          quad,
+        )
+        // Average on-screen scale through the middle of the page, for drag maths.
+        const mid = (a: Point2, c: Point2) => ({
+          x: (a.x + c.x) / 2,
+          y: (a.y + c.y) / 2,
+        })
+        const dist = (a: Point2, c: Point2) => Math.hypot(a.x - c.x, a.y - c.y)
+        const scale =
+          (dist(mid(quad[0], quad[3]), mid(quad[1], quad[2])) / PAGE_WIDTH_PX +
+            dist(mid(quad[0], quad[1]), mid(quad[3], quad[2])) /
+              PAGE_HEIGHT_PX) /
+          2
+        if (
+          state.editBlend === 1 &&
+          Math.abs(scale - state.editScale) > 0.002
+        ) {
+          state.editScale = scale
+          setEditScale(scale)
+        }
+      }
 
       const ready =
         state.editing && state.editBlend === 1 && state.flip === state.target
@@ -760,7 +810,6 @@ export function CardBook3D({
   )
 
   /** Open a card page for editing (null closes the editor). */
-  const editorRef = useRef<HTMLDivElement>(null)
   const editPageAt = useCallback(
     (page: number | null) => {
       if (page === null) {
@@ -984,30 +1033,31 @@ export function CardBook3D({
             aria-hidden
           />
         </div>
-        {renderPageEditor && editPage !== null && editLayout ? (
-          <div
-            ref={editorRef}
-            className={cn(
-              "absolute z-10 transition-opacity duration-200 motion-reduce:transition-none",
-              overlayReady ? "opacity-100" : "pointer-events-none opacity-0",
-            )}
-            style={{
-              left: (editLayout.containerWidth - editLayout.width) / 2,
-              top: (editLayout.containerHeight - editLayout.height) / 2,
-              width: editLayout.width,
-              height: editLayout.height,
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") editPageAt(null)
-            }}
-          >
-            <PageEditorHost
-              render={renderPageEditor}
-              page={editPage}
-              width={editLayout.width}
-              height={editLayout.height}
-              onPageChange={editPageAt}
-            />
+        {renderPageEditor && editPage !== null ? (
+          // The editor is laid out at the page's natural size and mapped onto the 3D page
+          // with a perspective transform the render loop updates.
+          <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-2xl">
+            <div
+              ref={editorRef}
+              className={cn(
+                "absolute top-0 left-0 origin-top-left transition-opacity duration-200 motion-reduce:transition-none",
+                overlayReady ? "pointer-events-auto opacity-100" : "opacity-0",
+              )}
+              style={{ width: PAGE_WIDTH_PX, height: PAGE_HEIGHT_PX }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") editPageAt(null)
+              }}
+            >
+              <CardCanvasScaleContext.Provider value={editScale}>
+                <PageEditorHost
+                  render={renderPageEditor}
+                  page={editPage}
+                  width={PAGE_WIDTH_PX}
+                  height={PAGE_HEIGHT_PX}
+                  onPageChange={editPageAt}
+                />
+              </CardCanvasScaleContext.Provider>
+            </div>
           </div>
         ) : null}
         {editable && editPage === null ? (
@@ -1108,6 +1158,34 @@ function PageEditorHost({
   ...args
 }: PageEditorArgs & { render: (args: PageEditorArgs) => ReactNode }) {
   return <>{render(args)}</>
+}
+
+/**
+ * Where the edited page sits in world space: the leaf is flat while editing, hinged at the
+ * spine at angle `progress · π`. `at(u, v)` maps a point of the editor (fractions from its
+ * top-left) onto the visible face; a right-hand page shows a leaf's front, a left-hand page
+ * its back. Mirrors the vertex shader in `page-shader.ts`.
+ */
+function editedPageFrame(progress: number, lift: number, side: Side) {
+  const a = progress * Math.PI
+  const cos = Math.cos(a)
+  const sin = Math.sin(a)
+  const sign = side === "right" ? 1 : -1
+  // Just proud of the face so the editor never dips behind the page.
+  const off = sign * (LEAF_THICKNESS / 2 + 0.0005)
+  const at = (u: number, v: number) => {
+    const s = (side === "right" ? u : 1 - u) * PAGE_W
+    return new Vector3(
+      cos * s - sin * off,
+      PAGE_H / 2 - v * PAGE_H,
+      sin * s + lift + cos * off,
+    )
+  }
+  return {
+    at,
+    center: at(0.5, 0.5),
+    normal: { x: -sin * sign, z: cos * sign },
+  }
 }
 
 function spreadLabel(spread: number, leafCount: number): string {

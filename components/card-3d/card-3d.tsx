@@ -34,6 +34,7 @@ import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { useCardCanvasScale } from "./canvas-scale-context"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import {
   useState,
@@ -192,6 +193,7 @@ export function Card3D({
       contrib.is_creator ? validMessagePage : validMessagePage + 1,
     )
 
+  const canvasScale = useCardCanvasScale()
   const onCurrentPageChangeRef = useRef(onCurrentPageChange)
   useEffect(() => {
     onCurrentPageChangeRef.current = onCurrentPageChange
@@ -286,10 +288,12 @@ export function Card3D({
     (e: MouseEvent) => {
       if (!onComposeCanvasPlace) return
       const overlay = e.currentTarget as HTMLElement
-      const rect = overlay.getBoundingClientRect()
+      // Layout size (unaffected by any 3D transform) and screen offset converted to layout px.
+      const rect = { width: overlay.offsetWidth, height: overlay.offsetHeight }
+      const screenRect = overlay.getBoundingClientRect()
       const pad = CANVAS_EDGE_PADDING
-      const clickX = e.clientX - rect.left
-      const clickY = e.clientY - rect.top
+      const clickX = (e.clientX - screenRect.left) / canvasScale
+      const clickY = (e.clientY - screenRect.top) / canvasScale
       const widthPx = rect.width * 0.75
       const halfW = widthPx / 2
       const halfH = COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX / 2
@@ -306,7 +310,7 @@ export function Card3D({
         pageIndex: currentPage,
       })
     },
-    [currentPage, onComposeCanvasPlace],
+    [currentPage, onComposeCanvasPlace, canvasScale],
   )
 
   const handleComposeDraftPatch = useCallback(
