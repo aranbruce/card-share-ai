@@ -373,6 +373,7 @@ export const InlineEdit = forwardRef<
         ) : null}
         <div
           ref={editRef}
+          data-inline-edit
           onPointerDown={
             canDragNote && !isEditing
               ? (e) => {

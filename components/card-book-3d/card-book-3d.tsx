@@ -92,6 +92,8 @@ const EDIT_FRAME_H = 1.16
  */
 const EDITOR_CHROME_SELECTOR =
   '[data-card-editor-chrome],[role="dialog"],[data-regenerate-area],[data-radix-popper-content-wrapper]'
+/** The cover's title and "For …" line sit below this fraction of its height. */
+const COVER_TITLE_ZONE = 0.62
 /** Peak darkening a lifted page casts on the page beneath it. */
 const TURN_SHADOW = 0.38
 const CAMERA_FOV = 30
@@ -498,7 +500,8 @@ export function CardBook3D({
 
     const projected = new Vector3()
     const raycaster = new Raycaster()
-    // Pages lie close enough to flat at rest to pick them as planes.
+    // Intersects the pointer ray with the page as the shader bends it (curl included), so a
+    // click lands on the same text in the editor that it hit on the 3D page.
     const pickPage = (
       clientX: number,
       clientY: number,
@@ -508,11 +511,6 @@ export function CardBook3D({
       const leaf = side === "right" ? state.target : state.target - 1
       const u = leaves[leaf]?.material.uniforms
       if (!u || rect.width <= 0 || rect.height <= 0) return null
-      const page = editedPageFrame(u.uProgress.value, u.uLift.value, side)
-      const origin = page.at(0, 0)
-      const across = page.at(1, 0).sub(origin)
-      const down = page.at(0, 1).sub(origin)
-      const normal = new Vector3().crossVectors(across, down)
       raycaster.setFromCamera(
         new Vector2(
           ((clientX - rect.left) / rect.width) * 2 - 1,
@@ -520,22 +518,48 @@ export function CardBook3D({
         ),
         camera,
       )
-      const { ray } = raycaster
-      const denom = normal.dot(ray.direction)
-      if (Math.abs(denom) < 1e-9) return null
-      const t = normal.dot(origin.clone().sub(ray.origin)) / denom
-      if (t < 0) return null
-      const hit = ray.origin
-        .clone()
-        .addScaledVector(ray.direction, t)
-        .sub(origin)
-      const point = {
-        u: hit.dot(across) / across.lengthSq(),
-        v: hit.dot(down) / down.lengthSq(),
+      const { origin: o, direction: d } = raycaster.ray
+      const surface = pageSurface(
+        u.uProgress.value,
+        u.uCurl.value,
+        u.uLift.value,
+        side,
+      )
+      // The page is a vertical ruled surface: find where its curve crosses the ray's
+      // vertical plane, then read the height off the ray.
+      const across = (s: number) => {
+        const p = surface(s)
+        return (p.x - o.x) * -d.z + (p.z - o.z) * d.x
       }
-      return point.u >= 0 && point.u <= 1 && point.v >= 0 && point.v <= 1
-        ? point
-        : null
+      const steps = 48
+      let hit: number | null = null
+      let prev = across(0)
+      for (let i = 1; i <= steps && hit === null; i++) {
+        const s1 = (i / steps) * PAGE_W
+        const next = across(s1)
+        if (prev === 0 || Math.sign(prev) !== Math.sign(next)) {
+          let lo = s1 - PAGE_W / steps
+          let hi = s1
+          for (let j = 0; j < 24; j++) {
+            const mid = (lo + hi) / 2
+            if (Math.sign(across(mid)) === Math.sign(across(lo))) lo = mid
+            else hi = mid
+          }
+          hit = (lo + hi) / 2
+        }
+        prev = next
+      }
+      if (hit === null) return null
+      const p = surface(hit)
+      const t =
+        Math.abs(d.x) > Math.abs(d.z) ? (p.x - o.x) / d.x : (p.z - o.z) / d.z
+      if (t < 0) return null
+      const y = o.y + d.y * t
+      const point = {
+        u: side === "right" ? hit / PAGE_W : 1 - hit / PAGE_W,
+        v: (PAGE_H / 2 - y) / PAGE_H,
+      }
+      return point.v >= 0 && point.v <= 1 ? point : null
     }
     sceneRef.current = { faceCanvases, faceTextures, pickPage }
     let frame = 0
@@ -568,9 +592,16 @@ export function CardBook3D({
       const turnT = state.flip - turningLeaf
       const lift = Math.sin(Math.PI * turnT)
       // Ease between browsing and the head-on editing camera.
-      const editGoal = state.editing ? 1 : 0
+      // Pull back while a page turns under the editing camera, then close in on the new page.
+      const editGoal =
+        state.editing && Math.abs(state.target - state.flip) < 0.02 ? 1 : 0
       if (Math.abs(editGoal - state.editBlend) > 0.002) {
-        const rate = state.reducedMotion ? 30 : 5
+        // Back off quickly when a turn starts so the lifting page never fills the view.
+        const rate = state.reducedMotion
+          ? 30
+          : state.editing && editGoal === 0
+            ? 10
+            : 5
         state.editBlend +=
           (editGoal - state.editBlend) * (1 - Math.exp(-dt * rate))
         moving = true
@@ -976,8 +1007,13 @@ export function CardBook3D({
     )
     const clientX = rect.left + point.x
     const clientY = rect.top + point.y
-    const target = document.elementFromPoint(clientX, clientY)
-    if (!target || !editor.contains(target)) return
+    const hit = document.elementFromPoint(clientX, clientY)
+    if (!hit || !editor.contains(hit)) return
+    // Anywhere on a note (its padding, GIF or chrome) means its text.
+    const target =
+      hit
+        .closest("[data-draggable-note]")
+        ?.querySelector("[data-inline-edit]") ?? hit
     target.dispatchEvent(
       new MouseEvent("click", {
         bubbles: true,
@@ -1120,6 +1156,15 @@ export function CardBook3D({
     }
     const rect = e.currentTarget.getBoundingClientRect()
     const xFraction = (e.clientX - rect.left) / rect.width
+    // On a closed card, the title edits the cover; anywhere else opens the card.
+    if (editable && !coverOnly && flipTarget <= 0) {
+      const point = sceneRef.current?.pickPage(e.clientX, e.clientY, "right")
+      if (point && point.v >= COVER_TITLE_ZONE) {
+        pendingClickRef.current = point
+        editPageAt(0)
+        return
+      }
+    }
     const page = editable ? pageAtClick(xFraction) : null
     if (page !== null) {
       const side: Side =
@@ -1212,8 +1257,11 @@ export function CardBook3D({
             <div
               ref={editorRef}
               className={cn(
-                "absolute top-0 left-0 origin-top-left transition-opacity duration-200 motion-reduce:transition-none",
-                overlayReady ? "pointer-events-auto opacity-100" : "opacity-0",
+                "absolute top-0 left-0 origin-top-left",
+                // Fade in once in place; vanish at once when the page moves off.
+                overlayReady
+                  ? "pointer-events-auto opacity-100 transition-opacity duration-200 motion-reduce:transition-none"
+                  : "opacity-0",
               )}
               style={{ width: PAGE_WIDTH_PX, height: PAGE_HEIGHT_PX }}
               onKeyDown={(e) => {
@@ -1236,7 +1284,7 @@ export function CardBook3D({
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             {flipTarget <= 0 && !coverOnly ? (
               <>
-                <span>Click the card to open it</span>
+                <span>Click the card to open it, or the title to edit it</span>
                 <Button
                   type="button"
                   size="sm"
@@ -1348,6 +1396,28 @@ function editedPageFrame(progress: number, lift: number, side: Side) {
     at,
     center: at(0.5, 0.5),
     normal: { x: -sin * sign, z: cos * sign },
+  }
+}
+
+/**
+ * A point on a leaf's visible face as the vertex shader bends it: `s` runs from the spine
+ * (0) to the fore-edge (`PAGE_W`); height is unchanged by the bend.
+ */
+function pageSurface(progress: number, curl: number, lift: number, side: Side) {
+  const base = progress * Math.PI
+  const k = (-curl * Math.sin(base)) / PAGE_W
+  const off = (side === "right" ? 1 : -1) * (LEAF_THICKNESS / 2)
+  return (s: number) => {
+    const a = base + k * s
+    const x =
+      Math.abs(k) < 1e-5
+        ? Math.cos(base) * s
+        : (Math.sin(a) - Math.sin(base)) / k
+    const z =
+      Math.abs(k) < 1e-5
+        ? Math.sin(base) * s
+        : (Math.cos(base) - Math.cos(a)) / k
+    return { x: x - Math.sin(a) * off, z: z + lift + Math.cos(a) * off }
   }
 }
 
