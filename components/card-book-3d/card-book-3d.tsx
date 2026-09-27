@@ -17,7 +17,7 @@ import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
 import { mapBoxPoint, quadToMatrix3d, type Point2 } from "@/lib/quad-transform"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, ArrowRight, Pencil, Plus } from "lucide-react"
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -83,6 +83,12 @@ const EDIT_FLATTEN = 0.5
  */
 const EDIT_YAW = 0.26
 const EDIT_PITCH = 0.14
+/** Editing camera speeds (per second): pulling back to change page, and closing in. */
+const EDIT_PULL_BACK_RATE = 6
+const EDIT_CLOSE_IN_RATE = 4
+/** Canvas bleed past the container, as a share of its width and height. */
+const CANVAS_BLEED_X = 0.75
+const CANVAS_BLEED_Y = 0.12
 /** Room around the edited page, as a multiple of its size. */
 const EDIT_FRAME_W = 1.2
 const EDIT_FRAME_H = 1.16
@@ -189,6 +195,14 @@ type LiveState = {
   editScale: number
   /** The edited page's corners on screen (container px), last frame. */
   editQuad: [Point2, Point2, Point2, Point2] | null
+  /**
+   * The page the editing camera is on. It only moves to a newly chosen page once the camera
+   * has pulled back, so switching pages eases out and back in rather than jumping.
+   */
+  shownEdit: { side: Side; leaf: number } | null
+  /** How far the canvas extends past the container on each side (CSS px), so pages that
+   * swing or sit outside the frame are not cut off. */
+  bleed: { l: number; t: number; r: number; b: number }
   pointer: {
     id: number
     startX: number
@@ -281,6 +295,8 @@ export function CardBook3D({
     overlayReady: false,
     editScale: 1,
     editQuad: null,
+    shownEdit: null,
+    bleed: { l: 0, t: 0, r: 0, b: 0 },
     pointer: null,
   })
 
@@ -407,8 +423,8 @@ export function CardBook3D({
     renderer.outputColorSpace = SRGBColorSpace
     renderer.setClearColor(0x000000, 0)
     renderer.domElement.style.display = "block"
-    renderer.domElement.style.width = "100%"
-    renderer.domElement.style.height = "100%"
+    renderer.domElement.style.position = "absolute"
+    renderer.domElement.style.pointerEvents = "none"
     container.appendChild(renderer.domElement)
 
     const scene = new Scene()
@@ -484,19 +500,54 @@ export function CardBook3D({
     scene.add(shadow)
 
     const resize = () => {
-      const { width, height } = container.getBoundingClientRect()
+      const rect = container.getBoundingClientRect()
+      const { width, height } = rect
       if (width <= 0 || height <= 0) return
-      renderer.setSize(width, height, false)
+      // Draw past the container (within the viewport, so the page never scrolls sideways)
+      // while keeping the same framing: the camera still frames the container.
+      const viewportW = document.documentElement.clientWidth
+      const bleed = {
+        l: Math.max(0, Math.min(rect.left, width * CANVAS_BLEED_X)),
+        r: Math.max(
+          0,
+          Math.min(viewportW - rect.right, width * CANVAS_BLEED_X),
+        ),
+        t: height * CANVAS_BLEED_Y,
+        b: height * CANVAS_BLEED_Y,
+      }
+      const fullW = width + bleed.l + bleed.r
+      const fullH = height + bleed.t + bleed.b
+      renderer.setSize(fullW, fullH, false)
+      const style = renderer.domElement.style
+      style.left = `${-bleed.l}px`
+      style.top = `${-bleed.t}px`
+      style.width = `${fullW}px`
+      style.height = `${fullH}px`
+      // Fade out towards the canvas edges so pages running past them soften away rather
+      // than stopping at a hard line.
+      const fade = (px: number) => Math.round(px * 0.85)
+      const mask = [
+        `linear-gradient(to right, transparent, #000 ${fade(bleed.l)}px, #000 calc(100% - ${fade(bleed.r)}px), transparent)`,
+        `linear-gradient(to bottom, transparent, #000 ${fade(bleed.t)}px, #000 calc(100% - ${fade(bleed.b)}px), transparent)`,
+      ].join(", ")
+      style.maskImage = mask
+      style.maskComposite = "intersect"
+      style.setProperty("-webkit-mask-image", mask)
+      style.setProperty("-webkit-mask-composite", "source-in")
       camera.aspect = width / height
+      camera.setViewOffset(width, height, -bleed.l, -bleed.t, fullW, fullH)
       camera.updateProjectionMatrix()
       setNarrow(width / height < 1)
       state.viewW = width
       state.viewH = height
+      state.bleed = bleed
       state.dirty = true
     }
     resize()
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(container)
+    // The bleed depends on where the container sits, which can change without it resizing.
+    window.addEventListener("resize", resize)
 
     const projected = new Vector3()
     const raycaster = new Raycaster()
@@ -511,10 +562,18 @@ export function CardBook3D({
       const leaf = side === "right" ? state.target : state.target - 1
       const u = leaves[leaf]?.material.uniforms
       if (!u || rect.width <= 0 || rect.height <= 0) return null
+      const { bleed } = state
       raycaster.setFromCamera(
         new Vector2(
-          ((clientX - rect.left) / rect.width) * 2 - 1,
-          -((clientY - rect.top) / rect.height) * 2 + 1,
+          ((clientX - rect.left + bleed.l) / (rect.width + bleed.l + bleed.r)) *
+            2 -
+            1,
+          -(
+            (clientY - rect.top + bleed.t) /
+            (rect.height + bleed.t + bleed.b)
+          ) *
+            2 +
+            1,
         ),
         camera,
       )
@@ -574,7 +633,11 @@ export function CardBook3D({
       state.dirty = false
 
       // Turn toward the target spread (drags set `flip` directly).
-      if (!state.pointer?.dragging) {
+      // While editing, a turn waits until the camera has pulled back from the page.
+      const holdTurn = state.editing && state.editBlend > 0.35
+      if (!state.pointer?.dragging && holdTurn) {
+        if (state.target !== state.flip) moving = true
+      } else if (!state.pointer?.dragging) {
         const diff = state.target - state.flip
         if (Math.abs(diff) > 1e-4) {
           const rate = state.reducedMotion ? 30 : 5
@@ -591,26 +654,7 @@ export function CardBook3D({
       const turningLeaf = Math.floor(state.flip)
       const turnT = state.flip - turningLeaf
       const lift = Math.sin(Math.PI * turnT)
-      // Ease between browsing and the head-on editing camera.
-      // Pull back while a page turns under the editing camera, then close in on the new page.
-      const editGoal =
-        state.editing && Math.abs(state.target - state.flip) < 0.02 ? 1 : 0
-      if (Math.abs(editGoal - state.editBlend) > 0.002) {
-        // Back off quickly when a turn starts so the lifting page never fills the view.
-        const rate = state.reducedMotion
-          ? 30
-          : state.editing && editGoal === 0
-            ? 10
-            : 5
-        state.editBlend +=
-          (editGoal - state.editBlend) * (1 - Math.exp(-dt * rate))
-        moving = true
-      } else if (state.editBlend !== editGoal) {
-        state.editBlend = editGoal
-        moving = true
-      }
-
-      // The page being edited (or about to be): the focused side of the target spread.
+      // The page chosen for editing: the focused side of the target spread.
       const editSide: Side =
         state.target <= 0
           ? "right"
@@ -618,6 +662,33 @@ export function CardBook3D({
             ? "left"
             : state.focus
       const editLeaf = editSide === "right" ? state.target : state.target - 1
+      // The camera stays on the page it shows until it has pulled back, then moves over.
+      if (!state.editing || !state.shownEdit || state.editBlend < 0.02) {
+        state.shownEdit = { side: editSide, leaf: editLeaf }
+      }
+      const shown = state.shownEdit
+      const onChosenPage = shown.side === editSide && shown.leaf === editLeaf
+      // Ease between browsing and the editing camera: pull back to move to another page
+      // (and while a page turns), then close in on it.
+      const editGoal =
+        state.editing &&
+        onChosenPage &&
+        Math.abs(state.target - state.flip) < 0.02
+          ? 1
+          : 0
+      if (Math.abs(editGoal - state.editBlend) > 0.002) {
+        const rate = state.reducedMotion
+          ? 30
+          : state.editing && editGoal === 0
+            ? EDIT_PULL_BACK_RATE
+            : EDIT_CLOSE_IN_RATE
+        state.editBlend +=
+          (editGoal - state.editBlend) * (1 - Math.exp(-dt * rate))
+        moving = true
+      } else if (state.editBlend !== editGoal) {
+        state.editBlend = editGoal
+        moving = true
+      }
 
       // Open pages rest slightly raised off the table, settling a little for editing.
       const fold =
@@ -637,7 +708,7 @@ export function CardBook3D({
           i === turningLeaf - 1 ? TURN_SHADOW * lift * turnT : 0
         // The edited page lies flat so the editor maps onto it exactly.
         u.uCurl.value =
-          i === editLeaf
+          i === shown.leaf
             ? PAGE_CURL_RADIANS * (1 - state.editBlend)
             : PAGE_CURL_RADIANS
       })
@@ -731,9 +802,13 @@ export function CardBook3D({
       const browseZ = distance * Math.cos(yaw) * Math.cos(pitch)
 
       // Editing camera: close in on the edited page, seen a little from the side and above.
-      const edited = leaves[editLeaf]?.material.uniforms
+      const edited = leaves[shown.leaf]?.material.uniforms
       const page = edited
-        ? editedPageFrame(edited.uProgress.value, edited.uLift.value, editSide)
+        ? editedPageFrame(
+            edited.uProgress.value,
+            edited.uLift.value,
+            shown.side,
+          )
         : null
       const b = state.editBlend * state.editBlend * (3 - 2 * state.editBlend)
       const mix = (a: number, c: number) => a + (c - a) * b
@@ -743,7 +818,7 @@ export function CardBook3D({
           (PAGE_W * EDIT_FRAME_W) / 2 / (Math.tan(halfFov) * camera.aspect),
         )
         // Swing the page normal towards the spine, then raise it.
-        const yaw = editSide === "right" ? -EDIT_YAW : EDIT_YAW
+        const yaw = shown.side === "right" ? -EDIT_YAW : EDIT_YAW
         const nx = page.normal.x * Math.cos(yaw) + page.normal.z * Math.sin(yaw)
         const nz =
           -page.normal.x * Math.sin(yaw) + page.normal.z * Math.cos(yaw)
@@ -771,9 +846,14 @@ export function CardBook3D({
         camera.updateMatrixWorld()
         const toScreen = (u: number, v: number): Point2 => {
           projected.copy(page.at(u, v)).project(camera)
+          const { bleed } = state
           return {
-            x: ((projected.x + 1) / 2) * state.viewW,
-            y: ((1 - projected.y) / 2) * state.viewH,
+            x:
+              ((projected.x + 1) / 2) * (state.viewW + bleed.l + bleed.r) -
+              bleed.l,
+            y:
+              ((1 - projected.y) / 2) * (state.viewH + bleed.t + bleed.b) -
+              bleed.t,
           }
         }
         const quad = [
@@ -809,7 +889,10 @@ export function CardBook3D({
       }
 
       const ready =
-        state.editing && state.editBlend === 1 && state.flip === state.target
+        state.editing &&
+        onChosenPage &&
+        state.editBlend === 1 &&
+        state.flip === state.target
       if (ready !== state.overlayReady) {
         state.overlayReady = ready
         setOverlayReady(ready)
@@ -820,6 +903,7 @@ export function CardBook3D({
     return () => {
       cancelAnimationFrame(frame)
       resizeObserver.disconnect()
+      window.removeEventListener("resize", resize)
       reducedMotionQuery.removeEventListener("change", onReducedMotion)
       sceneRef.current = null
       leaves.forEach(({ material }) => material.dispose())
@@ -997,23 +1081,18 @@ export function CardBook3D({
     const editor = editorRef.current
     const container = containerRef.current
     if (!pending || !quad || !editor || !container) return
+    const x = pending.u * PAGE_WIDTH_PX
+    const y = pending.v * PAGE_HEIGHT_PX
     const rect = container.getBoundingClientRect()
-    const point = mapBoxPoint(
-      PAGE_WIDTH_PX,
-      PAGE_HEIGHT_PX,
-      quad,
-      pending.u * PAGE_WIDTH_PX,
-      pending.v * PAGE_HEIGHT_PX,
-    )
+    const point = mapBoxPoint(PAGE_WIDTH_PX, PAGE_HEIGHT_PX, quad, x, y)
     const clientX = rect.left + point.x
     const clientY = rect.top + point.y
-    const hit = document.elementFromPoint(clientX, clientY)
-    if (!hit || !editor.contains(hit)) return
-    // Anywhere on a note (its padding, GIF or chrome) means its text.
+    // Text fields are found from the editor's own layout rather than by hit testing the
+    // transformed editor, which browsers do not all get right straight after it moves.
     const target =
-      hit
-        .closest("[data-draggable-note]")
-        ?.querySelector("[data-inline-edit]") ?? hit
+      nearestTextField(editor, x, y) ??
+      document.elementFromPoint(clientX, clientY)
+    if (!target || !editor.contains(target)) return
     target.dispatchEvent(
       new MouseEvent("click", {
         bubbles: true,
@@ -1282,21 +1361,7 @@ export function CardBook3D({
         ) : null}
         {editable && editPage === null ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            {flipTarget <= 0 && !coverOnly ? (
-              <>
-                <span>Click the card to open it, or the title to edit it</span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="pointer-events-auto h-7 rounded-full px-2.5 text-xs"
-                  onClick={() => editPageAt(0)}
-                >
-                  <Pencil />
-                  Edit cover
-                </Button>
-              </>
-            ) : (
+            {flipTarget <= 0 && !coverOnly ? null : (
               <span>Click any text to edit it</span>
             )}
           </div>
@@ -1397,6 +1462,45 @@ function editedPageFrame(progress: number, lift: number, side: Side) {
     center: at(0.5, 0.5),
     normal: { x: -sin * sign, z: cos * sign },
   }
+}
+
+/** Slack around a text field (editor px) within which a click still counts as on it. */
+const TEXT_FIELD_SLOP = 14
+
+/**
+ * The inline text field at (or within a few px of) a point in the editor's own layout, found
+ * from offsets so it does not depend on hit testing through the 3D transform.
+ */
+function nearestTextField(
+  editor: HTMLElement,
+  x: number,
+  y: number,
+): HTMLElement | null {
+  let best: HTMLElement | null = null
+  let bestDistance = TEXT_FIELD_SLOP
+  for (const field of editor.querySelectorAll<HTMLElement>(
+    "[data-inline-edit]",
+  )) {
+    // Anywhere on a note (its padding or GIF) counts as its text.
+    const box = field.closest<HTMLElement>("[data-draggable-note]") ?? field
+    let left = 0
+    let top = 0
+    let node: HTMLElement | null = box
+    while (node && node !== editor) {
+      left += node.offsetLeft
+      top += node.offsetTop
+      node = node.offsetParent as HTMLElement | null
+    }
+    if (node !== editor) continue
+    const dx = Math.max(left - x, 0, x - (left + box.offsetWidth))
+    const dy = Math.max(top - y, 0, y - (top + box.offsetHeight))
+    const distance = Math.hypot(dx, dy)
+    if (distance <= bestDistance) {
+      best = field
+      bestDistance = distance
+    }
+  }
+  return best
 }
 
 /**
