@@ -15,9 +15,9 @@ import {
 } from "@/lib/card-book"
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
-import { quadToMatrix3d, type Point2 } from "@/lib/quad-transform"
+import { mapBoxPoint, quadToMatrix3d, type Point2 } from "@/lib/quad-transform"
 import { cn } from "@/lib/utils"
-import { ArrowLeft, ArrowRight, Check, Pencil, Plus } from "lucide-react"
+import { ArrowLeft, ArrowRight, Pencil, Plus } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -37,7 +37,9 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   Scene,
+  Raycaster,
   SRGBColorSpace,
+  Vector2,
   Vector3,
   WebGLRenderer,
 } from "three"
@@ -84,6 +86,12 @@ const EDIT_PITCH = 0.14
 /** Room around the edited page, as a multiple of its size. */
 const EDIT_FRAME_W = 1.2
 const EDIT_FRAME_H = 1.16
+/**
+ * Focus in these counts as still editing: side panels that format the selected note (marked
+ * by the host) and popups the editor portals out of the card.
+ */
+const EDITOR_CHROME_SELECTOR =
+  '[data-card-editor-chrome],[role="dialog"],[data-regenerate-area],[data-radix-popper-content-wrapper]'
 /** Peak darkening a lifted page casts on the page beneath it. */
 const TURN_SHADOW = 0.38
 const CAMERA_FOV = 30
@@ -145,9 +153,14 @@ export type PageEditorArgs = {
 
 type Leaf = { mesh: Mesh; material: PageMaterial }
 
+/** A point on a page as fractions of its width and height from the top-left. */
+type PagePoint = { u: number; v: number }
+
 type SceneHandle = {
   faceCanvases: HTMLCanvasElement[]
   faceTextures: CanvasTexture[]
+  /** Where a screen point lands on the visible page on `side`, if it does. */
+  pickPage: (clientX: number, clientY: number, side: Side) => PagePoint | null
 }
 
 /** Mutable per-frame state the render loop reads without re-rendering React. */
@@ -172,6 +185,8 @@ type LiveState = {
   overlayReady: boolean
   /** On-screen px per editor px last reported to React. */
   editScale: number
+  /** The edited page's corners on screen (container px), last frame. */
+  editQuad: [Point2, Point2, Point2, Point2] | null
   pointer: {
     id: number
     startX: number
@@ -263,6 +278,7 @@ export function CardBook3D({
     viewH: 0,
     overlayReady: false,
     editScale: 1,
+    editQuad: null,
     pointer: null,
   })
 
@@ -423,7 +439,6 @@ export function CardBook3D({
       texture.anisotropy = anisotropy
       return texture
     })
-    sceneRef.current = { faceCanvases, faceTextures }
     paintedRef.current = new Map()
 
     // A thin box so pages have real edges; the shader bends it around the spine.
@@ -482,6 +497,47 @@ export function CardBook3D({
     resizeObserver.observe(container)
 
     const projected = new Vector3()
+    const raycaster = new Raycaster()
+    // Pages lie close enough to flat at rest to pick them as planes.
+    const pickPage = (
+      clientX: number,
+      clientY: number,
+      side: Side,
+    ): PagePoint | null => {
+      const rect = container.getBoundingClientRect()
+      const leaf = side === "right" ? state.target : state.target - 1
+      const u = leaves[leaf]?.material.uniforms
+      if (!u || rect.width <= 0 || rect.height <= 0) return null
+      const page = editedPageFrame(u.uProgress.value, u.uLift.value, side)
+      const origin = page.at(0, 0)
+      const across = page.at(1, 0).sub(origin)
+      const down = page.at(0, 1).sub(origin)
+      const normal = new Vector3().crossVectors(across, down)
+      raycaster.setFromCamera(
+        new Vector2(
+          ((clientX - rect.left) / rect.width) * 2 - 1,
+          -((clientY - rect.top) / rect.height) * 2 + 1,
+        ),
+        camera,
+      )
+      const { ray } = raycaster
+      const denom = normal.dot(ray.direction)
+      if (Math.abs(denom) < 1e-9) return null
+      const t = normal.dot(origin.clone().sub(ray.origin)) / denom
+      if (t < 0) return null
+      const hit = ray.origin
+        .clone()
+        .addScaledVector(ray.direction, t)
+        .sub(origin)
+      const point = {
+        u: hit.dot(across) / across.lengthSq(),
+        v: hit.dot(down) / down.lengthSq(),
+      }
+      return point.u >= 0 && point.u <= 1 && point.v >= 0 && point.v <= 1
+        ? point
+        : null
+    }
+    sceneRef.current = { faceCanvases, faceTextures, pickPage }
     let frame = 0
     let last = performance.now()
     let lastGifPaint = 0
@@ -695,6 +751,7 @@ export function CardBook3D({
           toScreen(1, 1),
           toScreen(0, 1),
         ] as const
+        state.editQuad = [...quad]
         editorEl.style.transform = quadToMatrix3d(
           PAGE_WIDTH_PX,
           PAGE_HEIGHT_PX,
@@ -809,6 +866,10 @@ export function CardBook3D({
     [leafCount],
   )
 
+  /** The click that opened the editor, replayed on the editor once it is in place. */
+  const pendingClickRef = useRef<PagePoint | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+
   /** Open a card page for editing (null closes the editor). */
   const editPageAt = useCallback(
     (page: number | null) => {
@@ -821,6 +882,7 @@ export function CardBook3D({
         ) {
           active.blur()
         }
+        pendingClickRef.current = null
         setEditPage(null)
         return
       }
@@ -830,6 +892,102 @@ export function CardBook3D({
     },
     [totalPages, goTo],
   )
+
+  // There is no "done" step: editing lasts while focus stays in the editor (or its pager and
+  // formatting panels) and ends when the user clicks or tabs away from it.
+  const editPageAtRef = useRef(editPageAt)
+  useEffect(() => {
+    editPageAtRef.current = editPageAt
+  }, [editPageAt])
+  const isEditing = editPage !== null
+  useEffect(() => {
+    if (!isEditing) return
+    let pointerDown = false
+    let onNote = false
+    let timer = 0
+    const inEditor = (node: EventTarget | null) =>
+      node instanceof Node && Boolean(editorRef.current?.contains(node))
+    /** The card's own controls (pager) and panels or popups that belong to the editor. */
+    const inChrome = (node: EventTarget | null) =>
+      node instanceof Element &&
+      !inEditor(node) &&
+      (node !== containerRef.current && Boolean(rootRef.current?.contains(node))
+        ? true
+        : node.closest(EDITOR_CHROME_SELECTOR) !== null)
+    // Wait a tick: clicking from one field to another blurs the first before focusing the next.
+    const check = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        if (pointerDown || onNote || pendingClickRef.current) return
+        const active = document.activeElement
+        if (inEditor(active) || inChrome(active)) return
+        editPageAtRef.current(null)
+      }, 0)
+    }
+    let downInChrome = false
+    const onPointerDown = (e: PointerEvent) => {
+      pointerDown = true
+      downInChrome = inChrome(e.target)
+      // Dragging or resizing a note keeps it selected even though nothing is focused.
+      onNote =
+        inEditor(e.target) &&
+        e.target instanceof Element &&
+        e.target.closest("[data-draggable-note]") !== null
+    }
+    const onPointerUp = () => {
+      pointerDown = false
+      // Pager clicks move between pages while editing (a button may disable and drop focus).
+      if (!downInChrome) check()
+    }
+    const onFocusOut = (e: FocusEvent) => {
+      if (pointerDown || inChrome(e.target)) return
+      check()
+    }
+    document.addEventListener("pointerdown", onPointerDown, true)
+    document.addEventListener("pointerup", onPointerUp, true)
+    document.addEventListener("pointercancel", onPointerUp, true)
+    document.addEventListener("focusout", onFocusOut, true)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener("pointerdown", onPointerDown, true)
+      document.removeEventListener("pointerup", onPointerUp, true)
+      document.removeEventListener("pointercancel", onPointerUp, true)
+      document.removeEventListener("focusout", onFocusOut, true)
+    }
+  }, [isEditing])
+
+  // Replay the click that opened a page on the editor, so one click both brings the page in
+  // and starts editing whatever was under the pointer (a headline, a note, a spot to place one).
+  useEffect(() => {
+    if (!overlayReady) return
+    const pending = pendingClickRef.current
+    pendingClickRef.current = null
+    const quad = live.current.editQuad
+    const editor = editorRef.current
+    const container = containerRef.current
+    if (!pending || !quad || !editor || !container) return
+    const rect = container.getBoundingClientRect()
+    const point = mapBoxPoint(
+      PAGE_WIDTH_PX,
+      PAGE_HEIGHT_PX,
+      quad,
+      pending.u * PAGE_WIDTH_PX,
+      pending.v * PAGE_HEIGHT_PX,
+    )
+    const clientX = rect.left + point.x
+    const clientY = rect.top + point.y
+    const target = document.elementFromPoint(clientX, clientY)
+    if (!target || !editor.contains(target)) return
+    target.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX,
+        clientY,
+      }),
+    )
+  }, [overlayReady])
 
   // Keep the edited page in range if pages are removed; open a newly added page.
   const pendingAddedPageRef = useRef<number | null>(null)
@@ -963,8 +1121,19 @@ export function CardBook3D({
     const rect = e.currentTarget.getBoundingClientRect()
     const xFraction = (e.clientX - rect.left) / rect.width
     const page = editable ? pageAtClick(xFraction) : null
-    if (page !== null) editPageAt(page)
-    else step(xFraction < 0.5 ? -1 : 1)
+    if (page !== null) {
+      const side: Side =
+        flipTarget <= 0
+          ? "right"
+          : narrow
+            ? currentSide
+            : xFraction < 0.5
+              ? "left"
+              : "right"
+      pendingClickRef.current =
+        sceneRef.current?.pickPage(e.clientX, e.clientY, side) ?? null
+      editPageAt(page)
+    } else step(xFraction < 0.5 ? -1 : 1)
   }
 
   const canEditPrev = editPage !== null && editPage > 0
@@ -996,7 +1165,10 @@ export function CardBook3D({
   if (webglFailed) return <>{fallback}</>
 
   return (
-    <div className={cn("flex w-full flex-col items-center gap-6", className)}>
+    <div
+      ref={rootRef}
+      className={cn("flex w-full flex-col items-center gap-6", className)}
+    >
       <div className="relative w-full">
         <div
           ref={containerRef}
@@ -1004,7 +1176,7 @@ export function CardBook3D({
           aria-roledescription="3D card"
           aria-label={
             editable
-              ? `Card for ${recipientName}. Click a page to edit it; use the arrow keys to move between pages and Escape to finish.`
+              ? `Card for ${recipientName}. Click any text on a page to edit it; use the arrow keys to move between pages and Escape to finish.`
               : `Card for ${recipientName}. Use the arrow keys or drag to turn pages.`
           }
           tabIndex={0}
@@ -1077,7 +1249,7 @@ export function CardBook3D({
                 </Button>
               </>
             ) : (
-              <span>Click a page to edit it</span>
+              <span>Click any text to edit it</span>
             )}
           </div>
         ) : null}
@@ -1093,34 +1265,25 @@ export function CardBook3D({
         >
           <ArrowLeft />
         </Button>
-        {editPage !== null ? (
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => editPageAt(null)}
-            className="rounded-full"
-          >
-            <Check />
-            Done
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            {Array.from({ length: leafCount + 1 }).map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => goTo(i, i === 0 ? "right" : "left")}
-                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
-                  i === flipTarget
-                    ? "bg-primary"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                }`}
-                aria-label={spreadLabel(i, leafCount)}
-                aria-current={i === flipTarget ? "true" : undefined}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {Array.from({ length: leafCount + 1 }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                if (editPage !== null) editPageAt(null)
+                goTo(i, i === 0 ? "right" : "left")
+              }}
+              className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                i === flipTarget
+                  ? "bg-primary"
+                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              }`}
+              aria-label={spreadLabel(i, leafCount)}
+              aria-current={i === flipTarget ? "true" : undefined}
+            />
+          ))}
+        </div>
         <Button
           variant="outline"
           size="icon-sm"

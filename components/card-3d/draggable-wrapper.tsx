@@ -631,6 +631,7 @@ export function DraggableWrapper({
   return (
     <div
       ref={containerRef}
+      data-draggable-note
       className={cn("relative", lockTouchAction && "touch-none select-none")}
       style={
         isPositioned

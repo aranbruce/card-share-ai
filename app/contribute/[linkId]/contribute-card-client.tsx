@@ -742,8 +742,8 @@ function ContributeCardPageInner({
   const instructionLine = card.sent_at
     ? "The card may already be with the recipient. You can still edit your note from this device"
     : canPlaceNewGuestMessage
-      ? "Open the card, click an inside page, then click anywhere on it to place your note"
-      : "Open the card and click the page with your note to edit it"
+      ? "Open the card and click anywhere on an inside page to place your note"
+      : "Open the card and click your note to edit it"
 
   // The flat editor, used on its own without WebGL and embedded over the 3D page otherwise.
   const renderEditor = (overrides: Partial<Card3DProps>) => (
