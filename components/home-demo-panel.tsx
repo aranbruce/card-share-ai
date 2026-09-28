@@ -71,6 +71,9 @@ const DEMO_NOTES: SampleNote[] = [
   { message: "Have the best day! Sam x", font: "pacifico", color: "#2f7d5b" },
 ]
 
+/** Rounded fore-edge corners on the demo card, in page widths. */
+const DEMO_CORNER = 0.03
+
 /** Cover hue of a birthday card, as on the create page. */
 const BIRTHDAY_HUE = 18
 
@@ -140,16 +143,7 @@ export function HomeDemoPanel() {
       <div className="grid min-h-[620px] grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
         {/* The create page's details form, filled in */}
         <aside className="flex flex-col border-r border-border bg-card px-7 py-6 text-left">
-          <h2 className="text-[30px] leading-[1.05] font-semibold tracking-[-0.03em]">
-            Tell us
-            <br />
-            <span className="text-muted-foreground">about who</span>
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            You can regenerate anything after this step
-          </p>
-
-          <div className="mt-6 flex flex-1 flex-col gap-4">
+          <div className="flex flex-1 flex-col gap-4">
             <div>
               <label
                 htmlFor="demo-recipient"
@@ -264,12 +258,13 @@ export function HomeDemoPanel() {
         </aside>
 
         {/* The create page's live preview */}
-        <div className="flex min-w-0 items-center justify-center bg-background px-8 py-8">
+        <div className="flex min-w-0 items-center justify-center overflow-hidden bg-background px-8 py-8">
           <div className="w-full max-w-[564px] text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview
             </p>
-            <div className="mx-auto mt-5 flex justify-center">
+            {/* The card floats gently, before and after it's made (off for reduced motion). */}
+            <div className="demo-float mx-auto mt-5 flex justify-center">
               {phase === "done" && result ? (
                 <SampleCard3D
                   id={`demo-${result.imageUrl}`}
@@ -280,12 +275,15 @@ export function HomeDemoPanel() {
                   notes={DEMO_NOTES}
                   showPager={false}
                   frameClassName="aspect-square"
+                  idleSway
+                  cornerRadius={DEMO_CORNER}
                 />
               ) : (
                 // Before the card exists: the same frame and closed pose as the 3D card, so it
                 // takes over without moving.
                 <div className="relative aspect-square w-full">
                   <ClosedCardCover
+                    cornerRadius={DEMO_CORNER}
                     headline=""
                     recipientName="Mira"
                     coverBackground={`linear-gradient(135deg, oklch(0.9 0.08 ${BIRTHDAY_HUE}) 0%, oklch(0.76 0.13 ${BIRTHDAY_HUE - 15}) 100%)`}

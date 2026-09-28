@@ -20,6 +20,7 @@ const vertexShader = /* glsl */ `
   varying vec3 vViewPosition;
   varying float vSpine;
   varying float vFace;
+  varying float vPageY;
 
   const float PI = 3.141592653589793;
 
@@ -45,6 +46,7 @@ const vertexShader = /* glsl */ `
     vNormal = normalize(normalMatrix * n);
     vSpine = s / uWidth;
     vFace = normal.z;
+    vPageY = position.y;
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
     vViewPosition = mvPosition.xyz;
     gl_Position = projectionMatrix * mvPosition;
@@ -59,14 +61,28 @@ const fragmentShader = /* glsl */ `
   uniform float uGlossBack;
   uniform float uShadowFront;
   uniform float uShadowBack;
+  uniform float uCorner;
+  uniform float uWidth;
+  uniform float uHalfHeight;
 
   varying vec2 vUv;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   varying float vSpine;
   varying float vFace;
+  varying float vPageY;
 
   void main() {
+    // Rounded fore-edge corners (the spine stays square, like a folded card). uCorner is
+    // the radius in page widths, 0 for none.
+    if (uCorner > 0.0) {
+      // The paper edges light darker than the faces and read as a hairline against the
+      // rounded corner, so rounded cards show their faces only.
+      if (abs(vFace) < 0.5) discard;
+      float r = uCorner * uWidth;
+      vec2 p = vec2((1.0 - vSpine) * uWidth, uHalfHeight - abs(vPageY));
+      if (p.x < r && p.y < r && length(vec2(r) - p) > r) discard;
+    }
     vec3 n = normalize(vNormal);
     vec3 color;
     float gloss = 0.0;
@@ -125,6 +141,8 @@ export type PageMaterial = ShaderMaterial & {
     uGlossBack: { value: number }
     uShadowFront: { value: number }
     uShadowBack: { value: number }
+    uCorner: { value: number }
+    uHalfHeight: { value: number }
   }
 }
 
@@ -151,6 +169,8 @@ export function createPageMaterial(
       uGlossBack: { value: gloss.back },
       uShadowFront: { value: 0 },
       uShadowBack: { value: 0 },
+      uCorner: { value: 0 },
+      uHalfHeight: { value: 0.5 },
     },
   }) as PageMaterial
 }
