@@ -9,7 +9,7 @@ import { Inbox, Plus, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { apiDelete } from "@/lib/api-client"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
-import { pastelHueFor } from "@/lib/card-pastel"
+import { pastelHuesFor } from "@/lib/card-pastel"
 import type { OwnerCardListItem } from "@/lib/owner-cards"
 
 const TYPE_LABEL: Record<string, string> = {
@@ -255,6 +255,7 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
     activeFilter === "all"
       ? cards
       : cards.filter((c) => c.card_type === activeFilter)
+  const pastelHues = pastelHuesFor(filteredCards.map((c) => c.id))
 
   const typeCounts = cards.reduce<Record<string, number>>((acc, c) => {
     acc[c.card_type] = (acc[c.card_type] || 0) + 1
@@ -409,7 +410,7 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
                       className="card-pastel card-preview-aspect relative overflow-hidden"
                       style={
                         {
-                          "--pastel-hue": pastelHueFor(card.id),
+                          "--pastel-hue": pastelHues[index],
                         } as CSSProperties
                       }
                     >
