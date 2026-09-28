@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 import {
+  cardPreviewImagePath,
   getCardPreviewByLinkId,
   parseCardPreviewVariant,
 } from "@/lib/card-preview"
@@ -21,6 +22,19 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
     const card = await getCardPreviewByLinkId(linkId)
     if (card) {
+      // Only the card's current URL is rendered, so varying the query can't bypass the
+      // cache and outdated links show the latest version.
+      const canonical = cardPreviewImagePath(linkId, variant, card)
+      const requested = `${request.nextUrl.pathname}${request.nextUrl.search}`
+      if (requested !== canonical) {
+        const redirect = NextResponse.redirect(new URL(canonical, request.url))
+        redirect.headers.set(
+          "Cache-Control",
+          "public, max-age=300, s-maxage=300",
+        )
+        return redirect
+      }
+
       const image = await renderCardPreviewImage({
         id: card.id,
         variant,
@@ -29,8 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         headline: card.copy_headline,
         cover: await loadPreviewCover(card.image_url),
       })
-      // The URL carries a version of the card's content, so edits get a new URL; this only
-      // bounds how long an unversioned or outdated URL shows the old image.
+      // The URL carries a version of the card's content, so edits get a new URL.
       image.headers.set(
         "Cache-Control",
         "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
