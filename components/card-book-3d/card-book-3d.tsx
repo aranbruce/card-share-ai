@@ -599,7 +599,7 @@ export function CardBook3D({
         PAGE_W,
         { front: i === 0 ? COVER_GLOSS : PAGE_GLOSS, back: PAGE_GLOSS },
       )
-      material.uniforms.uAspect.value = PAGE_H / PAGE_W
+      material.uniforms.uHalfHeight.value = PAGE_H / 2
       const mesh = new Mesh(leafGeometry, material)
       // Vertices move in the shader; the static bounds would cull turning pages.
       mesh.frustumCulled = false

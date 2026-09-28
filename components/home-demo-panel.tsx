@@ -258,7 +258,7 @@ export function HomeDemoPanel() {
         </aside>
 
         {/* The create page's live preview */}
-        <div className="flex min-w-0 items-center justify-center bg-background px-8 py-8">
+        <div className="flex min-w-0 items-center justify-center overflow-hidden bg-background px-8 py-8">
           <div className="w-full max-w-[564px] text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview

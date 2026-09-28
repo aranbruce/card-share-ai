@@ -20,6 +20,7 @@ const vertexShader = /* glsl */ `
   varying vec3 vViewPosition;
   varying float vSpine;
   varying float vFace;
+  varying float vPageY;
 
   const float PI = 3.141592653589793;
 
@@ -45,6 +46,7 @@ const vertexShader = /* glsl */ `
     vNormal = normalize(normalMatrix * n);
     vSpine = s / uWidth;
     vFace = normal.z;
+    vPageY = position.y;
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
     vViewPosition = mvPosition.xyz;
     gl_Position = projectionMatrix * mvPosition;
@@ -60,20 +62,23 @@ const fragmentShader = /* glsl */ `
   uniform float uShadowFront;
   uniform float uShadowBack;
   uniform float uCorner;
-  uniform float uAspect;
+  uniform float uWidth;
+  uniform float uHalfHeight;
 
   varying vec2 vUv;
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   varying float vSpine;
   varying float vFace;
+  varying float vPageY;
 
   void main() {
-    // Rounded fore-edge corners (the spine stays square, like a folded card). Distances are
-    // in page widths; uCorner is the radius, 0 for square corners.
-    if (uCorner > 0.0 && abs(vFace) > 0.5) {
-      vec2 p = vec2(1.0 - vSpine, min(vUv.y, 1.0 - vUv.y) * uAspect);
-      if (p.x < uCorner && p.y < uCorner && length(vec2(uCorner) - p) > uCorner) discard;
+    // Rounded fore-edge corners (the spine stays square, like a folded card), cut through
+    // the faces and the paper edges alike. uCorner is the radius in page widths, 0 for none.
+    if (uCorner > 0.0) {
+      float r = uCorner * uWidth;
+      vec2 p = vec2((1.0 - vSpine) * uWidth, uHalfHeight - abs(vPageY));
+      if (p.x < r && p.y < r && length(vec2(r) - p) > r) discard;
     }
     vec3 n = normalize(vNormal);
     vec3 color;
@@ -134,7 +139,7 @@ export type PageMaterial = ShaderMaterial & {
     uShadowFront: { value: number }
     uShadowBack: { value: number }
     uCorner: { value: number }
-    uAspect: { value: number }
+    uHalfHeight: { value: number }
   }
 }
 
@@ -162,7 +167,7 @@ export function createPageMaterial(
       uShadowFront: { value: 0 },
       uShadowBack: { value: 0 },
       uCorner: { value: 0 },
-      uAspect: { value: 1 },
+      uHalfHeight: { value: 0.5 },
     },
   }) as PageMaterial
 }
