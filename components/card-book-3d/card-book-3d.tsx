@@ -1338,6 +1338,15 @@ export function CardBook3D({
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return
+    // After a tap, phones send emulated mouse events that move focus, which would take it
+    // straight back off a field the tap opens for editing (see openPageAt). Taps on the card
+    // itself (not in the editor) are handled here, so skip them; scrolling is unaffected.
+    if (
+      e.pointerType !== "mouse" &&
+      !(e.target instanceof Node && editorRef.current?.contains(e.target))
+    ) {
+      e.preventDefault()
+    }
     live.current.pointer = {
       id: e.pointerId,
       startX: e.clientX,
@@ -1447,30 +1456,34 @@ export function CardBook3D({
     flushSync(() => editPageAt(page))
     const editor = editorRef.current
     if (!point || !editor) return
-    const field = nearestTextField(
-      editor,
-      point.u * PAGE_WIDTH_PX,
-      point.v * PAGE_HEIGHT_PX,
-    )
-    if (!field) return
-    pendingClickRef.current = null
-    // The editor has not been mapped onto the page yet, so lay it out flat for a moment and
-    // click at the matching point: the field puts its caret where the page was clicked.
+    // The editor has not been mapped onto the page yet, so lay it out flat for a moment to
+    // find the field under the point and click it there: the field puts its caret where the
+    // page was clicked.
     const transform = editor.style.transform
     editor.style.transform = "none"
-    const box = editor.getBoundingClientRect()
-    flushSync(() => {
-      field.dispatchEvent(
-        new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          clientX: box.left + point.u * PAGE_WIDTH_PX,
-          clientY: box.top + point.v * PAGE_HEIGHT_PX,
-        }),
+    try {
+      const field = nearestTextField(
+        editor,
+        point.u * PAGE_WIDTH_PX,
+        point.v * PAGE_HEIGHT_PX,
       )
-    })
-    editor.style.transform = transform
+      if (!field) return
+      pendingClickRef.current = null
+      const box = editor.getBoundingClientRect()
+      flushSync(() => {
+        field.dispatchEvent(
+          new MouseEvent("click", {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: box.left + point.u * PAGE_WIDTH_PX,
+            clientY: box.top + point.v * PAGE_HEIGHT_PX,
+          }),
+        )
+      })
+    } finally {
+      editor.style.transform = transform
+    }
   }
 
   const canEditPrev = editPage !== null && editPage > 0
@@ -1693,24 +1706,37 @@ function nearestTextField(
   x: number,
   y: number,
 ): HTMLElement | null {
+  // Measured on screen with the editor laid out flat for a moment: notes sit in different
+  // positioned wrappers, so layout offsets do not all lead back to the editor.
+  const transform = editor.style.transform
+  editor.style.transform = "none"
+  try {
+    return nearestFieldInFlatEditor(editor, x, y)
+  } finally {
+    editor.style.transform = transform
+  }
+}
+
+function nearestFieldInFlatEditor(
+  editor: HTMLElement,
+  x: number,
+  y: number,
+): HTMLElement | null {
+  const origin = editor.getBoundingClientRect()
   let best: HTMLElement | null = null
   let bestDistance = TEXT_FIELD_SLOP
   for (const field of editor.querySelectorAll<HTMLElement>(
     "[data-inline-edit]",
   )) {
     // Anywhere on a note (its padding or GIF) counts as its text.
-    const box = field.closest<HTMLElement>("[data-draggable-note]") ?? field
-    let left = 0
-    let top = 0
-    let node: HTMLElement | null = box
-    while (node && node !== editor) {
-      left += node.offsetLeft
-      top += node.offsetTop
-      node = node.offsetParent as HTMLElement | null
-    }
-    if (node !== editor) continue
-    const dx = Math.max(left - x, 0, x - (left + box.offsetWidth))
-    const dy = Math.max(top - y, 0, y - (top + box.offsetHeight))
+    const box = (
+      field.closest<HTMLElement>("[data-draggable-note]") ?? field
+    ).getBoundingClientRect()
+    if (box.width === 0 && box.height === 0) continue
+    const left = box.left - origin.left
+    const top = box.top - origin.top
+    const dx = Math.max(left - x, 0, x - (left + box.width))
+    const dy = Math.max(top - y, 0, y - (top + box.height))
     const distance = Math.hypot(dx, dy)
     if (distance <= bestDistance) {
       best = field
