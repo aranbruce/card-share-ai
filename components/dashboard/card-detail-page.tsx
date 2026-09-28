@@ -25,9 +25,13 @@ import {
 import { ArrowLeft, Paperclip, Send, Sparkles, UserPlus, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 import { NotePanel } from "@/components/note-panel"
+import { fullCardPageCount } from "@/components/card-3d/card-page-spread"
 import { MessageFontVariables } from "@/components/message-font-variables"
 import posthog from "posthog-js"
 import type { OwnerCardDetail, OwnerCardDetailCard } from "@/lib/owner-cards"
+
+/** Every card has at least two inside pages (the first spread), from creation. */
+const MIN_INSIDE_PAGES = fullCardPageCount(0) - 1
 
 function CardDetailLayout({
   children,
@@ -195,7 +199,9 @@ export function CardDetailPageClient({
             onGifChange={(url) => {
               if (url === null) activeContribution?.onGifClear?.()
             }}
-            totalInnerPages={activeContribution?.totalInnerPages ?? 1}
+            totalInnerPages={
+              activeContribution?.totalInnerPages ?? MIN_INSIDE_PAGES
+            }
             footer={
               <div className="mt-auto flex flex-col gap-6">
                 <div className="h-px bg-border" />
