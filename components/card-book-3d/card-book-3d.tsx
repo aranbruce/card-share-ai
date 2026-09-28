@@ -1583,13 +1583,6 @@ export function CardBook3D({
             </div>
           </div>
         ) : null}
-        {editable && editPage === null ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            {flipTarget <= 0 && !coverOnly ? null : (
-              <span>Click any text to edit it</span>
-            )}
-          </div>
-        ) : null}
       </div>
 
       <div className="flex items-center justify-center gap-4">
