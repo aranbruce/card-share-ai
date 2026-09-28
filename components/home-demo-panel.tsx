@@ -140,16 +140,7 @@ export function HomeDemoPanel() {
       <div className="grid min-h-[620px] grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
         {/* The create page's details form, filled in */}
         <aside className="flex flex-col border-r border-border bg-card px-7 py-6 text-left">
-          <h2 className="text-[30px] leading-[1.05] font-semibold tracking-[-0.03em]">
-            Tell us
-            <br />
-            <span className="text-muted-foreground">about Mira</span>
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            You can regenerate anything after this step
-          </p>
-
-          <div className="mt-6 flex flex-1 flex-col gap-4">
+          <div className="flex flex-1 flex-col gap-4">
             <div>
               <label
                 htmlFor="demo-recipient"
