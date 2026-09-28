@@ -1,9 +1,9 @@
 "use client"
 
 import { lazy, Suspense, useSyncExternalStore, type ComponentType } from "react"
-import { CardLoading3D } from "@/components/card-loading-3d"
 import { cn } from "@/lib/utils"
 import type { CardBook3DProps } from "./card-book-3d"
+import { ClosedCardCover } from "./closed-card-cover"
 import { cardBookFrameClass } from "./frame"
 
 /** Past this, a slow or stalled download shows the flat card rather than waiting on. */
@@ -38,12 +38,14 @@ if (typeof window !== "undefined") void loadCardBook3D()
 const LazyCardBook3D = lazy(loadCardBook3D)
 
 /**
- * Shown on the server and while the 3D card's code loads: a card with this card's cover and
- * title, in a frame the same size as the real one so nothing shifts when it arrives.
+ * Shown on the server and while the 3D card's code loads: the closed card's cover, drawn
+ * exactly where the 3D card will draw it, in a frame the same size as the real one, so nothing
+ * moves or resizes when it takes over.
  */
 function CardBook3DPlaceholder({
   imageUrl,
   headline,
+  recipientName,
   coverOnly = false,
   renderPageEditor,
   className,
@@ -55,15 +57,14 @@ function CardBook3DPlaceholder({
     >
       <div
         className={cn(
-          "flex w-full items-center justify-center",
+          "relative w-full",
           cardBookFrameClass(coverOnly, Boolean(renderPageEditor)),
         )}
       >
-        <CardLoading3D
-          variant="placeholder"
+        <ClosedCardCover
           imageUrl={imageUrl || null}
-          label={headline}
-          className="h-full max-w-none"
+          headline={headline}
+          recipientName={recipientName}
         />
       </div>
       {/* Room for the pager underneath the real card. */}
