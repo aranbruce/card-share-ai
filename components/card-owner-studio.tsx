@@ -14,9 +14,10 @@ import { ArrowLeft } from "lucide-react"
 import { EmptyContent } from "@/components/empty-content"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Card3D } from "@/components/card-3d"
+import { Card3D, type Card3DProps } from "@/components/card-3d"
+import { CardBook3D } from "@/components/card-book-3d"
+import { CardLoading3D } from "@/components/card-loading-3d"
 import type { Contribution } from "@/lib/card-body"
-import { Skeleton } from "@/components/ui/skeleton"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { DEFAULT_PRESET_TEXT_COLOR } from "@/lib/message-text-color-presets"
 import {
@@ -565,7 +566,7 @@ export const CardOwnerStudio = forwardRef<
   }, [loading, creatorRow, card, cardId, setContributions])
 
   if (loading) {
-    return <Skeleton className="card-cover-skeleton" />
+    return <CardLoading3D label="Opening your card…" className="mx-auto" />
   }
 
   if (cardNotFound || !card) {
@@ -605,36 +606,63 @@ export const CardOwnerStudio = forwardRef<
     )
   }
 
+  // The flat editor, used on its own without WebGL and embedded over the 3D page otherwise.
+  const editorProps: Card3DProps = {
+    imageUrl: card.image_url,
+    headline: card.copy_headline,
+    message: "",
+    recipientName: card.recipient_name || "You",
+    contributions,
+    editable: true,
+    onHeadlineChange: handleHeadlineChange,
+    isRegeneratingHeadline,
+    isRegeneratingImage,
+    suppressComposeActions: true,
+    onComposeCanvasPlace: showCompose ? handleComposeCanvasPlace : undefined,
+    onEditingContributionChange: (id) => {
+      if (id !== null) setEditingContributionId(id)
+    },
+    extraPages: displayExtraPages,
+    onAddPage: handleAddPage,
+    editableContributionIds,
+    onContributionEdit: handleContributionEdit,
+    onContributionGifChange: handleContributionGifChange,
+    onContributionLayoutChange: handleContributionLayoutChange,
+    contributionRegeneratingId: regeneratingContributionId,
+    creatorPlaceGeneration,
+  }
+
   return (
     <div className="w-full space-y-6">
-      <Card3D
+      <CardBook3D
         key={`${cardId}-${initialCardPage}`}
         imageUrl={card.image_url}
         headline={card.copy_headline}
         message=""
         recipientName={card.recipient_name || "You"}
         contributions={contributions}
-        editable
-        onHeadlineChange={handleHeadlineChange}
-        isRegeneratingHeadline={isRegeneratingHeadline}
-        isRegeneratingImage={isRegeneratingImage}
-        suppressComposeActions
-        onComposeCanvasPlace={
-          showCompose ? handleComposeCanvasPlace : undefined
-        }
-        onEditingContributionChange={(id) => {
-          if (id !== null) setEditingContributionId(id)
-        }}
-        navigateToPage={navigateToPage}
         extraPages={displayExtraPages}
-        onAddPage={handleAddPage}
         initialPage={initialCardPage}
-        editableContributionIds={editableContributionIds}
-        onContributionEdit={handleContributionEdit}
-        onContributionGifChange={handleContributionGifChange}
-        onContributionLayoutChange={handleContributionLayoutChange}
-        contributionRegeneratingId={regeneratingContributionId}
-        creatorPlaceGeneration={creatorPlaceGeneration}
+        navigateToPage={navigateToPage}
+        onAddPage={handleAddPage}
+        // The creator's note still needs placing: open the message page straight away.
+        autoEditPage={showCompose ? 1 : undefined}
+        renderPageEditor={({ page, onPageChange }) => (
+          <Card3D
+            {...editorProps}
+            embedded
+            initialPage={page}
+            navigateToPage={page}
+            onCurrentPageChange={onPageChange}
+          />
+        )}
+        fallback={
+          <Card3D
+            {...editorProps}
+            initialPage={initialCardPage}
+            navigateToPage={navigateToPage}
+          />
+        }
       />
       <GiphyPicker
         open={Boolean(contribGifPickerContributionId)}

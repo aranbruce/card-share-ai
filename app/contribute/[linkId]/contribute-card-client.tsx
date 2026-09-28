@@ -5,7 +5,9 @@ import { ArrowLeft, ArrowUp, FileX2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
-import { Card3D } from "@/components/card-3d"
+import { Card3D, type Card3DProps } from "@/components/card-3d"
+import { CardBook3D } from "@/components/card-book-3d"
+import { CardLoading3D } from "@/components/card-loading-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
 import type { CardComposeDraft } from "@/lib/card-compose-draft"
@@ -701,7 +703,7 @@ function ContributeCardPageInner({
                 <Skeleton className="mx-auto h-9 w-64 rounded-md" />
                 <Skeleton className="mx-auto h-4 w-72 rounded-sm" />
               </div>
-              <Skeleton className="mx-auto card-cover-skeleton max-w-md" />
+              <CardLoading3D label="Opening the card…" className="mx-auto" />
             </div>
           </main>
           <NotePanel loading />
@@ -740,8 +742,62 @@ function ContributeCardPageInner({
   const instructionLine = card.sent_at
     ? "The card may already be with the recipient. You can still edit your note from this device"
     : canPlaceNewGuestMessage
-      ? "Flip to the inside and click anywhere to place your note"
-      : "Flip to the inside to find and edit your note"
+      ? "Open the card and click anywhere on an inside page to place your note"
+      : "Open the card and click your note to edit it"
+
+  // The flat editor, used on its own without WebGL and embedded over the 3D page otherwise.
+  const renderEditor = (overrides: Partial<Card3DProps>) => (
+    <Card3D
+      imageUrl={card.image_url}
+      headline={card.copy_headline}
+      message={bodyMessage}
+      recipientName={card.recipient_name || "You"}
+      contributions={displayContributions}
+      extraPages={card.extra_pages || 0}
+      onAddPage={handleAddPage}
+      contributeSubmitNonce={submitNonce}
+      editableContributionIds={Object.keys(contributionEditTokens)}
+      onContributionEdit={handleContributionEdit}
+      onContributionGifChange={handleContributionGifChange}
+      onContributionLayoutChange={handleContributionLayoutChange}
+      contributionRegeneratingId={regeneratingContributionId}
+      composeDraft={composeDraft}
+      onComposeDraftChange={(patch) =>
+        setComposeDraft((d) => (d ? { ...d, ...patch } : d))
+      }
+      onComposeCanvasPlace={
+        canPlaceNewGuestMessage
+          ? (pt) => {
+              const pre = preComposeDraftRef.current
+              setComposeDraft({
+                message: pre.message,
+                giphyUrl: pre.giphyUrl,
+                textColor: pre.textColor,
+                fontSize: pre.fontSize,
+                fontFamily: pre.fontFamily,
+                rotationDegrees: pre.rotationDegrees,
+                x: pt.x,
+                y: pt.y,
+                pageIndex: pt.pageIndex,
+              })
+            }
+          : undefined
+      }
+      onComposeSubmit={submitComposeDraft}
+      onComposeCancel={cancelCompose}
+      composeSubmitting={submitting}
+      composeError={null}
+      onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
+      onComposeDraftGifChange={handleComposeDraftGifChange}
+      composeDraftRegenerating={composeDraftRegenerating}
+      suppressComposeActions
+      onEditingContributionChange={(id) => {
+        if (id !== null) setEditingContributionId(id)
+      }}
+      navigateToPage={navigateToPage}
+      {...overrides}
+    />
+  )
 
   return (
     <MessageFontVariables className="flex min-h-screen flex-col bg-background">
@@ -771,54 +827,24 @@ function ContributeCardPageInner({
             </div>
 
             {/* Card */}
-            <Card3D
+            <CardBook3D
               imageUrl={card.image_url}
               headline={card.copy_headline}
               message={bodyMessage}
               recipientName={card.recipient_name || "You"}
               contributions={displayContributions}
               extraPages={card.extra_pages || 0}
-              onAddPage={handleAddPage}
-              contributeSubmitNonce={submitNonce}
-              editableContributionIds={Object.keys(contributionEditTokens)}
-              onContributionEdit={handleContributionEdit}
-              onContributionGifChange={handleContributionGifChange}
-              onContributionLayoutChange={handleContributionLayoutChange}
-              contributionRegeneratingId={regeneratingContributionId}
-              composeDraft={composeDraft}
-              onComposeDraftChange={(patch) =>
-                setComposeDraft((d) => (d ? { ...d, ...patch } : d))
-              }
-              onComposeCanvasPlace={
-                canPlaceNewGuestMessage
-                  ? (pt) => {
-                      const pre = preComposeDraftRef.current
-                      setComposeDraft({
-                        message: pre.message,
-                        giphyUrl: pre.giphyUrl,
-                        textColor: pre.textColor,
-                        fontSize: pre.fontSize,
-                        fontFamily: pre.fontFamily,
-                        rotationDegrees: pre.rotationDegrees,
-                        x: pt.x,
-                        y: pt.y,
-                        pageIndex: pt.pageIndex,
-                      })
-                    }
-                  : undefined
-              }
-              onComposeSubmit={submitComposeDraft}
-              onComposeCancel={cancelCompose}
-              composeSubmitting={submitting}
-              composeError={null}
-              onComposeDraftRegenerateMessage={handleComposeDraftRegenerate}
-              onComposeDraftGifChange={handleComposeDraftGifChange}
-              composeDraftRegenerating={composeDraftRegenerating}
-              suppressComposeActions
-              onEditingContributionChange={(id) => {
-                if (id !== null) setEditingContributionId(id)
-              }}
               navigateToPage={navigateToPage}
+              onAddPage={handleAddPage}
+              renderPageEditor={({ page, onPageChange }) =>
+                renderEditor({
+                  embedded: true,
+                  initialPage: page,
+                  navigateToPage: page,
+                  onCurrentPageChange: onPageChange,
+                })
+              }
+              fallback={renderEditor({})}
             />
           </div>
         </main>

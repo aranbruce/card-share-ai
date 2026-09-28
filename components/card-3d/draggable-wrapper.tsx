@@ -10,7 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react"
-import { Maximize2 } from "lucide-react"
+import { Maximize2, Move } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   acquireCardGestureScrollLock,
@@ -20,6 +20,7 @@ import {
   DraggableNoteMoveContext,
   type DraggableNoteMoveContextValue,
 } from "./draggable-note-context"
+import { useCardCanvasPoint, useCardCanvasScale } from "./canvas-scale-context"
 
 /** Used to center the compose block on click before first layout (field + controls). */
 export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
@@ -58,10 +59,22 @@ function clampNotePositionInBounds(args: {
   padding: number
   x: number
   y: number
+  /** On-screen px per layout px (see `CardCanvasScaleContext`). */
+  scale: number
 }): { x: number; y: number } {
-  const boundsRect = args.bounds.getBoundingClientRect()
-  const outerRect = args.containerEl.getBoundingClientRect()
-  const rotatedRect = args.rotatedInnerEl?.getBoundingClientRect()
+  // Measure on screen, then convert to layout px so a scaled (3D) canvas clamps correctly.
+  const toLayout = (rect: DOMRect) => ({
+    left: rect.left / args.scale,
+    top: rect.top / args.scale,
+    right: rect.right / args.scale,
+    bottom: rect.bottom / args.scale,
+    width: rect.width / args.scale,
+    height: rect.height / args.scale,
+  })
+  const boundsRect = toLayout(args.bounds.getBoundingClientRect())
+  const outerRect = toLayout(args.containerEl.getBoundingClientRect())
+  const rotatedDomRect = args.rotatedInnerEl?.getBoundingClientRect()
+  const rotatedRect = rotatedDomRect ? toLayout(rotatedDomRect) : undefined
 
   let minX = args.padding
   let maxX = boundsRect.width - outerRect.width - args.padding
@@ -117,6 +130,17 @@ export function DraggableWrapper({
    */
   onFocusLeave?: () => void
 }) {
+  // Pointer deltas are screen px; divide by this to get canvas (layout) px.
+  const canvasScale = useCardCanvasScale()
+  const canvasScaleRef = useRef(canvasScale)
+  useEffect(() => {
+    canvasScaleRef.current = canvasScale
+  }, [canvasScale])
+  const toCanvasPoint = useCardCanvasPoint()
+  const toCanvasPointRef = useRef(toCanvasPoint)
+  useEffect(() => {
+    toCanvasPointRef.current = toCanvasPoint
+  }, [toCanvasPoint])
   const [position, setPosition] = useState<{
     x: number | null
     y: number | null
@@ -220,7 +244,7 @@ export function DraggableWrapper({
       }
       const boundsRect = bounds.getBoundingClientRect()
       const cr = el.getBoundingClientRect()
-      const leftInBounds = cr.left - boundsRect.left
+      const leftInBounds = (cr.left - boundsRect.left) / canvasScaleRef.current
       setFooterPlacement({
         left: CANVAS_PADDING - leftInBounds,
         width: Math.max(0, bounds.clientWidth - 2 * CANVAS_PADDING),
@@ -396,8 +420,9 @@ export function DraggableWrapper({
         if (bounds) {
           const boundsRect = bounds.getBoundingClientRect()
           const selfRect = containerRef.current.getBoundingClientRect()
-          currentPosX = selfRect.left - boundsRect.left
-          currentPosY = selfRect.top - boundsRect.top
+          currentPosX =
+            (selfRect.left - boundsRect.left) / canvasScaleRef.current
+          currentPosY = (selfRect.top - boundsRect.top) / canvasScaleRef.current
           setPosition({ x: currentPosX, y: currentPosY })
           syncLayoutSnapshot({ x: currentPosX, y: currentPosY })
         } else {
@@ -458,12 +483,28 @@ export function DraggableWrapper({
       const gesture = gesturePointerRef.current
       if (e.pointerId !== gesture.pointerId) return
 
-      const dx = e.clientX - startPos.current.x
-      const dy = e.clientY - startPos.current.y
+      const screenDx = e.clientX - startPos.current.x
+      const screenDy = e.clientY - startPos.current.y
+      // In perspective, map both ends onto the page exactly; flat, one scale is exact.
+      const mapPoint = toCanvasPointRef.current
+      const from =
+        mapPoint && containerRef.current
+          ? mapPoint(
+              containerRef.current,
+              startPos.current.x,
+              startPos.current.y,
+            )
+          : null
+      const to =
+        from && mapPoint && containerRef.current
+          ? mapPoint(containerRef.current, e.clientX, e.clientY)
+          : null
+      const dx = from && to ? to.x - from.x : screenDx / canvasScaleRef.current
+      const dy = from && to ? to.y - from.y : screenDy / canvasScaleRef.current
       let phase = gesturePhaseRef.current
 
       if (phase === "pending") {
-        if (!pastDragThreshold(dx, dy, e.pointerType)) return
+        if (!pastDragThreshold(screenDx, screenDy, e.pointerType)) return
         acquirePointerCapture()
         e.preventDefault()
         window.getSelection()?.removeAllRanges()
@@ -490,6 +531,7 @@ export function DraggableWrapper({
               padding: CANVAS_PADDING,
               x: nextX,
               y: nextY,
+              scale: canvasScaleRef.current,
             })
             syncLayoutSnapshot({ x: clamped.x, y: clamped.y })
             setPosition(clamped)
@@ -564,6 +606,7 @@ export function DraggableWrapper({
       padding: CANVAS_PADDING,
       x: position.x,
       y: position.y,
+      scale: canvasScaleRef.current,
     })
 
     if (clamped.x !== position.x || clamped.y !== position.y) {
@@ -583,8 +626,17 @@ export function DraggableWrapper({
   const isMovingNote = isDragging || pendingDrag
   const lockTouchAction = isDragging || isResizing || touchPendingScrollLock
 
-  const resizeHandleClassName =
-    "absolute -right-3 -bottom-3 z-10 flex h-7 w-7 touch-none cursor-se-resize items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+  const handleClassName =
+    "absolute z-20 flex h-7 w-7 touch-none items-center justify-center rounded-full border border-border bg-background p-0.5 shadow-sm transition-opacity opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring"
+  const resizeHandleClassName = cn(
+    handleClassName,
+    "-right-3 -bottom-3 cursor-se-resize",
+  )
+  // Moves the note even while its text is being edited (the text itself only drags when idle).
+  const moveHandleClassName = cn(
+    handleClassName,
+    "-top-3 -left-3 cursor-grab active:cursor-grabbing",
+  )
 
   const moveDragContext = useMemo(
     (): DraggableNoteMoveContextValue =>
@@ -607,6 +659,7 @@ export function DraggableWrapper({
   return (
     <div
       ref={containerRef}
+      data-draggable-note
       className={cn("relative", lockTouchAction && "touch-none select-none")}
       style={
         isPositioned
@@ -632,6 +685,18 @@ export function DraggableWrapper({
             aria-hidden
           />
         ) : null}
+        {editable && (
+          <button
+            type="button"
+            tabIndex={-1}
+            data-note-chrome
+            aria-label="Move note"
+            onPointerDown={(e) => handlePointerDown(e, "drag")}
+            className={moveHandleClassName}
+          >
+            <Move className="h-2.5 w-2.5 text-muted-foreground" />
+          </button>
+        )}
         {editable && (
           <button
             type="button"

@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Spinner } from "@/components/ui/spinner"
-import Image from "next/image"
 import { Inbox, Plus, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { apiDelete } from "@/lib/api-client"
-import { looksLikeDataUrl } from "@/lib/source-image-limits"
+import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
+import { pastelHuesFor } from "@/lib/card-pastel"
 import type { OwnerCardListItem } from "@/lib/owner-cards"
 
 const TYPE_LABEL: Record<string, string> = {
@@ -255,6 +255,7 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
     activeFilter === "all"
       ? cards
       : cards.filter((c) => c.card_type === activeFilter)
+  const pastelHues = pastelHuesFor(filteredCards.map((c) => c.id))
 
   const typeCounts = cards.reduce<Record<string, number>>((acc, c) => {
     acc[c.card_type] = (acc[c.card_type] || 0) + 1
@@ -405,38 +406,23 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
                     href={`/dashboard/cards/${card.id}`}
                     className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
                   >
-                    <div className="card-preview-aspect relative overflow-hidden bg-secondary">
-                      {card.image_url ? (
-                        <Image
-                          src={card.image_url}
-                          alt={
-                            card.copy_headline ||
-                            `${card.recipient_name}'s card`
-                          }
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-                          loading={index === 0 ? "eager" : "lazy"}
-                          priority={index === 0}
-                          unoptimized={looksLikeDataUrl(card.image_url)}
-                          className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-                        />
-                      ) : (
-                        <div
-                          className="h-full w-full"
-                          style={{
-                            background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
-                          }}
-                        />
-                      )}
-
-                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-                      {card.copy_headline ? (
-                        <div className="absolute right-0 bottom-0 left-0 card-preview-headline-inset text-center text-white">
-                          <p className="card-preview-headline font-bold">
-                            {card.copy_headline}
-                          </p>
-                        </div>
-                      ) : null}
+                    <div
+                      className="card-pastel card-preview-aspect relative overflow-hidden"
+                      style={
+                        {
+                          "--pastel-hue": pastelHues[index],
+                        } as CSSProperties
+                      }
+                    >
+                      <CardThumb3D
+                        imageUrl={card.image_url || null}
+                        headline={card.copy_headline || null}
+                        alt={
+                          card.copy_headline || `${card.recipient_name}'s card`
+                        }
+                        hue={hue}
+                        priority={index === 0}
+                      />
 
                       <div className="absolute top-3.5 left-3.5">
                         <span className="inline-flex items-center rounded-full bg-white/92 px-2.5 py-1 text-[11.5px] font-medium text-foreground shadow-sm backdrop-blur-sm">

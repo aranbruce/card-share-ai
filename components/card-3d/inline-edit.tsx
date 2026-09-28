@@ -9,6 +9,7 @@ import type {
   KeyboardEvent,
   MouseEvent,
 } from "react"
+import { createPortal } from "react-dom"
 import {
   useCallback,
   useEffect,
@@ -51,6 +52,42 @@ export function RegenerateShimmerOverlay({
       />
     </div>
   )
+}
+
+/**
+ * The caret position nearest a screen point, measured from each character's box so it also
+ * works inside transformed (3D) or not-yet-interactive editors, unlike hit testing.
+ */
+function caretNearPoint(
+  root: HTMLElement,
+  x: number,
+  y: number,
+): { node: Text; offset: number } | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const range = document.createRange()
+  let best: { node: Text; offset: number } | null = null
+  let bestScore = Infinity
+  for (
+    let node = walker.nextNode() as Text | null;
+    node;
+    node = walker.nextNode() as Text | null
+  ) {
+    for (let i = 0; i < node.data.length; i++) {
+      range.setStart(node, i)
+      range.setEnd(node, i + 1)
+      const r = range.getBoundingClientRect()
+      if (r.width === 0 && r.height === 0) continue
+      const dx = Math.max(r.left - x, 0, x - r.right)
+      const dy = Math.max(r.top - y, 0, y - r.bottom)
+      // Stay on the clicked line first, then the closest character along it.
+      const score = dy * 1000 + dx
+      if (score < bestScore) {
+        bestScore = score
+        best = { node, offset: x > (r.left + r.right) / 2 ? i + 1 : i }
+      }
+    }
+  }
+  return best
 }
 
 export type InlineEditRegenerateHandle = {
@@ -157,11 +194,17 @@ export const InlineEdit = forwardRef<
     !isGenerating,
   )
 
+  /** Where the click that started editing landed, to put the caret there. */
+  const caretPointRef = useRef<{ x: number; y: number } | null>(null)
+
   const handleClick = (e: MouseEvent) => {
     if (isGenerating) return
     if (moveDrag?.consumeSuppressNextClickAfterDrag()) return
     if (editable && onChange) {
       e.stopPropagation()
+      // Keyboard activation reports no position; that keeps select-all.
+      caretPointRef.current =
+        e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : null
       setIsEditing(true)
     }
   }
@@ -169,8 +212,18 @@ export const InlineEdit = forwardRef<
   useLayoutEffect(() => {
     if (!isEditing || !editRef.current) return
     editRef.current.focus()
+    const point = caretPointRef.current
+    caretPointRef.current = null
+    const caret = point
+      ? caretNearPoint(editRef.current, point.x, point.y)
+      : null
     const range = document.createRange()
-    range.selectNodeContents(editRef.current)
+    if (caret) {
+      range.setStart(caret.node, caret.offset)
+      range.collapse(true)
+    } else {
+      range.selectNodeContents(editRef.current)
+    }
     const sel = window.getSelection()
     sel?.removeAllRanges()
     sel?.addRange(range)
@@ -372,6 +425,7 @@ export const InlineEdit = forwardRef<
         ) : null}
         <div
           ref={editRef}
+          data-inline-edit
           onPointerDown={
             canDragNote && !isEditing
               ? (e) => {
@@ -397,7 +451,9 @@ export const InlineEdit = forwardRef<
             showShimmer &&
               regenerateShimmerTone === "paper" &&
               "ai-refine-shimmer-text-paper rounded-sm",
-            isEditing && "outline-none",
+            // Shown explicitly: focus that follows a click on the 3D card is set from script,
+            // which browsers do not always mark as :focus-visible.
+            isEditing && "rounded-sm ring-[3px] ring-ring/50 outline-none",
           )}
           style={editStyle ?? style}
           contentEditable={Boolean(
@@ -428,50 +484,54 @@ export const InlineEdit = forwardRef<
         </div>
       </div>
 
-      {showPromptInput && !toolbarExternal ? (
-        <div
-          data-regenerate-area
-          className="fixed z-100"
-          style={{
-            top: promptPosition.top,
-            left: promptPosition.left,
-            width: Math.max(promptPosition.width, 300),
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-xl">
-            <input
-              ref={promptInputRef}
-              type="text"
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              onKeyDown={handlePromptKeyDown}
-              placeholder="Describe the change you want..."
-              className="min-w-0 flex-1 border-none bg-transparent px-2 py-1 text-base text-foreground outline-none sm:text-sm"
-              disabled={isRegenerating}
-            />
-            <Button
-              variant="primary"
-              size="icon-sm"
-              onClick={() => void handleRegenerate()}
-              disabled={isRegenerating || !promptText.trim()}
-              className="rounded-full"
-              title="Generate"
+      {showPromptInput && !toolbarExternal && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              data-regenerate-area
+              className="fixed z-100"
+              style={{
+                top: promptPosition.top,
+                left: promptPosition.left,
+                width: Math.max(promptPosition.width, 300),
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              {isRegenerating ? <Spinner /> : <ArrowUp />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={closeRegeneratePrompt}
-              className="rounded-full"
-              title="Cancel"
-            >
-              <X className="text-muted-foreground" />
-            </Button>
-          </div>
-        </div>
-      ) : null}
+              <div className="flex items-center gap-2 rounded-2xl border border-border bg-background p-2 shadow-xl">
+                <input
+                  ref={promptInputRef}
+                  type="text"
+                  value={promptText}
+                  onChange={(e) => setPromptText(e.target.value)}
+                  onKeyDown={handlePromptKeyDown}
+                  placeholder="Describe the change you want..."
+                  className="min-w-0 flex-1 border-none bg-transparent px-2 py-1 text-base text-foreground outline-none sm:text-sm"
+                  disabled={isRegenerating}
+                />
+                <Button
+                  variant="primary"
+                  size="icon-sm"
+                  onClick={() => void handleRegenerate()}
+                  disabled={isRegenerating || !promptText.trim()}
+                  className="rounded-full"
+                  title="Generate"
+                >
+                  {isRegenerating ? <Spinner /> : <ArrowUp />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={closeRegeneratePrompt}
+                  className="rounded-full"
+                  title="Cancel"
+                >
+                  <X className="text-muted-foreground" />
+                </Button>
+              </div>
+            </div>,
+            // Portalled so a transformed ancestor (the 3D card) cannot offset this fixed box.
+            document.body,
+          )
+        : null}
     </div>
   )
 })
