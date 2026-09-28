@@ -62,11 +62,9 @@ export async function createGifPlayer(
       return frame
     },
     tick(now) {
-      if (fresh) {
-        fresh = false
-        return true
-      }
-      if (pending || disposed || now < dueAt) return false
+      const advanced = fresh
+      fresh = false
+      if (pending || disposed || now < dueAt) return advanced
       pending = true
       decoder
         .decode(index)
@@ -76,7 +74,11 @@ export async function createGifPlayer(
           frame = next.frame
           release = () => closeFrame(next.frame)
           index = (index + 1) % decoder.frameCount
-          dueAt = performance.now() + next.delayMs
+          // Schedule from when this frame was due, so decode time and frame-callback
+          // lateness do not slow the GIF down; start afresh after a stall (or at first).
+          const shownAt = performance.now()
+          const onTime = dueAt > 0 && shownAt - dueAt < next.delayMs
+          dueAt = (onTime ? dueAt : shownAt) + next.delayMs
           fresh = true
         })
         // A frame that fails to decode ends playback on the last good frame.
