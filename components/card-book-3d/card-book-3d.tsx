@@ -195,6 +195,11 @@ export type CardBook3DProps = {
    * card keeps its closed size when it opens and the spread runs past the frame's sides
    * (the canvas draws beyond it), so the frame's parents must not clip. */
   fitOpenSpread?: boolean
+  /** Slowly turns the card in 3D on its own while the pointer isn't over it (off for
+   * reduced motion). */
+  idleSway?: boolean
+  /** Rounds the pages' fore-edge corners, as a share of the page's width (e.g. 0.04). */
+  cornerRadius?: number
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -238,6 +243,10 @@ type LiveState = {
   narrow: boolean
   closedZoom: number
   fitOpenSpread: boolean
+  idleSway: boolean
+  cornerRadius: number
+  /** A mouse is over the card (its position drives the tilt instead of the idle sway). */
+  hovered: boolean
   reducedMotion: boolean
   camX: number
   fitW: number
@@ -298,6 +307,8 @@ export function CardBook3D({
   frameClassName,
   closedZoom = 1,
   fitOpenSpread = true,
+  idleSway = false,
+  cornerRadius = 0,
   navigateToPage,
   onPageChange,
   renderPageEditor,
@@ -371,6 +382,9 @@ export function CardBook3D({
     narrow: false,
     closedZoom,
     fitOpenSpread,
+    idleSway,
+    cornerRadius,
+    hovered: false,
     reducedMotion: false,
     camX: PAGE_W / 2,
     fitW: PAGE_W,
@@ -492,8 +506,10 @@ export function CardBook3D({
   useEffect(() => {
     live.current.closedZoom = closedZoom
     live.current.fitOpenSpread = fitOpenSpread
+    live.current.idleSway = idleSway
+    live.current.cornerRadius = cornerRadius
     live.current.dirty = true
-  }, [closedZoom, fitOpenSpread])
+  }, [closedZoom, fitOpenSpread, idleSway, cornerRadius])
 
   useEffect(() => {
     live.current.editing = editPage !== null
@@ -583,6 +599,7 @@ export function CardBook3D({
         PAGE_W,
         { front: i === 0 ? COVER_GLOSS : PAGE_GLOSS, back: PAGE_GLOSS },
       )
+      material.uniforms.uAspect.value = PAGE_H / PAGE_W
       const mesh = new Mesh(leafGeometry, material)
       // Vertices move in the shader; the static bounds would cull turning pages.
       mesh.frustumCulled = false
@@ -831,6 +848,7 @@ export function CardBook3D({
       leaves.forEach(({ material }, i) => {
         const p = leafProgress(state.flip, i)
         const u = material.uniforms
+        u.uCorner.value = state.cornerRadius
         u.uProgress.value = fold + p * (1 - 2 * fold)
         const restZ = -i * LEAF_GAP
         const turnedZ = -(leafTotal - 1 - i) * LEAF_GAP
@@ -876,6 +894,14 @@ export function CardBook3D({
         moving = true
       }
 
+      if (state.idleSway && !state.hovered) {
+        // Two slow, unrelated periods so the turn never quite repeats.
+        const t = now / 1000
+        state.tiltTarget = {
+          x: 0.7 * Math.sin((t * 2 * Math.PI) / 9),
+          y: 0.45 * Math.sin((t * 2 * Math.PI) / 6.5 + 1),
+        }
+      }
       const tiltTarget =
         state.reducedMotion || state.editing ? { x: 0, y: 0 } : state.tiltTarget
       const tiltFollow = 1 - Math.exp(-dt * 4)
@@ -1497,6 +1523,7 @@ export function CardBook3D({
     const rect = e.currentTarget.getBoundingClientRect()
     if (state.editing) return
     if (e.pointerType === "mouse") {
+      state.hovered = true
       state.tiltTarget = {
         x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
         y: ((e.clientY - rect.top) / rect.height) * 2 - 1,
@@ -1726,6 +1753,7 @@ export function CardBook3D({
           onPointerUp={(e) => endPointer(e, false)}
           onPointerCancel={(e) => endPointer(e, true)}
           onPointerLeave={() => {
+            live.current.hovered = false
             live.current.tiltTarget = { x: 0, y: 0 }
           }}
           onKeyDown={onKeyDown}
@@ -1737,6 +1765,7 @@ export function CardBook3D({
               headline={headline}
               recipientName={recipientName}
               zoom={closedZoom}
+              cornerRadius={cornerRadius}
             />
           )}
           <div

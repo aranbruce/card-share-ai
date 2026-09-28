@@ -71,6 +71,9 @@ const DEMO_NOTES: SampleNote[] = [
   { message: "Have the best day! Sam x", font: "pacifico", color: "#2f7d5b" },
 ]
 
+/** Rounded fore-edge corners on the demo card, in page widths. */
+const DEMO_CORNER = 0.045
+
 /** Cover hue of a birthday card, as on the create page. */
 const BIRTHDAY_HUE = 18
 
@@ -272,12 +275,15 @@ export function HomeDemoPanel() {
                   notes={DEMO_NOTES}
                   showPager={false}
                   frameClassName="aspect-square"
+                  idleSway
+                  cornerRadius={DEMO_CORNER}
                 />
               ) : (
                 // Before the card exists: the same frame and closed pose as the 3D card, so it
                 // takes over without moving.
                 <div className="relative aspect-square w-full">
                   <ClosedCardCover
+                    cornerRadius={DEMO_CORNER}
                     headline=""
                     recipientName="Mira"
                     coverBackground={`linear-gradient(135deg, oklch(0.9 0.08 ${BIRTHDAY_HUE}) 0%, oklch(0.76 0.13 ${BIRTHDAY_HUE - 15}) 100%)`}

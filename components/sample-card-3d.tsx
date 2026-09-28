@@ -28,6 +28,8 @@ export function SampleCard3D({
   frameClassName,
   closedZoom,
   fitOpenSpread,
+  idleSway,
+  cornerRadius,
   className,
 }: {
   /** Keys the sample notes. */
@@ -41,6 +43,8 @@ export function SampleCard3D({
   frameClassName?: string
   closedZoom?: number
   fitOpenSpread?: boolean
+  idleSway?: boolean
+  cornerRadius?: number
   className?: string
 }) {
   const contributions: Contribution[] = notes.map((note, i) => {
@@ -72,6 +76,8 @@ export function SampleCard3D({
         frameClassName={frameClassName}
         closedZoom={closedZoom}
         fitOpenSpread={fitOpenSpread}
+        idleSway={idleSway}
+        cornerRadius={cornerRadius}
       />
     </MessageFontVariables>
   )

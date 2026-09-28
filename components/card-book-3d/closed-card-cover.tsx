@@ -32,6 +32,7 @@ export function ClosedCardCover({
   headline,
   recipientName,
   zoom = 1,
+  cornerRadius = 0,
   coverBackground,
   shimmer = false,
   children,
@@ -42,6 +43,8 @@ export function ClosedCardCover({
   recipientName: string
   /** Matches the 3D card's `closedZoom` (the camera's closer, so the card is larger). */
   zoom?: number
+  /** Matches the 3D card's `cornerRadius` (fore-edge corners, in page widths). */
+  cornerRadius?: number
   /** Cover fill when there is no image (defaults to the 3D card's fallback cover). */
   coverBackground?: string
   /** Sweeps a shimmer across the cover (e.g. while it is being made). */
@@ -109,6 +112,9 @@ export function ClosedCardCover({
             width: scene(PAGE_W),
             height: scene(PAGE_H),
             transform: `translate(-50%, -50%) ${rotation}`,
+            borderRadius: cornerRadius
+              ? `0 ${scene(cornerRadius)} ${scene(cornerRadius)} 0`
+              : undefined,
             // The 3D card's fallback cover when there is no image; a quiet paper tone while
             // the image loads.
             background: imageUrl

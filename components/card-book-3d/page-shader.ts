@@ -59,6 +59,8 @@ const fragmentShader = /* glsl */ `
   uniform float uGlossBack;
   uniform float uShadowFront;
   uniform float uShadowBack;
+  uniform float uCorner;
+  uniform float uAspect;
 
   varying vec2 vUv;
   varying vec3 vNormal;
@@ -67,6 +69,12 @@ const fragmentShader = /* glsl */ `
   varying float vFace;
 
   void main() {
+    // Rounded fore-edge corners (the spine stays square, like a folded card). Distances are
+    // in page widths; uCorner is the radius, 0 for square corners.
+    if (uCorner > 0.0 && abs(vFace) > 0.5) {
+      vec2 p = vec2(1.0 - vSpine, min(vUv.y, 1.0 - vUv.y) * uAspect);
+      if (p.x < uCorner && p.y < uCorner && length(vec2(uCorner) - p) > uCorner) discard;
+    }
     vec3 n = normalize(vNormal);
     vec3 color;
     float gloss = 0.0;
@@ -125,6 +133,8 @@ export type PageMaterial = ShaderMaterial & {
     uGlossBack: { value: number }
     uShadowFront: { value: number }
     uShadowBack: { value: number }
+    uCorner: { value: number }
+    uAspect: { value: number }
   }
 }
 
@@ -151,6 +161,8 @@ export function createPageMaterial(
       uGlossBack: { value: gloss.back },
       uShadowFront: { value: 0 },
       uShadowBack: { value: 0 },
+      uCorner: { value: 0 },
+      uAspect: { value: 1 },
     },
   }) as PageMaterial
 }
