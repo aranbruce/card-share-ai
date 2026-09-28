@@ -10,7 +10,10 @@ import { CardBook3D } from "@/components/card-book-3d"
 import { CardLoading3D } from "@/components/card-loading-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
-import type { CardComposeDraft } from "@/lib/card-compose-draft"
+import {
+  composeDraftAsContribution,
+  type CardComposeDraft,
+} from "@/lib/card-compose-draft"
 import { DEFAULT_PRESET_TEXT_COLOR } from "@/lib/message-text-color-presets"
 import type { Contribution } from "@/lib/card-body"
 import type { ContributeCardResult } from "@/lib/contribute-card"
@@ -745,6 +748,12 @@ function ContributeCardPageInner({
       ? "Open the card and click anywhere on an inside page to place your note"
       : "Open the card and click your note to edit it"
 
+  // The 3D card also draws an unposted draft, so it stays in view when editing ends (e.g. the
+  // phone keyboard's done key drops focus) rather than vanishing until the page is reopened.
+  const contributionsOnCard = composeDraft
+    ? [...displayContributions, composeDraftAsContribution(composeDraft)]
+    : displayContributions
+
   // The flat editor, used on its own without WebGL and embedded over the 3D page otherwise.
   const renderEditor = (overrides: Partial<Card3DProps>) => (
     <Card3D
@@ -832,7 +841,7 @@ function ContributeCardPageInner({
               headline={card.copy_headline}
               message={bodyMessage}
               recipientName={card.recipient_name || "You"}
-              contributions={displayContributions}
+              contributions={contributionsOnCard}
               extraPages={card.extra_pages || 0}
               navigateToPage={navigateToPage}
               onAddPage={handleAddPage}
