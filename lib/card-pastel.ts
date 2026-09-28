@@ -13,9 +13,26 @@ const NO_REPEAT_WINDOW = 3
 /** Smallest hue difference (degrees) from those cards, so neighbours read as different. */
 const MIN_HUE_GAP = 25
 
+/** A backdrop blends from its hue to this many degrees on (see `.card-pastel`). */
+const BACKDROP_SPREAD = 30
+/** Smallest hue difference (degrees) between a plain gradient cover and any part of the
+ * backdrop behind it. Cover and backdrop are about as light as each other, so only hue sets
+ * the card apart. */
+const MIN_COVER_GAP = 60
+
 function hueGap(a: number, b: number): number {
   const d = Math.abs(a - b) % 360
   return Math.min(d, 360 - d)
+}
+
+/** How far a cover hue is from the nearest colour in a backdrop's blend. */
+function coverGap(backdrop: number, cover: number): number {
+  const d = (((cover - backdrop) % 360) + 360) % 360
+  return d <= BACKDROP_SPREAD ? 0 : Math.min(d - BACKDROP_SPREAD, 360 - d)
+}
+
+function contrastsWithCover(backdrop: number, cover: number | null): boolean {
+  return cover === null || coverGap(backdrop, cover) >= MIN_COVER_GAP
 }
 
 function hash(id: string): number {
@@ -30,18 +47,26 @@ function hash(id: string): number {
  * A pastel hue for each card, in display order. Each card starts from a colour of its own
  * (so it mostly keeps it as the list changes) and steps on to the next colour while a nearby
  * card has the same or a similar one, so neighbours always look different.
+ *
+ * `coverHues[i]` is the hue of card i's plain gradient cover, or null when it has an image;
+ * a card's backdrop always stands well apart from its plain cover.
  */
-export function pastelHuesFor(ids: readonly string[]): number[] {
+export function pastelHuesFor(
+  ids: readonly string[],
+  coverHues: readonly (number | null)[] = [],
+): number[] {
   const chosen: number[] = []
-  for (const id of ids) {
+  ids.forEach((id, i) => {
+    const cover = coverHues[i] ?? null
     const recent = chosen.slice(-NO_REPEAT_WINDOW)
     const start = hash(id) % PASTEL_HUES.length
-    // The first colour, from the card's own, that stands apart from its neighbours; failing
-    // that, the one that stands apart most.
+    // The first colour, from the card's own, that stands apart from its cover and its
+    // neighbours; failing that, the one apart from its cover that stands apart most.
     let index = start
     let bestGap = -1
     for (let step = 0; step < PASTEL_HUES.length; step++) {
       const candidate = (start + step) % PASTEL_HUES.length
+      if (!contrastsWithCover(PASTEL_HUES[candidate], cover)) continue
       const gap = Math.min(
         360,
         ...recent.map((other) => hueGap(PASTEL_HUES[candidate], other)),
@@ -56,13 +81,24 @@ export function pastelHuesFor(ids: readonly string[]): number[] {
       }
     }
     chosen.push(PASTEL_HUES[index])
-  }
+  })
   return chosen
 }
 
-/** A card's own pastel hue, for places that show one card on its own (e.g. link previews). */
-export function pastelHueFor(id: string): number {
-  return PASTEL_HUES[hash(id) % PASTEL_HUES.length]
+/**
+ * A card's own pastel hue, for places that show one card on its own (e.g. link previews).
+ * Pass the hue of its plain gradient cover, if it has one, to keep the backdrop apart from it.
+ */
+export function pastelHueFor(
+  id: string,
+  coverHue: number | null = null,
+): number {
+  const start = hash(id) % PASTEL_HUES.length
+  for (let step = 0; step < PASTEL_HUES.length; step++) {
+    const hue = PASTEL_HUES[(start + step) % PASTEL_HUES.length]
+    if (contrastsWithCover(hue, coverHue)) return hue
+  }
+  return PASTEL_HUES[start]
 }
 
 /** OKLCH to an sRGB hex colour, for renderers without OKLCH support (e.g. Satori). */

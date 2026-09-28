@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { CardTileRow } from "@/components/card-tile-row"
+import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
-import { getBrowseCategories } from "@/lib/category-pages"
+import { getBrowseCategories, occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 
 export const metadata: Metadata = buildPageMetadata({
@@ -68,83 +70,60 @@ function PlusIcon() {
   )
 }
 
-function ArrowIcon() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="size-3.5"
-      aria-hidden
-    >
-      <path d="M3 8h10M9 4l4 4-4 4" />
-    </svg>
-  )
-}
-
 function HeroFan() {
+  const byslug = Object.fromEntries(
+    getBrowseCategories().map((c) => [c.slug, c]),
+  )
+  // A staircase: each card sits higher and further right than the one behind it, so every
+  // card's bottom (where its title is) shows below the card in front.
   const cards = [
-    {
-      gradient:
-        "linear-gradient(135deg, oklch(0.88 0.08 18), oklch(0.82 0.09 48))",
-      rotate: -13,
-      tx: -118,
-      ty: 16,
-      opacity: 0.94,
-      z: 0,
-    },
-    {
-      gradient:
-        "linear-gradient(135deg, oklch(0.88 0.07 250), oklch(0.82 0.08 280))",
-      rotate: -4,
-      tx: -42,
-      ty: 4,
-      opacity: 1,
-      z: 1,
-    },
-    {
-      gradient:
-        "linear-gradient(135deg, oklch(0.88 0.07 170), oklch(0.82 0.08 200))",
-      rotate: 6,
-      tx: 56,
-      ty: -4,
-      opacity: 1,
-      z: 3,
-    },
-    {
-      gradient:
-        "linear-gradient(135deg, oklch(0.88 0.08 70), oklch(0.82 0.09 110))",
-      rotate: 15,
-      tx: 132,
-      ty: 22,
-      opacity: 0.94,
-      z: 0,
-    },
-  ]
+    { slug: "birthday", rotate: -4, tx: -150, ty: 105 },
+    { slug: "wedding", rotate: -1.5, tx: -50, ty: 35 },
+    { slug: "thank-you", rotate: 1.5, tx: 50, ty: -35 },
+    { slug: "promotion", rotate: 4, tx: 150, ty: -105 },
+  ].map((c, z) => ({ ...c, z, cat: byslug[c.slug] }))
 
   return (
-    <div className="relative grid min-h-[460px] place-items-center">
-      {cards.map((c, i) => (
-        <div
-          key={i}
-          className="absolute overflow-hidden rounded-xl shadow-[0_20px_40px_-20px_rgba(20,14,6,0.20)]"
+    <div className="relative grid min-h-[640px] place-items-center">
+      {/* An angled gradient square behind the cards. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 size-[440px] -translate-1/2 rotate-[-8deg] rounded-[48px] shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset"
+        style={{
+          background:
+            "linear-gradient(135deg, oklch(0.88 0.08 18), oklch(0.85 0.09 330) 50%, oklch(0.86 0.08 250))",
+        }}
+      />
+      {cards.map((c) => (
+        // The dashboard's standing 3D card; hovering brings it to the front and opens it.
+        <Link
+          key={c.slug}
+          href={`/browse/${c.slug}`}
+          aria-label={`${c.cat.label}: ${c.cat.cardTitle}`}
+          className="group @container absolute h-[400px] w-[300px] hover:z-10!"
           style={{
-            width: 262,
-            height: 356,
-            opacity: c.opacity,
             zIndex: c.z,
             transform: `rotate(${c.rotate}deg) translate(${c.tx}px, ${c.ty}px)`,
-            background: c.gradient,
           }}
-        />
+        >
+          <div
+            className="hero-drift absolute inset-0"
+            style={{ animationDelay: `${-c.z * 1.4}s` }}
+          >
+            <CardThumb3D
+              imageUrl={c.cat.coverImage}
+              headline={c.cat.cardTitle}
+              alt=""
+              hue={c.cat.coverHue}
+              priority
+            />
+          </div>
+        </Link>
       ))}
 
-      {/* Sig float — top right */}
+      {/* Sig float — bottom right */}
       <div
-        className="absolute top-[34px] right-[-26px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
+        className="hero-drift absolute right-[-10px] bottom-[40px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
         <span
@@ -152,17 +131,20 @@ function HeroFan() {
           style={{ background: "oklch(0.82 0.1 18)" }}
         />
         <div>
-          <div className="font-medium">120,000+ cards sent</div>
+          <div className="font-medium">Free to start</div>
           <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
-            across every occasion
+            design, sign and send
           </div>
         </div>
       </div>
 
-      {/* Sig float — bottom left */}
+      {/* Sig float — top left */}
       <div
-        className="absolute bottom-[60px] left-[-34px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
-        style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
+        className="hero-drift absolute top-[40px] left-[-10px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
+        style={{
+          boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)",
+          animationDelay: "-3s",
+        }}
       >
         <span
           className="size-5 shrink-0 rounded-full"
@@ -212,6 +194,24 @@ export default function CardsPage() {
                 <a href="#occasions">Browse occasions</a>
               </Button>
             </div>
+            <div className="mt-10 flex flex-wrap items-center gap-2">
+              <span className="mr-1 font-mono text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+                Popular
+              </span>
+              {getBrowseCategories().map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={`/browse/${cat.slug}`}
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm transition-colors hover:border-foreground/30"
+                >
+                  <span
+                    className="size-2.5 rounded-full"
+                    style={{ background: cat.frontGradient }}
+                  />
+                  {cat.label.replace(/ cards$/, "")}
+                </Link>
+              ))}
+            </div>
           </div>
 
           <div className="hidden lg:block">
@@ -230,33 +230,7 @@ export default function CardsPage() {
             Pick the moment worth marking together
           </h2>
 
-          <div className="relative mt-10 w-full overflow-scroll">
-            <div className="flex touch-pan-x snap-x snap-mandatory scroll-px-6 gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] md:scroll-px-15">
-              {getBrowseCategories().map((cat) => (
-                <Link
-                  key={cat.slug}
-                  href={`/browse/${cat.slug}`}
-                  className="group w-[180px] shrink-0 snap-start snap-always sm:w-[200px] md:w-[220px]"
-                >
-                  <div
-                    className="relative aspect-4/5 w-full overflow-hidden rounded-2xl transition-all duration-200 group-hover:translate-y-[-3px] group-hover:shadow-[0_26px_48px_-28px_rgba(20,14,6,0.32)]"
-                    style={{ background: cat.frontGradient }}
-                  >
-                    <div className="absolute right-3 bottom-3 flex size-7 translate-y-[6px] items-center justify-center rounded-full bg-white/90 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-                      <ArrowIcon />
-                    </div>
-                  </div>
-                  <div className="mt-2.5 text-sm font-medium tracking-[-0.01em]">
-                    {cat.label}
-                  </div>
-                  <div className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                    {cat.shortDesc}
-                  </div>
-                </Link>
-              ))}
-              <div aria-hidden className="w-6 shrink-0 md:w-15" />
-            </div>
-          </div>
+          <CardTileRow tiles={occasionTiles()} />
         </div>
       </section>
 

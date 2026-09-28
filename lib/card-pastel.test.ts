@@ -46,6 +46,41 @@ describe("card pastel", () => {
     }
   })
 
+  it("keeps each backdrop well clear of its card's plain cover", () => {
+    const list = ids(60)
+    const covers = list.map((_, i) => [18, 40, 70, 150, 310, 230, null][i % 7])
+    const hues = pastelHuesFor(list, covers)
+    hues.forEach((hue, i) => {
+      const cover = covers[i]
+      if (cover === null) return
+      // The backdrop blends from its hue to 30° on; the cover must be 60° from all of it.
+      for (let h = hue; h <= hue + 30; h += 5) {
+        const d = Math.abs(h - cover) % 360
+        expect(Math.min(d, 360 - d)).toBeGreaterThanOrEqual(60)
+      }
+    })
+  })
+
+  it("still keeps neighbours apart when covers constrain the backdrops", () => {
+    const hues = pastelHuesFor(ids(60), Array(60).fill(18))
+    hues.forEach((hue, i) => {
+      for (const other of hues.slice(Math.max(0, i - 3), i)) {
+        const d = Math.abs(hue - other) % 360
+        expect(Math.min(d, 360 - d)).toBeGreaterThanOrEqual(25)
+      }
+    })
+  })
+
+  it("keeps a single card's backdrop clear of its plain cover", () => {
+    for (const id of ids(20)) {
+      const hue = pastelHueFor(id, 60)
+      for (let h = hue; h <= hue + 30; h += 5) {
+        const d = Math.abs(h - 60) % 360
+        expect(Math.min(d, 360 - d)).toBeGreaterThanOrEqual(60)
+      }
+    }
+  })
+
   it("converts OKLCH to sRGB hex", () => {
     expect(oklchToHex(1, 0, 0)).toBe("#ffffff")
     expect(oklchToHex(0, 0, 0)).toBe("#000000")

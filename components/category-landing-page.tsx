@@ -1,5 +1,8 @@
 import Link from "next/link"
+import { Check, MousePointerClick } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { CardTileRow } from "@/components/card-tile-row"
+import { SampleCard3D } from "@/components/sample-card-3d"
 import type { CategoryConfig } from "@/lib/category-pages"
 
 function PlusIcon() {
@@ -15,102 +18,6 @@ function PlusIcon() {
     >
       <path d="M12 5v14M5 12h14" />
     </svg>
-  )
-}
-
-function CardVisual({ config }: { config: CategoryConfig }) {
-  return (
-    <div className="relative grid min-h-[460px] place-items-center">
-      {/* Back card 2 */}
-      <div
-        className="absolute overflow-hidden rounded-lg shadow-[0_14px_28px_-14px_rgba(20,14,6,0.16)]"
-        style={{
-          width: 212,
-          height: 288,
-          opacity: 0.85,
-          transform: "rotate(7deg) translate(62px, 8px)",
-          background: config.backGradient2,
-        }}
-      />
-      {/* Back card 1 */}
-      <div
-        className="absolute overflow-hidden rounded-lg shadow-[0_14px_28px_-14px_rgba(20,14,6,0.16)]"
-        style={{
-          width: 236,
-          height: 322,
-          opacity: 0.92,
-          transform: "rotate(-9deg) translate(-58px, 18px)",
-          background: config.backGradient1,
-        }}
-      />
-      {/* Front card */}
-      <div
-        className="relative z-10 overflow-hidden rounded-lg bg-[#fdfaf4]"
-        style={{
-          width: 300,
-          height: 408,
-          boxShadow:
-            "0 40px 80px -36px rgba(20,14,6,0.34), 0 14px 28px -14px rgba(20,14,6,0.16)",
-        }}
-      >
-        <div
-          className="absolute top-4 right-4 left-4 overflow-hidden rounded-[5px]"
-          style={{ bottom: 96 }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{ background: config.frontGradient }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "repeating-linear-gradient(135deg, transparent 0 14px, rgba(0,0,0,0.045) 14px 15px)",
-            }}
-          />
-        </div>
-        <div
-          className="absolute inset-x-0 bottom-6 px-5 text-center text-[23px] font-medium tracking-[-0.01em] text-[#1a1611]"
-          style={{ lineHeight: 1.2 }}
-        >
-          {config.cardTitle}
-        </div>
-      </div>
-
-      {/* Signature float 1 — top right */}
-      <div
-        className="absolute top-[34px] right-[-26px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
-        style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
-      >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: config.sigFloat1.color }}
-        />
-        <div>
-          <div className="font-medium">{config.sigFloat1.count}</div>
-          <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
-            {config.sigFloat1.recency}
-          </div>
-        </div>
-      </div>
-
-      {/* Signature float 2 — bottom left */}
-      <div
-        className="absolute bottom-[60px] left-[-34px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
-        style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
-      >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: config.sigFloat2.color }}
-        />
-        <div className="text-sm leading-tight">
-          <div>{config.sigFloat2.note}</div>
-          <div className="text-xs text-muted-foreground">
-            {config.sigFloat2.name}
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -144,10 +51,100 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 </Link>
               </Button>
             </div>
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              {[
+                "No app or account to sign",
+                "Signed from any phone",
+                "Free to start",
+              ].map((point) => (
+                <li key={point} className="flex items-center gap-1.5">
+                  <Check className="size-4 text-brand" aria-hidden />
+                  {point}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="hidden lg:block">
-            <CardVisual config={config} />
+          <div className="relative mx-auto mt-12 w-full max-w-[480px] lg:mt-0">
+            <div
+              className="relative rounded-3xl px-2 pt-12 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-4"
+              style={{ background: config.frontGradient }}
+            >
+              {/* Soft light from the top left, a little shade bottom right, and a faint dot
+                  grid, for depth. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-3xl"
+                style={{
+                  background:
+                    "radial-gradient(90% 70% at 15% 0%, rgba(255,255,255,0.6), transparent 60%), radial-gradient(80% 60% at 100% 100%, rgba(20,14,6,0.12), transparent 70%)",
+                }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 rounded-3xl opacity-40"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1.5px)",
+                  backgroundSize: "18px 18px",
+                  maskImage:
+                    "radial-gradient(70% 70% at 50% 45%, transparent 35%, black 100%)",
+                }}
+              />
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-foreground/80 backdrop-blur-sm sm:top-5 sm:left-6">
+                <MousePointerClick className="size-3.5" aria-hidden />
+                Open the card to read the notes
+              </div>
+              <SampleCard3D
+                id={config.slug}
+                imageUrl={config.coverImage}
+                headline={config.cardTitle}
+                recipientName={config.sampleRecipient}
+                message={config.sampleMessage}
+                notes={config.sampleNotes}
+                showPager={false}
+                frameClassName="aspect-square"
+                closedZoom={1.12}
+                fitOpenSpread={false}
+                className="relative w-full"
+              />
+            </div>
+
+            {/* Signature chips, overlapping the stage's edges. */}
+            <div
+              aria-hidden
+              className="absolute -top-4 -right-3 z-20 hidden items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-xs shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-right-6"
+            >
+              <div className="flex -space-x-1.5">
+                {config.sampleNotes.map((note) => (
+                  <span
+                    key={note.message}
+                    className="size-5 rounded-full ring-2 ring-card"
+                    style={{ background: note.color }}
+                  />
+                ))}
+              </div>
+              <div>
+                <div className="font-medium">
+                  {config.sampleNotes.length + 9} people signed
+                </div>
+                <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
+                  3 in the last hour
+                </div>
+              </div>
+            </div>
+            <div
+              aria-hidden
+              className="absolute -bottom-5 -left-3 z-20 hidden max-w-[220px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-left-8"
+            >
+              <span
+                className="size-5 shrink-0 rounded-full"
+                style={{ background: config.sampleNotes[0].color }}
+              />
+              <div className="text-sm leading-tight">
+                {config.sampleNotes[0].message}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -235,29 +232,18 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             {config.usesTitle}
           </h2>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {config.uses.map((use, i) => (
-              <Link
-                key={i}
-                href="/create"
-                className="block rounded-xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div
-                  className="mb-3 grid size-10 place-items-center rounded-lg text-lg leading-none"
-                  style={{ background: use.color }}
-                  aria-hidden
-                >
-                  {use.emoji}
-                </div>
-                <h3 className="text-sm font-semibold tracking-[-0.015em]">
-                  {use.title}
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {use.desc}
-                </p>
-              </Link>
-            ))}
-          </div>
+          <CardTileRow
+            tiles={config.uses.map((use) => ({
+              key: use.title,
+              href: "/create",
+              background: `linear-gradient(135deg, oklch(0.88 0.075 ${use.hue}), oklch(0.82 0.085 ${use.hue + 30}))`,
+              coverImage: use.coverImage,
+              coverHue: use.hue + 180,
+              headline: use.headline,
+              title: use.title,
+              desc: use.desc,
+            }))}
+          />
         </div>
       </section>
 
@@ -318,7 +304,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                   <h3 className="text-base font-medium tracking-[-0.02em]">
                     {cat.label}
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                     {cat.shortDesc}
                   </p>
                 </div>

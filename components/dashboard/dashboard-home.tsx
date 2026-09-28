@@ -30,6 +30,10 @@ const TYPE_HUE: Record<string, number> = {
   custom: 230,
 }
 
+function coverHue(cardType: string): number {
+  return TYPE_HUE[cardType] ?? 40
+}
+
 function initials(user: User): string {
   const name =
     (user.user_metadata?.full_name as string | undefined) ?? user.email ?? ""
@@ -255,7 +259,11 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
     activeFilter === "all"
       ? cards
       : cards.filter((c) => c.card_type === activeFilter)
-  const pastelHues = pastelHuesFor(filteredCards.map((c) => c.id))
+  const pastelHues = pastelHuesFor(
+    filteredCards.map((c) => c.id),
+    // Cards without an image show a plain cover in their type's hue.
+    filteredCards.map((c) => (c.image_url ? null : coverHue(c.card_type))),
+  )
 
   const typeCounts = cards.reduce<Record<string, number>>((acc, c) => {
     acc[c.card_type] = (acc[c.card_type] || 0) + 1
@@ -397,7 +405,7 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
         {filteredCards.length > 0 && (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
             {filteredCards.map((card, index) => {
-              const hue = TYPE_HUE[card.card_type] ?? 40
+              const hue = coverHue(card.card_type)
               const isConfirming = confirmDeleteId === card.id
               const isDeleting = deletingId === card.id
               return (

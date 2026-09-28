@@ -182,6 +182,19 @@ export type CardBook3DProps = {
   onPageChange?: (page: number) => void
   /** Only the cover exists yet (create flow): a single leaf with a back. */
   coverOnly?: boolean
+  /** Shows the previous/next buttons and page dots under the card (on by default). Without
+   * them the card still turns by clicking, dragging or the arrow keys. */
+  showPager?: boolean
+  /** Replaces the frame's default aspect classes (e.g. a taller frame shows the closed card
+   * larger; the open spread is sized by width either way). */
+  frameClassName?: string
+  /** Brings the camera closer while the card is closed (e.g. 1.2 shows it 20% larger),
+   * easing back as it opens so the spread still fits. */
+  closedZoom?: number
+  /** Pull the camera back so an open spread fits the frame's width (the default). Off, the
+   * card keeps its closed size when it opens and the spread runs past the frame's sides
+   * (the canvas draws beyond it), so the frame's parents must not clip. */
+  fitOpenSpread?: boolean
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -223,6 +236,8 @@ type LiveState = {
   target: number
   focus: Side
   narrow: boolean
+  closedZoom: number
+  fitOpenSpread: boolean
   reducedMotion: boolean
   camX: number
   fitW: number
@@ -279,6 +294,10 @@ export function CardBook3D({
   messagePageIndex = 1,
   initialPage = 0,
   coverOnly = false,
+  showPager = true,
+  frameClassName,
+  closedZoom = 1,
+  fitOpenSpread = true,
   navigateToPage,
   onPageChange,
   renderPageEditor,
@@ -350,6 +369,8 @@ export function CardBook3D({
     target: 0,
     focus: initialFocus,
     narrow: false,
+    closedZoom,
+    fitOpenSpread,
     reducedMotion: false,
     camX: PAGE_W / 2,
     fitW: PAGE_W,
@@ -467,6 +488,12 @@ export function CardBook3D({
     live.current.narrow = narrow
     live.current.dirty = true
   }, [narrow])
+
+  useEffect(() => {
+    live.current.closedZoom = closedZoom
+    live.current.fitOpenSpread = fitOpenSpread
+    live.current.dirty = true
+  }, [closedZoom, fitOpenSpread])
 
   useEffect(() => {
     live.current.editing = editPage !== null
@@ -897,9 +924,28 @@ export function CardBook3D({
         (state.fitW * FRAME_MARGIN_W) / 2 / (Math.tan(halfFov) * camera.aspect)
       // Pull back a little mid-turn: the lifted page is closer to the camera and looks larger.
       const turning = Math.sin(Math.PI * (state.flip - Math.floor(state.flip)))
-      const distance = Math.max(distH, distW) * (1 + 0.2 * turning)
       // A closed card is seen a little from the side (and from above) so it reads as an object.
       const closed = 1 - openness(state.flip, leafTotal)
+      let distance: number
+      if (state.fitOpenSpread) {
+        distance =
+          (Math.max(distH, distW) * (1 + 0.2 * turning)) /
+          (1 + (state.closedZoom - 1) * closed)
+      } else {
+        // Keep the closed size when open, letting the spread run past the frame into the
+        // canvas's bleed; only pull back if it would pass what the canvas can draw (e.g. on
+        // a phone, where the bleed stops at the screen's edge), short of the faded edge.
+        const reachW =
+          state.viewW + 2 * Math.min(state.bleed.l, state.bleed.r) * 0.8
+        const distReach =
+          state.viewH > 0
+            ? (state.fitW * FRAME_MARGIN_W) /
+              2 /
+              (Math.tan(halfFov) * (reachW / state.viewH))
+            : 0
+        distance =
+          Math.max(distH / state.closedZoom, distReach) * (1 + 0.2 * turning)
+      }
       const closedSide = state.flip < leafTotal / 2 ? 1 : -1
       const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
       const pitch = BROWSE_PITCH + CLOSED_PITCH * closed - state.tilt.y * 0.12
@@ -1671,7 +1717,7 @@ export function CardBook3D({
           tabIndex={0}
           className={cn(
             "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
-            cardBookFrameClass(coverOnly, editable),
+            frameClassName ?? cardBookFrameClass(coverOnly, editable),
             editable && editPage === null && "cursor-pointer",
           )}
           onPointerDown={onPointerDown}
@@ -1690,6 +1736,7 @@ export function CardBook3D({
               imageUrl={coverUrl}
               headline={headline}
               recipientName={recipientName}
+              zoom={closedZoom}
             />
           )}
           <div
@@ -1738,55 +1785,57 @@ export function CardBook3D({
         ) : null}
       </div>
 
-      <div className="flex items-center justify-center gap-4">
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={prev}
-          disabled={editPage !== null ? !canEditPrev : !canGoPrev}
-          aria-label="Previous page"
-        >
-          <ArrowLeft />
-        </Button>
-        <div className="flex items-center gap-2">
-          {faces.map((face, i) =>
-            face.kind === "blank" ? null : (
-              <button
-                key={i}
-                type="button"
-                onClick={() => {
-                  if (editPage !== null) editPageAt(null)
-                  goTo(spreadForFace(i, faces.length), sideOfFace(i))
-                }}
-                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
-                  facesInView.includes(i)
-                    ? "bg-primary"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                }`}
-                aria-label={faceLabel(face)}
-                aria-current={facesInView.includes(i) ? "true" : undefined}
-              />
-            ),
-          )}
+      {showPager ? (
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={prev}
+            disabled={editPage !== null ? !canEditPrev : !canGoPrev}
+            aria-label="Previous page"
+          >
+            <ArrowLeft />
+          </Button>
+          <div className="flex items-center gap-2">
+            {faces.map((face, i) =>
+              face.kind === "blank" ? null : (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    if (editPage !== null) editPageAt(null)
+                    goTo(spreadForFace(i, faces.length), sideOfFace(i))
+                  }}
+                  className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                    facesInView.includes(i)
+                      ? "bg-primary"
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                  aria-label={faceLabel(face)}
+                  aria-current={facesInView.includes(i) ? "true" : undefined}
+                />
+              ),
+            )}
+          </div>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={next}
+            disabled={editPage !== null ? !canEditNext : !canGoNext}
+            aria-label={
+              editPage !== null && editPage >= totalPages - 1 && onAddPage
+                ? "Add two pages"
+                : "Next page"
+            }
+          >
+            {editPage !== null && editPage >= totalPages - 1 && onAddPage ? (
+              <Plus />
+            ) : (
+              <ArrowRight />
+            )}
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={next}
-          disabled={editPage !== null ? !canEditNext : !canGoNext}
-          aria-label={
-            editPage !== null && editPage >= totalPages - 1 && onAddPage
-              ? "Add two pages"
-              : "Next page"
-          }
-        >
-          {editPage !== null && editPage >= totalPages - 1 && onAddPage ? (
-            <Plus />
-          ) : (
-            <ArrowRight />
-          )}
-        </Button>
-      </div>
+      ) : null}
 
       <p className="sr-only" aria-live="polite">
         {viewLabel(facesInView.map((i) => faces[i]))}
