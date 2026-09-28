@@ -1,42 +1,91 @@
 import { describe, expect, it } from "vitest"
-import { warpToQuad } from "./perspective-warp"
+import {
+  createImage,
+  drawImageOver,
+  drawQuad,
+  dropShadow,
+} from "./perspective-warp"
 
 function solid(width: number, height: number) {
-  const data = new Uint8Array(width * height * 4)
-  for (let i = 0; i < data.length; i += 4) data.set([200, 100, 50, 255], i)
-  return { width, height, data }
+  const image = createImage(width, height)
+  for (let i = 0; i < image.data.length; i += 4) {
+    image.data.set([200, 100, 50, 255], i)
+  }
+  return image
 }
 
-const alphaAt = (img: ReturnType<typeof warpToQuad>, x: number, y: number) =>
-  img.data[(y * img.width + x) * 4 + 3]
+const pixel = (img: ReturnType<typeof createImage>, x: number, y: number) =>
+  Array.from(
+    img.data.slice((y * img.width + x) * 4, (y * img.width + x) * 4 + 4),
+  )
 
-describe("perspective warp", () => {
-  it("keeps an image the same on its own rectangle", () => {
-    const src = solid(10, 8)
-    const out = warpToQuad(src, [
-      { x: 0, y: 0 },
-      { x: 10, y: 0 },
-      { x: 10, y: 8 },
-      { x: 0, y: 8 },
-    ])
-    expect(out.width).toBe(10)
-    expect(out.height).toBe(8)
-    expect(Array.from(out.data.slice(0, 4))).toEqual([200, 100, 50, 255])
+describe("perspective raster", () => {
+  it("draws an image unchanged onto its own rectangle", () => {
+    const dest = createImage(10, 8)
+    drawQuad(
+      dest,
+      [
+        { x: 0, y: 0 },
+        { x: 10, y: 0 },
+        { x: 10, y: 8 },
+        { x: 0, y: 8 },
+      ],
+      solid(10, 8),
+    )
+    expect(pixel(dest, 0, 0)).toEqual([200, 100, 50, 255])
+    expect(pixel(dest, 9, 7)).toEqual([200, 100, 50, 255])
   })
 
-  it("fills the quad and leaves the outside transparent", () => {
-    const out = warpToQuad(solid(40, 50), [
+  it("fills the quad, leaves the outside alone and shades it", () => {
+    const dest = createImage(100, 110)
+    const quad = [
       { x: 10, y: 20 },
       { x: 90, y: 0 },
       { x: 95, y: 110 },
       { x: 0, y: 100 },
-    ])
-    expect(out.width).toBe(95)
-    expect(out.height).toBe(110)
-    expect(alphaAt(out, 50, 55)).toBe(255)
-    expect(alphaAt(out, 1, 1)).toBe(0)
-    expect(alphaAt(out, 94, 2)).toBe(0)
-    const i = (55 * out.width + 50) * 4
-    expect(Array.from(out.data.slice(i, i + 3))).toEqual([200, 100, 50])
+    ] as const
+    drawQuad(dest, quad, [100, 100, 100], () => 0.5)
+    expect(pixel(dest, 50, 55)).toEqual([50, 50, 50, 255])
+    expect(pixel(dest, 1, 1)[3]).toBe(0)
+    expect(pixel(dest, 98, 2)[3]).toBe(0)
+  })
+
+  it("antialiases edges with partial coverage", () => {
+    const dest = createImage(10, 10)
+    drawQuad(
+      dest,
+      [
+        { x: 0, y: 0 },
+        { x: 5.5, y: 0 },
+        { x: 5.5, y: 10 },
+        { x: 0, y: 10 },
+      ],
+      [255, 255, 255],
+    )
+    expect(pixel(dest, 4, 5)[3]).toBe(255)
+    const edge = pixel(dest, 5, 5)[3]
+    expect(edge).toBeGreaterThan(0)
+    expect(edge).toBeLessThan(255)
+    expect(pixel(dest, 6, 5)[3]).toBe(0)
+  })
+
+  it("casts a soft, offset shadow under an image", () => {
+    const shape = createImage(40, 40)
+    drawQuad(
+      shape,
+      [
+        { x: 10, y: 10 },
+        { x: 20, y: 10 },
+        { x: 20, y: 20 },
+        { x: 10, y: 20 },
+      ],
+      [255, 255, 255],
+    )
+    const shadow = dropShadow(shape, 5, 5, 6, [0, 0, 0], 0.5)
+    expect(pixel(shadow, 20, 20)[3]).toBeGreaterThan(pixel(shadow, 12, 12)[3])
+    expect(pixel(shadow, 20, 20)[3]).toBeLessThanOrEqual(128)
+    expect(pixel(shadow, 2, 2)[3]).toBe(0)
+    drawImageOver(shadow, shape)
+    expect(pixel(shadow, 15, 15)).toEqual([255, 255, 255, 255])
   })
 })

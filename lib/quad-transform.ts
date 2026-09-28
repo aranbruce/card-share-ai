@@ -96,6 +96,17 @@ export function unmapBoxPoint(
   x: number,
   y: number,
 ): Point2 | null {
+  const p = quadUnmapper(quad)(x, y)
+  return p ? { x: p.x * width, y: p.y * height } : null
+}
+
+/**
+ * `unmapBoxPoint` for a unit box, with the map worked out once: for code that unmaps many
+ * points on the same quad (e.g. rasterising it).
+ */
+export function quadUnmapper(
+  quad: readonly [Point2, Point2, Point2, Point2],
+): (x: number, y: number) => Point2 | null {
   const { a, b, c, d, e, f, g, h } = unitSquareToQuad(...quad)
   // Inverse of [[a, b, c], [d, e, f], [g, h, 1]] applied to (x, y, 1).
   const A = e - f * h
@@ -107,10 +118,9 @@ export function unmapBoxPoint(
   const G = d * h - e * g
   const H = b * g - a * h
   const I = a * e - b * d
-  const w = G * x + H * y + I
-  if (Math.abs(w) < 1e-12) return null
-  return {
-    x: ((A * x + B * y + C) / w) * width,
-    y: ((D * x + E * y + F) / w) * height,
+  return (x, y) => {
+    const w = G * x + H * y + I
+    if (Math.abs(w) < 1e-12) return null
+    return { x: (A * x + B * y + C) / w, y: (D * x + E * y + F) / w }
   }
 }

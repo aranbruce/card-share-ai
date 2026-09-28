@@ -7,8 +7,7 @@ import {
 } from "@/lib/og-inter-tight-font"
 import { OgLogoMark } from "@/lib/og-logo-mark"
 import { decodePngRgba, encodePngRgba } from "@/lib/png-rgba"
-import { warpToQuad } from "@/lib/perspective-warp"
-import type { Point2 } from "@/lib/quad-transform"
+import { renderCardScene } from "@/lib/card-preview-scene"
 import { SITE_NAME } from "@/lib/site-metadata"
 
 export type CardPreviewImageInput = {
@@ -27,19 +26,8 @@ const FACE_SCALE = 2
 const FACE_WIDTH = 400 * FACE_SCALE
 const FACE_HEIGHT = 500 * FACE_SCALE
 
-/**
- * Where the card's corners sit in the preview (top-left, top-right, bottom-right,
- * bottom-left): the pose of the 3D card on the dashboard (turned a little further so it reads at
- * thumbnail size), with its right edge nearer.
- */
-const CARD_QUAD: readonly [Point2, Point2, Point2, Point2] = [
-  { x: 8, y: 42 },
-  { x: 382, y: 0 },
-  { x: 390, y: 522 },
-  { x: 0, y: 504 },
-]
-const CARD_LEFT = 715
-const CARD_TOP = 55
+/** The space the card (turned, open a little) is fitted into, right of the text. */
+const CARD_AREA = { right: 1150, width: 480, height: 510 }
 
 function clip(text: string, max: number): string {
   const trimmed = text.trim()
@@ -191,29 +179,40 @@ async function renderCardFace(
   return new Uint8Array(await face.arrayBuffer())
 }
 
-/** The flat front warped into the 3D card's pose, as a PNG data URL (at FACE_SCALE). */
-async function renderCardInPerspective(
+/** The card as a 3D scene (see `renderCardScene`), as a PNG data URL at FACE_SCALE. */
+async function renderCard3D(
   input: CardPreviewImageInput,
   recipientName: string,
   fonts: OgFonts,
-): Promise<string> {
+) {
   const flat = await renderCardFace(
     input.cover,
     clip(input.headline ?? "", 70),
     recipientName,
     fonts,
   )
-  const quad = CARD_QUAD.map((p) => ({
-    x: p.x * FACE_SCALE,
-    y: p.y * FACE_SCALE,
-  })) as [Point2, Point2, Point2, Point2]
-  const warped = warpToQuad(decodePngRgba(flat), quad)
-  return `data:image/png;base64,${Buffer.from(encodePngRgba(warped)).toString("base64")}`
+  const scene = renderCardScene(
+    decodePngRgba(flat),
+    CARD_AREA.width * FACE_SCALE,
+    CARD_AREA.height * FACE_SCALE,
+  )
+  return {
+    src: `data:image/png;base64,${Buffer.from(encodePngRgba(scene.image)).toString("base64")}`,
+    width: scene.image.width / FACE_SCALE,
+    height: scene.image.height / FACE_SCALE,
+    card: {
+      x: scene.card.x / FACE_SCALE,
+      y: scene.card.y / FACE_SCALE,
+      width: scene.card.width / FACE_SCALE,
+      height: scene.card.height / FACE_SCALE,
+    },
+  }
 }
 
 /**
  * A card's link preview (1200×630) for Slack, iMessage and social unfurls: the card's front
- * in the pose of the 3D card, on its pastel backdrop, with what the link is for beside it.
+ * as the 3D card shows it (a little open, lit and casting a shadow), on its pastel
+ * backdrop, with what the link is for beside it.
  */
 export async function renderCardPreviewImage(
   input: CardPreviewImageInput,
@@ -227,9 +226,11 @@ export async function renderCardPreviewImage(
     clip(input.senderName ?? "", 40) || null,
   )
   const shownTitle = clip(title, 56)
-  const card = await renderCardInPerspective(input, recipient, fonts)
-  const cardWidth = Math.ceil(Math.max(...CARD_QUAD.map((p) => p.x)))
-  const cardHeight = Math.ceil(Math.max(...CARD_QUAD.map((p) => p.y)))
+  const card = await renderCard3D(input, recipient, fonts)
+  // Right-align the card itself (not its shadow) in its area, centred vertically.
+  const cardLeft = CARD_AREA.right - card.card.width - card.card.x
+  const cardTop =
+    (CARD_PREVIEW_SIZE.height - card.card.height) / 2 - card.card.y
 
   return new ImageResponse(
     <div
@@ -290,31 +291,18 @@ export async function renderCardPreviewImage(
         </div>
       </div>
 
-      {/* The card's shadow on the backdrop, from a block tucked just inside the card. */}
-      <div
-        style={{
-          position: "absolute",
-          left: CARD_LEFT + 20,
-          top: CARD_TOP + 56,
-          width: cardWidth - 44,
-          height: cardHeight - 80,
-          background: "#3a2a22",
-          boxShadow:
-            "10px 30px 50px rgba(70, 35, 20, 0.32), 2px 8px 16px rgba(70, 35, 20, 0.18)",
-        }}
-      />
       {/* eslint-disable-next-line @next/next/no-img-element -- rendered by Satori, not the browser */}
       <img
-        src={card}
+        src={card.src}
         alt=""
-        width={cardWidth}
-        height={cardHeight}
+        width={card.width}
+        height={card.height}
         style={{
           position: "absolute",
-          left: CARD_LEFT,
-          top: CARD_TOP,
-          width: cardWidth,
-          height: cardHeight,
+          left: cardLeft,
+          top: cardTop,
+          width: card.width,
+          height: card.height,
         }}
       />
     </div>,
