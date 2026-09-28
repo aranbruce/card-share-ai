@@ -21,6 +21,11 @@ export type CardPreviewImageInput = {
   cover: string | null
 }
 
+/** The cover drawn when a card has no image, and its hue (OKLCH, midway between its stops)
+ * so the backdrop can keep clear of it. */
+const FALLBACK_COVER = "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)"
+const FALLBACK_COVER_HUE = 60
+
 /** The card front is laid out at twice its shown size, so the warp has detail to sample. */
 const FACE_SCALE = 2
 const FACE_WIDTH = 400 * FACE_SCALE
@@ -97,7 +102,7 @@ async function renderCardFace(
         height: "100%",
         display: "flex",
         position: "relative",
-        background: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
+        background: FALLBACK_COVER,
         fontFamily: OG_INTER_TIGHT_FAMILY,
       }}
     >
@@ -218,7 +223,9 @@ export async function renderCardPreviewImage(
   input: CardPreviewImageInput,
 ): Promise<ImageResponse> {
   const fonts = await loadFonts()
-  const { light, deep } = pastelStops(pastelHueFor(input.id))
+  const { light, deep } = pastelStops(
+    pastelHueFor(input.id, input.cover ? null : FALLBACK_COVER_HUE),
+  )
   const recipient = clip(input.recipientName ?? "", 40)
   const { title, subtitle } = cardPreviewCopy(
     input.variant,
