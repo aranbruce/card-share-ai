@@ -1392,6 +1392,20 @@ export function getBrowseCategories(): CategoryConfig[] {
   return BROWSE_CATEGORY_SLUGS.map((slug) => CATEGORY_CONFIGS[slug])
 }
 
+/** The browse occasions as tiles for `CardTileRow` (browse page and homepage). */
+export function occasionTiles() {
+  return getBrowseCategories().map((cat) => ({
+    key: cat.slug,
+    href: `/browse/${cat.slug}`,
+    background: cat.frontGradient,
+    coverImage: cat.coverImage,
+    coverHue: cat.coverHue,
+    headline: cat.cardTitle,
+    title: cat.label,
+    desc: cat.shortDesc,
+  }))
+}
+
 export function getCategoryConfig(slug: string): CategoryConfig | undefined {
   return CATEGORY_CONFIGS[slug]
 }

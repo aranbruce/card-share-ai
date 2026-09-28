@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 import { CardTileRow } from "@/components/card-tile-row"
+import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
-import { getBrowseCategories } from "@/lib/category-pages"
+import { getBrowseCategories, occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 
 export const metadata: Metadata = buildPageMetadata({
@@ -75,45 +75,34 @@ function HeroFan() {
     getBrowseCategories().map((c) => [c.slug, c]),
   )
   const cards = [
-    { slug: "birthday", rotate: -13, tx: -118, ty: 16, z: 0 },
-    { slug: "wedding", rotate: -4, tx: -42, ty: 4, z: 1 },
-    { slug: "promotion", rotate: 15, tx: 132, ty: 22, z: 2 },
-    { slug: "thank-you", rotate: 6, tx: 56, ty: -4, z: 3 },
+    { slug: "birthday", rotate: -10, tx: -150, ty: 20, z: 0 },
+    { slug: "wedding", rotate: -3, tx: -55, ty: 0, z: 1 },
+    { slug: "promotion", rotate: 11, tx: 150, ty: 24, z: 2 },
+    { slug: "thank-you", rotate: 4, tx: 50, ty: -8, z: 3 },
   ].map((c) => ({ ...c, cat: byslug[c.slug] }))
 
   return (
-    <div className="relative grid min-h-[460px] place-items-center">
+    <div className="relative grid min-h-[480px] place-items-center">
       {cards.map((c) => (
+        // The dashboard's standing 3D card; hovering brings it to the front and opens it.
         <Link
           key={c.slug}
           href={`/browse/${c.slug}`}
-          className="group absolute hover:z-10!"
+          aria-label={`${c.cat.label}: ${c.cat.cardTitle}`}
+          className="group @container absolute h-[440px] w-[330px] hover:z-10!"
           style={{
             zIndex: c.z,
             transform: `rotate(${c.rotate}deg) translate(${c.tx}px, ${c.ty}px)`,
           }}
         >
-          <div className="relative h-[356px] w-[262px] overflow-hidden rounded-xl shadow-[0_20px_40px_-20px_rgba(20,14,6,0.30)] transition-transform duration-300 ease-out group-hover:-translate-y-3 group-hover:shadow-[0_32px_56px_-24px_rgba(20,14,6,0.40)]">
-            <Image
-              src={c.cat.coverImage}
-              alt={`${c.cat.label}: ${c.cat.cardTitle}`}
-              fill
-              sizes="262px"
-              priority
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent" />
-            <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-transparent" />
-            {/* Only the front card's title shows; the others' would be cut off by the fan, so
-                theirs appear when the card is hovered to the front. */}
-            <p
-              className={`absolute inset-x-0 bottom-0 p-5 text-center text-xl font-bold text-white transition-opacity duration-300 ${
-                c.z === 3 ? "" : "opacity-0 group-hover:opacity-100"
-              }`}
-            >
-              {c.cat.cardTitle}
-            </p>
-          </div>
+          <CardThumb3D
+            imageUrl={c.cat.coverImage}
+            // Only the front card's title; the fan would cut off the rest.
+            headline={c.z === 3 ? c.cat.cardTitle : null}
+            alt=""
+            hue={c.cat.coverHue}
+            priority
+          />
         </Link>
       ))}
 
@@ -205,18 +194,7 @@ export default function CardsPage() {
             Pick the moment worth marking together
           </h2>
 
-          <CardTileRow
-            tiles={getBrowseCategories().map((cat) => ({
-              key: cat.slug,
-              href: `/browse/${cat.slug}`,
-              background: cat.frontGradient,
-              coverImage: cat.coverImage,
-              coverHue: cat.coverHue,
-              headline: cat.cardTitle,
-              title: cat.label,
-              desc: cat.shortDesc,
-            }))}
-          />
+          <CardTileRow tiles={occasionTiles()} />
         </div>
       </section>
 

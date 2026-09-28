@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
-import { Paperclip, Sparkles, X } from "lucide-react"
-import { ClosedCardCover } from "@/components/card-book-3d/closed-card-cover"
-import { cardBookFrameClass } from "@/components/card-book-3d/frame"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Paperclip, X } from "lucide-react"
+import { CardLoading3D } from "@/components/card-loading-3d"
 import { SampleCard3D, type SampleNote } from "@/components/sample-card-3d"
 
 const DEMO_STATES = {
@@ -70,15 +71,24 @@ const DEMO_NOTES: SampleNote[] = [
   { message: "Have the best day! Sam x", font: "pacifico", color: "#2f7d5b" },
 ]
 
+/** Cover hue of a birthday card, as on the create page. */
+const BIRTHDAY_HUE = 18
+
+type Phase = "idle" | "headline" | "cover" | "done"
+
+/**
+ * The homepage's "live preview": a browser window around a small copy of the create page's
+ * details step (same form, same preview states), filled in for Mira. Generating plays the real
+ * sequence (headline, then cover) with pre-made results, then hands over to the real 3D card.
+ */
 export function HomeDemoPanel() {
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("Warm")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [showShimmer, setShowShimmer] = useState(false)
-  const [displayedImageUrl, setDisplayedImageUrl] = useState("")
-  const [displayedMessage, setDisplayedMessage] = useState("")
+  const [phase, setPhase] = useState<Phase>("idle")
   const [photoAttached, setPhotoAttached] = useState(false)
-  const [hasGenerated, setHasGenerated] = useState(false)
+  const [result, setResult] = useState<{ imageUrl: string; message: string }>()
+
+  const isGenerating = phase === "headline" || phase === "cover"
 
   const scheduleTimeout = (fn: () => void, ms: number) => {
     const id = setTimeout(() => {
@@ -104,180 +114,193 @@ export function HomeDemoPanel() {
     const variant = photoAttached
       ? DEMO_STATES[demoKey].withPhoto
       : DEMO_STATES[demoKey].base
-    setIsGenerating(true)
-    setShowShimmer(true)
-    setHasGenerated(true)
-    setDisplayedImageUrl(variant.imageUrl)
-    setDisplayedMessage("")
-
+    setPhase("headline")
+    scheduleTimeout(() => setPhase("cover"), 1100)
     scheduleTimeout(() => {
-      setShowShimmer(false)
-
-      const newMessage = variant.message
-      let i = 0
-      const type = () => {
-        i++
-        setDisplayedMessage(newMessage.slice(0, i))
-        if (i < newMessage.length) {
-          scheduleTimeout(type, 25)
-        } else {
-          setIsGenerating(false)
-        }
-      }
-      scheduleTimeout(type, 300)
-    }, 700)
+      setResult({ imageUrl: variant.imageUrl, message: variant.message })
+      setPhase("done")
+    }, 2600)
   }
 
   return (
-    <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.14)] lg:block">
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/60 uppercase">
+    <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.18)] md:block">
+      {/* Browser chrome */}
+      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <div className="flex gap-1.5">
           <div className="h-2.5 w-2.5 rounded-full bg-border" />
           <div className="h-2.5 w-2.5 rounded-full bg-border" />
           <div className="h-2.5 w-2.5 rounded-full bg-border" />
         </div>
-        Live preview
-      </div>
-      <div className="flex">
-        <div className="flex w-52 shrink-0 flex-col gap-4 p-4">
-          <div className="rounded-xl bg-background p-3 text-sm leading-relaxed text-foreground">
-            <span className="text-xs text-muted-foreground">
-              Describe the card.
-            </span>
-            <br />
-            Mira turns 30 on Thursday. She&apos;s on the design team, loves
-            botanical illustration and long train rides.
-          </div>
-
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-              Tone
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {(
-                Object.keys(DEMO_STATES) as Array<keyof typeof DEMO_STATES>
-              ).map((c) => (
-                <ChipButton
-                  key={c}
-                  onClick={() => setDemoKey(c)}
-                  disabled={isGenerating}
-                  active={demoKey === c}
-                  className="text-xs"
-                >
-                  {c}
-                </ChipButton>
-              ))}
-            </div>
-          </div>
-          <div className="h-30">
-            <div className="mb-1.5 text-xs font-medium text-muted-foreground">
-              Reference photo{" "}
-              <span className="font-normal opacity-60">(optional)</span>
-            </div>
-            {photoAttached ? (
-              <div className="relative w-fit overflow-hidden rounded-xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/demo/mira.png"
-                  alt="Example reference photo for card generation"
-                  className="max-h-24 max-w-full"
-                />
-                <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Remove reference photo"
-                  onClick={() => setPhotoAttached(false)}
-                  disabled={isGenerating}
-                  className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPhotoAttached(true)}
-                disabled={isGenerating}
-                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Paperclip className="h-3.5 w-3.5" />
-                Attach a reference photo
-              </button>
-            )}
-          </div>
-          <Button
-            className="mt-auto w-full"
-            size="sm"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-          >
-            {isGenerating ? "Generating…" : "Generate card"}
-          </Button>
+        <div className="mx-auto w-full max-w-sm truncate rounded-md bg-background px-3 py-1 text-center font-mono text-[11px] text-muted-foreground">
+          cardshare.ai/create
         </div>
+        <div className="w-[46px]" aria-hidden />
+      </div>
 
-        <div className="min-w-0 flex-1 border-l border-border px-2 py-4 xl:px-6">
-          {hasGenerated && !isGenerating ? (
-            <SampleCard3D
-              id={`demo-${demoKey}-${photoAttached ? "photo" : "base"}`}
-              imageUrl={displayedImageUrl}
-              headline={displayedMessage}
-              recipientName="Mira"
-              message={DEMO_INSIDE_MESSAGE}
-              notes={DEMO_NOTES}
-              showPager={false}
-            />
-          ) : (
-            // Same frame as the 3D card, so nothing jumps when it takes over.
-            <div className="flex w-full flex-col items-center gap-6">
-              <div
-                className={`relative w-full ${cardBookFrameClass(false, false)}`}
+      <div className="grid min-h-[620px] grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
+        {/* The create page's details form, filled in */}
+        <aside className="flex flex-col border-r border-border bg-card px-7 py-6 text-left">
+          <h2 className="text-[30px] leading-[1.05] font-semibold tracking-[-0.03em]">
+            Tell us
+            <br />
+            <span className="text-muted-foreground">about who</span>
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            You can regenerate anything after this step
+          </p>
+
+          <div className="mt-6 flex flex-1 flex-col gap-4">
+            <div>
+              <label
+                htmlFor="demo-recipient"
+                className="mb-1.5 block text-xs font-medium text-muted-foreground"
               >
-                {hasGenerated ? (
-                  <>
-                    <ClosedCardCover
-                      imageUrl={displayedImageUrl}
-                      headline={displayedMessage}
-                      recipientName="Mira"
-                    />
-                    <div
-                      className={`absolute inset-y-[8%] left-1/2 z-10 aspect-4/5 -translate-x-1/2 rounded-md transition-opacity duration-500 ${
-                        showShimmer
-                          ? "opacity-100"
-                          : "pointer-events-none opacity-0"
-                      }`}
-                    >
-                      <div className="h-full w-full animate-pulse rounded-md bg-stone-200" />
-                    </div>
-                  </>
-                ) : (
-                  <div
-                    className="absolute inset-y-[8%] left-1/2 aspect-4/5 -translate-x-1/2 overflow-hidden rounded-md shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, oklch(0.92 0.07 18) 0%, oklch(0.82 0.12 3) 100%)",
-                    }}
+                To
+              </label>
+              <Input id="demo-recipient" value="Mira" readOnly variant="soft" />
+            </div>
+            <div>
+              <label
+                htmlFor="demo-sender"
+                className="mb-1.5 block text-xs font-medium text-muted-foreground"
+              >
+                From
+              </label>
+              <Input
+                id="demo-sender"
+                value="The design team"
+                readOnly
+                variant="soft"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="demo-context"
+                className="mb-1.5 block text-xs font-medium text-muted-foreground"
+              >
+                Context{" "}
+                <span className="font-normal opacity-60">(optional)</span>
+              </label>
+              <Textarea
+                id="demo-context"
+                value="Turns 30 on Thursday. Loves botanical illustration and long train rides"
+                readOnly
+                variant="card"
+                className="min-h-20"
+              />
+            </div>
+            <div>
+              <div className="mb-1.5 text-xs font-medium text-muted-foreground">
+                Reference photo{" "}
+                <span className="font-normal opacity-60">(optional)</span>
+              </div>
+              {photoAttached ? (
+                <div className="relative w-fit overflow-hidden rounded-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/demo/mira.png"
+                    alt="Example reference photo for card generation"
+                    className="max-h-24 max-w-full"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Remove reference photo"
+                    onClick={() => setPhotoAttached(false)}
+                    disabled={isGenerating}
+                    className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
                   >
-                    <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-                      <div
-                        className="flex h-8 w-8 items-center justify-center rounded-lg opacity-60"
-                        style={{ background: "oklch(0.7 0.14 18)" }}
-                      >
-                        <Sparkles className="h-4 w-4 stroke-white" />
-                      </div>
-                      <p
-                        className="text-xs leading-relaxed opacity-70"
-                        style={{ color: "oklch(0.25 0.06 18)" }}
-                      >
-                        Click Generate to see your card
-                      </p>
-                    </div>
-                  </div>
-                )}
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPhotoAttached(true)}
+                  disabled={isGenerating}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                  Attach a reference photo
+                </button>
+              )}
+            </div>
+            <div>
+              <div className="mb-1.5 text-xs font-medium text-muted-foreground">
+                Tone
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  Object.keys(DEMO_STATES) as Array<keyof typeof DEMO_STATES>
+                ).map((c) => (
+                  <ChipButton
+                    key={c}
+                    onClick={() => setDemoKey(c)}
+                    disabled={isGenerating}
+                    active={demoKey === c}
+                  >
+                    {c}
+                  </ChipButton>
+                ))}
               </div>
             </div>
-          )}
+
+            <div className="mt-auto pt-4">
+              <Button
+                className="w-full"
+                onClick={handleGenerate}
+                disabled={isGenerating}
+              >
+                {isGenerating
+                  ? "Generating…"
+                  : phase === "done"
+                    ? "Regenerate"
+                    : "Generate card"}
+              </Button>
+            </div>
+          </div>
+        </aside>
+
+        {/* The create page's live preview */}
+        <div className="flex min-w-0 items-center justify-center bg-background px-8 py-8">
+          <div className="w-full max-w-md text-center">
+            <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
+              Live preview
+            </p>
+            <div className="mx-auto mt-5 flex justify-center">
+              {phase === "done" && result ? (
+                <SampleCard3D
+                  id={`demo-${result.imageUrl}`}
+                  imageUrl={result.imageUrl}
+                  headline={result.message}
+                  recipientName="Mira"
+                  message={DEMO_INSIDE_MESSAGE}
+                  notes={DEMO_NOTES}
+                  showPager={false}
+                  frameClassName="aspect-square"
+                />
+              ) : isGenerating ? (
+                <CardLoading3D
+                  hue={BIRTHDAY_HUE}
+                  label={
+                    phase === "headline"
+                      ? "Writing your headline…"
+                      : "Designing your cover…"
+                  }
+                  className="mx-auto"
+                />
+              ) : (
+                <CardLoading3D
+                  variant="placeholder"
+                  hue={BIRTHDAY_HUE}
+                  label="Hit Generate to see Mira's card"
+                  className="mx-auto"
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
