@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Paperclip, Sparkles, X } from "lucide-react"
+import { ClosedCardCover } from "@/components/card-book-3d/closed-card-cover"
+import { cardBookFrameClass } from "@/components/card-book-3d/frame"
+import { SampleCard3D, type SampleNote } from "@/components/sample-card-3d"
 
 const DEMO_STATES = {
   Warm: {
@@ -49,6 +52,23 @@ const DEMO_STATES = {
     },
   },
 } as const
+
+/** Inside the demo card once it's made: the opening note and a few signatures. */
+const DEMO_INSIDE_MESSAGE =
+  "Mira, happy 30th! Here's to botanical sketches, long train rides and the best year yet. Love, the design team"
+const DEMO_NOTES: SampleNote[] = [
+  {
+    message: "Happy birthday! Cake is on me",
+    font: "caveat",
+    color: "#b4452f",
+  },
+  {
+    message: "30 looks great on you, Mira",
+    font: "dancing-script",
+    color: "#3f5aa8",
+  },
+  { message: "Have the best day! Sam x", font: "pacifico", color: "#2f7d5b" },
+]
 
 export function HomeDemoPanel() {
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -197,54 +217,66 @@ export function HomeDemoPanel() {
           </Button>
         </div>
 
-        <div className="relative min-h-64 flex-1 border-l border-border">
-          {!hasGenerated ? (
-            <div
-              className="absolute inset-x-2 inset-y-4 overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)] xl:inset-x-8"
-              style={{
-                background:
-                  "linear-gradient(135deg, oklch(0.92 0.07 18) 0%, oklch(0.82 0.12 3) 100%)",
-              }}
-            >
-              <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg opacity-60"
-                  style={{ background: "oklch(0.7 0.14 18)" }}
-                >
-                  <Sparkles className="h-4 w-4 stroke-white" />
-                </div>
-                <p
-                  className="text-xs leading-relaxed opacity-70"
-                  style={{ color: "oklch(0.25 0.06 18)" }}
-                >
-                  Click Generate to see your card
-                </p>
-              </div>
-            </div>
+        <div className="min-w-0 flex-1 border-l border-border px-2 py-4 xl:px-6">
+          {hasGenerated && !isGenerating ? (
+            <SampleCard3D
+              id={`demo-${demoKey}-${photoAttached ? "photo" : "base"}`}
+              imageUrl={displayedImageUrl}
+              headline={displayedMessage}
+              recipientName="Mira"
+              message={DEMO_INSIDE_MESSAGE}
+              notes={DEMO_NOTES}
+            />
           ) : (
-            <div className="absolute inset-x-2 inset-y-4 overflow-hidden rounded-xl shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)] xl:inset-x-8">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={displayedImageUrl}
-                alt="AI-generated greeting card cover preview"
-                className="h-full w-full object-cover"
-              />
+            // Same frame as the 3D card (and its pager's room below), so nothing jumps when
+            // it takes over.
+            <div className="flex w-full flex-col items-center gap-6">
               <div
-                className={`absolute inset-0 z-10 transition-opacity duration-500 ${
-                  showShimmer ? "opacity-100" : "pointer-events-none opacity-0"
-                }`}
+                className={`relative w-full ${cardBookFrameClass(false, false)}`}
               >
-                <div className="h-full w-full animate-pulse bg-stone-200" />
+                {hasGenerated ? (
+                  <>
+                    <ClosedCardCover
+                      imageUrl={displayedImageUrl}
+                      headline={displayedMessage}
+                      recipientName="Mira"
+                    />
+                    <div
+                      className={`absolute inset-y-[8%] left-1/2 z-10 aspect-4/5 -translate-x-1/2 rounded-md transition-opacity duration-500 ${
+                        showShimmer
+                          ? "opacity-100"
+                          : "pointer-events-none opacity-0"
+                      }`}
+                    >
+                      <div className="h-full w-full animate-pulse rounded-md bg-stone-200" />
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    className="absolute inset-y-[8%] left-1/2 aspect-4/5 -translate-x-1/2 overflow-hidden rounded-md shadow-[0_12px_32px_-8px_rgba(17,17,16,0.22)]"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, oklch(0.92 0.07 18) 0%, oklch(0.82 0.12 3) 100%)",
+                    }}
+                  >
+                    <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-lg opacity-60"
+                        style={{ background: "oklch(0.7 0.14 18)" }}
+                      >
+                        <Sparkles className="h-4 w-4 stroke-white" />
+                      </div>
+                      <p
+                        className="text-xs leading-relaxed opacity-70"
+                        style={{ color: "oklch(0.25 0.06 18)" }}
+                      >
+                        Click Generate to see your card
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
-              <div className="absolute inset-0 flex flex-col justify-end p-4">
-                <p className="min-h-10 text-lg font-semibold text-white/90">
-                  {displayedMessage}
-                  {isGenerating && (
-                    <span className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.1em] animate-pulse bg-white/70" />
-                  )}
-                </p>
-              </div>
+              <div className="h-8" aria-hidden />
             </div>
           )}
         </div>

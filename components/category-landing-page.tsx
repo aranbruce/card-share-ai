@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
+import { SampleCard3D } from "@/components/sample-card-3d"
 import type { CategoryConfig } from "@/lib/category-pages"
 
 function PlusIcon() {
@@ -15,102 +17,6 @@ function PlusIcon() {
     >
       <path d="M12 5v14M5 12h14" />
     </svg>
-  )
-}
-
-function CardVisual({ config }: { config: CategoryConfig }) {
-  return (
-    <div className="relative grid min-h-[460px] place-items-center">
-      {/* Back card 2 */}
-      <div
-        className="absolute overflow-hidden rounded-lg shadow-[0_14px_28px_-14px_rgba(20,14,6,0.16)]"
-        style={{
-          width: 212,
-          height: 288,
-          opacity: 0.85,
-          transform: "rotate(7deg) translate(62px, 8px)",
-          background: config.backGradient2,
-        }}
-      />
-      {/* Back card 1 */}
-      <div
-        className="absolute overflow-hidden rounded-lg shadow-[0_14px_28px_-14px_rgba(20,14,6,0.16)]"
-        style={{
-          width: 236,
-          height: 322,
-          opacity: 0.92,
-          transform: "rotate(-9deg) translate(-58px, 18px)",
-          background: config.backGradient1,
-        }}
-      />
-      {/* Front card */}
-      <div
-        className="relative z-10 overflow-hidden rounded-lg bg-[#fdfaf4]"
-        style={{
-          width: 300,
-          height: 408,
-          boxShadow:
-            "0 40px 80px -36px rgba(20,14,6,0.34), 0 14px 28px -14px rgba(20,14,6,0.16)",
-        }}
-      >
-        <div
-          className="absolute top-4 right-4 left-4 overflow-hidden rounded-[5px]"
-          style={{ bottom: 96 }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{ background: config.frontGradient }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "repeating-linear-gradient(135deg, transparent 0 14px, rgba(0,0,0,0.045) 14px 15px)",
-            }}
-          />
-        </div>
-        <div
-          className="absolute inset-x-0 bottom-6 px-5 text-center text-[23px] font-medium tracking-[-0.01em] text-[#1a1611]"
-          style={{ lineHeight: 1.2 }}
-        >
-          {config.cardTitle}
-        </div>
-      </div>
-
-      {/* Signature float 1 — top right */}
-      <div
-        className="absolute top-[34px] right-[-26px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
-        style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
-      >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: config.sigFloat1.color }}
-        />
-        <div>
-          <div className="font-medium">{config.sigFloat1.count}</div>
-          <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
-            {config.sigFloat1.recency}
-          </div>
-        </div>
-      </div>
-
-      {/* Signature float 2 — bottom left */}
-      <div
-        className="absolute bottom-[60px] left-[-34px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
-        style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
-      >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: config.sigFloat2.color }}
-        />
-        <div className="text-sm leading-tight">
-          <div>{config.sigFloat2.note}</div>
-          <div className="text-xs text-muted-foreground">
-            {config.sigFloat2.name}
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -146,8 +52,15 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
             </div>
           </div>
 
-          <div className="hidden lg:block">
-            <CardVisual config={config} />
+          <div className="mt-12 lg:mt-0">
+            <SampleCard3D
+              id={config.slug}
+              imageUrl={config.coverImage}
+              headline={config.cardTitle}
+              recipientName={config.sampleRecipient}
+              message={config.sampleMessage}
+              notes={config.sampleNotes}
+            />
           </div>
         </div>
       </section>
@@ -235,24 +148,26 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             {config.usesTitle}
           </h2>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
             {config.uses.map((use, i) => (
-              <Link
-                key={i}
-                href="/create"
-                className="block rounded-xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
-              >
+              <Link key={i} href="/create" className="group block">
                 <div
-                  className="mb-3 grid size-10 place-items-center rounded-lg text-lg leading-none"
-                  style={{ background: use.color }}
-                  aria-hidden
+                  className="card-preview-aspect relative overflow-hidden rounded-2xl transition-all duration-200 group-hover:translate-y-[-3px] group-hover:shadow-[0_26px_48px_-28px_rgba(20,14,6,0.32)]"
+                  style={{
+                    background: `linear-gradient(135deg, oklch(0.88 0.075 ${use.hue}), oklch(0.82 0.085 ${use.hue + 30}))`,
+                  }}
                 >
-                  {use.emoji}
+                  <CardThumb3D
+                    imageUrl={use.coverImage}
+                    headline={use.headline}
+                    alt=""
+                    hue={use.hue + 180}
+                  />
                 </div>
-                <h3 className="text-sm font-semibold tracking-[-0.015em]">
+                <h3 className="mt-2.5 text-sm font-medium tracking-[-0.01em]">
                   {use.title}
                 </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                   {use.desc}
                 </p>
               </Link>
@@ -318,7 +233,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                   <h3 className="text-base font-medium tracking-[-0.02em]">
                     {cat.label}
                   </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                     {cat.shortDesc}
                   </p>
                 </div>
