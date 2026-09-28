@@ -9,7 +9,6 @@ import {
   closedCoverQuad,
   FRAME_MARGIN_H,
   FRAME_MARGIN_W,
-  MIN_CSS_POSE_ASPECT,
   PAGE_H,
   PAGE_W,
 } from "./card-book-pose"
@@ -75,10 +74,11 @@ describe("closed card pose in CSS", () => {
   /** Projects a scene point the way the browser does for `closedCardCss`. */
   function cssProject(width: number, height: number, x: number, y: number) {
     const cqh = height / 100
-    const { matrix: m, unit, perspective } = closedCardCss
+    const { matrix: m, unitByHeight, unitByWidth, perspective } = closedCardCss
+    const unit = Math.min(unitByHeight * cqh, (unitByWidth * width) / 100)
     // Element coordinates (px from the pose's centre, y down), relative to the target.
-    const ex = (x - PAGE_W / 2) * unit * cqh
-    const ey = -y * unit * cqh
+    const ex = (x - PAGE_W / 2) * unit
+    const ey = -y * unit
     const cx = m[0] * ex + m[4] * ey
     const cy = m[1] * ex + m[5] * ey
     const cz = m[2] * ex + m[6] * ey
@@ -92,8 +92,10 @@ describe("closed card pose in CSS", () => {
     [358, 448],
     [900, 560],
     [640, 560],
+    // Narrow editing columns, where the camera fits the page's width instead.
+    [384, 560],
+    [300, 560],
   ])("draws the cover where the 3D camera does in a %i×%i frame", (w, h) => {
-    expect(w / h).toBeGreaterThanOrEqual(MIN_CSS_POSE_ASPECT)
     const corners = [
       [0, PAGE_H / 2],
       [PAGE_W, PAGE_H / 2],

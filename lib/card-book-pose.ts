@@ -110,14 +110,11 @@ export function closedCoverQuad(
 
 /**
  * The closed card's pose as plain CSS 3D, so it can be drawn before any JavaScript runs (e.g.
- * in server-rendered HTML). Lengths are in `cqh` of a size container that is the 3D card's
- * frame. Exact while the frame is at least `MIN_CSS_POSE_ASPECT` wide for its height (every
- * frame the card uses): the camera distance then depends only on the frame's height, so the
- * whole view scales with it.
+ * in server-rendered HTML). Lengths are container units of a size container that is the 3D
+ * card's frame. The camera backs off to fit the page's height or, in narrow frames, its width;
+ * either way the view scales with that side, so one scene unit is the smaller of the two
+ * lengths below and the pose is exact at any frame size.
  */
-export const MIN_CSS_POSE_ASPECT =
-  (PAGE_W * FRAME_MARGIN_W) / (PAGE_H * FRAME_MARGIN_H)
-
 export const closedCardCss = (() => {
   const yaw = CLOSED_YAW
   const pitch = BROWSE_PITCH + CLOSED_PITCH
@@ -131,8 +128,9 @@ export const closedCardCss = (() => {
   const right = normalize(cross(forward, { x: 0, y: 1, z: 0 }))
   const up = cross(right, forward)
   const tanHalfFov = Math.tan((CAMERA_FOV * Math.PI) / 360)
-  // With the frame's height as the limit, one scene unit is this many cqh at the target.
-  const unit = 100 / (PAGE_H * FRAME_MARGIN_H)
+  // One scene unit at the target, when the frame's height or its width limits the view.
+  const unitByHeight = 100 / (PAGE_H * FRAME_MARGIN_H)
+  const unitByWidth = 100 / (PAGE_W * FRAME_MARGIN_W)
   // Scene (x right, y up, z out) to CSS (x right, y down, z out) through the camera: the
   // columns are where the element's own x, y and z axes land.
   const m = [
@@ -156,8 +154,12 @@ export const closedCardCss = (() => {
   return {
     /** CSS `perspective` of the frame, in cqh (the camera's focal length). */
     perspective: 100 / (2 * tanHalfFov),
-    /** cqh per scene unit (page width = 1). */
-    unit,
+    /** Scene unit (page width = 1) in cqh when the height limits the view… */
+    unitByHeight,
+    /** …and in cqw when the width does; the smaller applies. */
+    unitByWidth,
+    /** CSS length of one scene unit. */
+    unitCss: `min(${unitByHeight.toFixed(4)}cqh, ${unitByWidth.toFixed(4)}cqw)`,
     /** Rotation from a flat element (the card's plane) into the camera's view. */
     rotation: `matrix3d(${m.map((n) => Math.round(n * 1e6) / 1e6).join(",")})`,
     matrix: m,

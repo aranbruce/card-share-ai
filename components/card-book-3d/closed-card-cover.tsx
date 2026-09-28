@@ -5,16 +5,16 @@ import { closedCardCss, PAGE_H, PAGE_W } from "@/lib/card-book-pose"
 import { cn } from "@/lib/utils"
 import { PAGE_HEIGHT_PX } from "./page-painter"
 
-const { perspective, unit, rotation } = closedCardCss
+const { perspective, unitCss, rotation } = closedCardCss
 
-/** A length on the card, given in the painter's page px (the page is 560 tall), as cqh. */
-function pagePx(px: number): string {
-  return `${((px * PAGE_H * unit) / PAGE_HEIGHT_PX).toFixed(4)}cqh`
+/** Scene units (page width = 1) as a CSS length. */
+function scene(units: number): string {
+  return `calc(${units.toFixed(5)} * var(--card-unit))`
 }
 
-/** Scene units as cqh. */
-function scene(units: number): string {
-  return `${(units * unit).toFixed(4)}cqh`
+/** A length on the card, given in the painter's page px (the page is 560 tall). */
+function pagePx(px: number): string {
+  return scene((px * PAGE_H) / PAGE_HEIGHT_PX)
 }
 
 /** Images already shown once, so a second copy (e.g. after the 3D code loads) skips the fade. */
@@ -59,7 +59,7 @@ export function ClosedCardCover({
     <div
       aria-hidden
       className={cn("pointer-events-none absolute inset-0", className)}
-      style={{ containerType: "size" }}
+      style={{ containerType: "size", "--card-unit": unitCss } as CSSProperties}
     >
       {/* Container units resolve against an ancestor, so the camera sits one level in. */}
       <div
