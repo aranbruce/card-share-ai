@@ -10,6 +10,7 @@ import { CardBook3D } from "@/components/card-book-3d"
 import { CardLoading3D } from "@/components/card-loading-3d"
 import { GiphyPicker } from "@/components/card-3d/giphy-picker"
 import { forCardDisplay } from "@/lib/card-body"
+import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
 import {
   composeDraftAsContribution,
   type CardComposeDraft,
@@ -685,14 +686,12 @@ function ContributeCardPageInner({
     [editingContributionIdResolved, contributionEditTokens, contributions],
   )
 
-  const maxContribPage = contributions.reduce(
-    (max, c) =>
-      typeof c.page_index === "number" && c.page_index >= 1
-        ? Math.max(max, c.page_index)
-        : max,
-    0,
+  // Same page count as the card itself: at least two inside pages, in pairs.
+  const totalInnerPages = Math.max(
+    1,
+    computeNaturalPageSpread(false, 1, contributions, card?.extra_pages ?? 0)
+      .totalPages - 1,
   )
-  const totalInnerPages = Math.max(1 + (card?.extra_pages ?? 0), maxContribPage)
 
   if (loading) {
     return (

@@ -1761,7 +1761,7 @@ export function CardBook3D({
           disabled={editPage !== null ? !canEditNext : !canGoNext}
           aria-label={
             editPage !== null && editPage >= totalPages - 1 && onAddPage
-              ? "Add a page"
+              ? "Add two pages"
               : "Next page"
           }
         >

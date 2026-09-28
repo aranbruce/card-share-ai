@@ -34,6 +34,7 @@ import {
   regenerateCardImage,
 } from "@/lib/regenerate-card-client"
 import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
+import { PAGES_PER_SHEET } from "@/lib/card-extra-pages"
 import {
   contributionHasCanvasPosition,
   contributionPageIndex,
@@ -512,7 +513,8 @@ export const CardOwnerStudio = forwardRef<
   const handleAddPage = useCallback(async () => {
     if (addExtraPageInFlightRef.current) return
     addExtraPageInFlightRef.current = true
-    const next = displayExtraPages + 1
+    // Pages come in pairs (one sheet), so the new spread has no blank side.
+    const next = displayExtraPages + PAGES_PER_SHEET
     try {
       await patchCardFields({ extra_pages: next })
       setDisplayExtraPages(next)

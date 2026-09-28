@@ -1,6 +1,9 @@
 import type { LayoutNumberValue } from "@/lib/contribution-layout"
 import { toLayoutPageIndex } from "@/lib/contribution-layout"
 
+/** Inside pages added at a time: one folded sheet, both sides, so no spread has a blank side. */
+export const PAGES_PER_SHEET = 2
+
 type ContributionPageFields = {
   page_index?: LayoutNumberValue
   is_creator?: boolean | null
