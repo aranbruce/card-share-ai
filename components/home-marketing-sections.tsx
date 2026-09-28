@@ -63,7 +63,7 @@ export function HomeMarketingSections({
                 Create cards without leaving Slack
               </h2>
               <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
-                Install the cardshareAI bot and send a personalised card in
+                Install the CardShare.ai bot and send a personalised card in
                 seconds, directly from any channel or DM
               </p>
               <ol className="mt-8 flex flex-col gap-5">
@@ -146,7 +146,7 @@ export function HomeMarketingSections({
                   </div>
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold">cardshareAI</span>
+                      <span className="font-semibold">CardShare.ai</span>
                       <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
                         APP
                       </span>
@@ -168,7 +168,7 @@ export function HomeMarketingSections({
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold">cardshareAI</span>
+                      <span className="font-semibold">CardShare.ai</span>
                       <span className="rounded bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
                         APP
                       </span>

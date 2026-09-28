@@ -65,7 +65,7 @@ export function PublicCardView({
 
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground">
-              Created with cardshareAI
+              Created with CardShare.ai
             </p>
           </div>
         </div>

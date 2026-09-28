@@ -98,7 +98,7 @@ function LinkChatFormInner() {
       </h1>
       <p className="text-muted-foreground">
         Your{platformLabel ? ` ${platformLabel}` : ""} account is now linked to
-        cardshareAI. You can create cards directly from the bot.
+        CardShare.ai. You can create cards directly from the bot.
       </p>
       <p className="text-sm text-muted-foreground">
         Head back to the chat and use{" "}

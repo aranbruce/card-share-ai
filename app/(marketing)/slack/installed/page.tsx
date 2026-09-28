@@ -19,7 +19,7 @@ export default async function SlackInstalledPage({
           Something went wrong
         </h1>
         <p className="text-muted-foreground">
-          cardshareAI couldn&apos;t be added to your workspace. Please try
+          CardShare.ai couldn&apos;t be added to your workspace. Please try
           again.
         </p>
         <a
@@ -35,14 +35,14 @@ export default async function SlackInstalledPage({
   return (
     <main className="mx-auto flex max-w-lg flex-col items-center gap-6 px-6 py-24 text-center">
       <h1 className="text-2xl font-bold tracking-tight">
-        cardshareAI added{team ? ` to ${team}` : ""}!
+        CardShare.ai added{team ? ` to ${team}` : ""}!
       </h1>
       <p className="text-muted-foreground">
         Use{" "}
         <code className="rounded bg-muted px-1 py-0.5 text-sm">
           /cardshareai-link
         </code>{" "}
-        to connect your cardshareAI account, then{" "}
+        to connect your CardShare.ai account, then{" "}
         <code className="rounded bg-muted px-1 py-0.5 text-sm">
           /cardshareai
         </code>{" "}
