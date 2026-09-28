@@ -52,7 +52,19 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
             </div>
           </div>
 
-          <div className="mt-12 lg:mt-0">
+          <div
+            className="relative mt-12 overflow-hidden rounded-3xl px-4 pt-6 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] sm:px-8 sm:pt-10 lg:mt-0"
+            style={{ background: config.frontGradient }}
+          >
+            {/* Soft light from the top left and a little shade bottom right, for depth. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(90% 70% at 15% 0%, rgba(255,255,255,0.55), transparent 60%), radial-gradient(80% 60% at 100% 100%, rgba(20,14,6,0.1), transparent 70%)",
+              }}
+            />
             <SampleCard3D
               id={config.slug}
               imageUrl={config.coverImage}
@@ -60,6 +72,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               recipientName={config.sampleRecipient}
               message={config.sampleMessage}
               notes={config.sampleNotes}
+              className="relative w-full"
             />
           </div>
         </div>
