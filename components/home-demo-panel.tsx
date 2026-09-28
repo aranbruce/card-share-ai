@@ -265,7 +265,10 @@ export function HomeDemoPanel() {
 
         {/* The create page's live preview */}
         <div className="flex min-w-0 items-center justify-center bg-background px-8 py-8">
-          <div className="w-full max-w-md text-center">
+          {/* A square 3D frame shows the closed card at 1/1.2 of its width; the loading card is
+              84% of a 4:5 box. With the box 79.4% (448/564) of the frame's width, both cards
+              are the same size at any width, so the card keeps its size when it takes over. */}
+          <div className="w-full max-w-[564px] text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview
             </p>
@@ -289,14 +292,14 @@ export function HomeDemoPanel() {
                       ? "Writing your headline…"
                       : "Designing your cover…"
                   }
-                  className="mx-auto"
+                  className="mx-auto w-[79.4%]"
                 />
               ) : (
                 <CardLoading3D
                   variant="placeholder"
                   hue={BIRTHDAY_HUE}
                   label="Hit Generate to see Mira's card"
-                  className="mx-auto"
+                  className="mx-auto w-[79.4%]"
                 />
               )}
             </div>

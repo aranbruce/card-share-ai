@@ -26,6 +26,7 @@ export function SampleCard3D({
   notes,
   showPager = true,
   frameClassName,
+  closedZoom,
   className,
 }: {
   /** Keys the sample notes. */
@@ -37,6 +38,7 @@ export function SampleCard3D({
   notes: readonly SampleNote[]
   showPager?: boolean
   frameClassName?: string
+  closedZoom?: number
   className?: string
 }) {
   const contributions: Contribution[] = notes.map((note, i) => {
@@ -66,6 +68,7 @@ export function SampleCard3D({
         contributions={contributions}
         showPager={showPager}
         frameClassName={frameClassName}
+        closedZoom={closedZoom}
       />
     </MessageFontVariables>
   )

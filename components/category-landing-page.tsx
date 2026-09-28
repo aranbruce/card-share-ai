@@ -104,6 +104,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 notes={config.sampleNotes}
                 showPager={false}
                 frameClassName="aspect-square"
+                closedZoom={1.12}
                 className="relative w-full"
               />
             </div>

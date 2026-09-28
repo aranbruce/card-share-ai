@@ -49,6 +49,7 @@ function CardBook3DPlaceholder({
   coverOnly = false,
   showPager = true,
   frameClassName,
+  closedZoom,
   renderPageEditor,
   className,
 }: CardBook3DProps) {
@@ -68,6 +69,7 @@ function CardBook3DPlaceholder({
           imageUrl={imageUrl || null}
           headline={headline}
           recipientName={recipientName}
+          zoom={closedZoom}
         />
       </div>
       {/* Room for the pager underneath the real card. */}

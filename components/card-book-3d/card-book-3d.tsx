@@ -188,6 +188,9 @@ export type CardBook3DProps = {
   /** Replaces the frame's default aspect classes (e.g. a taller frame shows the closed card
    * larger; the open spread is sized by width either way). */
   frameClassName?: string
+  /** Brings the camera closer while the card is closed (e.g. 1.2 shows it 20% larger),
+   * easing back as it opens so the spread still fits. */
+  closedZoom?: number
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -229,6 +232,7 @@ type LiveState = {
   target: number
   focus: Side
   narrow: boolean
+  closedZoom: number
   reducedMotion: boolean
   camX: number
   fitW: number
@@ -287,6 +291,7 @@ export function CardBook3D({
   coverOnly = false,
   showPager = true,
   frameClassName,
+  closedZoom = 1,
   navigateToPage,
   onPageChange,
   renderPageEditor,
@@ -358,6 +363,7 @@ export function CardBook3D({
     target: 0,
     focus: initialFocus,
     narrow: false,
+    closedZoom,
     reducedMotion: false,
     camX: PAGE_W / 2,
     fitW: PAGE_W,
@@ -475,6 +481,11 @@ export function CardBook3D({
     live.current.narrow = narrow
     live.current.dirty = true
   }, [narrow])
+
+  useEffect(() => {
+    live.current.closedZoom = closedZoom
+    live.current.dirty = true
+  }, [closedZoom])
 
   useEffect(() => {
     live.current.editing = editPage !== null
@@ -905,9 +916,11 @@ export function CardBook3D({
         (state.fitW * FRAME_MARGIN_W) / 2 / (Math.tan(halfFov) * camera.aspect)
       // Pull back a little mid-turn: the lifted page is closer to the camera and looks larger.
       const turning = Math.sin(Math.PI * (state.flip - Math.floor(state.flip)))
-      const distance = Math.max(distH, distW) * (1 + 0.2 * turning)
       // A closed card is seen a little from the side (and from above) so it reads as an object.
       const closed = 1 - openness(state.flip, leafTotal)
+      const distance =
+        (Math.max(distH, distW) * (1 + 0.2 * turning)) /
+        (1 + (state.closedZoom - 1) * closed)
       const closedSide = state.flip < leafTotal / 2 ? 1 : -1
       const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
       const pitch = BROWSE_PITCH + CLOSED_PITCH * closed - state.tilt.y * 0.12
@@ -1698,6 +1711,7 @@ export function CardBook3D({
               imageUrl={coverUrl}
               headline={headline}
               recipientName={recipientName}
+              zoom={closedZoom}
             />
           )}
           <div

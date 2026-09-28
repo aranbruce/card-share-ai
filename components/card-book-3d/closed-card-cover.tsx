@@ -31,11 +31,14 @@ export function ClosedCardCover({
   imageUrl,
   headline,
   recipientName,
+  zoom = 1,
   className,
 }: {
   imageUrl?: string | null
   headline: string
   recipientName: string
+  /** Matches the 3D card's `closedZoom` (the camera's closer, so the card is larger). */
+  zoom?: number
   className?: string
 }) {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(() =>
@@ -59,7 +62,13 @@ export function ClosedCardCover({
     <div
       aria-hidden
       className={cn("pointer-events-none absolute inset-0", className)}
-      style={{ containerType: "size", "--card-unit": unitCss } as CSSProperties}
+      style={
+        {
+          containerType: "size",
+          "--card-unit": unitCss,
+          transform: zoom === 1 ? undefined : `scale(${zoom})`,
+        } as CSSProperties
+      }
     >
       {/* Container units resolve against an ancestor, so the camera sits one level in. */}
       <div
