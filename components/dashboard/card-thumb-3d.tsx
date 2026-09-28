@@ -14,7 +14,8 @@ export function CardThumb3D({
   alt,
   hue,
   priority = false,
-  cardHeight = "74%",
+  cardHeight = 74,
+  cardOffsetY = 4,
 }: {
   imageUrl: string | null
   headline: string | null
@@ -22,9 +23,14 @@ export function CardThumb3D({
   /** Fallback cover gradient hue when there is no image. */
   hue: number
   priority?: boolean
-  /** The standing card's height, as a share of the container's. */
-  cardHeight?: string
+  /** The standing card's height, as a percentage of the container's. */
+  cardHeight?: number
+  /** Moves the card down from the centre, as a percentage of its own height. */
+  cardOffsetY?: number
 }) {
+  // The ground shadow sits just under the card's bottom edge.
+  const cardBottom = 50 - cardHeight / 2 - (cardOffsetY * cardHeight) / 100
+  const shadowBottom = `${cardBottom - 2}%`
   const fallbackCover: CSSProperties = {
     background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.78 0.13 ${hue - 15}) 100%)`,
   }
@@ -34,11 +40,12 @@ export function CardThumb3D({
       {/* Ground shadow */}
       <div
         aria-hidden
-        className="absolute bottom-[7%] h-[6%] w-[62%] rounded-[50%] bg-black/25 blur-md transition-all duration-500 group-hover:w-[70%] motion-reduce:transition-none"
+        className="absolute h-[6%] w-[62%] rounded-[50%] bg-black/25 blur-md transition-all duration-500 group-hover:w-[70%] motion-reduce:transition-none"
+        style={{ bottom: shadowBottom }}
       />
       <div
-        className="relative aspect-4/5 translate-y-[4%] rotate-x-6 -rotate-y-18 transition-transform duration-500 ease-out transform-3d group-hover:rotate-x-3 group-hover:-rotate-y-8 motion-reduce:transition-none"
-        style={{ height: cardHeight }}
+        className="relative aspect-4/5 rotate-x-6 -rotate-y-18 transition-transform duration-500 ease-out transform-3d group-hover:rotate-x-3 group-hover:-rotate-y-8 motion-reduce:transition-none"
+        style={{ height: `${cardHeight}%`, translate: `0 ${cardOffsetY}%` }}
       >
         {/* Inside page, visible when the cover swings open */}
         <div

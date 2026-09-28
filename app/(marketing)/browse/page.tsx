@@ -74,22 +74,24 @@ function HeroFan() {
   const byslug = Object.fromEntries(
     getBrowseCategories().map((c) => [c.slug, c]),
   )
+  // A staircase: each card sits higher and further right than the one behind it, so every
+  // card's bottom (where its title is) shows below the card in front.
   const cards = [
-    { slug: "birthday", rotate: -10, tx: -150, ty: 20, z: 0 },
-    { slug: "wedding", rotate: -3, tx: -55, ty: 0, z: 1 },
-    { slug: "promotion", rotate: 11, tx: 150, ty: 24, z: 2 },
-    { slug: "thank-you", rotate: 4, tx: 50, ty: -8, z: 3 },
-  ].map((c) => ({ ...c, cat: byslug[c.slug] }))
+    { slug: "birthday", rotate: -4, tx: -150, ty: 105 },
+    { slug: "wedding", rotate: -1.5, tx: -50, ty: 35 },
+    { slug: "thank-you", rotate: 1.5, tx: 50, ty: -35 },
+    { slug: "promotion", rotate: 4, tx: 150, ty: -105 },
+  ].map((c, z) => ({ ...c, z, cat: byslug[c.slug] }))
 
   return (
-    <div className="relative grid min-h-[480px] place-items-center">
+    <div className="relative grid min-h-[640px] place-items-center">
       {cards.map((c) => (
         // The dashboard's standing 3D card; hovering brings it to the front and opens it.
         <Link
           key={c.slug}
           href={`/browse/${c.slug}`}
           aria-label={`${c.cat.label}: ${c.cat.cardTitle}`}
-          className="group @container absolute h-[440px] w-[330px] hover:z-10!"
+          className="group @container absolute h-[400px] w-[300px] hover:z-10!"
           style={{
             zIndex: c.z,
             transform: `rotate(${c.rotate}deg) translate(${c.tx}px, ${c.ty}px)`,
@@ -97,8 +99,7 @@ function HeroFan() {
         >
           <CardThumb3D
             imageUrl={c.cat.coverImage}
-            // Only the front card's title; the fan would cut off the rest.
-            headline={c.z === 3 ? c.cat.cardTitle : null}
+            headline={c.cat.cardTitle}
             alt=""
             hue={c.cat.coverHue}
             priority
@@ -106,9 +107,9 @@ function HeroFan() {
         </Link>
       ))}
 
-      {/* Sig float — top right */}
+      {/* Sig float — bottom right */}
       <div
-        className="absolute top-[34px] right-[-26px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
+        className="absolute right-[-10px] bottom-[40px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
         <span
@@ -123,9 +124,9 @@ function HeroFan() {
         </div>
       </div>
 
-      {/* Sig float — bottom left */}
+      {/* Sig float — top left */}
       <div
-        className="absolute bottom-[60px] left-[-34px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
+        className="absolute top-[40px] left-[-10px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
         <span

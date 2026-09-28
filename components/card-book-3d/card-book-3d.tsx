@@ -191,6 +191,10 @@ export type CardBook3DProps = {
   /** Brings the camera closer while the card is closed (e.g. 1.2 shows it 20% larger),
    * easing back as it opens so the spread still fits. */
   closedZoom?: number
+  /** Pull the camera back so an open spread fits the frame's width (the default). Off, the
+   * card keeps its closed size when it opens and the spread runs past the frame's sides
+   * (the canvas draws beyond it), so the frame's parents must not clip. */
+  fitOpenSpread?: boolean
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -233,6 +237,7 @@ type LiveState = {
   focus: Side
   narrow: boolean
   closedZoom: number
+  fitOpenSpread: boolean
   reducedMotion: boolean
   camX: number
   fitW: number
@@ -292,6 +297,7 @@ export function CardBook3D({
   showPager = true,
   frameClassName,
   closedZoom = 1,
+  fitOpenSpread = true,
   navigateToPage,
   onPageChange,
   renderPageEditor,
@@ -364,6 +370,7 @@ export function CardBook3D({
     focus: initialFocus,
     narrow: false,
     closedZoom,
+    fitOpenSpread,
     reducedMotion: false,
     camX: PAGE_W / 2,
     fitW: PAGE_W,
@@ -484,8 +491,9 @@ export function CardBook3D({
 
   useEffect(() => {
     live.current.closedZoom = closedZoom
+    live.current.fitOpenSpread = fitOpenSpread
     live.current.dirty = true
-  }, [closedZoom])
+  }, [closedZoom, fitOpenSpread])
 
   useEffect(() => {
     live.current.editing = editPage !== null
@@ -918,9 +926,26 @@ export function CardBook3D({
       const turning = Math.sin(Math.PI * (state.flip - Math.floor(state.flip)))
       // A closed card is seen a little from the side (and from above) so it reads as an object.
       const closed = 1 - openness(state.flip, leafTotal)
-      const distance =
-        (Math.max(distH, distW) * (1 + 0.2 * turning)) /
-        (1 + (state.closedZoom - 1) * closed)
+      let distance: number
+      if (state.fitOpenSpread) {
+        distance =
+          (Math.max(distH, distW) * (1 + 0.2 * turning)) /
+          (1 + (state.closedZoom - 1) * closed)
+      } else {
+        // Keep the closed size when open, letting the spread run past the frame into the
+        // canvas's bleed; only pull back if it would pass what the canvas can draw (e.g. on
+        // a phone, where the bleed stops at the screen's edge), short of the faded edge.
+        const reachW =
+          state.viewW + 2 * Math.min(state.bleed.l, state.bleed.r) * 0.8
+        const distReach =
+          state.viewH > 0
+            ? (state.fitW * FRAME_MARGIN_W) /
+              2 /
+              (Math.tan(halfFov) * (reachW / state.viewH))
+            : 0
+        distance =
+          Math.max(distH / state.closedZoom, distReach) * (1 + 0.2 * turning)
+      }
       const closedSide = state.flip < leafTotal / 2 ? 1 : -1
       const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
       const pitch = BROWSE_PITCH + CLOSED_PITCH * closed - state.tilt.y * 0.12

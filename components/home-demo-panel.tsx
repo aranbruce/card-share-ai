@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Paperclip, X } from "lucide-react"
-import { CardLoading3D } from "@/components/card-loading-3d"
+import { Paperclip, Sparkles, X } from "lucide-react"
+import { ClosedCardCover } from "@/components/card-book-3d/closed-card-cover"
 import { SampleCard3D, type SampleNote } from "@/components/sample-card-3d"
 
 const DEMO_STATES = {
@@ -265,9 +265,6 @@ export function HomeDemoPanel() {
 
         {/* The create page's live preview */}
         <div className="flex min-w-0 items-center justify-center bg-background px-8 py-8">
-          {/* A square 3D frame shows the closed card at 1/1.2 of its width; the loading card is
-              84% of a 4:5 box. With the box 79.4% (448/564) of the frame's width, both cards
-              are the same size at any width, so the card keeps its size when it takes over. */}
           <div className="w-full max-w-[564px] text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview
@@ -284,23 +281,36 @@ export function HomeDemoPanel() {
                   showPager={false}
                   frameClassName="aspect-square"
                 />
-              ) : isGenerating ? (
-                <CardLoading3D
-                  hue={BIRTHDAY_HUE}
-                  label={
-                    phase === "headline"
-                      ? "Writing your headline…"
-                      : "Designing your cover…"
-                  }
-                  className="mx-auto w-[79.4%]"
-                />
               ) : (
-                <CardLoading3D
-                  variant="placeholder"
-                  hue={BIRTHDAY_HUE}
-                  label="Hit Generate to see Mira's card"
-                  className="mx-auto w-[79.4%]"
-                />
+                // Before the card exists: the same frame and closed pose as the 3D card, so it
+                // takes over without moving.
+                <div className="relative aspect-square w-full">
+                  <ClosedCardCover
+                    headline=""
+                    recipientName="Mira"
+                    coverBackground={`linear-gradient(135deg, oklch(0.9 0.08 ${BIRTHDAY_HUE}) 0%, oklch(0.76 0.13 ${BIRTHDAY_HUE - 15}) 100%)`}
+                    shimmer={isGenerating}
+                  >
+                    <div
+                      className={`flex h-[12cqh] w-[12cqh] items-center justify-center rounded-[3cqh] shadow-sm ${
+                        isGenerating ? "animate-pulse" : ""
+                      }`}
+                      style={{ background: `oklch(0.68 0.14 ${BIRTHDAY_HUE})` }}
+                    >
+                      <Sparkles className="h-1/2 w-1/2 stroke-white" />
+                    </div>
+                    <p
+                      className="mt-[3cqh] text-[3.6cqh] leading-relaxed font-medium"
+                      style={{ color: `oklch(0.28 0.07 ${BIRTHDAY_HUE})` }}
+                    >
+                      {phase === "headline"
+                        ? "Writing your headline…"
+                        : phase === "cover"
+                          ? "Designing your cover…"
+                          : "Hit Generate to see Mira's card"}
+                    </p>
+                  </ClosedCardCover>
+                </div>
               )}
             </div>
           </div>

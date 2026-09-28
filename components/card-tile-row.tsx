@@ -54,7 +54,8 @@ export function CardTileRow({ tiles }: { tiles: readonly CardTile[] }) {
                 headline={tile.headline}
                 alt=""
                 hue={tile.coverHue}
-                cardHeight="86%"
+                cardHeight={80}
+                cardOffsetY={-2}
               />
               <div className="absolute right-3 bottom-3 flex size-7 translate-y-[6px] items-center justify-center rounded-full bg-white/90 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
                 <ArrowIcon />

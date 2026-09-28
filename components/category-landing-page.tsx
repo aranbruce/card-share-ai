@@ -67,14 +67,14 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
 
           <div className="relative mx-auto mt-12 w-full max-w-[480px] lg:mt-0">
             <div
-              className="relative overflow-hidden rounded-3xl px-2 pt-12 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-4"
+              className="relative rounded-3xl px-2 pt-12 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-4"
               style={{ background: config.frontGradient }}
             >
               {/* Soft light from the top left, a little shade bottom right, and a faint dot
                   grid, for depth. */}
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0"
+                className="pointer-events-none absolute inset-0 rounded-3xl"
                 style={{
                   background:
                     "radial-gradient(90% 70% at 15% 0%, rgba(255,255,255,0.6), transparent 60%), radial-gradient(80% 60% at 100% 100%, rgba(20,14,6,0.12), transparent 70%)",
@@ -82,7 +82,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-40"
+                className="pointer-events-none absolute inset-0 rounded-3xl opacity-40"
                 style={{
                   backgroundImage:
                     "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1.5px)",
@@ -105,6 +105,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 showPager={false}
                 frameClassName="aspect-square"
                 closedZoom={1.12}
+                fitOpenSpread={false}
                 className="relative w-full"
               />
             </div>

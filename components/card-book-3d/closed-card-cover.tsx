@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, type CSSProperties } from "react"
+import { useState, type CSSProperties, type ReactNode } from "react"
 import { closedCardCss, PAGE_H, PAGE_W } from "@/lib/card-book-pose"
 import { cn } from "@/lib/utils"
 import { PAGE_HEIGHT_PX } from "./page-painter"
@@ -32,6 +32,9 @@ export function ClosedCardCover({
   headline,
   recipientName,
   zoom = 1,
+  coverBackground,
+  shimmer = false,
+  children,
   className,
 }: {
   imageUrl?: string | null
@@ -39,6 +42,12 @@ export function ClosedCardCover({
   recipientName: string
   /** Matches the 3D card's `closedZoom` (the camera's closer, so the card is larger). */
   zoom?: number
+  /** Cover fill when there is no image (defaults to the 3D card's fallback cover). */
+  coverBackground?: string
+  /** Sweeps a shimmer across the cover (e.g. while it is being made). */
+  shimmer?: boolean
+  /** Drawn on the cover in place of the title (e.g. a prompt before the card exists). */
+  children?: ReactNode
   className?: string
 }) {
   const [loadedUrl, setLoadedUrl] = useState<string | null>(() =>
@@ -104,7 +113,8 @@ export function ClosedCardCover({
             // the image loads.
             background: imageUrl
               ? "#e7e0d4"
-              : "linear-gradient(135deg, #f59e0b, #b45309)",
+              : (coverBackground ??
+                "linear-gradient(135deg, #f59e0b, #b45309)"),
           }}
         >
           {imageUrl ? (
@@ -135,30 +145,42 @@ export function ClosedCardCover({
               />
             </>
           ) : null}
-          {/* Matches the 3D card's cover painter: fade, title and "For …". */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-end bg-linear-to-t from-black/80 via-black/20 to-transparent text-center text-white"
-            style={{ padding: pagePx(24) }}
-          >
-            {headline.trim() ? (
-              <p
-                className="font-bold"
-                style={{
-                  fontSize: pagePx(30),
-                  lineHeight: 1.25,
-                  marginBottom: pagePx(8),
-                }}
-              >
-                {headline.trim()}
-              </p>
-            ) : null}
-            <p
-              className="opacity-80"
-              style={{ fontSize: pagePx(14), lineHeight: pagePx(20) }}
+          {shimmer ? (
+            <div className="ai-refine-shimmer-sweep-cover absolute inset-0 motion-reduce:hidden" />
+          ) : null}
+          {children ? (
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center text-center"
+              style={{ padding: pagePx(24) }}
             >
-              For {recipientName}
-            </p>
-          </div>
+              {children}
+            </div>
+          ) : (
+            /* Matches the 3D card's cover painter: fade, title and "For …". */
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-end bg-linear-to-t from-black/80 via-black/20 to-transparent text-center text-white"
+              style={{ padding: pagePx(24) }}
+            >
+              {headline.trim() ? (
+                <p
+                  className="font-bold"
+                  style={{
+                    fontSize: pagePx(30),
+                    lineHeight: 1.25,
+                    marginBottom: pagePx(8),
+                  }}
+                >
+                  {headline.trim()}
+                </p>
+              ) : null}
+              <p
+                className="opacity-80"
+                style={{ fontSize: pagePx(14), lineHeight: pagePx(20) }}
+              >
+                For {recipientName}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
