@@ -70,19 +70,6 @@ function PlusIcon() {
   )
 }
 
-/** Scattered confetti around the /browse hero's cards (positions in the fan's box). */
-const CONFETTI = [
-  { x: "8%", y: "22%", size: 17, hue: 18, shape: "dot", rotate: 0 },
-  { x: "18%", y: "8%", size: 12, hue: 250, shape: "strip", rotate: 30 },
-  { x: "88%", y: "12%", size: 15, hue: 330, shape: "square", rotate: 20 },
-  { x: "95%", y: "42%", size: 12, hue: 70, shape: "strip", rotate: -25 },
-  { x: "4%", y: "62%", size: 14, hue: 170, shape: "square", rotate: 45 },
-  { x: "12%", y: "90%", size: 10, hue: 330, shape: "strip", rotate: 60 },
-  { x: "60%", y: "95%", size: 15, hue: 250, shape: "dot", rotate: 0 },
-  { x: "82%", y: "78%", size: 12, hue: 18, shape: "strip", rotate: -40 },
-  { x: "50%", y: "4%", size: 14, hue: 130, shape: "dot", rotate: 0 },
-] as const
-
 function HeroFan() {
   const byslug = Object.fromEntries(
     getBrowseCategories().map((c) => [c.slug, c]),
@@ -107,25 +94,6 @@ function HeroFan() {
             "linear-gradient(135deg, oklch(0.88 0.08 18), oklch(0.85 0.09 330) 50%, oklch(0.86 0.08 250))",
         }}
       />
-      {/* Confetti */}
-      {CONFETTI.map((bit, i) => (
-        <span
-          key={i}
-          aria-hidden
-          className={`hero-drift pointer-events-none absolute ${
-            bit.shape === "dot" ? "rounded-full" : "rounded-[3px]"
-          }`}
-          style={{
-            left: bit.x,
-            top: bit.y,
-            width: bit.size,
-            height: bit.shape === "strip" ? bit.size * 2.6 : bit.size,
-            background: `oklch(0.78 0.13 ${bit.hue})`,
-            rotate: `${bit.rotate}deg`,
-            animationDelay: `${-i * 0.8}s`,
-          }}
-        />
-      ))}
       {cards.map((c) => (
         // The dashboard's standing 3D card; hovering brings it to the front and opens it.
         <Link
@@ -163,9 +131,9 @@ function HeroFan() {
           style={{ background: "oklch(0.82 0.1 18)" }}
         />
         <div>
-          <div className="font-medium">120,000+ cards sent</div>
+          <div className="font-medium">Signed from any phone</div>
           <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
-            across every occasion
+            no app or account needed
           </div>
         </div>
       </div>
