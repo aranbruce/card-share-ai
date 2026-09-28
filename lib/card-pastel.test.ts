@@ -52,11 +52,15 @@ describe("card pastel", () => {
     expect(oklchToHex(0.62796, 0.25768, 29.2339)).toBe("#ff0000")
   })
 
-  it("makes light pastel stops", () => {
-    const { light, deep } = pastelStops(32)
+  it("makes light pastel stops, deepening into the next hue", () => {
+    const { light, deep } = pastelStops(18)
+    const channels = (hex: string) =>
+      [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
     for (const hex of [light, deep]) {
-      const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
-      expect(Math.min(...channels)).toBeGreaterThan(200)
+      expect(Math.max(...channels(hex))).toBeGreaterThan(220)
+      expect(Math.min(...channels(hex))).toBeGreaterThan(140)
     }
+    const sum = (hex: string) => channels(hex).reduce((a, b) => a + b, 0)
+    expect(sum(deep)).toBeLessThan(sum(light))
   })
 })

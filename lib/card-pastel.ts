@@ -88,10 +88,11 @@ export function oklchToHex(l: number, c: number, h: number): string {
     .join("")}`
 }
 
-/** Light and deep stops of a softer wash of a pastel hue, as hex (for link previews). */
+/** The two stops of `.card-pastel` (light theme) for a hue, as hex, for renderers without
+ * OKLCH support. */
 export function pastelStops(hue: number): { light: string; deep: string } {
   return {
-    light: oklchToHex(0.975, 0.018, hue),
-    deep: oklchToHex(0.93, 0.055, hue),
+    light: oklchToHex(0.88, 0.075, hue),
+    deep: oklchToHex(0.82, 0.085, hue + 30),
   }
 }
