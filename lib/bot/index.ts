@@ -19,8 +19,10 @@ import {
   generateHeadline,
   generateImageUrl,
   createBotCard,
+  deleteWorkspaceLinks,
 } from "./internal-api"
 import type { CardRow } from "@/lib/create-card"
+import { SLACK_HELP_MESSAGE, type MessagesTabOpen } from "./slack-app-home"
 
 const CARD_TYPES = [
   "birthday",
@@ -145,6 +147,48 @@ export function getSlackAdapter(): ReturnType<typeof createSlackAdapter> {
   return _slackAdapter
 }
 
+/**
+ * Removes everything we hold for a Slack workspace once the app is uninstalled
+ * or its bot token is revoked: the stored bot token and the account links.
+ */
+export async function removeSlackInstallation(
+  installationId: string,
+): Promise<void> {
+  await getSlackAdapter().deleteInstallation(installationId)
+  await deleteWorkspaceLinks("slack", installationId)
+}
+
+/**
+ * Sends the welcome message the first time a user opens the app's Messages
+ * tab. Slack requires listed apps that enable the Messages tab to do this.
+ */
+export async function sendMessagesTabWelcome({
+  installationId,
+  teamId,
+  userId,
+  channelId,
+}: MessagesTabOpen): Promise<void> {
+  const state = getBot().getState()
+  const key = `slack:welcomed:${teamId}:${userId}`
+  if (!(await state.setIfNotExists(key, true))) return
+
+  try {
+    const adapter = getSlackAdapter()
+    const installation = await adapter.getInstallation(installationId)
+    if (!installation) throw new Error("installation not found")
+    await adapter.withBotToken(installation.botToken, () =>
+      adapter.webClient.chat.postMessage({
+        channel: channelId,
+        text: SLACK_HELP_MESSAGE,
+      }),
+    )
+  } catch (err) {
+    // Clear the marker so the next open retries the welcome
+    await state.delete(key)
+    throw err
+  }
+}
+
 export function getBot(): Chat<BotAdapters> {
   if (_bot) return _bot
 
@@ -163,6 +207,17 @@ export function getBot(): Chat<BotAdapters> {
 }
 
 function registerHandlers(bot: Chat<BotAdapters>): void {
+  // Reply to any direct message with instructions. Card creation happens via
+  // the slash commands, so there is nothing else to do with DM content.
+  bot.onDirectMessage(async (_thread, message, channel) => {
+    if (message.author.isBot || message.author.isMe) return
+    try {
+      await channel.post(SLACK_HELP_MESSAGE)
+    } catch (err) {
+      console.error(`[cardshareai] DM reply FAIL:`, err)
+    }
+  })
+
   // /createcard slash command → open modal
   bot.onSlashCommand("/cardshareai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
@@ -171,7 +226,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       const linked = await findLinkedUser(platform, event.user.userId, teamId)
       if (!linked) {
         const linkUrl = await createLinkUrl(platform, event.user.userId, teamId)
-        const msg = `You need to connect your cardshareAI account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
+        const msg = `You need to connect your CardShare.ai account before creating a card:\n${linkUrl}\n\n_This link expires in 15 minutes._`
         try {
           await event.channel.postEphemeral(event.user, msg, {
             fallbackToDM: false,
@@ -294,8 +349,8 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
     try {
       const existing = await findLinkedUser(platform, userId, teamId)
       const msg = existing
-        ? "Your cardshareAI account is already connected! Use `/cardshareai` to create a card."
-        : `Connect your cardshareAI account:\n${await createLinkUrl(platform, userId, teamId)}\n\n_This link expires in 15 minutes._`
+        ? "Your CardShare.ai account is already connected! Use `/cardshareai` to create a card."
+        : `Connect your CardShare.ai account:\n${await createLinkUrl(platform, userId, teamId)}\n\n_This link expires in 15 minutes._`
       try {
         await event.channel.postEphemeral(event.user, msg, {
           fallbackToDM: false,
@@ -364,7 +419,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       try {
         const linkUrl = await createLinkUrl(platform, user.userId, teamId)
         const dm = await bot.openDM(user)
-        await dm.post(`Connect your cardshareAI account first:\n${linkUrl}`)
+        await dm.post(`Connect your CardShare.ai account first:\n${linkUrl}`)
       } catch (err) {
         console.error(`[modal/createLinkUrl] FAIL:`, err)
       }

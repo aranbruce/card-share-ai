@@ -52,6 +52,23 @@ export async function createLinkUrl(
   return `${appUrl}/link-chat?token=${encodeURIComponent(token)}`
 }
 
+/** Deletes account links and pending link tokens for a removed workspace. */
+export async function deleteWorkspaceLinks(
+  platform: string,
+  platformTeamId: string,
+): Promise<void> {
+  const supabase = requireServiceRoleClient()
+  for (const table of ["chat_platform_identities", "chat_link_tokens"]) {
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq("platform", platform)
+      .eq("platform_team_id", platformTeamId)
+    if (error)
+      throw new Error(`deleteWorkspaceLinks(${table}): ${error.message}`)
+  }
+}
+
 export async function generateHeadline(
   params: {
     cardType: string

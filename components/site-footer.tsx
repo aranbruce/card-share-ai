@@ -90,6 +90,14 @@ export function SiteFooter() {
                   Terms
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/subprocessors"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Sub-processors
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
