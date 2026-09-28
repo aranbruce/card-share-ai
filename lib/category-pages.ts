@@ -47,6 +47,8 @@ export interface CategoryConfig {
   backGradient1: string
   backGradient2: string
   cardTitle: string
+  /** Hue of the mockup card's cover on the browse tile, well apart from `frontGradient`. */
+  coverHue: number
   sigFloat1: { color: string; count: string; recency: string }
   sigFloat2: { color: string; note: string; name: string }
 
@@ -101,6 +103,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.07 70), oklch(0.82 0.08 110))",
     cardTitle: "Happy Birthday, Mira",
+    coverHue: 280,
     sigFloat1: {
       color: "oklch(0.82 0.1 18)",
       count: "14 people signed",
@@ -274,6 +277,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.06 200), oklch(0.82 0.07 230))",
     cardTitle: "Thank you, Alex",
+    coverHue: 18,
     sigFloat1: {
       color: "oklch(0.82 0.1 170)",
       count: "11 people signed",
@@ -447,6 +451,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.07 100), oklch(0.82 0.08 130))",
     cardTitle: "Five years, James",
+    coverHue: 250,
     sigFloat1: {
       color: "oklch(0.82 0.1 70)",
       count: "18 people signed",
@@ -620,6 +625,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.06 270), oklch(0.82 0.07 300))",
     cardTitle: "Good luck, Dan",
+    coverHue: 70,
     sigFloat1: {
       color: "oklch(0.82 0.1 250)",
       count: "19 people signed",
@@ -793,6 +799,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.05 350), oklch(0.83 0.06 20))",
     cardTitle: "James & Emma",
+    coverHue: 250,
     sigFloat1: {
       color: "oklch(0.84 0.08 330)",
       count: "42 people signed",
@@ -966,6 +973,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.07 150), oklch(0.82 0.08 180))",
     cardTitle: "Congrats, Aria!",
+    coverHue: 330,
     sigFloat1: {
       color: "oklch(0.82 0.1 130)",
       count: "14 people signed",
@@ -1139,6 +1147,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     backGradient2:
       "linear-gradient(135deg, oklch(0.88 0.06 240), oklch(0.82 0.07 270))",
     cardTitle: "Well done, Taylor",
+    coverHue: 40,
     sigFloat1: {
       color: "oklch(0.82 0.1 220)",
       count: "8 people signed",

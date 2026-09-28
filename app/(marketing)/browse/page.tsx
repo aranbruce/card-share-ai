@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
 import { getBrowseCategories } from "@/lib/category-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
@@ -239,9 +240,15 @@ export default function CardsPage() {
                   className="group w-[180px] shrink-0 snap-start snap-always sm:w-[200px] md:w-[220px]"
                 >
                   <div
-                    className="relative aspect-4/5 w-full overflow-hidden rounded-2xl transition-all duration-200 group-hover:translate-y-[-3px] group-hover:shadow-[0_26px_48px_-28px_rgba(20,14,6,0.32)]"
+                    className="card-preview-aspect relative overflow-hidden rounded-2xl transition-all duration-200 group-hover:translate-y-[-3px] group-hover:shadow-[0_26px_48px_-28px_rgba(20,14,6,0.32)]"
                     style={{ background: cat.frontGradient }}
                   >
+                    <CardThumb3D
+                      imageUrl={null}
+                      headline={cat.cardTitle}
+                      alt=""
+                      hue={cat.coverHue}
+                    />
                     <div className="absolute right-3 bottom-3 flex size-7 translate-y-[6px] items-center justify-center rounded-full bg-white/90 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
                       <ArrowIcon />
                     </div>
