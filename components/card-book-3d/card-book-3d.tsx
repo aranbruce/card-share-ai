@@ -19,6 +19,7 @@ import {
   type BookFace,
 } from "@/lib/card-book"
 import type { Contribution } from "@/lib/card-body"
+import { createGifPlayer, type GifPlayer } from "@/lib/gif-player"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
 import {
   mapBoxPoint,
@@ -130,8 +131,11 @@ const TURN_SHADOW = 0.38
 const DRAG_THRESHOLD_PX = 8
 /** Horizontal drag distance (in page widths) for one full turn. */
 const DRAG_PAGES_PER_TURN = 1.6
-/** GIF frames are re-uploaded as whole page textures, so keep the rate modest. */
-const GIF_REPAINT_MS = 150
+/**
+ * GIF frames are re-uploaded as whole page textures, so repaints are capped (~15fps).
+ * Players keep their own timing, so a faster GIF drops frames rather than slowing down.
+ */
+const GIF_REPAINT_MS = 66
 /** Quiet time after the last viewport change before the keyboard counts as settled. */
 const KEYBOARD_SETTLE_MS = 250
 /** Longest to wait for a keyboard to open after a note gets focus before revealing it. */
@@ -324,7 +328,8 @@ export function CardBook3D({
   const paintFaceRef = useRef<(faceIndex: number) => void>(() => {})
   /** Signature each face was last painted with; cleared when the scene is rebuilt. */
   const paintedRef = useRef<Map<number, string>>(new Map())
-  const gifFacesRef = useRef<number[]>([])
+  /** Faces showing GIFs, with the GIF URLs on each. */
+  const gifFacesRef = useRef<{ index: number; urls: string[] }[]>([])
 
   const [webglFailed, setWebglFailed] = useState(false)
   const editable = Boolean(renderPageEditor)
@@ -450,6 +455,17 @@ export function CardBook3D({
     imageUrls,
     imageHostRef,
   )
+  const gifUrls = useMemo(
+    () => [
+      ...new Set(
+        faces.flatMap((f) =>
+          f.kind === "page" ? faceImageUrls(f, content) : [],
+        ),
+      ),
+    ],
+    [faces, content],
+  )
+  const gifPlayersRef = useGifPlayers(gifUrls)
 
   const fontFamily = useCallback((presetId: string | null) => {
     const probe = fontProbeRef.current
@@ -773,6 +789,8 @@ export function CardBook3D({
     let frame = 0
     let last = performance.now()
     let lastGifPaint = 0
+    /** GIFs with a new frame not yet painted (repaints are throttled). */
+    const gifsAdvanced = new Set<string>()
 
     const tick = (now: number) => {
       frame = requestAnimationFrame(tick)
@@ -914,18 +932,27 @@ export function CardBook3D({
         moving = true
       }
 
-      // Animated GIFs: repaint the faces near the current spread.
+      // Animated GIFs: advance the ones near the current spread and repaint their faces.
       // While a page is open for editing the DOM editor shows the live GIFs instead.
       const gifFaces = state.editing ? [] : gifFacesRef.current
-      if (gifFaces.length > 0 && now - lastGifPaint > GIF_REPAINT_MS) {
-        lastGifPaint = now
+      if (gifFaces.length > 0) {
         const lo = Math.floor(state.flip) * 2 - 1
         const hi = Math.ceil(state.flip) * 2 + 1
-        for (const index of gifFaces) {
-          if (index >= lo && index <= hi) {
-            paintFaceRef.current(index)
-            moving = true
+        const inView = gifFaces.filter((f) => f.index >= lo && f.index <= hi)
+        for (const url of new Set(inView.flatMap((f) => f.urls))) {
+          if (gifPlayersRef.current.get(url)?.player?.tick(now)) {
+            gifsAdvanced.add(url)
           }
+        }
+        if (gifsAdvanced.size > 0 && now - lastGifPaint > GIF_REPAINT_MS) {
+          lastGifPaint = now
+          for (const { index, urls } of inView) {
+            if (urls.some((url) => gifsAdvanced.has(url))) {
+              paintFaceRef.current(index)
+              moving = true
+            }
+          }
+          gifsAdvanced.clear()
         }
       }
 
@@ -1112,7 +1139,7 @@ export function CardBook3D({
       renderer.dispose()
       renderer.domElement.remove()
     }
-  }, [])
+  }, [gifPlayersRef])
 
   // Builds the leaves when the scene is created and whenever pages are added or removed.
   // Declared after the scene effect and before the paint effect, so it runs between them.
@@ -1124,7 +1151,12 @@ export function CardBook3D({
   useEffect(() => {
     const handle = sceneRef.current
     if (!handle) return
-    const resources = { images, fontFamily }
+    const players = gifPlayersRef.current
+    const resources = {
+      images,
+      fontFamily,
+      gifFrame: (url: string) => players.get(url)?.player?.frame ?? null,
+    }
     const paint = (faceIndex: number) => {
       const face = faces[faceIndex]
       const canvas = handle.faceCanvases[faceIndex]
@@ -1134,8 +1166,10 @@ export function CardBook3D({
       texture.needsUpdate = true
     }
     paintFaceRef.current = paint
-    gifFacesRef.current = faces.flatMap((face, i) =>
-      faceHasGif(face, content) ? [i] : [],
+    gifFacesRef.current = faces.flatMap((face, index) =>
+      faceHasGif(face, content)
+        ? [{ index, urls: faceImageUrls(face, content) }]
+        : [],
     )
     // Only repaint (and re-upload) faces whose content actually changed.
     let painted = false
@@ -1147,7 +1181,7 @@ export function CardBook3D({
       painted = true
     })
     if (painted) live.current.dirty = true
-  }, [faces, content, images, fontFamily, fontsVersion])
+  }, [faces, content, images, fontFamily, fontsVersion, gifPlayersRef])
 
   // ── Reveal ─────────────────────────────────────────────────────────────────
   // The canvas stays hidden behind the placeholder cover until the cover image and fonts
@@ -2101,8 +2135,8 @@ function CardTextAlternative({
 }
 
 /**
- * Loads images for canvas painting. CORS-enabled so WebGL can upload them; each element is
- * parked in a hidden host so animated GIFs keep advancing frames.
+ * Loads images for canvas painting. CORS-enabled so WebGL can upload them. An animated
+ * GIF's `<img>` only paints its first frame (and its size); `useGifPlayers` animates it.
  */
 function useLoadedImages(
   urls: string[],
@@ -2154,6 +2188,56 @@ function useLoadedImages(
   }, [key, hostRef])
 
   return { images, failed }
+}
+
+type GifPlayerEntry = { player: GifPlayer | null; dispose: () => void }
+
+/**
+ * Animated GIF players by URL, for painting the current frame onto page textures. A player
+ * is null until its GIF is fetched and decoded, and stays null for a still GIF.
+ */
+function useGifPlayers(urls: string[]): RefObject<Map<string, GifPlayerEntry>> {
+  const playersRef = useRef<Map<string, GifPlayerEntry>>(new Map())
+  const key = urls.join("\n")
+
+  useEffect(() => {
+    const players = playersRef.current
+    const wanted = new Set(key ? key.split("\n") : [])
+    for (const [url, entry] of players) {
+      if (wanted.has(url)) continue
+      entry.dispose()
+      players.delete(url)
+    }
+    for (const url of wanted) {
+      if (players.has(url)) continue
+      const controller = new AbortController()
+      const entry: GifPlayerEntry = {
+        player: null,
+        dispose: () => {
+          controller.abort()
+          entry.player?.dispose()
+        },
+      }
+      players.set(url, entry)
+      createGifPlayer(url, controller.signal)
+        .then((player) => {
+          if (controller.signal.aborted) player?.dispose()
+          else entry.player = player
+        })
+        // Playback is an enhancement: a GIF that cannot be decoded stays on its first frame.
+        .catch(() => {})
+    }
+  }, [key])
+
+  useEffect(() => {
+    const players = playersRef.current
+    return () => {
+      players.forEach((entry) => entry.dispose())
+      players.clear()
+    }
+  }, [])
+
+  return playersRef
 }
 
 function createShadowTexture(): CanvasTexture {
