@@ -131,6 +131,8 @@ const DRAG_THRESHOLD_PX = 8
 const DRAG_PAGES_PER_TURN = 1.6
 /** GIF frames are re-uploaded as whole page textures, so keep the rate modest. */
 const GIF_REPAINT_MS = 150
+/** Longest a touch tap waits for its click before it is handled without one. */
+const TAP_CLICK_WAIT_MS = 400
 /** Longest the card waits for its cover image and fonts before showing anyway. */
 const REVEAL_TIMEOUT_MS = 2500
 /** Cross-fade from the placeholder cover to the 3D card. */
@@ -298,6 +300,14 @@ export function CardBook3D({
   const [editScale, setEditScale] = useState(1)
   /** The editor element, mapped onto the 3D page every frame by the render loop. */
   const editorRef = useRef<HTMLDivElement>(null)
+  /** The editor is briefly laid out flat (untransformed) to replay a click inside a tap. */
+  const editorFlatRef = useRef(false)
+  /** A touch tap waiting for its click event (see endPointer). */
+  const pendingTapRef = useRef<{
+    x: number
+    y: number
+    timer: number
+  } | null>(null)
   const startPage =
     editPage ?? (coverOnly ? 0 : (navigateToPage ?? initialPage))
   const initialFlip = coverOnly ? 0 : spreadForPage(startPage)
@@ -1119,6 +1129,11 @@ export function CardBook3D({
   /** Screen point to layout px within an editor element, through the page's perspective. */
   const toCanvasPoint = useCallback<CardCanvasPointMapper>(
     (element, clientX, clientY) => {
+      // Laid out flat for a click replayed inside a tap (see openPageAt): one px is one px.
+      if (editorFlatRef.current) {
+        const box = element.getBoundingClientRect()
+        return { x: clientX - box.left, y: clientY - box.top }
+      }
       const editor = editorRef.current
       const container = containerRef.current
       const quad = live.current.editQuad
@@ -1338,15 +1353,6 @@ export function CardBook3D({
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return
-    // After a tap, phones send emulated mouse events that move focus, which would take it
-    // straight back off a field the tap opens for editing (see openPageAt). Taps on the card
-    // itself (not in the editor) are handled here, so skip them; scrolling is unaffected.
-    if (
-      e.pointerType !== "mouse" &&
-      !(e.target instanceof Node && editorRef.current?.contains(e.target))
-    ) {
-      e.preventDefault()
-    }
     live.current.pointer = {
       id: e.pointerId,
       startX: e.clientX,
@@ -1408,18 +1414,47 @@ export function CardBook3D({
       return
     }
     if (cancelled) return
+    // A touch tap is handled on its click: phones send emulated mouse events after the tap
+    // that would move focus off a field it opens, and only a tap or click lets them focus a
+    // field and raise the keyboard. The click normally follows at once.
+    if (e.pointerType !== "mouse") {
+      const tap = { x: e.clientX, y: e.clientY, timer: 0 }
+      window.clearTimeout(pendingTapRef.current?.timer)
+      tap.timer = window.setTimeout(() => {
+        if (pendingTapRef.current !== tap) return
+        pendingTapRef.current = null
+        handleTap(tap.x, tap.y)
+      }, TAP_CLICK_WAIT_MS)
+      pendingTapRef.current = tap
+      return
+    }
+    handleTap(e.clientX, e.clientY)
+  }
+
+  const onContainerClick = () => {
+    const tap = pendingTapRef.current
+    if (!tap) return
+    pendingTapRef.current = null
+    window.clearTimeout(tap.timer)
+    handleTap(tap.x, tap.y)
+  }
+
+  /** A click or tap on the 3D card (not a drag): opens, turns or edits a page. */
+  const handleTap = (clientX: number, clientY: number) => {
+    const container = containerRef.current
+    if (!container) return
     // Clicking around the page being edited closes the editor.
     if (editPage !== null) {
       editPageAt(null)
       return
     }
-    const rect = e.currentTarget.getBoundingClientRect()
-    const xFraction = (e.clientX - rect.left) / rect.width
+    const rect = container.getBoundingClientRect()
+    const xFraction = (clientX - rect.left) / rect.width
     // On a closed card, the title edits the cover; anywhere else opens the card.
     if (editable && !coverOnly && flipTarget <= 0) {
-      const point = sceneRef.current?.pickPage(e.clientX, e.clientY, "right")
+      const point = sceneRef.current?.pickPage(clientX, clientY, "right")
       if (point && point.v >= COVER_TITLE_ZONE) {
-        openPageAt(0, point)
+        openPageAt(0, point, { x: clientX, y: clientY })
         return
       }
     }
@@ -1435,7 +1470,8 @@ export function CardBook3D({
               : "right"
       openPageAt(
         page,
-        sceneRef.current?.pickPage(e.clientX, e.clientY, side) ?? null,
+        sceneRef.current?.pickPage(clientX, clientY, side) ?? null,
+        { x: clientX, y: clientY },
       )
     } else if (flipTarget <= 0) {
       // A closed card opens wherever it is clicked (the cover sits in the middle).
@@ -1451,38 +1487,59 @@ export function CardBook3D({
    * browsers only reliably focus (and phones only raise the keyboard) during a user gesture.
    * Other clicks (such as placing a note on blank page) replay once the editor is in place.
    */
-  const openPageAt = (page: number, point: PagePoint | null) => {
+  const openPageAt = (
+    page: number,
+    point: PagePoint | null,
+    tap?: { x: number; y: number },
+  ) => {
     pendingClickRef.current = point
     flushSync(() => editPageAt(page))
     const editor = editorRef.current
     if (!point || !editor) return
-    // The editor has not been mapped onto the page yet, so lay it out flat for a moment to
-    // find the field under the point and click it there: the field puts its caret where the
-    // page was clicked.
+    const x = point.u * PAGE_WIDTH_PX
+    const y = point.v * PAGE_HEIGHT_PX
+    // The editor has not been mapped onto the page yet, so lay it out flat for a moment and
+    // click at the matching point: a field puts its caret where the page was clicked, and a
+    // blank spot places a note there. Doing it inside the click lets phones raise the
+    // keyboard for it.
     const transform = editor.style.transform
+    const pointerEvents = editor.style.pointerEvents
     editor.style.transform = "none"
+    editorFlatRef.current = true
     try {
-      const field = nearestTextField(
-        editor,
-        point.u * PAGE_WIDTH_PX,
-        point.v * PAGE_HEIGHT_PX,
-      )
-      if (!field) return
-      pendingClickRef.current = null
+      const field = nearestFieldInFlatEditor(editor, x, y)
       const box = editor.getBoundingClientRect()
+      let clientX = box.left + x
+      let clientY = box.top + y
+      let target: Element | null = field
+      if (!target && tap) {
+        // Nothing to type into there: shift the flat editor so the point is under the
+        // pointer (on screen) and click whatever is there.
+        editor.style.transform = `translate(${tap.x - clientX}px, ${tap.y - clientY}px)`
+        editor.style.pointerEvents = "auto"
+        clientX = tap.x
+        clientY = tap.y
+        const hit = document.elementFromPoint(clientX, clientY)
+        target = hit && editor.contains(hit) ? hit : null
+      }
+      if (!target) return
+      pendingClickRef.current = null
+      const clicked = target
       flushSync(() => {
-        field.dispatchEvent(
+        clicked.dispatchEvent(
           new MouseEvent("click", {
             bubbles: true,
             cancelable: true,
             view: window,
-            clientX: box.left + point.u * PAGE_WIDTH_PX,
-            clientY: box.top + point.v * PAGE_HEIGHT_PX,
+            clientX,
+            clientY,
           }),
         )
       })
     } finally {
+      editorFlatRef.current = false
       editor.style.transform = transform
+      editor.style.pointerEvents = pointerEvents
     }
   }
 
@@ -1536,6 +1593,7 @@ export function CardBook3D({
             editable && editPage === null && "cursor-pointer",
           )}
           onPointerDown={onPointerDown}
+          onClick={onContainerClick}
           onPointerMove={onPointerMove}
           onPointerUp={(e) => endPointer(e, false)}
           onPointerCancel={(e) => endPointer(e, true)}
