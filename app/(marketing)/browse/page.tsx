@@ -98,17 +98,13 @@ function HeroFan() {
 
   return (
     <div className="relative grid min-h-[640px] place-items-center">
-      {/* A soft wash of the cards' colours behind them. */}
+      {/* An angled gradient square behind the cards. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-[2%_-4%] rounded-[45%] blur-2xl"
+        className="pointer-events-none absolute top-1/2 left-1/2 size-[440px] -translate-1/2 rotate-[-8deg] rounded-[48px] shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset"
         style={{
-          background: [
-            "radial-gradient(45% 50% at 22% 72%, oklch(0.84 0.12 18), transparent 72%)",
-            "radial-gradient(45% 50% at 42% 48%, oklch(0.85 0.1 330), transparent 72%)",
-            "radial-gradient(45% 50% at 64% 34%, oklch(0.86 0.09 190), transparent 72%)",
-            "radial-gradient(45% 50% at 82% 20%, oklch(0.87 0.11 130), transparent 72%)",
-          ].join(", "),
+          background:
+            "linear-gradient(135deg, oklch(0.88 0.08 18), oklch(0.85 0.09 330) 50%, oklch(0.86 0.08 250))",
         }}
       />
       {/* Confetti */}
