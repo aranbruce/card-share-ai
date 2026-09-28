@@ -143,7 +143,7 @@ export function HomeDemoPanel() {
           <h2 className="text-[30px] leading-[1.05] font-semibold tracking-[-0.03em]">
             Tell us
             <br />
-            <span className="text-muted-foreground">about who</span>
+            <span className="text-muted-foreground">about Mira</span>
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             You can regenerate anything after this step
@@ -269,7 +269,8 @@ export function HomeDemoPanel() {
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview
             </p>
-            <div className="mx-auto mt-5 flex justify-center">
+            {/* The card floats gently, before and after it's made (off for reduced motion). */}
+            <div className="demo-float mx-auto mt-5 flex justify-center">
               {phase === "done" && result ? (
                 <SampleCard3D
                   id={`demo-${result.imageUrl}`}

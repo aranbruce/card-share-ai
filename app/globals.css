@@ -267,11 +267,33 @@
   animation: hero-drift 6s ease-in-out infinite;
 }
 
+/* Homepage demo: the card rises, sways a little and settles, on a slow loop */
+@keyframes demo-float {
+  0%,
+  100% {
+    translate: 0 0;
+    rotate: -1deg;
+  }
+  30% {
+    translate: 6px -14px;
+    rotate: 0.5deg;
+  }
+  65% {
+    translate: -5px -6px;
+    rotate: 1.2deg;
+  }
+}
+
+.demo-float {
+  animation: demo-float 8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card-3d-float,
   .card-3d-float-shadow,
   .card-3d-peek,
-  .hero-drift {
+  .hero-drift,
+  .demo-float {
     animation: none;
   }
 }
