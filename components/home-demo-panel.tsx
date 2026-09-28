@@ -72,7 +72,7 @@ const DEMO_NOTES: SampleNote[] = [
 ]
 
 /** Rounded fore-edge corners on the demo card, in page widths. */
-const DEMO_CORNER = 0.045
+const DEMO_CORNER = 0.03
 
 /** Cover hue of a birthday card, as on the create page. */
 const BIRTHDAY_HUE = 18
