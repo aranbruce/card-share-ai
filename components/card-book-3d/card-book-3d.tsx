@@ -64,6 +64,7 @@ import {
   PAGE_WIDTH_PX,
   type BookContent,
 } from "./page-painter"
+import { cardBookFrameClass } from "./frame"
 import {
   createPageMaterial,
   LEAF_THICKNESS,
@@ -181,9 +182,13 @@ type Leaf = { mesh: Mesh; material: PageMaterial }
 /** A point on a page as fractions of its width and height from the top-left. */
 type PagePoint = { u: number; v: number }
 
+type BookFaces = ReturnType<typeof buildBookFaces>
+
 type SceneHandle = {
   faceCanvases: HTMLCanvasElement[]
   faceTextures: CanvasTexture[]
+  /** Rebuilds the leaves for a new set of faces, keeping the renderer and scene. */
+  setFaces: (faces: BookFaces) => void
   /** Where a screen point lands on the visible page on `side`, if it does. */
   pickPage: (clientX: number, clientY: number, side: Side) => PagePoint | null
 }
@@ -269,14 +274,19 @@ export function CardBook3D({
 
   const [webglFailed, setWebglFailed] = useState(false)
   const editable = Boolean(renderPageEditor)
-  const [editPage, setEditPage] = useState<number | null>(
-    editable && autoEditPage !== undefined ? autoEditPage : null,
-  )
+  // A page the host asked for before this mounted (the card loads on demand) still counts:
+  // it opens there, and on editing surfaces opens it for editing.
+  const [editPage, setEditPage] = useState<number | null>(() => {
+    if (!editable) return null
+    if (autoEditPage !== undefined) return autoEditPage
+    return navigateToPage !== undefined && !coverOnly ? navigateToPage : null
+  })
   const [overlayReady, setOverlayReady] = useState(false)
   const [editScale, setEditScale] = useState(1)
   /** The editor element, mapped onto the 3D page every frame by the render loop. */
   const editorRef = useRef<HTMLDivElement>(null)
-  const startPage = editPage ?? initialPage
+  const startPage =
+    editPage ?? (coverOnly ? 0 : (navigateToPage ?? initialPage))
   const initialFlip = coverOnly ? 0 : spreadForPage(startPage)
   const initialFocus: Side = startPage % 2 === 1 ? "left" : "right"
   const [flipTarget, setFlipTarget] = useState(initialFlip)
@@ -447,9 +457,6 @@ export function CardBook3D({
     const scene = new Scene()
     const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 50)
     const state = live.current
-    const leafTotal = leafCountForFaces(faces)
-    state.flip = Math.min(state.flip, leafTotal)
-    state.target = Math.min(state.target, leafTotal)
     state.dirty = true
 
     const reducedMotionQuery = window.matchMedia(
@@ -462,18 +469,9 @@ export function CardBook3D({
     reducedMotionQuery.addEventListener("change", onReducedMotion)
 
     const anisotropy = renderer.capabilities.getMaxAnisotropy()
-    const faceCanvases = faces.map(() => {
-      const canvas = document.createElement("canvas")
-      canvas.width = PAGE_WIDTH_PX * PAGE_TEXTURE_SCALE
-      canvas.height = PAGE_HEIGHT_PX * PAGE_TEXTURE_SCALE
-      return canvas
-    })
-    const faceTextures = faceCanvases.map((canvas) => {
-      const texture = new CanvasTexture(canvas)
-      texture.colorSpace = SRGBColorSpace
-      texture.anisotropy = anisotropy
-      return texture
-    })
+    // One canvas and texture per face; kept across page-count changes (see setFaces).
+    const faceCanvases: HTMLCanvasElement[] = []
+    const faceTextures: CanvasTexture[] = []
     paintedRef.current = new Map()
 
     // A thin box so pages have real edges; the shader bends it around the spine.
@@ -487,22 +485,7 @@ export function CardBook3D({
     )
     leafGeometry.translate(PAGE_W / 2, 0, 0)
     const leaves: Leaf[] = []
-    for (let i = 0; i < leafTotal; i++) {
-      const material = createPageMaterial(
-        faceTextures[i * 2],
-        faceTextures[i * 2 + 1],
-        PAGE_W,
-        {
-          front: i === 0 ? COVER_GLOSS : PAGE_GLOSS,
-          back: i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS,
-        },
-      )
-      const mesh = new Mesh(leafGeometry, material)
-      // Vertices move in the shader; the static bounds would cull turning pages.
-      mesh.frustumCulled = false
-      scene.add(mesh)
-      leaves.push({ mesh, material })
-    }
+    let leafTotal = 0
 
     const shadowTexture = createShadowTexture()
     const shadowMaterial = new MeshBasicMaterial({
@@ -512,9 +495,61 @@ export function CardBook3D({
     })
     const shadowGeometry = new PlaneGeometry(1, 1)
     const shadow = new Mesh(shadowGeometry, shadowMaterial)
-    shadow.position.z = -LEAF_GAP * (leafTotal + 2)
     shadow.renderOrder = -1
     scene.add(shadow)
+
+    // Adding or removing pages keeps the renderer (and its GL context), camera and loop, and
+    // reuses page textures; leaves are only added or removed at the end. The paint effect then
+    // repaints just the faces whose content changed.
+    const createLeaf = (i: number): Leaf => {
+      const material = createPageMaterial(
+        faceTextures[i * 2],
+        faceTextures[i * 2 + 1],
+        PAGE_W,
+        { front: i === 0 ? COVER_GLOSS : PAGE_GLOSS, back: PAGE_GLOSS },
+      )
+      const mesh = new Mesh(leafGeometry, material)
+      // Vertices move in the shader; the static bounds would cull turning pages.
+      mesh.frustumCulled = false
+      scene.add(mesh)
+      return { mesh, material }
+    }
+    const setFaces = (next: BookFaces) => {
+      while (faceCanvases.length < next.length) {
+        const canvas = document.createElement("canvas")
+        canvas.width = PAGE_WIDTH_PX * PAGE_TEXTURE_SCALE
+        canvas.height = PAGE_HEIGHT_PX * PAGE_TEXTURE_SCALE
+        const texture = new CanvasTexture(canvas)
+        texture.colorSpace = SRGBColorSpace
+        texture.anisotropy = anisotropy
+        faceCanvases.push(canvas)
+        faceTextures.push(texture)
+      }
+      while (faceCanvases.length > next.length) {
+        faceCanvases.pop()
+        faceTextures.pop()?.dispose()
+        paintedRef.current.delete(faceCanvases.length)
+      }
+
+      leafTotal = leafCountForFaces(next)
+      while (leaves.length > leafTotal) {
+        const leaf = leaves.pop()
+        if (leaf) {
+          scene.remove(leaf.mesh)
+          leaf.material.dispose()
+        }
+      }
+      while (leaves.length < leafTotal) leaves.push(createLeaf(leaves.length))
+      // Only the last leaf's back is the (glossy) back cover.
+      leaves.forEach(({ material }, i) => {
+        material.uniforms.uGlossBack.value =
+          i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS
+      })
+      shadow.position.z = -LEAF_GAP * (leafTotal + 2)
+      state.flip = Math.min(state.flip, leafTotal)
+      state.target = Math.min(state.target, leafTotal)
+      state.dirty = true
+    }
 
     const resize = () => {
       const rect = container.getBoundingClientRect()
@@ -637,7 +672,7 @@ export function CardBook3D({
       }
       return point.v >= 0 && point.v <= 1 ? point : null
     }
-    sceneRef.current = { faceCanvases, faceTextures, pickPage }
+    sceneRef.current = { faceCanvases, faceTextures, pickPage, setFaces }
     let frame = 0
     let last = performance.now()
     let lastGifPaint = 0
@@ -932,6 +967,12 @@ export function CardBook3D({
       renderer.dispose()
       renderer.domElement.remove()
     }
+  }, [])
+
+  // Builds the leaves when the scene is created and whenever pages are added or removed.
+  // Declared after the scene effect and before the paint effect, so it runs between them.
+  useEffect(() => {
+    sceneRef.current?.setFaces(faces)
   }, [faces])
 
   // ── Paint page textures ────────────────────────────────────────────────────
@@ -1401,11 +1442,7 @@ export function CardBook3D({
           tabIndex={0}
           className={cn(
             "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
-            coverOnly
-              ? "aspect-4/5"
-              : editable
-                ? "aspect-4/5 sm:aspect-auto sm:h-[560px]"
-                : "aspect-4/5 sm:aspect-4/3",
+            cardBookFrameClass(coverOnly, editable),
             editable && editPage === null && "cursor-pointer",
           )}
           onPointerDown={onPointerDown}
