@@ -73,9 +73,12 @@ const fragmentShader = /* glsl */ `
   varying float vPageY;
 
   void main() {
-    // Rounded fore-edge corners (the spine stays square, like a folded card), cut through
-    // the faces and the paper edges alike. uCorner is the radius in page widths, 0 for none.
+    // Rounded fore-edge corners (the spine stays square, like a folded card). uCorner is
+    // the radius in page widths, 0 for none.
     if (uCorner > 0.0) {
+      // The paper edges light darker than the faces and read as a hairline against the
+      // rounded corner, so rounded cards show their faces only.
+      if (abs(vFace) < 0.5) discard;
       float r = uCorner * uWidth;
       vec2 p = vec2((1.0 - vSpine) * uWidth, uHalfHeight - abs(vPageY));
       if (p.x < r && p.y < r && length(vec2(r) - p) > r) discard;
