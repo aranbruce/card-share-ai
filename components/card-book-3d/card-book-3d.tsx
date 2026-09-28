@@ -181,9 +181,13 @@ type Leaf = { mesh: Mesh; material: PageMaterial }
 /** A point on a page as fractions of its width and height from the top-left. */
 type PagePoint = { u: number; v: number }
 
+type BookFaces = ReturnType<typeof buildBookFaces>
+
 type SceneHandle = {
   faceCanvases: HTMLCanvasElement[]
   faceTextures: CanvasTexture[]
+  /** Rebuilds the leaves for a new set of faces, keeping the renderer and scene. */
+  setFaces: (faces: BookFaces) => void
   /** Where a screen point lands on the visible page on `side`, if it does. */
   pickPage: (clientX: number, clientY: number, side: Side) => PagePoint | null
 }
@@ -330,6 +334,8 @@ export function CardBook3D({
     [coverOnly, messagePageIndex, contributions, extraPages],
   )
   const faces = useMemo(() => buildBookFaces(totalPages), [totalPages])
+  /** Faces for the scene to build with when it mounts; later changes go through setFaces. */
+  const facesRef = useRef(faces)
   const leafCount = leafCountForFaces(faces)
 
   const content = useMemo<BookContent>(
@@ -447,9 +453,6 @@ export function CardBook3D({
     const scene = new Scene()
     const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 50)
     const state = live.current
-    const leafTotal = leafCountForFaces(faces)
-    state.flip = Math.min(state.flip, leafTotal)
-    state.target = Math.min(state.target, leafTotal)
     state.dirty = true
 
     const reducedMotionQuery = window.matchMedia(
@@ -462,18 +465,9 @@ export function CardBook3D({
     reducedMotionQuery.addEventListener("change", onReducedMotion)
 
     const anisotropy = renderer.capabilities.getMaxAnisotropy()
-    const faceCanvases = faces.map(() => {
-      const canvas = document.createElement("canvas")
-      canvas.width = PAGE_WIDTH_PX * PAGE_TEXTURE_SCALE
-      canvas.height = PAGE_HEIGHT_PX * PAGE_TEXTURE_SCALE
-      return canvas
-    })
-    const faceTextures = faceCanvases.map((canvas) => {
-      const texture = new CanvasTexture(canvas)
-      texture.colorSpace = SRGBColorSpace
-      texture.anisotropy = anisotropy
-      return texture
-    })
+    // One canvas and texture per face; kept across page-count changes (see setFaces).
+    const faceCanvases: HTMLCanvasElement[] = []
+    const faceTextures: CanvasTexture[] = []
     paintedRef.current = new Map()
 
     // A thin box so pages have real edges; the shader bends it around the spine.
@@ -486,23 +480,8 @@ export function CardBook3D({
       1,
     )
     leafGeometry.translate(PAGE_W / 2, 0, 0)
-    const leaves: Leaf[] = []
-    for (let i = 0; i < leafTotal; i++) {
-      const material = createPageMaterial(
-        faceTextures[i * 2],
-        faceTextures[i * 2 + 1],
-        PAGE_W,
-        {
-          front: i === 0 ? COVER_GLOSS : PAGE_GLOSS,
-          back: i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS,
-        },
-      )
-      const mesh = new Mesh(leafGeometry, material)
-      // Vertices move in the shader; the static bounds would cull turning pages.
-      mesh.frustumCulled = false
-      scene.add(mesh)
-      leaves.push({ mesh, material })
-    }
+    let leaves: Leaf[] = []
+    let leafTotal = 0
 
     const shadowTexture = createShadowTexture()
     const shadowMaterial = new MeshBasicMaterial({
@@ -512,9 +491,60 @@ export function CardBook3D({
     })
     const shadowGeometry = new PlaneGeometry(1, 1)
     const shadow = new Mesh(shadowGeometry, shadowMaterial)
-    shadow.position.z = -LEAF_GAP * (leafTotal + 2)
     shadow.renderOrder = -1
     scene.add(shadow)
+
+    // Adding or removing pages only rebuilds the leaves: the renderer (and its GL context),
+    // camera and loop stay, and existing page textures are reused. The paint effect then
+    // repaints just the faces whose content changed.
+    let builtFaces: BookFaces | null = null
+    const setFaces = (next: BookFaces) => {
+      if (next === builtFaces) return
+      builtFaces = next
+      while (faceCanvases.length < next.length) {
+        const canvas = document.createElement("canvas")
+        canvas.width = PAGE_WIDTH_PX * PAGE_TEXTURE_SCALE
+        canvas.height = PAGE_HEIGHT_PX * PAGE_TEXTURE_SCALE
+        const texture = new CanvasTexture(canvas)
+        texture.colorSpace = SRGBColorSpace
+        texture.anisotropy = anisotropy
+        paintedRef.current.delete(faceCanvases.length)
+        faceCanvases.push(canvas)
+        faceTextures.push(texture)
+      }
+      while (faceCanvases.length > next.length) {
+        faceCanvases.pop()
+        faceTextures.pop()?.dispose()
+        paintedRef.current.delete(faceCanvases.length)
+      }
+
+      leaves.forEach(({ mesh, material }) => {
+        scene.remove(mesh)
+        material.dispose()
+      })
+      leafTotal = leafCountForFaces(next)
+      leaves = Array.from({ length: leafTotal }, (_, i) => {
+        const material = createPageMaterial(
+          faceTextures[i * 2],
+          faceTextures[i * 2 + 1],
+          PAGE_W,
+          {
+            front: i === 0 ? COVER_GLOSS : PAGE_GLOSS,
+            back: i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS,
+          },
+        )
+        const mesh = new Mesh(leafGeometry, material)
+        // Vertices move in the shader; the static bounds would cull turning pages.
+        mesh.frustumCulled = false
+        scene.add(mesh)
+        return { mesh, material }
+      })
+      shadow.position.z = -LEAF_GAP * (leafTotal + 2)
+      state.flip = Math.min(state.flip, leafTotal)
+      state.target = Math.min(state.target, leafTotal)
+      state.dirty = true
+    }
+    setFaces(facesRef.current)
 
     const resize = () => {
       const rect = container.getBoundingClientRect()
@@ -637,7 +667,7 @@ export function CardBook3D({
       }
       return point.v >= 0 && point.v <= 1 ? point : null
     }
-    sceneRef.current = { faceCanvases, faceTextures, pickPage }
+    sceneRef.current = { faceCanvases, faceTextures, pickPage, setFaces }
     let frame = 0
     let last = performance.now()
     let lastGifPaint = 0
@@ -932,6 +962,13 @@ export function CardBook3D({
       renderer.dispose()
       renderer.domElement.remove()
     }
+  }, [])
+
+  // New faces (pages added or removed) rebuild the leaves in the existing scene. Runs before
+  // the paint effect below, so it paints onto the right canvases.
+  useEffect(() => {
+    facesRef.current = faces
+    sceneRef.current?.setFaces(faces)
   }, [faces])
 
   // ── Paint page textures ────────────────────────────────────────────────────
