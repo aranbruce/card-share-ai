@@ -617,7 +617,8 @@ export function CreateCardPageClient() {
                     )}
                     {cardData.imageUrl &&
                     !isGeneratingImage &&
-                    !isRegeneratingImage ? (
+                    !isRegeneratingImage &&
+                    !isRegeneratingHeadline ? (
                       <CardBook3D
                         imageUrl={cardData.imageUrl}
                         headline={cardData.headline}
@@ -627,16 +628,20 @@ export function CreateCardPageClient() {
                         renderPageEditor={() => renderCover(true)}
                         fallback={renderCover(false)}
                       />
-                    ) : isGeneratingImage || isRegeneratingImage ? (
+                    ) : isGeneratingImage ||
+                      isRegeneratingImage ||
+                      isRegeneratingHeadline ? (
                       <CardLoading3D
                         hue={TYPE_HUE[selectedType] ?? 40}
                         imageUrl={
-                          isRegeneratingImage ? cardData.imageUrl : null
+                          isGeneratingImage ? null : cardData.imageUrl || null
                         }
                         label={
                           isRegeneratingImage
                             ? "Painting a new cover…"
-                            : "Designing your cover…"
+                            : isRegeneratingHeadline
+                              ? "Writing a new title…"
+                              : "Designing your cover…"
                         }
                       />
                     ) : (

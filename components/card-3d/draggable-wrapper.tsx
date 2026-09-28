@@ -20,7 +20,7 @@ import {
   DraggableNoteMoveContext,
   type DraggableNoteMoveContextValue,
 } from "./draggable-note-context"
-import { useCardCanvasScale } from "./canvas-scale-context"
+import { useCardCanvasPoint, useCardCanvasScale } from "./canvas-scale-context"
 
 /** Used to center the compose block on click before first layout (field + controls). */
 export const COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX = 108
@@ -136,6 +136,11 @@ export function DraggableWrapper({
   useEffect(() => {
     canvasScaleRef.current = canvasScale
   }, [canvasScale])
+  const toCanvasPoint = useCardCanvasPoint()
+  const toCanvasPointRef = useRef(toCanvasPoint)
+  useEffect(() => {
+    toCanvasPointRef.current = toCanvasPoint
+  }, [toCanvasPoint])
   const [position, setPosition] = useState<{
     x: number | null
     y: number | null
@@ -480,8 +485,22 @@ export function DraggableWrapper({
 
       const screenDx = e.clientX - startPos.current.x
       const screenDy = e.clientY - startPos.current.y
-      const dx = screenDx / canvasScaleRef.current
-      const dy = screenDy / canvasScaleRef.current
+      // In perspective, map both ends onto the page exactly; flat, one scale is exact.
+      const mapPoint = toCanvasPointRef.current
+      const from =
+        mapPoint && containerRef.current
+          ? mapPoint(
+              containerRef.current,
+              startPos.current.x,
+              startPos.current.y,
+            )
+          : null
+      const to =
+        from && mapPoint && containerRef.current
+          ? mapPoint(containerRef.current, e.clientX, e.clientY)
+          : null
+      const dx = from && to ? to.x - from.x : screenDx / canvasScaleRef.current
+      const dy = from && to ? to.y - from.y : screenDy / canvasScaleRef.current
       let phase = gesturePhaseRef.current
 
       if (phase === "pending") {

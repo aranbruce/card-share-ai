@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { mapBoxPoint, quadToMatrix3d, type Point2 } from "./quad-transform"
+import {
+  mapBoxPoint,
+  quadToMatrix3d,
+  unmapBoxPoint,
+  type Point2,
+} from "./quad-transform"
 
 type Quad = [Point2, Point2, Point2, Point2]
 
@@ -51,5 +56,35 @@ describe("quad transform", () => {
     const mid = mapBoxPoint(448, 560, quad, 448, 280)
     expect(mid.x).toBeCloseTo(200, 6)
     expect(mid.y).toBeCloseTo(140, 6)
+  })
+
+  it("maps screen points back into the box", () => {
+    const quads: Quad[] = [
+      [
+        { x: 10, y: 20 },
+        { x: 300, y: 40 },
+        { x: 280, y: 420 },
+        { x: 25, y: 400 },
+      ],
+      [
+        { x: 5, y: 7 },
+        { x: 229, y: 7 },
+        { x: 229, y: 287 },
+        { x: 5, y: 287 },
+      ],
+    ]
+    for (const quad of quads) {
+      for (const [x, y] of [
+        [0, 0],
+        [120, 40],
+        [300, 500],
+        [448, 560],
+      ]) {
+        const screen = mapBoxPoint(448, 560, quad, x, y)
+        const back = unmapBoxPoint(448, 560, quad, screen.x, screen.y)
+        expect(back?.x).toBeCloseTo(x, 5)
+        expect(back?.y).toBeCloseTo(y, 5)
+      }
+    }
   })
 })

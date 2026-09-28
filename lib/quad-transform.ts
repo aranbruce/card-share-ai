@@ -83,3 +83,34 @@ function unitSquareToQuad(p0: Point2, p1: Point2, p2: Point2, p3: Point2) {
 function round(n: number): string {
   return Number.isFinite(n) ? String(Math.round(n * 1e6) / 1e6) : "0"
 }
+
+/**
+ * The inverse of `mapBoxPoint`: the point in the box that a screen point on the quad came
+ * from. Used to turn pointer positions over a page drawn in perspective back into the page's
+ * own (layout) pixels exactly, where a single scale factor would drift across the page.
+ */
+export function unmapBoxPoint(
+  width: number,
+  height: number,
+  quad: readonly [Point2, Point2, Point2, Point2],
+  x: number,
+  y: number,
+): Point2 | null {
+  const { a, b, c, d, e, f, g, h } = unitSquareToQuad(...quad)
+  // Inverse of [[a, b, c], [d, e, f], [g, h, 1]] applied to (x, y, 1).
+  const A = e - f * h
+  const B = c * h - b
+  const C = b * f - c * e
+  const D = f * g - d
+  const E = a - c * g
+  const F = c * d - a * f
+  const G = d * h - e * g
+  const H = b * g - a * h
+  const I = a * e - b * d
+  const w = G * x + H * y + I
+  if (Math.abs(w) < 1e-12) return null
+  return {
+    x: ((A * x + B * y + C) / w) * width,
+    y: ((D * x + E * y + F) / w) * height,
+  }
+}

@@ -34,7 +34,7 @@ import { GiphyPicker } from "./giphy-picker"
 import { GiphyCanvasGif } from "./giphy-canvas-gif"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { useCardCanvasScale } from "./canvas-scale-context"
+import { useCardCanvasPoint, useCardCanvasScale } from "./canvas-scale-context"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 import {
   useState,
@@ -194,6 +194,7 @@ export function Card3D({
     )
 
   const canvasScale = useCardCanvasScale()
+  const toCanvasPoint = useCardCanvasPoint()
   const onCurrentPageChangeRef = useRef(onCurrentPageChange)
   useEffect(() => {
     onCurrentPageChangeRef.current = onCurrentPageChange
@@ -290,10 +291,17 @@ export function Card3D({
       const overlay = e.currentTarget as HTMLElement
       // Layout size (unaffected by any 3D transform) and screen offset converted to layout px.
       const rect = { width: overlay.offsetWidth, height: overlay.offsetHeight }
+      // In perspective the page's screen box does not start at its corner, so map the click
+      // exactly when the host can; otherwise one scale is exact (flat card).
+      const mapped = toCanvasPoint?.(overlay, e.clientX, e.clientY)
       const screenRect = overlay.getBoundingClientRect()
       const pad = CANVAS_EDGE_PADDING
-      const clickX = (e.clientX - screenRect.left) / canvasScale
-      const clickY = (e.clientY - screenRect.top) / canvasScale
+      const clickX = mapped
+        ? mapped.x
+        : (e.clientX - screenRect.left) / canvasScale
+      const clickY = mapped
+        ? mapped.y
+        : (e.clientY - screenRect.top) / canvasScale
       const widthPx = rect.width * 0.75
       const halfW = widthPx / 2
       const halfH = COMPOSE_DRAFT_ESTIMATE_HEIGHT_PX / 2
@@ -310,7 +318,7 @@ export function Card3D({
         pageIndex: currentPage,
       })
     },
-    [currentPage, onComposeCanvasPlace, canvasScale],
+    [currentPage, onComposeCanvasPlace, canvasScale, toCanvasPoint],
   )
 
   const handleComposeDraftPatch = useCallback(

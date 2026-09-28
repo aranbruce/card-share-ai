@@ -1,7 +1,11 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { CardCanvasScaleContext } from "@/components/card-3d/canvas-scale-context"
+import {
+  CardCanvasPointContext,
+  CardCanvasScaleContext,
+  type CardCanvasPointMapper,
+} from "@/components/card-3d/canvas-scale-context"
 import { computeNaturalPageSpread } from "@/components/card-3d/card-page-spread"
 import {
   bookCenterOffset,
@@ -15,7 +19,12 @@ import {
 } from "@/lib/card-book"
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
-import { mapBoxPoint, quadToMatrix3d, type Point2 } from "@/lib/quad-transform"
+import {
+  mapBoxPoint,
+  quadToMatrix3d,
+  unmapBoxPoint,
+  type Point2,
+} from "@/lib/quad-transform"
 import { flushSync } from "react-dom"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react"
@@ -104,6 +113,8 @@ const EDIT_FRAME_H = 1.16
  */
 const EDITOR_CHROME_SELECTOR =
   '[data-card-editor-chrome],[role="dialog"],[data-regenerate-area],[data-radix-popper-content-wrapper]'
+/** How long after "Add a page" resolves to wait for the new page before giving up. */
+const ADD_PAGE_WAIT_MS = 4000
 /** The cover's title and "For …" line sit below this fraction of its height. */
 const COVER_TITLE_ZONE = 0.62
 /** Peak darkening a lifted page casts on the page beneath it. */
@@ -987,6 +998,34 @@ export function CardBook3D({
     [leafCount],
   )
 
+  /** Screen point to layout px within an editor element, through the page's perspective. */
+  const toCanvasPoint = useCallback<CardCanvasPointMapper>(
+    (element, clientX, clientY) => {
+      const editor = editorRef.current
+      const container = containerRef.current
+      const quad = live.current.editQuad
+      if (!editor || !container || !quad) return null
+      const rect = container.getBoundingClientRect()
+      const point = unmapBoxPoint(
+        PAGE_WIDTH_PX,
+        PAGE_HEIGHT_PX,
+        quad,
+        clientX - rect.left,
+        clientY - rect.top,
+      )
+      if (!point) return null
+      let x = point.x
+      let y = point.y
+      let node: HTMLElement | null = element
+      while (node && node !== editor) {
+        x -= node.offsetLeft
+        y -= node.offsetTop
+        node = node.offsetParent as HTMLElement | null
+      }
+      return node === editor ? { x, y } : null
+    },
+    [],
+  )
   /** The click that opened the editor, replayed on the editor once it is in place. */
   const pendingClickRef = useRef<PagePoint | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -1039,7 +1078,10 @@ export function CardBook3D({
     const check = () => {
       window.clearTimeout(timer)
       timer = window.setTimeout(() => {
-        if (pointerDown || onNote || pendingClickRef.current) return
+        const heldByNote = onNote
+        // A note drag or resize only keeps editing open for that one interaction.
+        if (!pointerDown) onNote = false
+        if (pointerDown || heldByNote || pendingClickRef.current) return
         const active = document.activeElement
         if (inEditor(active) || inChrome(active)) return
         editPageAtRef.current(null)
@@ -1114,11 +1156,9 @@ export function CardBook3D({
   const pendingAddedPageRef = useRef<number | null>(null)
   useEffect(() => {
     const pending = pendingAddedPageRef.current
-    if (pending !== null) {
-      if (totalPages > pending) {
-        pendingAddedPageRef.current = null
-        queueMicrotask(() => editPageAt(pending))
-      }
+    if (pending !== null && totalPages > pending) {
+      pendingAddedPageRef.current = null
+      queueMicrotask(() => editPageAt(pending))
       return
     }
     if (editPage !== null && editPage >= totalPages) {
@@ -1128,12 +1168,19 @@ export function CardBook3D({
 
   const addPage = async () => {
     if (!onAddPage) return
-    pendingAddedPageRef.current = totalPages
+    const pending = totalPages
+    pendingAddedPageRef.current = pending
     try {
       await onAddPage()
     } catch {
-      pendingAddedPageRef.current = null
+      // Handled below.
     }
+    // Hosts may swallow a failed add; stop waiting if the page has not arrived shortly after.
+    window.setTimeout(() => {
+      if (pendingAddedPageRef.current === pending) {
+        pendingAddedPageRef.current = null
+      }
+    }, ADD_PAGE_WAIT_MS)
   }
 
   /** The card page under a click, or null for the back cover and padding pages. */
@@ -1263,6 +1310,11 @@ export function CardBook3D({
         page,
         sceneRef.current?.pickPage(e.clientX, e.clientY, side) ?? null,
       )
+    } else if (flipTarget <= 0) {
+      // A closed card opens wherever it is clicked (the cover sits in the middle).
+      step(1)
+    } else if (flipTarget >= leafCount) {
+      step(-1)
     } else step(xFraction < 0.5 ? -1 : 1)
   }
 
@@ -1387,17 +1439,25 @@ export function CardBook3D({
               )}
               style={{ width: PAGE_WIDTH_PX, height: PAGE_HEIGHT_PX }}
               onKeyDown={(e) => {
-                if (e.key === "Escape") editPageAt(null)
+                // Popups the editor portals out (e.g. the AI prompt) handle their own Escape.
+                if (
+                  e.key === "Escape" &&
+                  e.currentTarget.contains(e.target as Node)
+                ) {
+                  editPageAt(null)
+                }
               }}
             >
               <CardCanvasScaleContext.Provider value={editScale}>
-                <PageEditorHost
-                  render={renderPageEditor}
-                  page={editPage}
-                  width={PAGE_WIDTH_PX}
-                  height={PAGE_HEIGHT_PX}
-                  onPageChange={editPageAt}
-                />
+                <CardCanvasPointContext.Provider value={toCanvasPoint}>
+                  <PageEditorHost
+                    render={renderPageEditor}
+                    page={editPage}
+                    width={PAGE_WIDTH_PX}
+                    height={PAGE_HEIGHT_PX}
+                    onPageChange={editPageAt}
+                  />
+                </CardCanvasPointContext.Provider>
               </CardCanvasScaleContext.Provider>
             </div>
           </div>
@@ -1623,15 +1683,24 @@ function useLoadedImages(
     if (!key) return
     let cancelled = false
     const created: HTMLImageElement[] = []
-    for (const url of key.split("\n")) {
+    const wanted = new Set(key.split("\n"))
+    for (const url of wanted) {
       const img = new Image()
       img.decoding = "async"
       if (!url.startsWith("data:")) img.crossOrigin = "anonymous"
       img.alt = ""
       img.onload = () => {
         if (cancelled) return
-        setImages((prev) => new Map(prev).set(url, img))
+        // Drop images no longer in use (e.g. replaced covers, which can be large data URLs).
+        setImages((prev) => {
+          const next = new Map(
+            [...prev].filter(([existing]) => wanted.has(existing)),
+          )
+          return next.set(url, img)
+        })
       }
+      // A failed load (e.g. a host without CORS) leaves the painted fallback in place.
+      img.onerror = () => img.remove()
       img.src = url
       hostRef.current?.appendChild(img)
       created.push(img)
