@@ -3,7 +3,9 @@
  * card (not per type) so a grid of cards of the same type still varies, and stable so a
  * card keeps its colour.
  */
-const PASTEL_HUES = [20, 55, 95, 150, 195, 235, 280, 330] as const
+// Warm tints around the brand coral (#ff5a4a, hue ~29) and the off-white ground (hue ~83):
+// blush, coral, peach, apricot, sand and butter.
+const PASTEL_HUES = [355, 18, 32, 48, 66, 84] as const
 
 export function pastelHueFor(id: string): number {
   let hash = 0
