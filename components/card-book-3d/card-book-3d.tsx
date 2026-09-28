@@ -131,6 +131,14 @@ const DRAG_THRESHOLD_PX = 8
 const DRAG_PAGES_PER_TURN = 1.6
 /** GIF frames are re-uploaded as whole page textures, so keep the rate modest. */
 const GIF_REPAINT_MS = 150
+/** Quiet time after the last viewport change before the keyboard counts as settled. */
+const KEYBOARD_SETTLE_MS = 250
+/** Longest to wait for a keyboard to open after a note gets focus before revealing it. */
+const KEYBOARD_WAIT_MS = 700
+/** How long the browser gets to bring the caret into view before the page is moved. */
+const CARET_REVEAL_WAIT_MS = 200
+/** Room kept around the note when bringing it into view. */
+const REVEAL_MARGIN_PX = 16
 /** Longest a touch tap waits for its click before it is handled without one. */
 const TAP_CLICK_WAIT_MS = 400
 /** Longest the card waits for its cover image and fonts before showing anyway. */
@@ -1285,6 +1293,67 @@ export function CardBook3D({
     )
   }, [overlayReady])
 
+  // When a note gets focus on a phone, its keyboard slides up and the camera zooms in, which
+  // can leave the note hidden until the first keystroke scrolls it into view (a jump). Once
+  // both have settled, bring it into view straight away (see revealFocusedNote).
+  useEffect(() => {
+    if (!isEditing) return
+    const editor = () => editorRef.current
+    const viewport = window.visualViewport
+    type VirtualKeyboard = EventTarget & { boundingRect?: DOMRect }
+    const keyboard = (
+      navigator as Navigator & { virtualKeyboard?: VirtualKeyboard }
+    ).virtualKeyboard
+    let settleTimer = 0
+    let giveUpTimer = 0
+    let waiting = false
+    const reveal = () => {
+      if (!waiting) return
+      // Wait for the camera to arrive on the page, so the note is where it will stay.
+      if (!live.current.overlayReady) {
+        settleTimer = window.setTimeout(reveal, KEYBOARD_SETTLE_MS)
+        return
+      }
+      waiting = false
+      window.clearTimeout(giveUpTimer)
+      revealFocusedNote(editor())
+    }
+    // The keyboard slides in over several viewport changes; act once they stop.
+    const onViewportChange = () => {
+      if (!waiting) return
+      window.clearTimeout(settleTimer)
+      settleTimer = window.setTimeout(reveal, KEYBOARD_SETTLE_MS)
+    }
+    const isNoteField = (node: EventTarget | null): node is HTMLElement =>
+      node instanceof HTMLElement &&
+      node.isContentEditable &&
+      Boolean(editor()?.contains(node))
+    const start = () => {
+      waiting = true
+      onViewportChange()
+      // No on-screen keyboard (e.g. a hardware one) means no viewport change: go anyway.
+      window.clearTimeout(giveUpTimer)
+      giveUpTimer = window.setTimeout(reveal, KEYBOARD_WAIT_MS)
+    }
+    const onFocusIn = (e: FocusEvent) => {
+      if (isNoteField(e.target)) start()
+    }
+    document.addEventListener("focusin", onFocusIn, true)
+    viewport?.addEventListener("resize", onViewportChange)
+    viewport?.addEventListener("scroll", onViewportChange)
+    keyboard?.addEventListener("geometrychange", onViewportChange)
+    // The note may already have focus: a tap focuses it as it opens the page.
+    if (isNoteField(document.activeElement)) start()
+    return () => {
+      window.clearTimeout(settleTimer)
+      window.clearTimeout(giveUpTimer)
+      document.removeEventListener("focusin", onFocusIn, true)
+      viewport?.removeEventListener("resize", onViewportChange)
+      viewport?.removeEventListener("scroll", onViewportChange)
+      keyboard?.removeEventListener("geometrychange", onViewportChange)
+    }
+  }, [isEditing])
+
   // Keep the edited page in range if pages are removed; open a newly added page.
   const pendingAddedPageRef = useRef<number | null>(null)
   useEffect(() => {
@@ -1759,6 +1828,60 @@ const TEXT_FIELD_SLOP = 14
  * The inline text field at (or within a few px of) a point in the editor's own layout, found
  * from offsets so it does not depend on hit testing through the 3D transform.
  */
+/**
+ * How far the page must scroll (px, down is positive) for the focused note in the editor to
+ * be in the visible part of the screen: above an on-screen keyboard and below a sticky or
+ * fixed header. Zero when it already is, or when nothing in the editor is focused.
+ */
+function focusedNoteOffset(editor: HTMLElement | null): number {
+  const active = document.activeElement
+  if (!editor || !(active instanceof HTMLElement) || !editor.contains(active)) {
+    return 0
+  }
+  const box = (
+    active.closest<HTMLElement>("[data-draggable-note]") ?? active
+  ).getBoundingClientRect()
+  const viewport = window.visualViewport
+  const viewTop = viewport?.offsetTop ?? 0
+  const viewBottom = viewTop + (viewport?.height ?? window.innerHeight)
+  let top = viewTop + REVEAL_MARGIN_PX
+  const header = document.querySelector("header")
+  if (header) {
+    const position = getComputedStyle(header).position
+    if (position === "sticky" || position === "fixed") {
+      top = Math.max(
+        top,
+        header.getBoundingClientRect().bottom + REVEAL_MARGIN_PX,
+      )
+    }
+  }
+  const bottom = viewBottom - REVEAL_MARGIN_PX
+  let offset = 0
+  if (box.bottom > bottom) offset = box.bottom - bottom
+  // A note taller than the space shows from its top.
+  if (box.top - offset < top) offset = box.top - top
+  return Math.abs(offset) < 1 ? 0 : offset
+}
+
+/**
+ * Brings the focused note into view if it is hidden. First the way typing does: setting the
+ * caret again makes phone browsers scroll it into view themselves. If that does not move it,
+ * the page jumps (without animating) to show it.
+ */
+function revealFocusedNote(editor: HTMLElement | null) {
+  if (focusedNoteOffset(editor) === 0) return
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0).cloneRange()
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+  window.setTimeout(() => {
+    const offset = focusedNoteOffset(editor)
+    if (offset !== 0) window.scrollBy({ top: offset, behavior: "auto" })
+  }, CARET_REVEAL_WAIT_MS)
+}
+
 function nearestTextField(
   editor: HTMLElement,
   x: number,
