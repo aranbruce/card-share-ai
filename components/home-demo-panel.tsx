@@ -226,10 +226,10 @@ export function HomeDemoPanel() {
               recipientName="Mira"
               message={DEMO_INSIDE_MESSAGE}
               notes={DEMO_NOTES}
+              showPager={false}
             />
           ) : (
-            // Same frame as the 3D card (and its pager's room below), so nothing jumps when
-            // it takes over.
+            // Same frame as the 3D card, so nothing jumps when it takes over.
             <div className="flex w-full flex-col items-center gap-6">
               <div
                 className={`relative w-full ${cardBookFrameClass(false, false)}`}
@@ -276,7 +276,6 @@ export function HomeDemoPanel() {
                   </div>
                 )}
               </div>
-              <div className="h-8" aria-hidden />
             </div>
           )}
         </div>

@@ -24,6 +24,8 @@ export function SampleCard3D({
   recipientName,
   message,
   notes,
+  showPager = true,
+  frameClassName,
   className,
 }: {
   /** Keys the sample notes. */
@@ -33,6 +35,8 @@ export function SampleCard3D({
   recipientName: string
   message: string
   notes: readonly SampleNote[]
+  showPager?: boolean
+  frameClassName?: string
   className?: string
 }) {
   const contributions: Contribution[] = notes.map((note, i) => {
@@ -60,6 +64,8 @@ export function SampleCard3D({
         message={message}
         recipientName={recipientName}
         contributions={contributions}
+        showPager={showPager}
+        frameClassName={frameClassName}
       />
     </MessageFontVariables>
   )

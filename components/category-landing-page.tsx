@@ -65,9 +65,9 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
             </ul>
           </div>
 
-          <div className="relative mt-12 lg:mt-0">
+          <div className="relative mx-auto mt-12 w-full max-w-[480px] lg:mt-0 lg:mr-0">
             <div
-              className="relative overflow-hidden rounded-3xl px-4 pt-14 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-8"
+              className="relative overflow-hidden rounded-3xl px-2 pt-12 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-4"
               style={{ background: config.frontGradient }}
             >
               {/* Soft light from the top left, a little shade bottom right, and a faint dot
@@ -102,6 +102,8 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 recipientName={config.sampleRecipient}
                 message={config.sampleMessage}
                 notes={config.sampleNotes}
+                showPager={false}
+                frameClassName="aspect-square"
                 className="relative w-full"
               />
             </div>
@@ -131,7 +133,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
             </div>
             <div
               aria-hidden
-              className="absolute bottom-16 -left-3 z-20 hidden max-w-[220px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-left-8"
+              className="absolute -bottom-5 -left-3 z-20 hidden max-w-[220px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-left-8"
             >
               <span
                 className="size-5 shrink-0 rounded-full"

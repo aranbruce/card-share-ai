@@ -47,6 +47,8 @@ function CardBook3DPlaceholder({
   headline,
   recipientName,
   coverOnly = false,
+  showPager = true,
+  frameClassName,
   renderPageEditor,
   className,
 }: CardBook3DProps) {
@@ -58,7 +60,8 @@ function CardBook3DPlaceholder({
       <div
         className={cn(
           "relative w-full",
-          cardBookFrameClass(coverOnly, Boolean(renderPageEditor)),
+          frameClassName ??
+            cardBookFrameClass(coverOnly, Boolean(renderPageEditor)),
         )}
       >
         <ClosedCardCover
@@ -68,7 +71,7 @@ function CardBook3DPlaceholder({
         />
       </div>
       {/* Room for the pager underneath the real card. */}
-      <div className="h-8" aria-hidden />
+      {showPager ? <div className="h-8" aria-hidden /> : null}
     </div>
   )
 }

@@ -182,6 +182,12 @@ export type CardBook3DProps = {
   onPageChange?: (page: number) => void
   /** Only the cover exists yet (create flow): a single leaf with a back. */
   coverOnly?: boolean
+  /** Shows the previous/next buttons and page dots under the card (on by default). Without
+   * them the card still turns by clicking, dragging or the arrow keys. */
+  showPager?: boolean
+  /** Replaces the frame's default aspect classes (e.g. a taller frame shows the closed card
+   * larger; the open spread is sized by width either way). */
+  frameClassName?: string
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -279,6 +285,8 @@ export function CardBook3D({
   messagePageIndex = 1,
   initialPage = 0,
   coverOnly = false,
+  showPager = true,
+  frameClassName,
   navigateToPage,
   onPageChange,
   renderPageEditor,
@@ -1671,7 +1679,7 @@ export function CardBook3D({
           tabIndex={0}
           className={cn(
             "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
-            cardBookFrameClass(coverOnly, editable),
+            frameClassName ?? cardBookFrameClass(coverOnly, editable),
             editable && editPage === null && "cursor-pointer",
           )}
           onPointerDown={onPointerDown}
@@ -1738,55 +1746,57 @@ export function CardBook3D({
         ) : null}
       </div>
 
-      <div className="flex items-center justify-center gap-4">
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={prev}
-          disabled={editPage !== null ? !canEditPrev : !canGoPrev}
-          aria-label="Previous page"
-        >
-          <ArrowLeft />
-        </Button>
-        <div className="flex items-center gap-2">
-          {faces.map((face, i) =>
-            face.kind === "blank" ? null : (
-              <button
-                key={i}
-                type="button"
-                onClick={() => {
-                  if (editPage !== null) editPageAt(null)
-                  goTo(spreadForFace(i, faces.length), sideOfFace(i))
-                }}
-                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
-                  facesInView.includes(i)
-                    ? "bg-primary"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                }`}
-                aria-label={faceLabel(face)}
-                aria-current={facesInView.includes(i) ? "true" : undefined}
-              />
-            ),
-          )}
+      {showPager ? (
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={prev}
+            disabled={editPage !== null ? !canEditPrev : !canGoPrev}
+            aria-label="Previous page"
+          >
+            <ArrowLeft />
+          </Button>
+          <div className="flex items-center gap-2">
+            {faces.map((face, i) =>
+              face.kind === "blank" ? null : (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    if (editPage !== null) editPageAt(null)
+                    goTo(spreadForFace(i, faces.length), sideOfFace(i))
+                  }}
+                  className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                    facesInView.includes(i)
+                      ? "bg-primary"
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                  aria-label={faceLabel(face)}
+                  aria-current={facesInView.includes(i) ? "true" : undefined}
+                />
+              ),
+            )}
+          </div>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={next}
+            disabled={editPage !== null ? !canEditNext : !canGoNext}
+            aria-label={
+              editPage !== null && editPage >= totalPages - 1 && onAddPage
+                ? "Add two pages"
+                : "Next page"
+            }
+          >
+            {editPage !== null && editPage >= totalPages - 1 && onAddPage ? (
+              <Plus />
+            ) : (
+              <ArrowRight />
+            )}
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={next}
-          disabled={editPage !== null ? !canEditNext : !canGoNext}
-          aria-label={
-            editPage !== null && editPage >= totalPages - 1 && onAddPage
-              ? "Add two pages"
-              : "Next page"
-          }
-        >
-          {editPage !== null && editPage >= totalPages - 1 && onAddPage ? (
-            <Plus />
-          ) : (
-            <ArrowRight />
-          )}
-        </Button>
-      </div>
+      ) : null}
 
       <p className="sr-only" aria-live="polite">
         {viewLabel(facesInView.map((i) => faces[i]))}
