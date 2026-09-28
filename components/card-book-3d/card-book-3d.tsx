@@ -16,6 +16,7 @@ import {
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
 import { mapBoxPoint, quadToMatrix3d, type Point2 } from "@/lib/quad-transform"
+import { flushSync } from "react-dom"
 import { cn } from "@/lib/utils"
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react"
 import {
@@ -1239,8 +1240,7 @@ export function CardBook3D({
     if (editable && !coverOnly && flipTarget <= 0) {
       const point = sceneRef.current?.pickPage(e.clientX, e.clientY, "right")
       if (point && point.v >= COVER_TITLE_ZONE) {
-        pendingClickRef.current = point
-        editPageAt(0)
+        openPageAt(0, point)
         return
       }
     }
@@ -1254,10 +1254,38 @@ export function CardBook3D({
             : xFraction < 0.5
               ? "left"
               : "right"
-      pendingClickRef.current =
-        sceneRef.current?.pickPage(e.clientX, e.clientY, side) ?? null
-      editPageAt(page)
+      openPageAt(
+        page,
+        sceneRef.current?.pickPage(e.clientX, e.clientY, side) ?? null,
+      )
     } else step(xFraction < 0.5 ? -1 : 1)
+  }
+
+  /**
+   * Opens a page for editing from a click on the 3D card. A text field under the click is
+   * focused straight away, inside the click itself, rather than once the camera arrives:
+   * browsers only reliably focus (and phones only raise the keyboard) during a user gesture.
+   * Other clicks (such as placing a note on blank page) replay once the editor is in place.
+   */
+  const openPageAt = (page: number, point: PagePoint | null) => {
+    pendingClickRef.current = point
+    flushSync(() => editPageAt(page))
+    const editor = editorRef.current
+    if (!point || !editor) return
+    const field = nearestTextField(
+      editor,
+      point.u * PAGE_WIDTH_PX,
+      point.v * PAGE_HEIGHT_PX,
+    )
+    if (!field) return
+    pendingClickRef.current = null
+    field.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      }),
+    )
   }
 
   const canEditPrev = editPage !== null && editPage > 0
