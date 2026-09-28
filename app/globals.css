@@ -251,10 +251,27 @@
   animation: card-3d-peek 4.5s ease-in-out infinite;
 }
 
+/* Marketing heroes: a slow bob for floating cards, chips and confetti (stagger with
+   animation-delay) */
+@keyframes hero-drift {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -8px;
+  }
+}
+
+.hero-drift {
+  animation: hero-drift 6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card-3d-float,
   .card-3d-float-shadow,
-  .card-3d-peek {
+  .card-3d-peek,
+  .hero-drift {
     animation: none;
   }
 }

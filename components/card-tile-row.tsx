@@ -14,6 +14,9 @@ export type CardTile = {
   desc: string
 }
 
+/** Small in-plane turns for the cards, so a row doesn't look stamped out (repeats). */
+const TILTS = [-2.5, 1.5, -1, 2.5, -2, 1]
+
 function ArrowIcon() {
   return (
     <svg
@@ -39,7 +42,7 @@ export function CardTileRow({ tiles }: { tiles: readonly CardTile[] }) {
   return (
     <div className="relative mt-10 w-full overflow-scroll">
       <div className="flex touch-pan-x snap-x snap-mandatory scroll-px-6 gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] md:scroll-px-15">
-        {tiles.map((tile) => (
+        {tiles.map((tile, i) => (
           <Link
             key={tile.key}
             href={tile.href}
@@ -56,6 +59,7 @@ export function CardTileRow({ tiles }: { tiles: readonly CardTile[] }) {
                 hue={tile.coverHue}
                 cardHeight={80}
                 cardOffsetY={-2}
+                rotate={TILTS[i % TILTS.length]}
               />
               <div className="absolute right-3 bottom-3 flex size-7 translate-y-[6px] items-center justify-center rounded-full bg-white/90 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
                 <ArrowIcon />

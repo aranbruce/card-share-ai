@@ -70,6 +70,19 @@ function PlusIcon() {
   )
 }
 
+/** Scattered confetti around the /browse hero's cards (positions in the fan's box). */
+const CONFETTI = [
+  { x: "8%", y: "22%", size: 17, hue: 18, shape: "dot", rotate: 0 },
+  { x: "18%", y: "8%", size: 12, hue: 250, shape: "strip", rotate: 30 },
+  { x: "88%", y: "12%", size: 15, hue: 330, shape: "square", rotate: 20 },
+  { x: "95%", y: "42%", size: 12, hue: 70, shape: "strip", rotate: -25 },
+  { x: "4%", y: "62%", size: 14, hue: 170, shape: "square", rotate: 45 },
+  { x: "12%", y: "90%", size: 10, hue: 330, shape: "strip", rotate: 60 },
+  { x: "60%", y: "95%", size: 15, hue: 250, shape: "dot", rotate: 0 },
+  { x: "82%", y: "78%", size: 12, hue: 18, shape: "strip", rotate: -40 },
+  { x: "50%", y: "4%", size: 14, hue: 130, shape: "dot", rotate: 0 },
+] as const
+
 function HeroFan() {
   const byslug = Object.fromEntries(
     getBrowseCategories().map((c) => [c.slug, c]),
@@ -85,6 +98,38 @@ function HeroFan() {
 
   return (
     <div className="relative grid min-h-[640px] place-items-center">
+      {/* A soft wash of the cards' colours behind them. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-[2%_-4%] rounded-[45%] blur-2xl"
+        style={{
+          background: [
+            "radial-gradient(45% 50% at 22% 72%, oklch(0.84 0.12 18), transparent 72%)",
+            "radial-gradient(45% 50% at 42% 48%, oklch(0.85 0.1 330), transparent 72%)",
+            "radial-gradient(45% 50% at 64% 34%, oklch(0.86 0.09 190), transparent 72%)",
+            "radial-gradient(45% 50% at 82% 20%, oklch(0.87 0.11 130), transparent 72%)",
+          ].join(", "),
+        }}
+      />
+      {/* Confetti */}
+      {CONFETTI.map((bit, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className={`hero-drift pointer-events-none absolute ${
+            bit.shape === "dot" ? "rounded-full" : "rounded-[3px]"
+          }`}
+          style={{
+            left: bit.x,
+            top: bit.y,
+            width: bit.size,
+            height: bit.shape === "strip" ? bit.size * 2.6 : bit.size,
+            background: `oklch(0.78 0.13 ${bit.hue})`,
+            rotate: `${bit.rotate}deg`,
+            animationDelay: `${-i * 0.8}s`,
+          }}
+        />
+      ))}
       {cards.map((c) => (
         // The dashboard's standing 3D card; hovering brings it to the front and opens it.
         <Link
@@ -97,19 +142,24 @@ function HeroFan() {
             transform: `rotate(${c.rotate}deg) translate(${c.tx}px, ${c.ty}px)`,
           }}
         >
-          <CardThumb3D
-            imageUrl={c.cat.coverImage}
-            headline={c.cat.cardTitle}
-            alt=""
-            hue={c.cat.coverHue}
-            priority
-          />
+          <div
+            className="hero-drift absolute inset-0"
+            style={{ animationDelay: `${-c.z * 1.4}s` }}
+          >
+            <CardThumb3D
+              imageUrl={c.cat.coverImage}
+              headline={c.cat.cardTitle}
+              alt=""
+              hue={c.cat.coverHue}
+              priority
+            />
+          </div>
         </Link>
       ))}
 
       {/* Sig float — bottom right */}
       <div
-        className="absolute right-[-10px] bottom-[40px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
+        className="hero-drift absolute right-[-10px] bottom-[40px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
         <span
@@ -126,8 +176,11 @@ function HeroFan() {
 
       {/* Sig float — top left */}
       <div
-        className="absolute top-[40px] left-[-10px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
-        style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
+        className="hero-drift absolute top-[40px] left-[-10px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
+        style={{
+          boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)",
+          animationDelay: "-3s",
+        }}
       >
         <span
           className="size-5 shrink-0 rounded-full"
@@ -176,6 +229,24 @@ export default function CardsPage() {
               <Button asChild variant="outline" size="lg">
                 <a href="#occasions">Browse occasions</a>
               </Button>
+            </div>
+            <div className="mt-10 flex flex-wrap items-center gap-2">
+              <span className="mr-1 font-mono text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+                Popular
+              </span>
+              {getBrowseCategories().map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={`/browse/${cat.slug}`}
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm transition-colors hover:border-foreground/30"
+                >
+                  <span
+                    className="size-2.5 rounded-full"
+                    style={{ background: cat.frontGradient }}
+                  />
+                  {cat.label.replace(/ cards$/, "")}
+                </Link>
+              ))}
             </div>
           </div>
 

@@ -16,6 +16,7 @@ export function CardThumb3D({
   priority = false,
   cardHeight = 74,
   cardOffsetY = 4,
+  rotate = 0,
 }: {
   imageUrl: string | null
   headline: string | null
@@ -27,6 +28,8 @@ export function CardThumb3D({
   cardHeight?: number
   /** Moves the card down from the centre, as a percentage of its own height. */
   cardOffsetY?: number
+  /** Turns the card in the picture's plane, in degrees (e.g. to vary a row of cards). */
+  rotate?: number
 }) {
   // The ground shadow sits just under the card's bottom edge.
   const cardBottom = 50 - cardHeight / 2 - (cardOffsetY * cardHeight) / 100
@@ -45,7 +48,11 @@ export function CardThumb3D({
       />
       <div
         className="relative aspect-4/5 rotate-x-6 -rotate-y-18 transition-transform duration-500 ease-out transform-3d group-hover:rotate-x-3 group-hover:-rotate-y-8 motion-reduce:transition-none"
-        style={{ height: `${cardHeight}%`, translate: `0 ${cardOffsetY}%` }}
+        style={{
+          height: `${cardHeight}%`,
+          translate: `0 ${cardOffsetY}%`,
+          rotate: rotate ? `${rotate}deg` : undefined,
+        }}
       >
         {/* Inside page, visible when the cover swings open */}
         <div
