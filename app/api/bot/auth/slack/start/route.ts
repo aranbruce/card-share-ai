@@ -6,6 +6,7 @@ const SCOPES = [
   "chat:write",
   "chat:write.public",
   "commands",
+  "im:history",
   "im:write",
   "users:read",
 ].join(",")

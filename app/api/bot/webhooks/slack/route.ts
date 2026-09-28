@@ -1,4 +1,9 @@
-import { getBot, removeSlackInstallation } from "@/lib/bot"
+import {
+  getBot,
+  removeSlackInstallation,
+  sendMessagesTabWelcome,
+} from "@/lib/bot"
+import { getMessagesTabOpen } from "@/lib/bot/slack-app-home"
 import { getUninstalledSlackInstallationId } from "@/lib/bot/slack-uninstall"
 import { after } from "next/server"
 import type { NextRequest } from "next/server"
@@ -107,9 +112,21 @@ export async function POST(request: NextRequest) {
     },
   )
 
-  // The adapter ignores uninstall events, so clean up ourselves. Only act on
-  // a 200, which means the adapter accepted the request signature.
+  // The adapter ignores uninstall and Messages tab events, so handle them
+  // ourselves. Only act on a 200, which means the adapter accepted the
+  // request signature.
   if (response.status === 200) {
+    const messagesTabOpen = getMessagesTabOpen(body)
+    if (messagesTabOpen) {
+      after(async () => {
+        try {
+          await sendMessagesTabWelcome(messagesTabOpen)
+        } catch (err) {
+          console.error(`[slack/welcome] FAIL:`, err)
+        }
+      })
+    }
+
     const installationId = getUninstalledSlackInstallationId(body)
     if (installationId) {
       after(async () => {

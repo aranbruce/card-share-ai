@@ -22,6 +22,7 @@ import {
   deleteWorkspaceLinks,
 } from "./internal-api"
 import type { CardRow } from "@/lib/create-card"
+import { SLACK_HELP_MESSAGE, type MessagesTabOpen } from "./slack-app-home"
 
 const CARD_TYPES = [
   "birthday",
@@ -157,6 +158,32 @@ export async function removeSlackInstallation(
   await deleteWorkspaceLinks("slack", installationId)
 }
 
+/**
+ * Sends the welcome message the first time a user opens the app's Messages
+ * tab. Slack requires listed apps that enable the Messages tab to do this.
+ */
+export async function sendMessagesTabWelcome({
+  installationId,
+  teamId,
+  userId,
+  channelId,
+}: MessagesTabOpen): Promise<void> {
+  const firstOpen = await getBot()
+    .getState()
+    .setIfNotExists(`slack:welcomed:${teamId}:${userId}`, true)
+  if (!firstOpen) return
+
+  const adapter = getSlackAdapter()
+  const installation = await adapter.getInstallation(installationId)
+  if (!installation) return
+  await adapter.withBotToken(installation.botToken, () =>
+    adapter.webClient.chat.postMessage({
+      channel: channelId,
+      text: SLACK_HELP_MESSAGE,
+    }),
+  )
+}
+
 export function getBot(): Chat<BotAdapters> {
   if (_bot) return _bot
 
@@ -175,6 +202,17 @@ export function getBot(): Chat<BotAdapters> {
 }
 
 function registerHandlers(bot: Chat<BotAdapters>): void {
+  // Reply to any direct message with instructions. Card creation happens via
+  // the slash commands, so there is nothing else to do with DM content.
+  bot.onDirectMessage(async (_thread, message, channel) => {
+    if (message.author.isBot || message.author.isMe) return
+    try {
+      await channel.post(SLACK_HELP_MESSAGE)
+    } catch (err) {
+      console.error(`[cardshareai] DM reply FAIL:`, err)
+    }
+  })
+
   // /createcard slash command → open modal
   bot.onSlashCommand("/cardshareai", async (event: SlashCommandEvent) => {
     const platform = event.adapter.name
