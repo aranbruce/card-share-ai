@@ -27,7 +27,7 @@ const FACE_WIDTH = 400 * FACE_SCALE
 const FACE_HEIGHT = 500 * FACE_SCALE
 
 /** The space the card (turned, open a little) is fitted into, right of the text. */
-const CARD_AREA = { right: 1150, width: 480, height: 510 }
+const CARD_AREA = { right: 1090, width: 480, height: 510 }
 
 function clip(text: string, max: number): string {
   const trimmed = text.trim()
