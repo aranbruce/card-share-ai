@@ -1,10 +1,10 @@
 /**
- * Soft pastel backdrops for card thumbnails (see `.card-pastel` in globals.css): warm tints
- * around the brand coral (#ff5a4a, hue ~29) and off-white ground (hue ~83), plus a dusty
- * mauve and sage for variety.
+ * Pastel backdrops for card thumbnails (see `.card-pastel` in globals.css), matching the
+ * browse page's occasion tiles: each hue blends diagonally into the one 30° on, around the
+ * whole wheel (peach, sand, olive, green, teal, blue, lilac, pink).
  */
 export const PASTEL_HUES = [
-  330, 345, 358, 10, 20, 30, 40, 52, 64, 76, 90, 120,
+  0, 18, 40, 70, 100, 130, 160, 190, 220, 250, 290, 330,
 ] as const
 
 /** Cards before this one (in display order) whose colour it must stand apart from. Covers
@@ -88,10 +88,11 @@ export function oklchToHex(l: number, c: number, h: number): string {
     .join("")}`
 }
 
-/** The light and deep stops of `.card-pastel` (light theme) for a hue, as hex. */
+/** The two stops of `.card-pastel` (light theme) for a hue, as hex, for renderers without
+ * OKLCH support. */
 export function pastelStops(hue: number): { light: string; deep: string } {
   return {
-    light: oklchToHex(0.975, 0.018, hue),
-    deep: oklchToHex(0.93, 0.055, hue),
+    light: oklchToHex(0.88, 0.075, hue),
+    deep: oklchToHex(0.82, 0.085, hue + 30),
   }
 }

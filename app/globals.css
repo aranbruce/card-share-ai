@@ -141,19 +141,20 @@
 /* Pastel backdrop behind a dashboard card; set --pastel-hue per card. */
 @layer components {
   .card-pastel {
-    /* A light wash of the tint at the top, a little deeper below. */
-    background: radial-gradient(
-      120% 95% at 50% 15%,
-      oklch(0.975 0.018 var(--pastel-hue, 32)) 0%,
-      oklch(0.93 0.055 var(--pastel-hue, 32)) 100%
+    /* Same wash as the browse page's occasion tiles: a diagonal blend from the hue into
+       its neighbour 30° on. */
+    background: linear-gradient(
+      135deg,
+      oklch(0.88 0.075 var(--pastel-hue, 18)),
+      oklch(0.82 0.085 calc(var(--pastel-hue, 18) + 30))
     );
   }
 
   .dark .card-pastel {
-    background: radial-gradient(
-      120% 90% at 50% 20%,
-      oklch(0.31 0.03 var(--pastel-hue, 32)) 0%,
-      oklch(0.25 0.045 var(--pastel-hue, 32)) 100%
+    background: linear-gradient(
+      135deg,
+      oklch(0.34 0.04 var(--pastel-hue, 18)),
+      oklch(0.27 0.05 calc(var(--pastel-hue, 18) + 30))
     );
   }
 }

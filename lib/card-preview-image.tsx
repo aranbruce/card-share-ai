@@ -239,7 +239,7 @@ export async function renderCardPreviewImage(
         height: "100%",
         display: "flex",
         position: "relative",
-        backgroundImage: `radial-gradient(circle at 75% 20%, ${light} 0%, ${deep} 85%)`,
+        backgroundImage: `linear-gradient(135deg, ${light}, ${deep})`,
         fontFamily: OG_INTER_TIGHT_FAMILY,
       }}
     >
