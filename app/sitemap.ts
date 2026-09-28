@@ -23,5 +23,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/slack/install`, lastModified: MARKETING_LAST_MODIFIED },
     { url: `${base}/privacy`, lastModified: MARKETING_LAST_MODIFIED },
     { url: `${base}/terms`, lastModified: MARKETING_LAST_MODIFIED },
+    { url: `${base}/subprocessors`, lastModified: MARKETING_LAST_MODIFIED },
   ]
 }
