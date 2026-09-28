@@ -1284,13 +1284,23 @@ export function CardBook3D({
     )
     if (!field) return
     pendingClickRef.current = null
-    field.dispatchEvent(
-      new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      }),
-    )
+    // The editor has not been mapped onto the page yet, so lay it out flat for a moment and
+    // click at the matching point: the field puts its caret where the page was clicked.
+    const transform = editor.style.transform
+    editor.style.transform = "none"
+    const box = editor.getBoundingClientRect()
+    flushSync(() => {
+      field.dispatchEvent(
+        new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: box.left + point.u * PAGE_WIDTH_PX,
+          clientY: box.top + point.v * PAGE_HEIGHT_PX,
+        }),
+      )
+    })
+    editor.style.transform = transform
   }
 
   const canEditPrev = editPage !== null && editPage > 0

@@ -54,6 +54,42 @@ export function RegenerateShimmerOverlay({
   )
 }
 
+/**
+ * The caret position nearest a screen point, measured from each character's box so it also
+ * works inside transformed (3D) or not-yet-interactive editors, unlike hit testing.
+ */
+function caretNearPoint(
+  root: HTMLElement,
+  x: number,
+  y: number,
+): { node: Text; offset: number } | null {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const range = document.createRange()
+  let best: { node: Text; offset: number } | null = null
+  let bestScore = Infinity
+  for (
+    let node = walker.nextNode() as Text | null;
+    node;
+    node = walker.nextNode() as Text | null
+  ) {
+    for (let i = 0; i < node.data.length; i++) {
+      range.setStart(node, i)
+      range.setEnd(node, i + 1)
+      const r = range.getBoundingClientRect()
+      if (r.width === 0 && r.height === 0) continue
+      const dx = Math.max(r.left - x, 0, x - r.right)
+      const dy = Math.max(r.top - y, 0, y - r.bottom)
+      // Stay on the clicked line first, then the closest character along it.
+      const score = dy * 1000 + dx
+      if (score < bestScore) {
+        bestScore = score
+        best = { node, offset: x > (r.left + r.right) / 2 ? i + 1 : i }
+      }
+    }
+  }
+  return best
+}
+
 export type InlineEditRegenerateHandle = {
   openRegeneratePrompt: () => void
   closeRegeneratePrompt: () => void
@@ -158,11 +194,17 @@ export const InlineEdit = forwardRef<
     !isGenerating,
   )
 
+  /** Where the click that started editing landed, to put the caret there. */
+  const caretPointRef = useRef<{ x: number; y: number } | null>(null)
+
   const handleClick = (e: MouseEvent) => {
     if (isGenerating) return
     if (moveDrag?.consumeSuppressNextClickAfterDrag()) return
     if (editable && onChange) {
       e.stopPropagation()
+      // Keyboard activation reports no position; that keeps select-all.
+      caretPointRef.current =
+        e.clientX || e.clientY ? { x: e.clientX, y: e.clientY } : null
       setIsEditing(true)
     }
   }
@@ -170,8 +212,18 @@ export const InlineEdit = forwardRef<
   useLayoutEffect(() => {
     if (!isEditing || !editRef.current) return
     editRef.current.focus()
+    const point = caretPointRef.current
+    caretPointRef.current = null
+    const caret = point
+      ? caretNearPoint(editRef.current, point.x, point.y)
+      : null
     const range = document.createRange()
-    range.selectNodeContents(editRef.current)
+    if (caret) {
+      range.setStart(caret.node, caret.offset)
+      range.collapse(true)
+    } else {
+      range.selectNodeContents(editRef.current)
+    }
     const sel = window.getSelection()
     sel?.removeAllRanges()
     sel?.addRange(range)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -9,6 +9,7 @@ import { Inbox, Plus, Trash2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { apiDelete } from "@/lib/api-client"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
+import { pastelHueFor } from "@/lib/card-pastel"
 import type { OwnerCardListItem } from "@/lib/owner-cards"
 
 const TYPE_LABEL: Record<string, string> = {
@@ -404,7 +405,14 @@ export function DashboardHome({ initialCards, user }: DashboardHomeProps) {
                     href={`/dashboard/cards/${card.id}`}
                     className="block overflow-hidden rounded-2xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/5"
                   >
-                    <div className="card-preview-aspect relative overflow-hidden bg-secondary">
+                    <div
+                      className="card-pastel card-preview-aspect relative overflow-hidden"
+                      style={
+                        {
+                          "--pastel-hue": pastelHueFor(card.id),
+                        } as CSSProperties
+                      }
+                    >
                       <CardThumb3D
                         imageUrl={card.image_url || null}
                         headline={card.copy_headline || null}

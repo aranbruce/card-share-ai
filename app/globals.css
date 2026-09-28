@@ -138,6 +138,25 @@
   @apply @container aspect-4/5 w-full;
 }
 
+/* Pastel backdrop behind a dashboard card; set --pastel-hue per card. */
+@layer components {
+  .card-pastel {
+    background: radial-gradient(
+      120% 90% at 50% 20%,
+      oklch(0.97 0.025 var(--pastel-hue, 40)) 0%,
+      oklch(0.92 0.05 var(--pastel-hue, 40)) 100%
+    );
+  }
+
+  .dark .card-pastel {
+    background: radial-gradient(
+      120% 90% at 50% 20%,
+      oklch(0.34 0.035 var(--pastel-hue, 40)) 0%,
+      oklch(0.27 0.045 var(--pastel-hue, 40)) 100%
+    );
+  }
+}
+
 @utility card-preview-headline {
   font-size: clamp(0.875rem, 6.5cqw, 1.75rem);
   line-height: 1.25;
