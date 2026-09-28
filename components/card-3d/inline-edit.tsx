@@ -399,7 +399,9 @@ export const InlineEdit = forwardRef<
             showShimmer &&
               regenerateShimmerTone === "paper" &&
               "ai-refine-shimmer-text-paper rounded-sm",
-            isEditing && "outline-none",
+            // Shown explicitly: focus that follows a click on the 3D card is set from script,
+            // which browsers do not always mark as :focus-visible.
+            isEditing && "rounded-sm ring-[3px] ring-ring/50 outline-none",
           )}
           style={editStyle ?? style}
           contentEditable={Boolean(

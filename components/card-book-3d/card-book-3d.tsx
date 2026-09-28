@@ -86,7 +86,12 @@ const EDIT_YAW = 0.26
 const EDIT_PITCH = 0.14
 /** Editing camera speeds (per second): pulling back to change page, and closing in. */
 const EDIT_PULL_BACK_RATE = 6
-const EDIT_CLOSE_IN_RATE = 4
+const EDIT_CLOSE_IN_RATE = 8
+/**
+ * How far the editing camera has closed in (0 to 1) before the editor shows. It tracks the
+ * page while the camera finishes moving, so it can appear before the camera settles.
+ */
+const EDIT_OVERLAY_AT = 0.75
 /** Canvas bleed past the container, as a share of its width and height. */
 const CANVAS_BLEED_X = 0.75
 const CANVAS_BLEED_Y = 0.12
@@ -710,7 +715,9 @@ export function CardBook3D({
         // The edited page lies flat so the editor maps onto it exactly.
         u.uCurl.value =
           i === shown.leaf
-            ? PAGE_CURL_RADIANS * (1 - state.editBlend)
+            ? // Flat well before the editor shows, so the editor lies exactly on it.
+              PAGE_CURL_RADIANS *
+              Math.max(0, 1 - state.editBlend / (EDIT_OVERLAY_AT * 0.75))
             : PAGE_CURL_RADIANS
       })
 
@@ -770,9 +777,7 @@ export function CardBook3D({
       }
 
       if (!moving) {
-        if (state.overlayReady !== (state.editing && state.editBlend === 1)) {
-          state.dirty = true
-        }
+        if (state.editing !== state.overlayReady) state.dirty = true
         return
       }
 
@@ -881,8 +886,8 @@ export function CardBook3D({
               PAGE_HEIGHT_PX) /
           2
         if (
-          state.editBlend === 1 &&
-          Math.abs(scale - state.editScale) > 0.002
+          state.editBlend >= EDIT_OVERLAY_AT &&
+          Math.abs(scale - state.editScale) > 0.004
         ) {
           state.editScale = scale
           setEditScale(scale)
@@ -892,7 +897,7 @@ export function CardBook3D({
       const ready =
         state.editing &&
         onChosenPage &&
-        state.editBlend === 1 &&
+        state.editBlend >= EDIT_OVERLAY_AT &&
         state.flip === state.target
       if (ready !== state.overlayReady) {
         state.overlayReady = ready
@@ -1367,7 +1372,7 @@ export function CardBook3D({
                 "absolute top-0 left-0 origin-top-left",
                 // Fade in once in place; vanish at once when the page moves off.
                 overlayReady
-                  ? "pointer-events-auto opacity-100 transition-opacity duration-200 motion-reduce:transition-none"
+                  ? "pointer-events-auto opacity-100 transition-opacity duration-150 motion-reduce:transition-none"
                   : "opacity-0",
               )}
               style={{ width: PAGE_WIDTH_PX, height: PAGE_HEIGHT_PX }}
