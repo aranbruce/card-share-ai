@@ -131,6 +131,10 @@ const DRAG_THRESHOLD_PX = 8
 const DRAG_PAGES_PER_TURN = 1.6
 /** GIF frames are re-uploaded as whole page textures, so keep the rate modest. */
 const GIF_REPAINT_MS = 150
+/** Lets the editing camera settle before scrolling the field being typed in into view. */
+const REVEAL_FIELD_DELAY_MS = 350
+/** Room kept around that field when scrolling it into view. */
+const REVEAL_FIELD_MARGIN_PX = 16
 /** Longest a touch tap waits for its click before it is handled without one. */
 const TAP_CLICK_WAIT_MS = 400
 /** Longest the card waits for its cover image and fonts before showing anyway. */
@@ -1285,6 +1289,28 @@ export function CardBook3D({
     )
   }, [overlayReady])
 
+  // Once the editor is in place, bring the field being typed in into view (above a phone's
+  // keyboard and below a sticky header), smoothly. Otherwise the browser does it only on the
+  // first keystroke, as a jump.
+  useEffect(() => {
+    if (!overlayReady) return
+    let timer = 0
+    const reveal = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(
+        () => revealFocusedField(editorRef.current),
+        REVEAL_FIELD_DELAY_MS,
+      )
+    }
+    reveal()
+    const viewport = window.visualViewport
+    viewport?.addEventListener("resize", reveal)
+    return () => {
+      window.clearTimeout(timer)
+      viewport?.removeEventListener("resize", reveal)
+    }
+  }, [overlayReady])
+
   // Keep the edited page in range if pages are removed; open a newly added page.
   const pendingAddedPageRef = useRef<number | null>(null)
   useEffect(() => {
@@ -1759,6 +1785,42 @@ const TEXT_FIELD_SLOP = 14
  * The inline text field at (or within a few px of) a point in the editor's own layout, found
  * from offsets so it does not depend on hit testing through the 3D transform.
  */
+/**
+ * Scrolls the page so the focused field in the editor (its whole note) is in the visible part
+ * of the screen: above an on-screen keyboard and below a sticky or fixed header.
+ */
+function revealFocusedField(editor: HTMLElement | null) {
+  const active = document.activeElement
+  if (!editor || !(active instanceof HTMLElement) || !editor.contains(active)) {
+    return
+  }
+  const box = (
+    active.closest<HTMLElement>("[data-draggable-note]") ?? active
+  ).getBoundingClientRect()
+  const viewport = window.visualViewport
+  const viewTop = viewport?.offsetTop ?? 0
+  const viewBottom = viewTop + (viewport?.height ?? window.innerHeight)
+  let top = viewTop + REVEAL_FIELD_MARGIN_PX
+  const header = document.querySelector("header")
+  if (header) {
+    const position = getComputedStyle(header).position
+    if (position === "sticky" || position === "fixed") {
+      top = Math.max(
+        top,
+        header.getBoundingClientRect().bottom + REVEAL_FIELD_MARGIN_PX,
+      )
+    }
+  }
+  const bottom = viewBottom - REVEAL_FIELD_MARGIN_PX
+  let delta = 0
+  if (box.bottom > bottom) delta = box.bottom - bottom
+  // A note taller than the space shows from its top.
+  if (box.top - delta < top) delta = box.top - top
+  if (Math.abs(delta) < 1) return
+  const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  window.scrollBy({ top: delta, behavior: smooth ? "smooth" : "auto" })
+}
+
 function nearestTextField(
   editor: HTMLElement,
   x: number,
