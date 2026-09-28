@@ -64,23 +64,29 @@ import {
   PAGE_WIDTH_PX,
   type BookContent,
 } from "./page-painter"
+import { ClosedCardCover } from "./closed-card-cover"
 import { cardBookFrameClass } from "./frame"
+import {
+  BROWSE_PITCH,
+  CAMERA_FOV,
+  CLOSED_PITCH,
+  CLOSED_YAW,
+  FRAME_MARGIN_H,
+  FRAME_MARGIN_W,
+  PAGE_H,
+  PAGE_W,
+} from "@/lib/card-book-pose"
 import {
   createPageMaterial,
   LEAF_THICKNESS,
   type PageMaterial,
 } from "./page-shader"
 
-/** World units: one page is 1 wide; height keeps the 4:5 card ratio. */
-const PAGE_W = 1
-const PAGE_H = (PAGE_W * PAGE_HEIGHT_PX) / PAGE_WIDTH_PX
 /** Gap between stacked leaves so they never z-fight. */
 const LEAF_GAP = LEAF_THICKNESS + 0.0015
 /** Gloss on the printed covers; inside pages are matte card stock. */
 const COVER_GLOSS = 0.35
 const PAGE_GLOSS = 0.03
-/** How far the camera swings round a closed card so its thickness shows. */
-const CLOSED_YAW = 0.32
 /**
  * An open card rests with its pages angled up slightly (radians, as a fraction of a half
  * turn), like a card standing open on a table. Pages settle a little while one is edited.
@@ -120,14 +126,17 @@ const ADD_PAGE_WAIT_MS = 4000
 const COVER_TITLE_ZONE = 0.62
 /** Peak darkening a lifted page casts on the page beneath it. */
 const TURN_SHADOW = 0.38
-const CAMERA_FOV = 30
-const FRAME_MARGIN_W = 1.14
-const FRAME_MARGIN_H = 1.2
 const DRAG_THRESHOLD_PX = 8
 /** Horizontal drag distance (in page widths) for one full turn. */
 const DRAG_PAGES_PER_TURN = 1.6
 /** GIF frames are re-uploaded as whole page textures, so keep the rate modest. */
 const GIF_REPAINT_MS = 150
+/** Longest the card waits for its cover image and fonts before showing anyway. */
+const REVEAL_TIMEOUT_MS = 2500
+/** Cross-fade from the placeholder cover to the 3D card. */
+const REVEAL_FADE_MS = 250
+/** How long the card shows closed before opening to a starting page inside. */
+const REVEAL_OPEN_DELAY_MS = 350
 
 type Side = "left" | "right"
 
@@ -195,6 +204,10 @@ type SceneHandle = {
 
 /** Mutable per-frame state the render loop reads without re-rendering React. */
 type LiveState = {
+  /** The canvas is showing: until then it stays closed on the cover behind the placeholder. */
+  revealed: boolean
+  /** Reveal once the next frame has rendered (textures are ready). */
+  revealNext: boolean
   flip: number
   target: number
   focus: Side
@@ -303,20 +316,29 @@ export function CardBook3D({
   }
   const [narrow, setNarrow] = useState(false)
   const [fontsVersion, setFontsVersion] = useState(0)
+  /** The 3D canvas is showing (see Reveal below); the placeholder cover goes once it has. */
+  const [revealed, setRevealed] = useState(false)
+  const [placeholderGone, setPlaceholderGone] = useState(false)
+  /** The spread to open to once revealed (the latest `flipTarget`). */
+  const flipTargetRef = useRef(flipTarget)
 
+  // It starts closed on the cover, where the loading placeholder shows it, and opens to the
+  // starting page once visible.
   const live = useRef<LiveState>({
-    flip: initialFlip,
-    target: initialFlip,
+    revealed: false,
+    revealNext: false,
+    flip: 0,
+    target: 0,
     focus: initialFocus,
     narrow: false,
     reducedMotion: false,
-    camX: initialFlip === 0 ? PAGE_W / 2 : 0,
+    camX: PAGE_W / 2,
     fitW: PAGE_W,
     tilt: { x: 0, y: 0 },
     tiltTarget: { x: 0, y: 0 },
     dirty: true,
     editing: editPage !== null,
-    editBlend: editPage !== null ? 1 : 0,
+    editBlend: 0,
     viewW: 0,
     viewH: 0,
     overlayReady: false,
@@ -370,7 +392,10 @@ export function CardBook3D({
     () => [...new Set(faces.flatMap((f) => faceImageUrls(f, content)))],
     [faces, content],
   )
-  const images = useLoadedImages(imageUrls, imageHostRef)
+  const { images, failed: failedImages } = useLoadedImages(
+    imageUrls,
+    imageHostRef,
+  )
 
   const fontFamily = useCallback((presetId: string | null) => {
     const probe = fontProbeRef.current
@@ -412,8 +437,10 @@ export function CardBook3D({
   }, [fontPresetKey, fontFamily])
 
   useEffect(() => {
-    live.current.target = flipTarget
+    flipTargetRef.current = flipTarget
     live.current.focus = focus
+    // Until the card shows, it waits closed; it turns to the target once revealed.
+    if (live.current.revealed) live.current.target = flipTarget
     live.current.dirty = true
   }, [flipTarget, focus])
 
@@ -452,6 +479,8 @@ export function CardBook3D({
     renderer.domElement.style.display = "block"
     renderer.domElement.style.position = "absolute"
     renderer.domElement.style.pointerEvents = "none"
+    // Hidden behind the placeholder cover until its textures are ready (see reveal below).
+    renderer.domElement.style.opacity = "0"
     container.appendChild(renderer.domElement)
 
     const scene = new Scene()
@@ -672,7 +701,12 @@ export function CardBook3D({
       }
       return point.v >= 0 && point.v <= 1 ? point : null
     }
-    sceneRef.current = { faceCanvases, faceTextures, pickPage, setFaces }
+    sceneRef.current = {
+      faceCanvases,
+      faceTextures,
+      pickPage,
+      setFaces,
+    }
     let frame = 0
     let last = performance.now()
     let lastGifPaint = 0
@@ -723,6 +757,7 @@ export function CardBook3D({
       // Ease between browsing and the editing camera: pull back to move to another page
       // (and while a page turns), then close in on it.
       const editGoal =
+        state.revealed &&
         state.editing &&
         onChosenPage &&
         Math.abs(state.target - state.flip) < 0.02
@@ -848,7 +883,7 @@ export function CardBook3D({
       const closed = 1 - openness(state.flip, leafTotal)
       const closedSide = state.flip < leafTotal / 2 ? 1 : -1
       const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
-      const pitch = 0.08 + 0.1 * closed - state.tilt.y * 0.12
+      const pitch = BROWSE_PITCH + CLOSED_PITCH * closed - state.tilt.y * 0.12
       const browseX = state.camX + distance * Math.sin(yaw) * Math.cos(pitch)
       const browseY = distance * Math.sin(pitch)
       const browseZ = distance * Math.cos(yaw) * Math.cos(pitch)
@@ -891,6 +926,25 @@ export function CardBook3D({
         camera.lookAt(state.camX, 0, 0)
       }
       renderer.render(scene, camera)
+      if (state.revealNext) {
+        state.revealNext = false
+        if (!state.revealed) {
+          state.revealed = true
+          setRevealed(true)
+          const fade = state.reducedMotion ? 0 : REVEAL_FADE_MS
+          const canvas = renderer.domElement
+          canvas.style.transition = fade ? `opacity ${fade}ms ease-out` : ""
+          canvas.style.opacity = "1"
+          window.setTimeout(() => setPlaceholderGone(true), fade + 50)
+          // A beat on the closed card before it opens, unless motion is reduced.
+          const open = () => {
+            state.target = flipTargetRef.current
+            state.dirty = true
+          }
+          if (state.reducedMotion || flipTargetRef.current === 0) open()
+          else window.setTimeout(open, REVEAL_OPEN_DELAY_MS)
+        }
+      }
 
       // Map the DOM editor onto the page as rendered this frame.
       const editorEl = editorRef.current
@@ -1004,6 +1058,29 @@ export function CardBook3D({
     if (painted) live.current.dirty = true
   }, [faces, content, images, fontFamily, fontsVersion])
 
+  // ── Reveal ─────────────────────────────────────────────────────────────────
+  // The canvas stays hidden behind the placeholder cover until the cover image and fonts
+  // are painted, so it never shows a stand-in cover or fallback text; then it fades in
+  // (identical in place and size) and turns to the starting page.
+  const coverUrl = imageUrl || null
+  const coverSettled =
+    !coverUrl || images.has(coverUrl) || failedImages.has(coverUrl)
+  const fontsSettled =
+    fontsVersion > 0 || typeof document === "undefined" || !document.fonts
+  useEffect(() => {
+    if (revealed || !coverSettled || !fontsSettled) return
+    // The paint effect above has painted with them; reveal once that frame renders.
+    live.current.revealNext = true
+    live.current.dirty = true
+  }, [revealed, coverSettled, fontsSettled])
+  // Never wait on a slow image or font for long.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      live.current.revealNext = true
+      live.current.dirty = true
+    }, REVEAL_TIMEOUT_MS)
+    return () => window.clearTimeout(timer)
+  }, [])
   // ── Navigation ─────────────────────────────────────────────────────────────
   const currentSide: Side =
     flipTarget <= 0 ? "right" : flipTarget >= leafCount ? "left" : focus
@@ -1455,6 +1532,13 @@ export function CardBook3D({
           onKeyDown={onKeyDown}
         >
           <span ref={fontProbeRef} className="hidden" aria-hidden />
+          {placeholderGone ? null : (
+            <ClosedCardCover
+              imageUrl={coverUrl}
+              headline={headline}
+              recipientName={recipientName}
+            />
+          )}
           <div
             ref={imageHostRef}
             className="pointer-events-none absolute top-0 left-0 h-px w-px overflow-hidden opacity-0"
@@ -1710,10 +1794,15 @@ function CardTextAlternative({
 function useLoadedImages(
   urls: string[],
   hostRef: RefObject<HTMLDivElement | null>,
-): ReadonlyMap<string, HTMLImageElement> {
+): {
+  images: ReadonlyMap<string, HTMLImageElement>
+  /** Images that could not be loaded (the painted fallback stays). */
+  failed: ReadonlySet<string>
+} {
   const [images, setImages] = useState<ReadonlyMap<string, HTMLImageElement>>(
     () => new Map(),
   )
+  const [failed, setFailed] = useState<ReadonlySet<string>>(() => new Set())
   const key = urls.join("\n")
 
   useEffect(() => {
@@ -1737,7 +1826,10 @@ function useLoadedImages(
         })
       }
       // A failed load (e.g. a host without CORS) leaves the painted fallback in place.
-      img.onerror = () => img.remove()
+      img.onerror = () => {
+        img.remove()
+        if (!cancelled) setFailed((prev) => new Set(prev).add(url))
+      }
       img.src = url
       hostRef.current?.appendChild(img)
       created.push(img)
@@ -1748,7 +1840,7 @@ function useLoadedImages(
     }
   }, [key, hostRef])
 
-  return images
+  return { images, failed }
 }
 
 function createShadowTexture(): CanvasTexture {
