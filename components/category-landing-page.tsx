@@ -1,6 +1,7 @@
 import Link from "next/link"
+import { Check, MousePointerClick } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
+import { CardTileRow } from "@/components/card-tile-row"
 import { SampleCard3D } from "@/components/sample-card-3d"
 import type { CategoryConfig } from "@/lib/category-pages"
 
@@ -50,30 +51,96 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 </Link>
               </Button>
             </div>
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              {[
+                "No app or account to sign",
+                "Signed from any phone",
+                "Free to start",
+              ].map((point) => (
+                <li key={point} className="flex items-center gap-1.5">
+                  <Check className="size-4 text-brand" aria-hidden />
+                  {point}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div
-            className="relative mt-12 overflow-hidden rounded-3xl px-4 pt-6 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] sm:px-8 sm:pt-10 lg:mt-0"
-            style={{ background: config.frontGradient }}
-          >
-            {/* Soft light from the top left and a little shade bottom right, for depth. */}
+          <div className="relative mt-12 lg:mt-0">
+            <div
+              className="relative overflow-hidden rounded-3xl px-4 pt-14 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-8"
+              style={{ background: config.frontGradient }}
+            >
+              {/* Soft light from the top left, a little shade bottom right, and a faint dot
+                  grid, for depth. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(90% 70% at 15% 0%, rgba(255,255,255,0.6), transparent 60%), radial-gradient(80% 60% at 100% 100%, rgba(20,14,6,0.12), transparent 70%)",
+                }}
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-40"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1.5px)",
+                  backgroundSize: "18px 18px",
+                  maskImage:
+                    "radial-gradient(70% 70% at 50% 45%, transparent 35%, black 100%)",
+                }}
+              />
+              <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs font-medium text-foreground/80 backdrop-blur-sm sm:top-5 sm:left-6">
+                <MousePointerClick className="size-3.5" aria-hidden />
+                Open the card to read the notes
+              </div>
+              <SampleCard3D
+                id={config.slug}
+                imageUrl={config.coverImage}
+                headline={config.cardTitle}
+                recipientName={config.sampleRecipient}
+                message={config.sampleMessage}
+                notes={config.sampleNotes}
+                className="relative w-full"
+              />
+            </div>
+
+            {/* Signature chips, overlapping the stage's edges. */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(90% 70% at 15% 0%, rgba(255,255,255,0.55), transparent 60%), radial-gradient(80% 60% at 100% 100%, rgba(20,14,6,0.1), transparent 70%)",
-              }}
-            />
-            <SampleCard3D
-              id={config.slug}
-              imageUrl={config.coverImage}
-              headline={config.cardTitle}
-              recipientName={config.sampleRecipient}
-              message={config.sampleMessage}
-              notes={config.sampleNotes}
-              className="relative w-full"
-            />
+              className="absolute -top-4 -right-3 z-20 hidden items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-xs shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-right-6"
+            >
+              <div className="flex -space-x-1.5">
+                {config.sampleNotes.map((note) => (
+                  <span
+                    key={note.message}
+                    className="size-5 rounded-full ring-2 ring-card"
+                    style={{ background: note.color }}
+                  />
+                ))}
+              </div>
+              <div>
+                <div className="font-medium">
+                  {config.sampleNotes.length + 9} people signed
+                </div>
+                <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
+                  3 in the last hour
+                </div>
+              </div>
+            </div>
+            <div
+              aria-hidden
+              className="absolute bottom-16 -left-3 z-20 hidden max-w-[220px] items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-left-8"
+            >
+              <span
+                className="size-5 shrink-0 rounded-full"
+                style={{ background: config.sampleNotes[0].color }}
+              />
+              <div className="text-sm leading-tight">
+                {config.sampleNotes[0].message}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -161,31 +228,18 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             {config.usesTitle}
           </h2>
-          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-            {config.uses.map((use, i) => (
-              <Link key={i} href="/create" className="group block">
-                <div
-                  className="card-preview-aspect relative overflow-hidden rounded-2xl transition-all duration-200 group-hover:translate-y-[-3px] group-hover:shadow-[0_26px_48px_-28px_rgba(20,14,6,0.32)]"
-                  style={{
-                    background: `linear-gradient(135deg, oklch(0.88 0.075 ${use.hue}), oklch(0.82 0.085 ${use.hue + 30}))`,
-                  }}
-                >
-                  <CardThumb3D
-                    imageUrl={use.coverImage}
-                    headline={use.headline}
-                    alt=""
-                    hue={use.hue + 180}
-                  />
-                </div>
-                <h3 className="mt-2.5 text-sm font-medium tracking-[-0.01em]">
-                  {use.title}
-                </h3>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {use.desc}
-                </p>
-              </Link>
-            ))}
-          </div>
+          <CardTileRow
+            tiles={config.uses.map((use) => ({
+              key: use.title,
+              href: "/create",
+              background: `linear-gradient(135deg, oklch(0.88 0.075 ${use.hue}), oklch(0.82 0.085 ${use.hue + 30}))`,
+              coverImage: use.coverImage,
+              coverHue: use.hue + 180,
+              headline: use.headline,
+              title: use.title,
+              desc: use.desc,
+            }))}
+          />
         </div>
       </section>
 
