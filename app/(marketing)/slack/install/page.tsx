@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import { buildPageMetadata } from "@/lib/site-metadata"
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Add CardShare.ai to Slack",
+  title: "Add Card Share AI to Slack",
   description:
-    "Install the CardShare.ai Slack app to create AI greeting cards with /cardshareai and share links in your workspace.",
+    "Install the Card Share AI Slack app to create AI greeting cards with /cardshareai and share links in your workspace.",
   path: "/slack/install",
 })
 
@@ -13,7 +13,7 @@ export default function SlackInstallPage() {
     <main className="mx-auto flex max-w-lg flex-col items-center gap-8 px-6 py-24 text-center">
       <div className="flex flex-col items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight">
-          Add cardshareAI to Slack
+          Add Card Share AI to Slack
         </h1>
         <p className="text-muted-foreground">
           Create personalised AI greeting cards directly from Slack using{" "}
@@ -51,7 +51,7 @@ export default function SlackInstallPage() {
       <p className="text-xs text-muted-foreground">
         After installing, use{" "}
         <code className="rounded bg-muted px-1 py-0.5">/cardshareai-link</code>{" "}
-        to connect your cardshareAI account.
+        to connect your Card Share AI account.
       </p>
     </main>
   )
