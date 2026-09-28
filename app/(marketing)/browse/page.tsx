@@ -244,7 +244,7 @@ export default function CardsPage() {
                     style={{ background: cat.frontGradient }}
                   >
                     <CardThumb3D
-                      imageUrl={null}
+                      imageUrl={cat.coverImage}
                       headline={cat.cardTitle}
                       alt=""
                       hue={cat.coverHue}
