@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import {
-  buildOpenGraph,
-  DEFAULT_DESCRIPTION,
-  DEFAULT_OG_IMAGE_PATH,
-} from "@/lib/site-metadata"
+  CARD_PREVIEW_SIZE,
+  cardPreviewImagePath,
+  type CardPreviewVariant,
+} from "@/lib/card-preview"
+import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/site-metadata"
 import {
   getContributeCardByLinkId,
   type ContributeCardRecord,
@@ -24,12 +25,6 @@ function shareCardTitle(
   return "Your greeting card"
 }
 
-function shareableImageUrl(url: string | null | undefined): string | undefined {
-  const trimmed = url?.trim()
-  if (!trimmed || trimmed.startsWith("data:")) return undefined
-  return trimmed
-}
-
 function shareCardDescription(
   card: PublicCardViewRecord | ContributeCardRecord,
   intro: string,
@@ -43,22 +38,34 @@ function shareCardDescription(
 }
 
 function cardLinkMetadata(
+  linkId: string,
+  variant: CardPreviewVariant,
   card: PublicCardViewRecord | ContributeCardRecord,
   title: string,
   description: string,
 ): Metadata {
-  const imageUrl = shareableImageUrl(card.image_url)
+  const image = {
+    url: cardPreviewImagePath(linkId, variant, card),
+    ...CARD_PREVIEW_SIZE,
+    alt: title,
+  }
 
   return {
     title,
     description,
     robots: { index: false, follow: false },
-    openGraph: buildOpenGraph(title, description, imageUrl),
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      title,
+      description,
+      images: [image],
+    },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: imageUrl ? [imageUrl] : [DEFAULT_OG_IMAGE_PATH],
+      images: [image],
     },
   }
 }
@@ -77,6 +84,8 @@ export async function buildContributeCardMetadata(
 
     const { card } = result
     return cardLinkMetadata(
+      linkId,
+      "contribute",
       card,
       shareCardTitle(card, "Sign {name}'s card"),
       shareCardDescription(
@@ -104,6 +113,8 @@ export async function buildViewCardMetadata(linkId: string): Promise<Metadata> {
 
     const { card } = result
     return cardLinkMetadata(
+      linkId,
+      "view",
       card,
       shareCardTitle(card, "A card for {name}"),
       shareCardDescription(

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest"
-import { PASTEL_HUES, pastelHuesFor } from "./card-pastel"
+import {
+  oklchToHex,
+  PASTEL_HUES,
+  pastelHueFor,
+  pastelHuesFor,
+  pastelStops,
+} from "./card-pastel"
 
 /** UUID-like ids, as real cards have (a fixed sequence so the test is deterministic). */
 const ids = (n: number) => {
@@ -31,5 +37,26 @@ describe("card pastel", () => {
 
   it("uses a wide range of colours", () => {
     expect(new Set(pastelHuesFor(ids(60))).size).toBeGreaterThan(9)
+  })
+
+  it("gives a single card one of the palette hues, the same every time", () => {
+    for (const id of ids(20)) {
+      expect(PASTEL_HUES).toContain(pastelHueFor(id))
+      expect(pastelHueFor(id)).toBe(pastelHueFor(id))
+    }
+  })
+
+  it("converts OKLCH to sRGB hex", () => {
+    expect(oklchToHex(1, 0, 0)).toBe("#ffffff")
+    expect(oklchToHex(0, 0, 0)).toBe("#000000")
+    expect(oklchToHex(0.62796, 0.25768, 29.2339)).toBe("#ff0000")
+  })
+
+  it("makes light pastel stops", () => {
+    const { light, deep } = pastelStops(32)
+    for (const hex of [light, deep]) {
+      const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+      expect(Math.min(...channels)).toBeGreaterThan(200)
+    }
   })
 })

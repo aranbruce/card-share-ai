@@ -22,6 +22,7 @@ import {
   deleteWorkspaceLinks,
 } from "./internal-api"
 import type { CardRow } from "@/lib/create-card"
+import { cardPreviewImagePath } from "@/lib/card-preview"
 import { SLACK_HELP_MESSAGE, type MessagesTabOpen } from "./slack-app-home"
 
 const CARD_TYPES = [
@@ -76,6 +77,29 @@ async function generateAndCreateCard(
 function cardUrl(card: CardRow): string {
   const appUrl = getAppUrl()
   return `${appUrl}/dashboard/cards/${card.id}`
+}
+
+function optionalText(value: unknown): string | null {
+  return typeof value === "string" ? value : null
+}
+
+/**
+ * The card's preview image (its front on a pastel backdrop, 1200×630), which Slack fetches
+ * from the app. Falls back to the raw cover when the app isn't reachable over https.
+ */
+function cardImageUrl(card: CardRow): string | undefined {
+  const appUrl = getAppUrl()
+  const linkId = optionalText(card.contributor_link_id)
+  if (linkId && appUrl.startsWith("https://")) {
+    return `${appUrl}${cardPreviewImagePath(linkId, "view", {
+      recipient_name: optionalText(card.recipient_name),
+      sender_name: optionalText(card.sender_name),
+      copy_headline: optionalText(card.copy_headline),
+      image_url: optionalText(card.image_url),
+    })}`
+  }
+  const cover = optionalText(card.image_url)
+  return cover?.startsWith("https") ? cover : undefined
 }
 
 function contributorUrl(card: CardRow): string {
@@ -466,19 +490,17 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
           return
         }
 
-        const isHttpsImage =
-          typeof card.image_url === "string" &&
-          (card.image_url as string).startsWith("https")
+        const imageUrl = cardImageUrl(card)
 
         await notify(
           Card({
             title: `Your card for ${recipientName} is ready!`,
-            ...(isHttpsImage ? { imageUrl: card.image_url as string } : {}),
+            ...(imageUrl ? { imageUrl } : {}),
             children: [
-              ...(card.copy_headline
-                ? [CardText(`"${card.copy_headline as string}"`)]
+              // The preview image already shows the title on the card.
+              ...(card.copy_headline && !imageUrl
+                ? [CardText(`"${card.copy_headline as string}"`), Divider()]
                 : []),
-              Divider(),
               Actions([
                 LinkButton({ label: "Open Card", url: cardUrl(card) }),
                 LinkButton({
