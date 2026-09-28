@@ -131,9 +131,9 @@ function HeroFan() {
           style={{ background: "oklch(0.82 0.1 18)" }}
         />
         <div>
-          <div className="font-medium">Signed from any phone</div>
+          <div className="font-medium">Free to start</div>
           <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
-            no app or account needed
+            design, sign and send
           </div>
         </div>
       </div>
