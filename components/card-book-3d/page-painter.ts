@@ -53,6 +53,8 @@ export type BookContent = {
 
 export type PaintResources = {
   images: ReadonlyMap<string, HTMLImageElement>
+  /** The current frame of an animated GIF, when playing (the `<img>` only has its first). */
+  gifFrame?: (url: string) => CanvasImageSource | null
   /** Canvas font-family stack for a message font preset (null = app default). */
   fontFamily: (presetId: string | null) => string
 }
@@ -386,7 +388,8 @@ function paintNote(
     roundRect(ctx, gx, 0, gifW, gifH, 6)
     ctx.clip()
     if (gif && gif.naturalWidth > 0) {
-      ctx.drawImage(gif, gx, 0, gifW, gifH)
+      const frame = note.giphyUrl ? resources.gifFrame?.(note.giphyUrl) : null
+      ctx.drawImage(frame ?? gif, gx, 0, gifW, gifH)
     } else {
       ctx.fillStyle = "rgba(120, 113, 108, 0.12)"
       ctx.fillRect(gx, 0, gifW, gifH)
