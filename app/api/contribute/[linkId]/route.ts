@@ -12,6 +12,7 @@ import { normalizeContributionRotationDegrees } from "@/lib/contribution-rotatio
 import { normalizeContributionFontFamily } from "@/lib/contribution-font-family"
 import { randomPresetTextColor } from "@/lib/message-text-color-presets"
 import { compactCardPages } from "@/lib/compact-card-pages"
+import { PAGES_PER_SHEET } from "@/lib/card-extra-pages"
 import { getContributeCardByLinkId } from "@/lib/contribute-card"
 import { requireServiceRoleClient } from "@/lib/supabase/admin"
 
@@ -202,12 +203,21 @@ export async function PATCH(
 
     if (body.action === "add_page") {
       const supabase = requireServiceRoleClient()
-      const { data: next, error: rpcError } = await supabase.rpc(
-        "increment_extra_pages",
-        { card_link_id: linkId },
-      )
-      if (rpcError) {
-        return NextResponse.json({ error: rpcError.message }, { status: 500 })
+      // Pages come in pairs (one sheet), so the new spread has no blank side.
+      let next: number | null = null
+      for (let i = 0; i < PAGES_PER_SHEET; i++) {
+        const { data, error: rpcError } = await supabase.rpc(
+          "increment_extra_pages",
+          { card_link_id: linkId },
+        )
+        if (rpcError) {
+          // A page already added stands (the card rounds up to a whole sheet).
+          if (next !== null) break
+          return NextResponse.json({ error: rpcError.message }, { status: 500 })
+        }
+        // At the cap after the first page: keep what was added.
+        if (data === null) break
+        next = data as number
       }
       if (next === null) {
         // NULL means either the card doesn't exist or extra_pages is already at

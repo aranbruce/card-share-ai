@@ -722,7 +722,7 @@ export function Card3D({
                 : goToPage(currentPage + 1)
             }
             disabled={!canGoRight}
-            title={isLastPage && onAddPage ? "Add a new page" : "Next page"}
+            title={isLastPage && onAddPage ? "Add two pages" : "Next page"}
           >
             <ArrowRight />
           </Button>

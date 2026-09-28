@@ -16,6 +16,7 @@ import {
   PAGE_CURL_RADIANS,
   settleFlipTarget,
   spreadForPage,
+  type BookFace,
 } from "@/lib/card-book"
 import type { Contribution } from "@/lib/card-body"
 import { MESSAGE_FONT_PRESETS } from "@/lib/message-font-presets"
@@ -1113,6 +1114,18 @@ export function CardBook3D({
           ? flipTarget * 2
           : flipTarget * 2 - 1,
     )
+  /** Faces shown (one dot each in the pager): the open spread, or one page on narrow screens
+   * and while editing. Card page `p` is face `p`. */
+  const facesInView: number[] =
+    editPage !== null
+      ? [Math.min(editPage, faces.length - 1)]
+      : flipTarget <= 0
+        ? [0]
+        : flipTarget >= leafCount
+          ? [faces.length - 1]
+          : narrow
+            ? [currentSide === "left" ? flipTarget * 2 - 1 : flipTarget * 2]
+            : [flipTarget * 2 - 1, flipTarget * 2]
   const onPageChangeRef = useRef(onPageChange)
   useEffect(() => {
     onPageChangeRef.current = onPageChange
@@ -1736,23 +1749,25 @@ export function CardBook3D({
           <ArrowLeft />
         </Button>
         <div className="flex items-center gap-2">
-          {Array.from({ length: leafCount + 1 }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => {
-                if (editPage !== null) editPageAt(null)
-                goTo(i, i === 0 ? "right" : "left")
-              }}
-              className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
-                i === flipTarget
-                  ? "bg-primary"
-                  : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-              }`}
-              aria-label={spreadLabel(i, leafCount)}
-              aria-current={i === flipTarget ? "true" : undefined}
-            />
-          ))}
+          {faces.map((face, i) =>
+            face.kind === "blank" ? null : (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  if (editPage !== null) editPageAt(null)
+                  goTo(spreadForFace(i, faces.length), sideOfFace(i))
+                }}
+                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                  facesInView.includes(i)
+                    ? "bg-primary"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                }`}
+                aria-label={faceLabel(face)}
+                aria-current={facesInView.includes(i) ? "true" : undefined}
+              />
+            ),
+          )}
         </div>
         <Button
           variant="outline"
@@ -1761,7 +1776,7 @@ export function CardBook3D({
           disabled={editPage !== null ? !canEditNext : !canGoNext}
           aria-label={
             editPage !== null && editPage >= totalPages - 1 && onAddPage
-              ? "Add a page"
+              ? "Add two pages"
               : "Next page"
           }
         >
@@ -1774,7 +1789,7 @@ export function CardBook3D({
       </div>
 
       <p className="sr-only" aria-live="polite">
-        {spreadLabel(flipTarget, leafCount)}
+        {viewLabel(facesInView.map((i) => faces[i]))}
       </p>
       <CardTextAlternative
         headline={headline}
@@ -1949,10 +1964,30 @@ function pageSurface(progress: number, curl: number, lift: number, side: Side) {
   }
 }
 
-function spreadLabel(spread: number, leafCount: number): string {
-  if (spread <= 0) return "Front cover"
-  if (spread >= leafCount) return "Back cover"
-  return `Inside, spread ${spread}`
+/** The spread that shows a face: the cover alone, then two faces per spread. */
+function spreadForFace(face: number, faceCount: number): number {
+  if (face <= 0) return 0
+  if (face >= faceCount - 1) return faceCount / 2
+  return Math.ceil(face / 2)
+}
+
+/** Which side of its spread a face is on (the cover sits on the right, the back on the left). */
+function sideOfFace(face: number): Side {
+  return face > 0 && face % 2 === 1 ? "left" : "right"
+}
+
+function faceLabel(face: BookFace | undefined): string {
+  if (!face || face.kind === "cover") return "Front cover"
+  if (face.kind === "back") return "Back cover"
+  if (face.kind === "page") return `Page ${face.pageIndex}`
+  return "Blank page"
+}
+
+/** What is in view, for screen readers: "Page 1", "Pages 1 and 2", "Front cover". */
+function viewLabel(faces: (BookFace | undefined)[]): string {
+  const pages = faces.flatMap((f) => (f?.kind === "page" ? [f.pageIndex] : []))
+  if (pages.length === 2) return `Pages ${pages[0]} and ${pages[1]}`
+  return faceLabel(faces.find((f) => f?.kind !== "blank") ?? faces[0])
 }
 
 /** Screen-reader copy of what the WebGL canvas shows. */
