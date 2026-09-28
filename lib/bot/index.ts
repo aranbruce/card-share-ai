@@ -168,20 +168,25 @@ export async function sendMessagesTabWelcome({
   userId,
   channelId,
 }: MessagesTabOpen): Promise<void> {
-  const firstOpen = await getBot()
-    .getState()
-    .setIfNotExists(`slack:welcomed:${teamId}:${userId}`, true)
-  if (!firstOpen) return
+  const state = getBot().getState()
+  const key = `slack:welcomed:${teamId}:${userId}`
+  if (!(await state.setIfNotExists(key, true))) return
 
-  const adapter = getSlackAdapter()
-  const installation = await adapter.getInstallation(installationId)
-  if (!installation) return
-  await adapter.withBotToken(installation.botToken, () =>
-    adapter.webClient.chat.postMessage({
-      channel: channelId,
-      text: SLACK_HELP_MESSAGE,
-    }),
-  )
+  try {
+    const adapter = getSlackAdapter()
+    const installation = await adapter.getInstallation(installationId)
+    if (!installation) throw new Error("installation not found")
+    await adapter.withBotToken(installation.botToken, () =>
+      adapter.webClient.chat.postMessage({
+        channel: channelId,
+        text: SLACK_HELP_MESSAGE,
+      }),
+    )
+  } catch (err) {
+    // Clear the marker so the next open retries the welcome
+    await state.delete(key)
+    throw err
+  }
 }
 
 export function getBot(): Chat<BotAdapters> {
