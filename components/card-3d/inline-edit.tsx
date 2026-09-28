@@ -223,6 +223,10 @@ export const InlineEdit = forwardRef<
       range.collapse(true)
     } else {
       range.selectNodeContents(editRef.current)
+      // Select all only when a key starts editing. A field that focuses itself (e.g. a draft
+      // note reopening) or a click off the text continues at the end, so the next keystroke
+      // does not replace what is there.
+      if (autoFocus || point) range.collapse(false)
     }
     const sel = window.getSelection()
     sel?.removeAllRanges()
@@ -230,7 +234,7 @@ export const InlineEdit = forwardRef<
     queueMicrotask(() => {
       setEditSurfaceEmpty(!(editRef.current?.innerText || "").trim())
     })
-  }, [isEditing])
+  }, [isEditing, autoFocus])
 
   useEffect(() => {
     const syncEmptyFromValue = () => setEditSurfaceEmpty(!value.trim())
@@ -465,8 +469,25 @@ export const InlineEdit = forwardRef<
           onKeyDown={handleKeyDown}
           onInput={syncEditEmptyFromDom}
           onClick={(e) => {
-            if (isEditing) e.stopPropagation()
-            else handleClick(e)
+            if (!isEditing) {
+              handleClick(e)
+              return
+            }
+            e.stopPropagation()
+            // A click replayed from the 3D card (see CardBook3D) does not move the caret
+            // the way a real one does, so place it where the page was clicked.
+            const el = editRef.current
+            if (!e.nativeEvent.isTrusted && el && (e.clientX || e.clientY)) {
+              const caret = caretNearPoint(el, e.clientX, e.clientY)
+              if (caret) {
+                const range = document.createRange()
+                range.setStart(caret.node, caret.offset)
+                range.collapse(true)
+                const sel = window.getSelection()
+                sel?.removeAllRanges()
+                sel?.addRange(range)
+              }
+            }
           }}
         >
           {isEditing ? (
