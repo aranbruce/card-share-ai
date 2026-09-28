@@ -12,43 +12,43 @@ import { SampleCard3D, type SampleNote } from "@/components/sample-card-3d"
 const DEMO_STATES = {
   Warm: {
     base: {
-      imageUrl: "/demo/card-warm.png",
+      imageUrl: "/demo/card-warm.webp",
       message:
         "Celebrating Your Blossoming 30s with Love, Laughter, and Adventure!",
     },
     withPhoto: {
-      imageUrl: "/demo/card-warm-with-photo.png",
+      imageUrl: "/demo/card-warm-with-photo.webp",
       message: "Blooming into 30: A Journey to Remember!",
     },
   },
   Playful: {
     base: {
-      imageUrl: "/demo/card-playful.png",
+      imageUrl: "/demo/card-playful.webp",
       message: "All Aboard the Fabulous 30s Express, Mira!",
     },
     withPhoto: {
-      imageUrl: "/demo/card-playful-with-photo.png",
+      imageUrl: "/demo/card-playful-with-photo.webp",
       message: "All Aboard the Crazy Thirties Train, Mira!",
     },
   },
   Dry: {
     base: {
-      imageUrl: "/demo/card-dry.png",
+      imageUrl: "/demo/card-dry.webp",
       message:
         "Turning 30: A Stop on Life's Train Where You Collect More Plants",
     },
     withPhoto: {
-      imageUrl: "/demo/card-dry-with-photo.png",
+      imageUrl: "/demo/card-dry-with-photo.webp",
       message: "Turning 30: Embrace the Art of Aging Gracefully",
     },
   },
   Sincere: {
     base: {
-      imageUrl: "/demo/card-sincere.png",
+      imageUrl: "/demo/card-sincere.webp",
       message: "So glad you're on our team - today is all yours!",
     },
     withPhoto: {
-      imageUrl: "/demo/card-sincere-with-photo.png",
+      imageUrl: "/demo/card-sincere-with-photo.webp",
       message: "Blossoming into Your Best Decade Yet, Mira!",
     },
   },
