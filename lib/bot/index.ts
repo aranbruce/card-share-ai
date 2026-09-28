@@ -19,6 +19,7 @@ import {
   generateHeadline,
   generateImageUrl,
   createBotCard,
+  deleteWorkspaceLinks,
 } from "./internal-api"
 import type { CardRow } from "@/lib/create-card"
 
@@ -143,6 +144,17 @@ export function getSlackAdapter(): ReturnType<typeof createSlackAdapter> {
   if (!signingSecret) throw new Error("SLACK_SIGNING_SECRET is not configured")
   _slackAdapter = createSlackAdapter({ clientId, clientSecret, signingSecret })
   return _slackAdapter
+}
+
+/**
+ * Removes everything we hold for a Slack workspace once the app is uninstalled
+ * or its bot token is revoked: the stored bot token and the account links.
+ */
+export async function removeSlackInstallation(
+  installationId: string,
+): Promise<void> {
+  await getSlackAdapter().deleteInstallation(installationId)
+  await deleteWorkspaceLinks("slack", installationId)
 }
 
 export function getBot(): Chat<BotAdapters> {
