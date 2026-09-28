@@ -6,6 +6,9 @@ import {
   OG_INTER_TIGHT_FAMILY,
 } from "@/lib/og-inter-tight-font"
 import { OgLogoMark } from "@/lib/og-logo-mark"
+import { decodePngRgba, encodePngRgba } from "@/lib/png-rgba"
+import { warpToQuad } from "@/lib/perspective-warp"
+import type { Point2 } from "@/lib/quad-transform"
 import { SITE_NAME } from "@/lib/site-metadata"
 
 export type CardPreviewImageInput = {
@@ -19,8 +22,24 @@ export type CardPreviewImageInput = {
   cover: string | null
 }
 
-const CARD_WIDTH = 400
-const CARD_HEIGHT = 500
+/** The card front is laid out at twice its shown size, so the warp has detail to sample. */
+const FACE_SCALE = 2
+const FACE_WIDTH = 400 * FACE_SCALE
+const FACE_HEIGHT = 500 * FACE_SCALE
+
+/**
+ * Where the card's corners sit in the preview (top-left, top-right, bottom-right,
+ * bottom-left): the pose of the 3D card on the dashboard (turned a little further so it reads at
+ * thumbnail size), with its right edge nearer.
+ */
+const CARD_QUAD: readonly [Point2, Point2, Point2, Point2] = [
+  { x: 8, y: 42 },
+  { x: 382, y: 0 },
+  { x: 390, y: 522 },
+  { x: 0, y: 504 },
+]
+const CARD_LEFT = 715
+const CARD_TOP = 55
 
 function clip(text: string, max: number): string {
   const trimmed = text.trim()
@@ -55,31 +74,43 @@ function titleFontSize(title: string): number {
   return 52
 }
 
-/** The card's front, as the 3D card paints it: cover art, a dark fade and the title. */
-function CardFront({
-  cover,
-  headline,
-  recipientName,
-}: {
-  cover: string | null
-  headline: string
-  recipientName: string
-}) {
-  return (
+type OgFonts = NonNullable<
+  ConstructorParameters<typeof ImageResponse>[1]
+>["fonts"]
+
+async function loadFonts(): Promise<OgFonts> {
+  const [regular, semiBold, bold] = await Promise.all([
+    loadInterTight(400),
+    loadInterTight(600),
+    loadInterTight(700),
+  ])
+  return [
+    { name: OG_INTER_TIGHT_FAMILY, data: regular, weight: 400 },
+    { name: OG_INTER_TIGHT_FAMILY, data: semiBold, weight: 600 },
+    { name: OG_INTER_TIGHT_FAMILY, data: bold, weight: 700 },
+  ]
+}
+
+/**
+ * The card's front, flat, as the 3D card paints it: cover art, a dark fade, the title and
+ * the gloss of the cover stock.
+ */
+async function renderCardFace(
+  cover: string | null,
+  headline: string,
+  recipientName: string,
+  fonts: OgFonts,
+): Promise<Uint8Array> {
+  const s = FACE_SCALE
+  const face = new ImageResponse(
     <div
       style={{
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
+        width: "100%",
+        height: "100%",
         display: "flex",
-        borderRadius: 18,
-        overflow: "hidden",
+        position: "relative",
         background: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)",
-        boxShadow:
-          "0 40px 70px rgba(70, 35, 20, 0.28), 0 8px 18px rgba(70, 35, 20, 0.16)",
-        transform: "rotate(4deg)",
+        fontFamily: OG_INTER_TIGHT_FAMILY,
       }}
     >
       {cover ? (
@@ -87,14 +118,14 @@ function CardFront({
         <img
           src={cover}
           alt=""
-          width={CARD_WIDTH}
-          height={CARD_HEIGHT}
+          width={FACE_WIDTH}
+          height={FACE_HEIGHT}
           style={{
             position: "absolute",
             left: 0,
             top: 0,
-            width: CARD_WIDTH,
-            height: CARD_HEIGHT,
+            width: FACE_WIDTH,
+            height: FACE_HEIGHT,
             objectFit: "cover",
           }}
         />
@@ -104,13 +135,13 @@ function CardFront({
           position: "absolute",
           left: 0,
           top: 0,
-          width: CARD_WIDTH,
-          height: CARD_HEIGHT,
+          width: FACE_WIDTH,
+          height: FACE_HEIGHT,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
           alignItems: "center",
-          padding: 26,
+          padding: 26 * s,
           backgroundImage:
             "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%)",
           color: "#ffffff",
@@ -120,7 +151,7 @@ function CardFront({
         {headline ? (
           <div
             style={{
-              fontSize: 32,
+              fontSize: 32 * s,
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: "-0.02em",
@@ -132,8 +163,8 @@ function CardFront({
         {recipientName ? (
           <div
             style={{
-              marginTop: 8,
-              fontSize: 17,
+              marginTop: 8 * s,
+              fontSize: 17 * s,
               fontWeight: 400,
               opacity: 0.8,
             }}
@@ -142,23 +173,52 @@ function CardFront({
           </div>
         ) : null}
       </div>
-    </div>
+      {/* Gloss: light catching the cover from the top left. */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: FACE_WIDTH,
+          height: FACE_HEIGHT,
+          backgroundImage:
+            "linear-gradient(120deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 35%, rgba(255,255,255,0) 55%)",
+        }}
+      />
+    </div>,
+    { width: FACE_WIDTH, height: FACE_HEIGHT, fonts },
   )
+  return new Uint8Array(await face.arrayBuffer())
+}
+
+/** The flat front warped into the 3D card's pose, as a PNG data URL (at FACE_SCALE). */
+async function renderCardInPerspective(
+  input: CardPreviewImageInput,
+  recipientName: string,
+  fonts: OgFonts,
+): Promise<string> {
+  const flat = await renderCardFace(
+    input.cover,
+    clip(input.headline ?? "", 70),
+    recipientName,
+    fonts,
+  )
+  const quad = CARD_QUAD.map((p) => ({
+    x: p.x * FACE_SCALE,
+    y: p.y * FACE_SCALE,
+  })) as [Point2, Point2, Point2, Point2]
+  const warped = warpToQuad(decodePngRgba(flat), quad)
+  return `data:image/png;base64,${Buffer.from(encodePngRgba(warped)).toString("base64")}`
 }
 
 /**
- * A card's link preview (1200×630) for Slack, iMessage and social unfurls: the card's
- * front, tilted over an open inside page, on its pastel backdrop, with what the link is for.
+ * A card's link preview (1200×630) for Slack, iMessage and social unfurls: the card's front
+ * in the pose of the 3D card, on its pastel backdrop, with what the link is for beside it.
  */
 export async function renderCardPreviewImage(
   input: CardPreviewImageInput,
 ): Promise<ImageResponse> {
-  const [regular, semiBold, bold] = await Promise.all([
-    loadInterTight(400),
-    loadInterTight(600),
-    loadInterTight(700),
-  ])
-
+  const fonts = await loadFonts()
   const { light, deep } = pastelStops(pastelHueFor(input.id))
   const recipient = clip(input.recipientName ?? "", 40)
   const { title, subtitle } = cardPreviewCopy(
@@ -167,6 +227,9 @@ export async function renderCardPreviewImage(
     clip(input.senderName ?? "", 40) || null,
   )
   const shownTitle = clip(title, 56)
+  const card = await renderCardInPerspective(input, recipient, fonts)
+  const cardWidth = Math.ceil(Math.max(...CARD_QUAD.map((p) => p.x)))
+  const cardHeight = Math.ceil(Math.max(...CARD_QUAD.map((p) => p.y)))
 
   return new ImageResponse(
     <div
@@ -227,45 +290,34 @@ export async function renderCardPreviewImage(
         </div>
       </div>
 
+      {/* The card's shadow on the backdrop, from a block tucked just inside the card. */}
       <div
         style={{
           position: "absolute",
-          left: 700,
-          top: 64,
-          width: CARD_WIDTH,
-          height: CARD_HEIGHT,
-          display: "flex",
+          left: CARD_LEFT + 20,
+          top: CARD_TOP + 56,
+          width: cardWidth - 44,
+          height: cardHeight - 80,
+          background: "#3a2a22",
+          boxShadow:
+            "10px 30px 50px rgba(70, 35, 20, 0.32), 2px 8px 16px rgba(70, 35, 20, 0.18)",
         }}
-      >
-        {/* An inside page peeking out behind the front, so it reads as a card. */}
-        <div
-          style={{
-            position: "absolute",
-            left: -34,
-            top: 10,
-            width: CARD_WIDTH,
-            height: CARD_HEIGHT,
-            display: "flex",
-            borderRadius: 18,
-            background: "linear-gradient(160deg, #fffdf9 0%, #f4efe7 100%)",
-            boxShadow: "0 24px 50px rgba(70, 35, 20, 0.18)",
-            transform: "rotate(-5deg)",
-          }}
-        />
-        <CardFront
-          cover={input.cover}
-          headline={clip(input.headline ?? "", 70)}
-          recipientName={recipient}
-        />
-      </div>
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- rendered by Satori, not the browser */}
+      <img
+        src={card}
+        alt=""
+        width={cardWidth}
+        height={cardHeight}
+        style={{
+          position: "absolute",
+          left: CARD_LEFT,
+          top: CARD_TOP,
+          width: cardWidth,
+          height: cardHeight,
+        }}
+      />
     </div>,
-    {
-      ...CARD_PREVIEW_SIZE,
-      fonts: [
-        { name: OG_INTER_TIGHT_FAMILY, data: regular, weight: 400 },
-        { name: OG_INTER_TIGHT_FAMILY, data: semiBold, weight: 600 },
-        { name: OG_INTER_TIGHT_FAMILY, data: bold, weight: 700 },
-      ],
-    },
+    { ...CARD_PREVIEW_SIZE, fonts },
   )
 }

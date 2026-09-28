@@ -497,10 +497,10 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
             title: `Your card for ${recipientName} is ready!`,
             ...(imageUrl ? { imageUrl } : {}),
             children: [
-              ...(card.copy_headline
-                ? [CardText(`"${card.copy_headline as string}"`)]
+              // The preview image already shows the title on the card.
+              ...(card.copy_headline && !imageUrl
+                ? [CardText(`"${card.copy_headline as string}"`), Divider()]
                 : []),
-              Divider(),
               Actions([
                 LinkButton({ label: "Open Card", url: cardUrl(card) }),
                 LinkButton({
