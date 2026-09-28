@@ -64,6 +64,7 @@ import {
   PAGE_WIDTH_PX,
   type BookContent,
 } from "./page-painter"
+import { cardBookFrameClass } from "./frame"
 import {
   createPageMaterial,
   LEAF_THICKNESS,
@@ -273,14 +274,19 @@ export function CardBook3D({
 
   const [webglFailed, setWebglFailed] = useState(false)
   const editable = Boolean(renderPageEditor)
-  const [editPage, setEditPage] = useState<number | null>(
-    editable && autoEditPage !== undefined ? autoEditPage : null,
-  )
+  // A page the host asked for before this mounted (the card loads on demand) still counts:
+  // it opens there, and on editing surfaces opens it for editing.
+  const [editPage, setEditPage] = useState<number | null>(() => {
+    if (!editable) return null
+    if (autoEditPage !== undefined) return autoEditPage
+    return navigateToPage !== undefined && !coverOnly ? navigateToPage : null
+  })
   const [overlayReady, setOverlayReady] = useState(false)
   const [editScale, setEditScale] = useState(1)
   /** The editor element, mapped onto the 3D page every frame by the render loop. */
   const editorRef = useRef<HTMLDivElement>(null)
-  const startPage = editPage ?? initialPage
+  const startPage =
+    editPage ?? (coverOnly ? 0 : (navigateToPage ?? initialPage))
   const initialFlip = coverOnly ? 0 : spreadForPage(startPage)
   const initialFocus: Side = startPage % 2 === 1 ? "left" : "right"
   const [flipTarget, setFlipTarget] = useState(initialFlip)
@@ -334,8 +340,6 @@ export function CardBook3D({
     [coverOnly, messagePageIndex, contributions, extraPages],
   )
   const faces = useMemo(() => buildBookFaces(totalPages), [totalPages])
-  /** Faces for the scene to build with when it mounts; later changes go through setFaces. */
-  const facesRef = useRef(faces)
   const leafCount = leafCountForFaces(faces)
 
   const content = useMemo<BookContent>(
@@ -480,7 +484,7 @@ export function CardBook3D({
       1,
     )
     leafGeometry.translate(PAGE_W / 2, 0, 0)
-    let leaves: Leaf[] = []
+    const leaves: Leaf[] = []
     let leafTotal = 0
 
     const shadowTexture = createShadowTexture()
@@ -494,13 +498,23 @@ export function CardBook3D({
     shadow.renderOrder = -1
     scene.add(shadow)
 
-    // Adding or removing pages only rebuilds the leaves: the renderer (and its GL context),
-    // camera and loop stay, and existing page textures are reused. The paint effect then
+    // Adding or removing pages keeps the renderer (and its GL context), camera and loop, and
+    // reuses page textures; leaves are only added or removed at the end. The paint effect then
     // repaints just the faces whose content changed.
-    let builtFaces: BookFaces | null = null
+    const createLeaf = (i: number): Leaf => {
+      const material = createPageMaterial(
+        faceTextures[i * 2],
+        faceTextures[i * 2 + 1],
+        PAGE_W,
+        { front: i === 0 ? COVER_GLOSS : PAGE_GLOSS, back: PAGE_GLOSS },
+      )
+      const mesh = new Mesh(leafGeometry, material)
+      // Vertices move in the shader; the static bounds would cull turning pages.
+      mesh.frustumCulled = false
+      scene.add(mesh)
+      return { mesh, material }
+    }
     const setFaces = (next: BookFaces) => {
-      if (next === builtFaces) return
-      builtFaces = next
       while (faceCanvases.length < next.length) {
         const canvas = document.createElement("canvas")
         canvas.width = PAGE_WIDTH_PX * PAGE_TEXTURE_SCALE
@@ -508,7 +522,6 @@ export function CardBook3D({
         const texture = new CanvasTexture(canvas)
         texture.colorSpace = SRGBColorSpace
         texture.anisotropy = anisotropy
-        paintedRef.current.delete(faceCanvases.length)
         faceCanvases.push(canvas)
         faceTextures.push(texture)
       }
@@ -518,33 +531,25 @@ export function CardBook3D({
         paintedRef.current.delete(faceCanvases.length)
       }
 
-      leaves.forEach(({ mesh, material }) => {
-        scene.remove(mesh)
-        material.dispose()
-      })
       leafTotal = leafCountForFaces(next)
-      leaves = Array.from({ length: leafTotal }, (_, i) => {
-        const material = createPageMaterial(
-          faceTextures[i * 2],
-          faceTextures[i * 2 + 1],
-          PAGE_W,
-          {
-            front: i === 0 ? COVER_GLOSS : PAGE_GLOSS,
-            back: i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS,
-          },
-        )
-        const mesh = new Mesh(leafGeometry, material)
-        // Vertices move in the shader; the static bounds would cull turning pages.
-        mesh.frustumCulled = false
-        scene.add(mesh)
-        return { mesh, material }
+      while (leaves.length > leafTotal) {
+        const leaf = leaves.pop()
+        if (leaf) {
+          scene.remove(leaf.mesh)
+          leaf.material.dispose()
+        }
+      }
+      while (leaves.length < leafTotal) leaves.push(createLeaf(leaves.length))
+      // Only the last leaf's back is the (glossy) back cover.
+      leaves.forEach(({ material }, i) => {
+        material.uniforms.uGlossBack.value =
+          i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS
       })
       shadow.position.z = -LEAF_GAP * (leafTotal + 2)
       state.flip = Math.min(state.flip, leafTotal)
       state.target = Math.min(state.target, leafTotal)
       state.dirty = true
     }
-    setFaces(facesRef.current)
 
     const resize = () => {
       const rect = container.getBoundingClientRect()
@@ -964,10 +969,9 @@ export function CardBook3D({
     }
   }, [])
 
-  // New faces (pages added or removed) rebuild the leaves in the existing scene. Runs before
-  // the paint effect below, so it paints onto the right canvases.
+  // Builds the leaves when the scene is created and whenever pages are added or removed.
+  // Declared after the scene effect and before the paint effect, so it runs between them.
   useEffect(() => {
-    facesRef.current = faces
     sceneRef.current?.setFaces(faces)
   }, [faces])
 
@@ -1438,11 +1442,7 @@ export function CardBook3D({
           tabIndex={0}
           className={cn(
             "relative w-full cursor-grab touch-pan-y rounded-2xl outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
-            coverOnly
-              ? "aspect-4/5"
-              : editable
-                ? "aspect-4/5 sm:aspect-auto sm:h-[560px]"
-                : "aspect-4/5 sm:aspect-4/3",
+            cardBookFrameClass(coverOnly, editable),
             editable && editPage === null && "cursor-pointer",
           )}
           onPointerDown={onPointerDown}
