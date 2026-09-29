@@ -1629,14 +1629,14 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         hue: 300,
         headline: "Get well soon, Leo",
-        coverImage: "/occasions/get-well-soon.webp",
+        coverImage: "/occasions/uses/get-well-soon-5.webp",
         title: "Get well cards for kids",
         desc: "Bright covers and GIFs from classmates to brighten a sick day",
       },
       {
         hue: 250,
         headline: "Rest up, Mia",
-        coverImage: "/occasions/uses/get-well-soon-5.webp",
+        coverImage: "/occasions/uses/get-well-soon-6.webp",
         title: "Get well cards for friends",
         desc: "The whole group chat, in one card that actually arrives",
       },

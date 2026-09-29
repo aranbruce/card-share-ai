@@ -55,6 +55,25 @@ describe("occasion pages", () => {
   )
 })
 
+describe("occasion cover art", () => {
+  // scripts/generate-occasion-art.mjs names files by slot, so each slot must use its own.
+  it.each(Object.values(CATEGORY_CONFIGS))(
+    "$slug puts each image in its own slot",
+    (config) => {
+      if (config.coverImage) {
+        expect(config.coverImage).toBe(`/occasions/${config.slug}.webp`)
+      }
+      config.uses.forEach((use, i) => {
+        if (use.coverImage) {
+          expect(use.coverImage).toBe(
+            `/occasions/uses/${config.slug}-${i + 1}.webp`,
+          )
+        }
+      })
+    },
+  )
+})
+
 describe("comparison pages", () => {
   it.each(Object.values(COMPARE_CONFIGS))(
     "$slug cites its sources and has metadata",
