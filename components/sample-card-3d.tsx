@@ -25,9 +25,10 @@ const SWIPE_THRESHOLD_PX = 8
 
 /**
  * Loads the 3D card (and `three`, whose start-up blocks the main thread for a while on
- * phones) only when it's wanted. With a mouse, that's once the card is near the screen and
- * the browser is idle, or on hover. On touch screens it waits for a tap or sideways swipe
- * on the card, then opens it, so phones paint and respond without the 3D work. Until then the same closed cover shows.
+ * phones) once the page has finished loading, the card is near the screen and the browser
+ * is idle, so the page paints and responds first. Hovering, tapping or swiping the card
+ * loads it sooner, and a tap or sideways swipe also opens it. Until then the same closed
+ * cover shows.
  */
 function useDeferredCardBook3D() {
   const ref = useRef<HTMLDivElement>(null)
@@ -57,11 +58,8 @@ function useDeferredCardBook3D() {
       load()
     }
 
-    const hasMouse = window.matchMedia(
-      "(hover: hover) and (pointer: fine)",
-    ).matches
     let observer: IntersectionObserver | undefined
-    if (hasMouse) {
+    const loadWhenNearAndIdle = () => {
       observer = new IntersectionObserver(
         (entries) => {
           if (!entries.some((e) => e.isIntersecting)) return
@@ -75,10 +73,17 @@ function useDeferredCardBook3D() {
         { rootMargin: "200px" },
       )
       observer.observe(el)
-      el.addEventListener("pointerenter", load)
     }
-    // On touch screens a sideways swipe loads and opens the card like a tap (it turns on a
-    // drag once loaded). Vertical swipes still scroll the page and load nothing.
+    if (document.readyState === "complete") loadWhenNearAndIdle()
+    else window.addEventListener("load", loadWhenNearAndIdle, { once: true })
+    // Hovering with a mouse loads it straight away (a touch fires this too, but may be a
+    // scroll, so touches wait for a tap or swipe below).
+    const onPointerEnter = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") load()
+    }
+    el.addEventListener("pointerenter", onPointerEnter)
+    // Before it has loaded, a sideways swipe on a touch screen loads and opens the card like
+    // a tap (it turns on a drag once loaded). Vertical swipes still scroll the page.
     let swipe: { id: number; x: number; y: number } | null = null
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === "mouse") return
@@ -102,12 +107,13 @@ function useDeferredCardBook3D() {
     el.addEventListener("focusin", load)
 
     return () => {
+      window.removeEventListener("load", loadWhenNearAndIdle)
       observer?.disconnect()
       if (idleId !== undefined) {
         if ("cancelIdleCallback" in window) window.cancelIdleCallback(idleId)
         else clearTimeout(idleId)
       }
-      el.removeEventListener("pointerenter", load)
+      el.removeEventListener("pointerenter", onPointerEnter)
       el.removeEventListener("pointerdown", onPointerDown)
       el.removeEventListener("pointermove", onPointerMove)
       el.removeEventListener("pointerup", endSwipe)
