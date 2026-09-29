@@ -26,9 +26,8 @@ const SWIPE_THRESHOLD_PX = 8
 /**
  * Loads the 3D card (and `three`, whose start-up blocks the main thread for a while on
  * phones) only when it's wanted. With a mouse, that's once the card is near the screen and
- * the browser is idle, or on hover. On touch screens it waits for the card to be touched,
- * and opens it after a tap or sideways swipe, so phones paint and respond without the 3D
- * work. Until then the same closed cover shows.
+ * the browser is idle, or on hover. On touch screens it waits for a tap or sideways swipe
+ * on the card, then opens it, so phones paint and respond without the 3D work. Until then the same closed cover shows.
  */
 function useDeferredCardBook3D() {
   const ref = useRef<HTMLDivElement>(null)
@@ -78,14 +77,12 @@ function useDeferredCardBook3D() {
       observer.observe(el)
       el.addEventListener("pointerenter", load)
     }
-    // On touch screens, start loading as soon as the card is touched, and treat a sideways
-    // swipe like a tap (the card turns on a drag once it has loaded). Vertical swipes still
-    // scroll the page.
+    // On touch screens a sideways swipe loads and opens the card like a tap (it turns on a
+    // drag once loaded). Vertical swipes still scroll the page and load nothing.
     let swipe: { id: number; x: number; y: number } | null = null
     const onPointerDown = (e: PointerEvent) => {
       if (e.pointerType === "mouse") return
       swipe = { id: e.pointerId, x: e.clientX, y: e.clientY }
-      load()
     }
     const onPointerMove = (e: PointerEvent) => {
       if (!swipe || swipe.id !== e.pointerId) return
