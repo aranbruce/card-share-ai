@@ -60,7 +60,7 @@ export default function HomePage() {
       {/* ===== OCCASIONS ===== */}
       <section id="occasions" className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
             Browse occasions
           </p>
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl">

@@ -1,7 +1,7 @@
 export function CreatePageIntro() {
   return (
     <header className="mb-10 text-center md:text-left">
-      <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+      <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
         Create a card
       </p>
       <h1 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-balance md:text-4xl">

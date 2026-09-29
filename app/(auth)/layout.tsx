@@ -42,7 +42,7 @@ export default function AuthLayout({
 
         {/* Tagline */}
         <div className="relative">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
             One prompt, any card
           </p>
           <p className="mt-3 max-w-sm text-3xl leading-tight font-semibold tracking-tight text-background">

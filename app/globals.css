@@ -1,6 +1,32 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+ * Arial (or its metric twin Liberation Sans on Linux) sized to Inter Tight's widths, so text wraps the same before and after the web
+ * font swaps in (no layout shift). Ratios measured per weight: body copy (400) and
+ * semibold headings (600, drawn from Arial Bold) need different size adjustments.
+ */
+@font-face {
+  font-family: "Inter Tight Fallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"),
+    local("LiberationSans");
+  font-weight: 100 550;
+  size-adjust: 96.1%;
+  ascent-override: 100.8%;
+  descent-override: 25.1%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Inter Tight Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"),
+    local("LiberationSans-Bold");
+  font-weight: 551 900;
+  size-adjust: 94.1%;
+  ascent-override: 103%;
+  descent-override: 25.6%;
+  line-gap-override: 0%;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -20,6 +46,8 @@
   --accent: oklch(0.958 0.008 83); /* subtle hover state */
   --accent-foreground: oklch(0.142 0.004 49);
   --brand: #ff5a4a;
+  /* The brand color darkened for small text on light backgrounds (4.5:1 contrast). */
+  --brand-strong: #c0392b;
   --brand-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
@@ -59,6 +87,7 @@
   --accent: oklch(0.22 0.003 49);
   --accent-foreground: oklch(0.985 0 0);
   --brand: #ff5a4a;
+  --brand-strong: #ff5a4a;
   --brand-foreground: oklch(1 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
@@ -122,6 +151,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
   --color-brand-foreground: var(--brand-foreground);
 }
 
