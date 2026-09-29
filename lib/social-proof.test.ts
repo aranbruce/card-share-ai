@@ -5,7 +5,11 @@ import {
   signerCountLine,
   SOCIAL_PROOF_MIN_COUNT,
 } from "./social-proof"
-import { testimonialsFor } from "./testimonials"
+import {
+  activeTestimonials,
+  PLACEHOLDER_TESTIMONIALS,
+  testimonialsFor,
+} from "./testimonials"
 
 describe("formatProofCount", () => {
   it("hides counts below the threshold or missing", () => {
@@ -77,6 +81,17 @@ describe("testimonialsFor", () => {
   })
 
   it("renders nothing while the list is empty", () => {
-    expect(testimonialsFor("birthday")).toEqual([])
+    expect(testimonialsFor("birthday", 3, [])).toEqual([])
+  })
+})
+
+describe("activeTestimonials", () => {
+  it("never shows placeholder quotes in production", () => {
+    expect(activeTestimonials("production")).toEqual([])
+  })
+
+  it("shows placeholder quotes in preview and local builds", () => {
+    expect(activeTestimonials("preview")).toBe(PLACEHOLDER_TESTIMONIALS)
+    expect(activeTestimonials(undefined)).toBe(PLACEHOLDER_TESTIMONIALS)
   })
 })

@@ -86,7 +86,7 @@ export function TestimonialsSection({
         <ul className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
           {testimonials.map((t) => (
             <li key={`${t.name}-${t.quote.slice(0, 24)}`}>
-              <figure className="flex h-full flex-col justify-between gap-6 rounded-2xl bg-secondary/50 p-6">
+              <figure className="flex h-full flex-col justify-between gap-6 rounded-2xl border border-border bg-card p-6">
                 <blockquote className="text-base leading-relaxed">
                   &ldquo;{t.quote}&rdquo;
                 </blockquote>
