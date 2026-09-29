@@ -3,7 +3,6 @@ import { Check, MousePointerClick } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
 import { SampleCard3D } from "@/components/sample-card-3d"
-import { countMessages, getCardMessages } from "@/lib/card-messages"
 import { type CategoryConfig, occasionTiles } from "@/lib/category-pages"
 
 function PlusIcon() {
@@ -23,9 +22,6 @@ function PlusIcon() {
 }
 
 export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
-  const messages = getCardMessages(config.slug)
-  const occasionName = config.label.replace(/ cards$/, "").toLowerCase()
-
   return (
     <main>
       {/* ===== HERO ===== */}
@@ -250,27 +246,6 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
           />
         </div>
       </section>
-
-      {/* ===== MESSAGE IDEAS ===== */}
-      {messages ? (
-        <section className="border-t border-border">
-          <div className="mx-auto flex max-w-[1440px] flex-col items-start gap-6 px-6 py-16 md:flex-row md:items-center md:justify-between md:px-15">
-            <div>
-              <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-                Stuck on what to write?
-              </p>
-              <h2 className="mt-3 text-2xl leading-[1.05] font-semibold tracking-[-0.03em] md:text-3xl">
-                {countMessages(messages)} {occasionName} card messages to borrow
-              </h2>
-            </div>
-            <Button asChild variant="outline" size="lg">
-              <Link href={`/browse/${config.slug}/messages`}>
-                See message ideas
-              </Link>
-            </Button>
-          </div>
-        </section>
-      ) : null}
 
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">

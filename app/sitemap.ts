@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next"
 import { getAppUrl } from "@/lib/app-url"
-import { CARD_MESSAGES } from "@/lib/card-messages"
 import { CATEGORY_CONFIGS } from "@/lib/category-pages"
 import { COMPARE_CONFIGS } from "@/lib/compare-pages"
 
@@ -28,19 +27,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(config.lastModified),
   }))
 
-  const messagePages: MetadataRoute.Sitemap = Object.values(CARD_MESSAGES).map(
-    (page) => ({
-      url: `${base}/browse/${page.slug}/messages`,
-      lastModified: new Date(page.lastModified),
-    }),
-  )
-
   // `/create` is left out: it's an interactive app page with little text to index.
   return [
     { url: base, lastModified: MARKETING_LAST_MODIFIED },
     { url: `${base}/browse`, lastModified: MARKETING_LAST_MODIFIED },
     ...categoryPages,
-    ...messagePages,
     { url: `${base}/compare`, lastModified: MARKETING_LAST_MODIFIED },
     ...comparePages,
     { url: `${base}/slack/install`, lastModified: SLACK_LAST_MODIFIED },
