@@ -32,7 +32,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: base, lastModified: MARKETING_LAST_MODIFIED },
     { url: `${base}/browse`, lastModified: MARKETING_LAST_MODIFIED },
     ...categoryPages,
-    { url: `${base}/compare`, lastModified: MARKETING_LAST_MODIFIED },
     ...comparePages,
     { url: `${base}/slack/install`, lastModified: SLACK_LAST_MODIFIED },
     { url: `${base}/privacy`, lastModified: LEGAL_LAST_MODIFIED },
