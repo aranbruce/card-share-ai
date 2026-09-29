@@ -20,12 +20,15 @@ type Loaded = ComponentType<CardBook3DProps>
 /** How long the freshly loaded card rests closed before a tap that loaded it opens it. */
 const OPEN_AFTER_LOAD_MS = 350
 
+/** Sideways travel that makes a touch on the not-yet-loaded card a swipe to open it. */
+const SWIPE_THRESHOLD_PX = 8
+
 /**
  * Loads the 3D card (and `three`, whose start-up blocks the main thread for a while on
  * phones) only when it's wanted. With a mouse, that's once the card is near the screen and
- * the browser is idle, or on hover. On touch screens it waits for a tap on the card, then
- * opens it, so phones paint and respond without the 3D work. Until then the same closed
- * cover shows.
+ * the browser is idle, or on hover. On touch screens it waits for the card to be touched,
+ * and opens it after a tap or sideways swipe, so phones paint and respond without the 3D
+ * work. Until then the same closed cover shows.
  */
 function useDeferredCardBook3D() {
   const ref = useRef<HTMLDivElement>(null)
@@ -75,6 +78,29 @@ function useDeferredCardBook3D() {
       observer.observe(el)
       el.addEventListener("pointerenter", load)
     }
+    // On touch screens, start loading as soon as the card is touched, and treat a sideways
+    // swipe like a tap (the card turns on a drag once it has loaded). Vertical swipes still
+    // scroll the page.
+    let swipe: { id: number; x: number; y: number } | null = null
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") return
+      swipe = { id: e.pointerId, x: e.clientX, y: e.clientY }
+      load()
+    }
+    const onPointerMove = (e: PointerEvent) => {
+      if (!swipe || swipe.id !== e.pointerId) return
+      const dx = Math.abs(e.clientX - swipe.x)
+      if (dx < SWIPE_THRESHOLD_PX || dx < Math.abs(e.clientY - swipe.y)) return
+      swipe = null
+      loadAndOpen()
+    }
+    const endSwipe = () => {
+      swipe = null
+    }
+    el.addEventListener("pointerdown", onPointerDown)
+    el.addEventListener("pointermove", onPointerMove)
+    el.addEventListener("pointerup", endSwipe)
+    el.addEventListener("pointercancel", endSwipe)
     el.addEventListener("click", loadAndOpen)
     el.addEventListener("focusin", load)
 
@@ -85,6 +111,10 @@ function useDeferredCardBook3D() {
         else clearTimeout(idleId)
       }
       el.removeEventListener("pointerenter", load)
+      el.removeEventListener("pointerdown", onPointerDown)
+      el.removeEventListener("pointermove", onPointerMove)
+      el.removeEventListener("pointerup", endSwipe)
+      el.removeEventListener("pointercancel", endSwipe)
       el.removeEventListener("click", loadAndOpen)
       el.removeEventListener("focusin", load)
     }
@@ -171,7 +201,8 @@ export function SampleCard3D({
 
   return (
     <MessageFontVariables className={className ?? "w-full"}>
-      <div ref={ref}>
+      {/* Vertical pans scroll; sideways ones reach the swipe handler, as on the 3D card. */}
+      <div ref={ref} className="touch-pan-y">
         {Loaded ? (
           <Loaded {...cardProps} navigateToPage={navigateToPage} />
         ) : (
