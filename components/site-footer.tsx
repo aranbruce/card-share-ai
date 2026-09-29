@@ -1,15 +1,12 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
+import { getBrowseCategories } from "@/lib/category-pages"
+import { COMPARE_CONFIGS } from "@/lib/compare-pages"
 
-const OCCASIONS = [
-  { label: "Birthday cards", href: "/browse/birthday" },
-  { label: "Thank you cards", href: "/browse/thank-you" },
-  { label: "Work anniversary cards", href: "/browse/work-anniversary" },
-  { label: "Farewell cards", href: "/browse/farewell" },
-  { label: "Wedding cards", href: "/browse/wedding" },
-  { label: "Promotion cards", href: "/browse/promotion" },
-  { label: "Kudos cards", href: "/browse/kudos" },
-]
+const OCCASIONS = getBrowseCategories().map((cat) => ({
+  label: cat.label,
+  href: `/browse/${cat.slug}`,
+}))
 
 export function SiteFooter() {
   return (
@@ -74,6 +71,16 @@ export function SiteFooter() {
                   Slack app
                 </Link>
               </li>
+              {Object.values(COMPARE_CONFIGS).map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/compare/${c.slug}`}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    vs {c.competitor}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link
                   href="/privacy"

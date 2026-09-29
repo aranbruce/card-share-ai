@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Inter_Tight, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SiteJsonLd } from "@/components/json-ld"
+import { isIndexableDeployment } from "@/lib/robots-rules"
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE_PATH,
@@ -29,6 +30,8 @@ export const metadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
   applicationName: SITE_NAME,
+  // Preview deployments duplicate production, so keep them out of search.
+  robots: isIndexableDeployment() ? undefined : { index: false, follow: false },
   openGraph: {
     type: "website",
     siteName: SITE_NAME,

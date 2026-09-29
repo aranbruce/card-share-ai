@@ -3,7 +3,7 @@ import { Check, MousePointerClick } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
 import { SampleCard3D } from "@/components/sample-card-3d"
-import type { CategoryConfig } from "@/lib/category-pages"
+import { type CategoryConfig, occasionTiles } from "@/lib/category-pages"
 
 function PlusIcon() {
   return (
@@ -97,7 +97,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               </div>
               <SampleCard3D
                 id={config.slug}
-                imageUrl={config.coverImage}
+                imageUrl={config.coverImage ?? ""}
                 headline={config.cardTitle}
                 recipientName={config.sampleRecipient}
                 message={config.sampleMessage}
@@ -275,44 +275,19 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
       </section>
 
       {/* ===== RELATED CATEGORIES ===== */}
-      {/* TODO: Add related categories */}
-      {/* <section className="border-t border-border">
+      <section className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             More occasions
           </p>
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
-            Not a {config.label.toLowerCase().replace(" cards", "")}? We&apos;ve
-            got the rest
+            The same card for every moment
           </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            The same one-link, everyone-signs flow works for every occasion
-            worth marking
-          </p>
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {otherCategories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/browse/${cat.slug}`}
-                className="flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div
-                  className="aspect-video w-full"
-                  style={{ background: cat.frontGradient }}
-                />
-                <div className="p-4">
-                  <h3 className="text-base font-medium tracking-[-0.02em]">
-                    {cat.label}
-                  </h3>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                    {cat.shortDesc}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <CardTileRow
+            tiles={occasionTiles().filter((tile) => tile.key !== config.slug)}
+          />
         </div>
-      </section> */}
+      </section>
 
       {/* ===== CTA BAND ===== */}
       <section className="border-t border-border bg-secondary/50">

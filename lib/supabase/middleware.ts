@@ -47,5 +47,17 @@ export async function updateSession(request: NextRequest) {
     return redirectResponse
   }
 
+  // Signed-in visitors skip the marketing homepage. Redirecting here (not in the page)
+  // lets the homepage be prerendered and served from the CDN.
+  if (user && pathname === "/") {
+    const redirectResponse = NextResponse.redirect(
+      new URL("/dashboard", request.url),
+    )
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie)
+    })
+    return redirectResponse
+  }
+
   return supabaseResponse
 }

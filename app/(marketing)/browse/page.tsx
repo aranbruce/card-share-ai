@@ -3,8 +3,10 @@ import Link from "next/link"
 import { CardTileRow } from "@/components/card-tile-row"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
+import { JsonLd } from "@/components/json-ld"
 import { getBrowseCategories, occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
+import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Online Group Cards for Every Occasion",
@@ -162,6 +164,13 @@ function HeroFan() {
 export default function CardsPage() {
   return (
     <main>
+      <JsonLd data={faqPageJsonLd(FAQS)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Browse occasions", path: "/browse" },
+        ])}
+      />
       {/* ===== HERO ===== */}
       <section className="py-20">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
