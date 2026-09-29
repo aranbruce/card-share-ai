@@ -1,4 +1,5 @@
 import { getAppUrl } from "@/lib/app-url"
+import { CARD_MESSAGES } from "@/lib/card-messages"
 import { getBrowseCategories } from "@/lib/category-pages"
 import { COMPARE_CONFIGS } from "@/lib/compare-pages"
 import { DEFAULT_DESCRIPTION, SITE_NAME } from "@/lib/site-metadata"
@@ -9,6 +10,10 @@ export function buildLlmsTxt(): string {
   const occasions = getBrowseCategories().map(
     (cat) =>
       `- [${cat.label}](${base}/browse/${cat.slug}): ${cat.metaDescription}`,
+  )
+  const messageIdeas = Object.values(CARD_MESSAGES).map(
+    (page) =>
+      `- [${page.h1}](${base}/browse/${page.slug}/messages): ${page.metaDescription}`,
   )
   const comparisons = Object.values(COMPARE_CONFIGS).map(
     (c) => `- [${c.h1}](${base}/compare/${c.slug}): ${c.metaDescription}`,
@@ -31,6 +36,10 @@ export function buildLlmsTxt(): string {
     "## Occasions",
     "",
     ...occasions,
+    "",
+    "## What to write: card message ideas",
+    "",
+    ...messageIdeas,
     "",
     "## Comparisons",
     "",
