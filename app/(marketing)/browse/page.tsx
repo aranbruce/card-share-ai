@@ -29,7 +29,7 @@ const STEPS = [
   {
     n: "03",
     title: "Send it when the card is full",
-    desc: "Deliver by email or shareable link, on the day, or scheduled in advance. It opens beautifully in the browser, every note included",
+    desc: "Deliver by email or shareable link, whenever you're ready. It opens beautifully in the browser, every note included",
   },
 ]
 
@@ -40,7 +40,7 @@ const FAQS = [
   },
   {
     q: "How does everyone sign the same card?",
-    a: "You share one link with your group. Each person opens it on their own phone or laptop, adds their note, picks an ink colour, and can attach a photo or GIF. The card stays private until you choose to send it.",
+    a: "You share one link with your group. Each person opens it on their own phone or laptop, adds their note, picks an ink colour, and can attach a GIF. The card stays private until you choose to send it.",
   },
   {
     q: "Does everyone who signs need an account?",
@@ -48,7 +48,7 @@ const FAQS = [
   },
   {
     q: "Is it free to send a group card?",
-    a: "Yes. You can design a card, collect signatures, and send it for free. Paid plans add scheduled delivery, team features, and a saved archive of every card.",
+    a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
   },
   {
     q: "How is this different from a paper card?",

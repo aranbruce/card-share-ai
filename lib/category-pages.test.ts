@@ -43,6 +43,16 @@ describe("occasion pages", () => {
       }
     },
   )
+
+  it.each(Object.values(CATEGORY_CONFIGS))(
+    "$slug doesn't promise features the app doesn't have",
+    (config) => {
+      // No scheduled delivery, paid plans or signer photos exist yet; update this test
+      // alongside the copy when they ship.
+      const copy = JSON.stringify(config).toLowerCase()
+      expect(copy).not.toMatch(/schedul|paid plan|photo or gif|gif or photo/)
+    },
+  )
 })
 
 describe("comparison pages", () => {

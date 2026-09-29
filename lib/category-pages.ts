@@ -188,12 +188,12 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "02",
         title: "Share one link, everyone signs",
-        desc: "Drop the link in your group chat. Each person adds their note from their own phone, picks an ink colour, and can add a photo or GIF. It stays private until you send",
+        desc: "Drop the link in your group chat. Each person adds their note from their own phone, picks an ink colour, and can add a GIF. It stays private until you send",
       },
       {
         n: "03",
         title: "Send it on the big day",
-        desc: "When the card is full, schedule it to arrive on the morning of the birthday by email or a shareable link. It opens beautifully in the browser with every signature",
+        desc: "When the card is full, send it on the morning of the birthday by email or a shareable link. It opens beautifully in the browser with every signature",
       },
     ],
 
@@ -226,7 +226,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
         headline: "Happy Birthday, Zoe",
         coverImage: "/occasions/uses/birthday-4.webp",
         title: "Birthday cards for friends",
-        desc: "Inside jokes, group photos, the works. Made for the whole group chat to pile on",
+        desc: "Inside jokes, GIFs, the works. Made for the whole group chat to pile on",
       },
       {
         hue: 250,
@@ -249,33 +249,33 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     faqs: [
       {
         q: "How do group birthday cards work?",
-        a: "Start a card, share one link, and everyone adds their note from their own phone or laptop. No one sees the card until you decide it's full and send it. It arrives as a single, beautifully laid-out card on the big day.",
+        a: "Start a card, share one link, and everyone adds their note from their own phone or laptop. No one sees the card until you decide it's full and send it. It arrives as a single, beautifully laid-out card when you send it.",
       },
       {
         q: "Can everyone sign the same birthday card online?",
-        a: "Yes. There's no limit on signers. Each person places their message anywhere on the page, picks an ink colour, and can add a photo or GIF. The card stays completely private until you send it.",
+        a: "Yes. There's no limit on signers. Each person places their message anywhere on the page, picks an ink colour, and can add a GIF. The card stays completely private until you send it.",
       },
       {
         q: "Is CardShare.ai free?",
-        a: "Yes, you can design a card, collect signatures, and send it for free. Paid plans add team features, scheduled sends, and a saved archive of every card you've organised.",
+        a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
       },
       {
         q: "How do I send a birthday card by email or text?",
         a: "When the card's ready, enter the recipient's email address or copy a shareable link to drop into a text. They open it right in the browser. Nothing to download or install.",
       },
       {
-        q: "Can I schedule the card to arrive on their birthday?",
-        a: "Yes. Pick the date and time and CardShare.ai delivers it then, so the card lands right on the morning of the birthday, even if you set it up weeks ahead.",
+        q: "Can I set the card up before their birthday?",
+        a: "Yes. Start it weeks ahead and leave the link open while people sign. Nothing is sent until you decide it's ready, so you can send it on the morning of the birthday.",
       },
       {
-        q: "Can I add photos, GIFs, or a group message?",
-        a: "Every signer can add a photo or GIF alongside their note, and the AI can draft a shared opening message that sets the tone for the whole card.",
+        q: "Can I add GIFs or a group message?",
+        a: "Every signer can add a GIF alongside their note, and the AI can draft a shared opening message that sets the tone for the whole card.",
       },
     ],
 
     ctaBandTitle: "Whose birthday is coming up?",
     ctaBandSub:
-      "Set up the card in two minutes, share the link, and let everyone sign. We'll handle the cover, the layout, and the reminder",
+      "Set up the card in two minutes, share the link, and let everyone sign. We'll handle the cover and the layout",
   },
 
   "thank-you": {
@@ -376,7 +376,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "02",
         title: "Share one link, everyone adds their note",
-        desc: "Send the link to your team, the group chat, or the whole org. Each person signs from their own device, adds their message, and can include a photo or GIF",
+        desc: "Send the link to your team, the group chat, or the whole org. Each person signs from their own device, adds their message, and can include a GIF",
       },
       {
         n: "03",
@@ -441,7 +441,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can the whole team sign the same thank you card?",
-        a: "Yes, there's no limit on signers. Each person adds their note, picks their ink colour, and can attach a photo or GIF. It all comes together in one card.",
+        a: "Yes, there's no limit on signers. Each person adds their note, picks their ink colour, and can attach a GIF. It all comes together in one card.",
       },
       {
         q: "What's the right tone for a professional thank you card?",
@@ -457,7 +457,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Is it free to send a group thank you card?",
-        a: "Yes. The free plan covers design, signatures, and sending. Paid plans add scheduled delivery, team features, and a card archive.",
+        a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
       },
     ],
 
@@ -560,12 +560,12 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "02",
         title: "The whole team signs",
-        desc: "Share one link with everyone: remote, in-office, across time zones. Each person adds their message, picks an ink colour, and can add a GIF or photo",
+        desc: "Share one link with everyone: remote, in-office, across time zones. Each person adds their message, picks an ink colour, and can add a GIF",
       },
       {
         n: "03",
         title: "Deliver it on the day",
-        desc: "Schedule the card to land on the exact anniversary date, by email or shareable link. It arrives as one beautifully composed card, every note included",
+        desc: "Send it on the anniversary date by email or shareable link. It arrives as one beautifully composed card, every note included",
       },
     ],
 
@@ -621,11 +621,11 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     faqs: [
       {
         q: "How do group work anniversary cards work?",
-        a: "Start a card, share one link with the team, and everyone adds their note from their own device. The card stays private until you send it. It arrives as one beautifully composed card on the anniversary day.",
+        a: "Start a card, share one link with the team, and everyone adds their note from their own device. The card stays private until you send it. It arrives as one beautifully composed card when you send it.",
       },
       {
-        q: "Can I set it up in advance and schedule the delivery?",
-        a: "Yes. Create the card, collect signatures at your own pace, and schedule it to land on the exact anniversary date. CardShare.ai delivers it then. No manual reminder needed.",
+        q: "Can I set it up in advance?",
+        a: "Yes. Create the card and collect signatures at your own pace. Nothing is sent until you decide it's ready, so you can send it on the exact anniversary date.",
       },
       {
         q: "What should I write in a work anniversary card?",
@@ -641,7 +641,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Is it free to send a group work anniversary card?",
-        a: "Yes. Design, collect signatures, and send for free. Paid plans add scheduled delivery, team features, and an archive of every card you've organised.",
+        a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
       },
     ],
 
@@ -744,7 +744,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "02",
         title: "Drop the link in the group chat",
-        desc: "Everyone signs from their own phone or laptop. No chasing, no circulating paper. Each person adds their note, picks an ink colour, and can add a GIF or photo",
+        desc: "Everyone signs from their own phone or laptop. No chasing, no circulating paper. Each person adds their note, picks an ink colour, and can add a GIF",
       },
       {
         n: "03",
@@ -805,7 +805,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     faqs: [
       {
         q: "How do group farewell cards work?",
-        a: "Start a card, share one link, and everyone adds their note from their own device. No one sees it until you decide it's ready to send. It arrives as one card on the day.",
+        a: "Start a card, share one link, and everyone adds their note from their own device. No one sees it until you decide it's ready to send. It arrives as one card when you send it.",
       },
       {
         q: "Can I keep the card a surprise?",
@@ -816,16 +816,16 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
         a: "The AI drafts the opening message: warm, specific, appropriate to the situation. You can regenerate it or edit it until it sounds right for the person and the moment.",
       },
       {
-        q: "Can I include a photo in the farewell card?",
-        a: "Yes. Each signer can add a photo or GIF alongside their note. You can also set a photo as the card cover.",
+        q: "Can I use a photo for the farewell card?",
+        a: "Yes. Upload a photo when you create the card and the AI designs the cover from it. Each signer can also add a GIF alongside their note.",
       },
       {
         q: "How many people can sign a leaving card?",
         a: "No limit. Whether it's a team of five or a whole building, everyone gets the same link and adds their own note.",
       },
       {
-        q: "Can I schedule it to arrive at a specific time?",
-        a: "Yes. Set the delivery time to land right when their last day ends, or whenever feels right. CardShare.ai handles the delivery.",
+        q: "Can I choose when it's sent?",
+        a: "Yes. Nothing is sent until you decide it's ready, so you can send it on their last day, at their leaving do, or whenever feels right.",
       },
     ],
 
@@ -996,8 +996,8 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
         a: "There's no limit. Whether your guest list is ten people or two hundred, everyone gets the same link and adds their own personal note.",
       },
       {
-        q: "Can guests add photos or personal messages?",
-        a: "Yes. Every signer can add a photo or GIF alongside their message. The AI can also draft a shared opening note that sets the tone for the whole card.",
+        q: "Can guests add GIFs or personal messages?",
+        a: "Yes. Every signer writes their own message and can add a GIF alongside it. The AI can also draft a shared opening note that sets the tone for the whole card.",
       },
       {
         q: "Can I keep it a surprise?",
@@ -1193,7 +1193,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Is it free?",
-        a: "Yes. Create the card, collect signatures, and send it for free. Paid plans add scheduled delivery and team features.",
+        a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
       },
     ],
 
@@ -1365,7 +1365,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can signers add specific, personal notes?",
-        a: "Yes. Each person writes their own note, picks their own ink colour, and can add a photo or GIF. The AI can also draft an opening message that names what was achieved.",
+        a: "Yes. Each person writes their own note, picks their own ink colour, and can add a GIF. The AI can also draft an opening message that names what was achieved.",
       },
       {
         q: "How many people can sign?",
@@ -1377,7 +1377,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Is it free to send a kudos card?",
-        a: "Yes. Design the card, collect notes, and send it for free. Paid plans add scheduled delivery, team features, and an archive.",
+        a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
       },
     ],
 
