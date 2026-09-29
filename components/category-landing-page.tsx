@@ -3,7 +3,10 @@ import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
 import { OccasionCardStage } from "@/components/occasion-card-stage"
+import { StatsLine, TestimonialsSection } from "@/components/social-proof"
 import { type CategoryConfig, occasionTiles } from "@/lib/category-pages"
+import type { StatItem } from "@/lib/social-proof"
+import { testimonialsFor } from "@/lib/testimonials"
 
 function PlusIcon() {
   return (
@@ -21,7 +24,13 @@ function PlusIcon() {
   )
 }
 
-export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
+export function CategoryLandingPage({
+  config,
+  stats,
+}: {
+  config: CategoryConfig
+  stats: StatItem[]
+}) {
   return (
     <main>
       {/* ===== HERO ===== */}
@@ -63,6 +72,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 </li>
               ))}
             </ul>
+            <StatsLine items={stats} className="mt-4" />
           </div>
 
           <OccasionCardStage config={config} />
@@ -167,6 +177,8 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
         </div>
       </section>
 
+      <TestimonialsSection testimonials={testimonialsFor(config.slug)} />
+
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
@@ -228,6 +240,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               </Link>
             </Button>
           </div>
+          <StatsLine items={stats} className="mt-6 justify-center" />
         </div>
       </section>
     </main>

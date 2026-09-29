@@ -9,12 +9,15 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
+import { StatsLine } from "@/components/social-proof"
+import type { StatItem } from "@/lib/social-proof"
 
 interface AuthGateModalProps {
   isOpen: boolean
   onClose: () => void
   onLogin: () => void
   onSignUp: () => void
+  stats?: StatItem[]
 }
 
 export function AuthGateModal({
@@ -22,6 +25,7 @@ export function AuthGateModal({
   onClose,
   onLogin,
   onSignUp,
+  stats = [],
 }: AuthGateModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -58,6 +62,7 @@ export function AuthGateModal({
         <p className="mt-2 text-center text-xs text-muted-foreground">
           Free account • No credit card required
         </p>
+        <StatsLine items={stats} className="justify-center text-xs" />
       </DialogContent>
     </Dialog>
   )

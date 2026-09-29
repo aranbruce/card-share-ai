@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
 import { HomeDemoPanel } from "@/components/home-demo-panel"
 import { HomeMarketingSections } from "@/components/home-marketing-sections"
+import { LogoStrip, StatsLine } from "@/components/social-proof"
 import { getAppUrl } from "@/lib/app-url"
 import { occasionTiles } from "@/lib/category-pages"
+import { getSiteStats } from "@/lib/site-stats"
 import { buildPageMetadata, DEFAULT_DESCRIPTION } from "@/lib/site-metadata"
+import { buildStatItems } from "@/lib/social-proof"
+import { CUSTOMER_LOGOS } from "@/lib/testimonials"
 
 export const metadata: Metadata = buildPageMetadata({
   title: "AI Group Greeting Cards for Teams & Slack",
@@ -15,8 +19,12 @@ export const metadata: Metadata = buildPageMetadata({
 })
 
 // Signed-in visitors are sent to /dashboard by `proxy.ts`, so this page can be static.
-export default function HomePage() {
+// It regenerates hourly so the usage stats stay current.
+export const revalidate = 3600
+
+export default async function HomePage() {
   const appHostname = getAppUrl().replace(/^https?:\/\//, "")
+  const stats = buildStatItems(await getSiteStats())
 
   return (
     <>
@@ -49,11 +57,14 @@ export default function HomePage() {
                 <Link href="/login">Sign in</Link>
               </Button>
             </div>
+            <StatsLine items={stats} className="mt-6 justify-center" />
           </div>
 
           <div className="mx-auto mt-16 max-w-280">
             <HomeDemoPanel />
           </div>
+
+          <LogoStrip logos={CUSTOMER_LOGOS} className="mt-16" />
         </div>
       </section>
 
@@ -70,7 +81,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <HomeMarketingSections appHostname={appHostname} />
+      <HomeMarketingSections appHostname={appHostname} stats={stats} />
     </>
   )
 }

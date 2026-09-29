@@ -2,6 +2,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { SlackConversationMockup } from "@/components/slack-conversation-mockup"
 import { FaqSection } from "@/components/faq-section"
+import { StatsLine, TestimonialsSection } from "@/components/social-proof"
+import type { StatItem } from "@/lib/social-proof"
+import { testimonialsFor } from "@/lib/testimonials"
 
 const HOME_FAQS = [
   {
@@ -58,8 +61,10 @@ const FEATURES = [
 
 export function HomeMarketingSections({
   appHostname,
+  stats,
 }: {
   appHostname: string
+  stats: StatItem[]
 }) {
   return (
     <>
@@ -88,6 +93,8 @@ export function HomeMarketingSections({
           </div>
         </div>
       </section>
+
+      <TestimonialsSection testimonials={testimonialsFor(undefined)} />
 
       <section className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
@@ -181,6 +188,7 @@ export function HomeMarketingSections({
               <Link href="/sign-up">Create an account</Link>
             </Button>
           </div>
+          <StatsLine items={stats} className="mt-6 justify-center" />
         </div>
       </section>
     </>

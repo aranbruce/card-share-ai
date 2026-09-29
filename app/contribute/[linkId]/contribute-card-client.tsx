@@ -29,6 +29,7 @@ import {
 import { createContributionSaveGenerationTracker } from "@/lib/contribution-save-generation"
 import posthog from "posthog-js"
 import { posthogAiHeaders } from "@/lib/posthog-client"
+import { signerCountLine } from "@/lib/social-proof"
 
 function readContributeTokensFromStorage(
   linkId: string,
@@ -741,6 +742,8 @@ function ContributeCardPageInner({
     )
   }
 
+  const signerCount = contributions.filter((c) => !c.is_creator).length
+
   const instructionLine = card.sent_at
     ? "The card may already be with the recipient. You can still edit your note from this device"
     : canPlaceNewGuestMessage
@@ -831,6 +834,9 @@ function ContributeCardPageInner({
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {instructionLine}
+              </p>
+              <p className="mt-2 text-sm font-medium text-brand">
+                {signerCountLine(signerCount)}
               </p>
             </div>
 

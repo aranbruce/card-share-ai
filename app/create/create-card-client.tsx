@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { CardTypeSelector } from "@/components/card-type-selector"
 import { CardDetailsForm } from "@/components/card-details-form"
 import { AuthGateModal } from "@/components/auth-gate-modal"
+import { StatsLine } from "@/components/social-proof"
 import { Card3D } from "@/components/card-3d"
 import { CardBook3D } from "@/components/card-book-3d"
 import { CardLoading3D } from "@/components/card-loading-3d"
@@ -35,6 +36,7 @@ import {
   regenerateCardImage,
 } from "@/lib/regenerate-card-client"
 import posthog from "posthog-js"
+import type { StatItem } from "@/lib/social-proof"
 
 const TYPE_HUE: Record<string, number> = {
   birthday: 18,
@@ -53,7 +55,7 @@ interface CardData {
 
 type Step = "select-type" | "details"
 
-export function CreateCardPageClient() {
+export function CreateCardPageClient({ stats }: { stats: StatItem[] }) {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
   const [step, setStep] = useState<Step>("select-type")
@@ -387,6 +389,7 @@ export function CreateCardPageClient() {
               </Link>
             </Button>
             <CardTypeSelector onSelect={handleCardTypeSelect} />
+            <StatsLine items={stats} className="justify-center pt-4 pb-10" />
           </div>
         </div>
       )}
@@ -671,6 +674,7 @@ export function CreateCardPageClient() {
         onClose={() => setShowAuthModal(false)}
         onLogin={() => handleAuthRedirect("login")}
         onSignUp={() => handleAuthRedirect("signup")}
+        stats={stats}
       />
     </div>
   )
