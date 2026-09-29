@@ -6,7 +6,7 @@ export type CardTile = {
   href: string
   /** CSS background of the tile behind the card. */
   background: string
-  coverImage: string
+  coverImage: string | null
   /** Hue of the card's plain cover if its image fails. */
   coverHue: number
   headline: string

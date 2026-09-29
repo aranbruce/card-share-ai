@@ -3,8 +3,10 @@ import Link from "next/link"
 import { CardTileRow } from "@/components/card-tile-row"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
+import { JsonLd } from "@/components/json-ld"
 import { getBrowseCategories, occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
+import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Online Group Cards for Every Occasion",
@@ -27,7 +29,7 @@ const STEPS = [
   {
     n: "03",
     title: "Send it when the card is full",
-    desc: "Deliver by email or shareable link, on the day, or scheduled in advance. It opens beautifully in the browser, every note included",
+    desc: "Deliver by email or shareable link, whenever you're ready. It opens beautifully in the browser, every note included",
   },
 ]
 
@@ -38,7 +40,7 @@ const FAQS = [
   },
   {
     q: "How does everyone sign the same card?",
-    a: "You share one link with your group. Each person opens it on their own phone or laptop, adds their note, picks an ink colour, and can attach a photo or GIF. The card stays private until you choose to send it.",
+    a: "You share one link with your group. Each person opens it on their own phone or laptop, adds their note, picks an ink color, and can attach a GIF. The card stays private until you choose to send it.",
   },
   {
     q: "Does everyone who signs need an account?",
@@ -46,7 +48,7 @@ const FAQS = [
   },
   {
     q: "Is it free to send a group card?",
-    a: "Yes. You can design a card, collect signatures, and send it for free. Paid plans add scheduled delivery, team features, and a saved archive of every card.",
+    a: "Yes. You can design a card, collect signatures, and send it for free, and nobody who signs needs an account.",
   },
   {
     q: "How is this different from a paper card?",
@@ -162,6 +164,13 @@ function HeroFan() {
 export default function CardsPage() {
   return (
     <main>
+      <JsonLd data={faqPageJsonLd(FAQS)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Browse occasions", path: "/browse" },
+        ])}
+      />
       {/* ===== HERO ===== */}
       <section className="py-20">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
@@ -250,7 +259,7 @@ export default function CardsPage() {
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
             {STEPS.map((step) => (
               <div key={step.n}>
-                <div className="font-mono text-sm text-muted-foreground/60">
+                <div className="font-mono text-sm text-muted-foreground/90">
                   {step.n}
                 </div>
                 <h3 className="mt-2 text-lg font-semibold tracking-[-0.015em]">

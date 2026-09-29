@@ -79,7 +79,10 @@ export function PublicCardView({
 
           <div className="mt-12 text-center">
             <p className="text-xs text-muted-foreground">
-              Created with CardShare.ai
+              Created with{" "}
+              <Link href="/" className="underline-offset-2 hover:underline">
+                CardShare.ai
+              </Link>
             </p>
           </div>
         </div>

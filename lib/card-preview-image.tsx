@@ -19,6 +19,8 @@ export type CardPreviewImageInput = {
   headline: string | null
   /** The cover as a data URL the renderer can draw, or null for the fallback gradient. */
   cover: string | null
+  /** Text beside the card, in place of the card-link copy (e.g. for an occasion page). */
+  copy?: { title: string; subtitle: string }
 }
 
 /** The cover drawn when a card has no image, and its hue (OKLCH, midway between its stops)
@@ -227,11 +229,13 @@ export async function renderCardPreviewImage(
     pastelHueFor(input.id, input.cover ? null : FALLBACK_COVER_HUE),
   )
   const recipient = clip(input.recipientName ?? "", 40)
-  const { title, subtitle } = cardPreviewCopy(
-    input.variant,
-    recipient || null,
-    clip(input.senderName ?? "", 40) || null,
-  )
+  const { title, subtitle } =
+    input.copy ??
+    cardPreviewCopy(
+      input.variant,
+      recipient || null,
+      clip(input.senderName ?? "", 40) || null,
+    )
   const shownTitle = clip(title, 56)
   const card = await renderCard3D(input, recipient, fonts)
   // Right-align the card itself (not its shadow) in its area, centred vertically.

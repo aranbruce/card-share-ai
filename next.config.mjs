@@ -8,6 +8,10 @@ const nextConfig = {
   },
   // PostHog proxy is handled in proxy.ts (Host header required for /static/* scripts).
   skipTrailingSlashRedirect: true,
+  // Occasion preview images are re-rendered on the server (weekly) from the cover art.
+  outputFileTracingIncludes: {
+    "/og/occasion/[slug]": ["./public/occasions/*.webp"],
+  },
   // Belt-and-braces with robots.txt: if a card URL is linked publicly, Google
   // can still discover it — noindex drops it instead of indexing a bare URL.
   async headers() {
