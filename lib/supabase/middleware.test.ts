@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { updateSession } from "./middleware"
 
 const getUser = vi.fn()
 vi.mock("@supabase/ssr", () => ({
   createServerClient: () => ({ auth: { getUser } }),
 }))
-
-const { updateSession } = await import("./middleware")
 
 function request(path: string) {
   return new NextRequest(new URL(path, "https://www.cardshare.ai"))
