@@ -67,7 +67,7 @@ export default function SlackInstallPage() {
             Add CardShare.ai to Slack
           </h1>
           <p className="max-w-lg text-muted-foreground">
-            Create personalised AI greeting cards for birthdays, farewells and
+            Create personalized AI greeting cards for birthdays, farewells and
             thank-yous without leaving Slack, then let the whole team sign them
           </p>
         </div>

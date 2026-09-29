@@ -70,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-US">
       <body
         className={`${interTight.variable} ${jetBrainsMono.variable} font-sans antialiased`}
         style={{ fontFamily: "var(--font-inter-tight), system-ui, sans-serif" }}

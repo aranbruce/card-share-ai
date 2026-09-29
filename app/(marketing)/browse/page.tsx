@@ -40,7 +40,7 @@ const FAQS = [
   },
   {
     q: "How does everyone sign the same card?",
-    a: "You share one link with your group. Each person opens it on their own phone or laptop, adds their note, picks an ink colour, and can attach a GIF. The card stays private until you choose to send it.",
+    a: "You share one link with your group. Each person opens it on their own phone or laptop, adds their note, picks an ink color, and can attach a GIF. The card stays private until you choose to send it.",
   },
   {
     q: "Does everyone who signs need an account?",

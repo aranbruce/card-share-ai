@@ -188,7 +188,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "02",
         title: "Share one link, everyone signs",
-        desc: "Drop the link in your group chat. Each person adds their note from their own phone, picks an ink colour, and can add a GIF. It stays private until you send",
+        desc: "Drop the link in your group chat. Each person adds their note from their own phone, picks an ink color, and can add a GIF. It stays private until you send",
       },
       {
         n: "03",
@@ -230,7 +230,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         hue: 250,
-        headline: "Happy Birthday, Mum",
+        headline: "Happy Birthday, Mom",
         coverImage: "/occasions/uses/birthday-5.webp",
         title: "Birthday cards for family",
         desc: "For Mom, Dad, a sibling, or the group of cousins. Warm, personal, kept for years",
@@ -253,7 +253,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can everyone sign the same birthday card online?",
-        a: "Yes. There's no limit on signers. Each person places their message anywhere on the page, picks an ink colour, and can add a GIF. The card stays completely private until you send it.",
+        a: "Yes. There's no limit on signers. Each person places their message anywhere on the page, picks an ink color, and can add a GIF. The card stays completely private until you send it.",
       },
       {
         q: "Is CardShare.ai free?",
@@ -282,7 +282,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     slug: "thank-you",
     lastModified: "2026-09-29",
     label: "Thank you cards",
-    shortDesc: "For the team, the mentor, the neighbour who watched the dog",
+    shortDesc: "For the team, the mentor, the neighbor who watched the dog",
 
     metaTitle: "Group Thank You Cards for Coworkers",
     metaDescription:
@@ -411,7 +411,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         hue: 250,
-        headline: "Thank you, Ms Lee",
+        headline: "Thank you, Ms. Lee",
         coverImage: "/occasions/uses/thank-you-4.webp",
         title: "Thank you cards for teachers",
         desc: "From the whole class, the whole parent group, or just the students who meant it most",
@@ -421,7 +421,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
         headline: "Thank you, Jo",
         coverImage: "/occasions/uses/thank-you-5.webp",
         title: "Thank you cards for volunteers",
-        desc: "Recognise the people who gave their time with something more than a quick mention",
+        desc: "Recognize the people who gave their time with something more than a quick mention",
       },
       {
         hue: 18,
@@ -441,7 +441,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can the whole team sign the same thank you card?",
-        a: "Yes, there's no limit on signers. Each person adds their note, picks their ink colour, and can attach a GIF. It all comes together in one card.",
+        a: "Yes, there's no limit on signers. Each person adds their note, picks their ink color, and can attach a GIF. It all comes together in one card.",
       },
       {
         q: "What's the right tone for a professional thank you card?",
@@ -555,12 +555,12 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "01",
         title: "Note the anniversary",
-        desc: "Tell us who it's for and how long they've been around. \"Sarah hits ten years this Thursday, she built the whole CS team.\" The AI drafts a cover and note that honours the milestone",
+        desc: "Tell us who it's for and how long they've been around. \"Sarah hits ten years this Thursday, she built the whole CS team.\" The AI drafts a cover and note that honors the milestone",
       },
       {
         n: "02",
         title: "The whole team signs",
-        desc: "Share one link with everyone: remote, in-office, across time zones. Each person adds their message, picks an ink colour, and can add a GIF",
+        desc: "Share one link with everyone: remote, in-office, across time zones. Each person adds their message, picks an ink color, and can add a GIF",
       },
       {
         n: "03",
@@ -656,7 +656,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     label: "Farewell cards",
     shortDesc: "Send someone off with notes from everyone they worked with",
 
-    metaTitle: "Group Farewell & Leaving Cards for Coworkers",
+    metaTitle: "Group Farewell & Goodbye Cards for Coworkers",
     metaDescription:
       "Create a group farewell card online. Share one link so the whole team signs a leaving card or goodbye card for a coworker moving on. AI crafts the cover. Free to start.",
 
@@ -744,7 +744,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "02",
         title: "Drop the link in the group chat",
-        desc: "Everyone signs from their own phone or laptop. No chasing, no circulating paper. Each person adds their note, picks an ink colour, and can add a GIF",
+        desc: "Everyone signs from their own phone or laptop. No chasing, no circulating paper. Each person adds their note, picks an ink color, and can add a GIF",
       },
       {
         n: "03",
@@ -825,7 +825,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can I choose when it's sent?",
-        a: "Yes. Nothing is sent until you decide it's ready, so you can send it on their last day, at their leaving do, or whenever feels right.",
+        a: "Yes. Nothing is sent until you decide it's ready, so you can send it on their last day, at their send-off party, or whenever feels right.",
       },
     ],
 
@@ -1306,7 +1306,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     ],
 
     usesEyebrow: "Kudos cards for every kind of recognition",
-    usesTitle: "What are you recognising?",
+    usesTitle: "What are you recognizing?",
     uses: [
       {
         hue: 18,
@@ -1353,7 +1353,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     ],
 
     faqEyebrow: "Kudos card FAQs",
-    faqTitle: "Everything about recognising someone properly",
+    faqTitle: "Everything about recognizing someone properly",
     faqs: [
       {
         q: "How are kudos cards different from other recognition tools?",
@@ -1365,7 +1365,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can signers add specific, personal notes?",
-        a: "Yes. Each person writes their own note, picks their own ink colour, and can add a GIF. The AI can also draft an opening message that names what was achieved.",
+        a: "Yes. Each person writes their own note, picks their own ink color, and can add a GIF. The AI can also draft an opening message that names what was achieved.",
       },
       {
         q: "How many people can sign?",
@@ -1446,7 +1446,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       {
         n: "03",
         title: "Send it on their last day",
-        desc: "Present it at the leaving do, or send it by email or link on the morning they retire. It opens in the browser with every signature, and they can revisit it for years",
+        desc: "Present it at the send-off party, or send it by email or link on the morning they retire. It opens in the browser with every signature, and they can revisit it for years",
       },
     ],
 
@@ -1469,7 +1469,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         hue: 200,
-        headline: "Thank you, Mrs Patel",
+        headline: "Thank you, Mrs. Patel",
         coverImage: "/occasions/uses/retirement-3.webp",
         title: "Retirement cards for teachers",
         desc: "Colleagues, parents and former students, all in one card",
@@ -1479,11 +1479,11 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
         headline: "Happy Retirement, Dad",
         coverImage: "/occasions/uses/retirement-4.webp",
         title: "Retirement cards for family",
-        desc: "For Mum, Dad or a grandparent finally putting their feet up",
+        desc: "For Mom, Dad or a grandparent finally putting their feet up",
       },
       {
         hue: 330,
-        headline: "Thank you, Dr Ellis",
+        headline: "Thank you, Dr. Ellis",
         coverImage: "/occasions/uses/retirement-5.webp",
         title: "Retirement cards for nurses and doctors",
         desc: "From the whole ward, across every shift, without passing paper around",
@@ -1510,7 +1510,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "What should I write in a retirement card?",
-        a: "Thank them for something specific, share a favourite memory, and wish them well for what comes next. If you're stuck, the AI can draft an opening note for the group to build on.",
+        a: "Thank them for something specific, share a favorite memory, and wish them well for what comes next. If you're stuck, the AI can draft an opening note for the group to build on.",
       },
       {
         q: "Is CardShare.ai free?",
@@ -1796,7 +1796,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         q: "Can I keep the tone calm and respectful?",
-        a: "Yes. You choose the cover and the opening note, and can regenerate or edit either until the tone feels right. You can also leave out GIFs and bright colours entirely.",
+        a: "Yes. You choose the cover and the opening note, and can regenerate or edit either until the tone feels right. You can also leave out GIFs and bright colors entirely.",
       },
       {
         q: "Can people share a memory?",
@@ -2037,7 +2037,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         hue: 180,
-        headline: "Dr Chen!",
+        headline: "Dr. Chen!",
         coverImage: null,
         title: "PhD and masters cards",
         desc: "Years of work deserve a card from the whole lab and everyone who helped",
@@ -2199,7 +2199,7 @@ export const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
       },
       {
         hue: 330,
-        headline: "Merry Christmas, Nan",
+        headline: "Merry Christmas, Grandma",
         coverImage: null,
         title: "Christmas cards for family",
         desc: "Every relative signs, near or far, in one festive card",
