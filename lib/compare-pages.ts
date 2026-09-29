@@ -160,7 +160,7 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       {
         feature: "Price to send a card",
         us: "Free",
-        them: "Paid per card (listed at $5.99 in its help center), or annual card bundles",
+        them: "$5.99 per card, or prepaid card bundles at 10% to 33% off",
       },
       {
         feature: "AI-designed cover image",

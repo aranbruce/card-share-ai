@@ -7,12 +7,6 @@ import {
 
 type JsonLdObject = Record<string, unknown>
 
-/**
- * Official profiles for the brand (LinkedIn, X, Product Hunt, Slack Marketplace…).
- * Search engines use these to tie the site to its knowledge panel.
- */
-export const SAME_AS_PROFILES: string[] = []
-
 export function organizationJsonLd(): JsonLdObject {
   const appUrl = getAppUrl()
   return {
@@ -22,7 +16,6 @@ export function organizationJsonLd(): JsonLdObject {
     name: SITE_NAME,
     url: appUrl,
     logo: `${appUrl}/icon.png`,
-    ...(SAME_AS_PROFILES.length > 0 ? { sameAs: SAME_AS_PROFILES } : {}),
   }
 }
 
