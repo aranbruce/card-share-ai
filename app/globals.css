@@ -3,8 +3,9 @@
 
 /*
  * Arial (or its metric twin Liberation Sans on Linux) sized to Inter Tight's widths, so text wraps the same before and after the web
- * font swaps in (no layout shift). Ratios measured per weight: body copy (400) and
+ * font swaps in (no layout shift). Ratios measured per weight across the marketing copy: body copy (400) and
  * semibold headings (600, drawn from Arial Bold) need different size adjustments.
+ * macOS, iOS and Windows all ship Arial.
  */
 @font-face {
   font-family: "Inter Tight Fallback";
@@ -12,9 +13,9 @@
     local("Arial"), local("ArialMT"), local("Liberation Sans"),
     local("LiberationSans");
   font-weight: 100 550;
-  size-adjust: 96.1%;
-  ascent-override: 100.8%;
-  descent-override: 25.1%;
+  size-adjust: 95.8%;
+  ascent-override: 101.1%;
+  descent-override: 25.2%;
   line-gap-override: 0%;
 }
 @font-face {
@@ -23,9 +24,41 @@
     local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"),
     local("LiberationSans-Bold");
   font-weight: 551 900;
-  size-adjust: 94.1%;
-  ascent-override: 103%;
-  descent-override: 25.6%;
+  size-adjust: 93.3%;
+  ascent-override: 103.8%;
+  descent-override: 25.9%;
+  line-gap-override: 0%;
+}
+
+/*
+ * Android has no Arial, so the faces above don't load there and the browser moves on to
+ * these: Roboto sized to Inter Tight the same way (ratios measured per weight).
+ */
+@font-face {
+  font-family: "Inter Tight Fallback Roboto";
+  src: local("Roboto"), local("Roboto-Regular");
+  font-weight: 100 450;
+  size-adjust: 96.8%;
+  ascent-override: 100.1%;
+  descent-override: 24.9%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Inter Tight Fallback Roboto";
+  src: local("Roboto Medium"), local("Roboto-Medium");
+  font-weight: 451 550;
+  size-adjust: 98.2%;
+  ascent-override: 98.7%;
+  descent-override: 24.6%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: "Inter Tight Fallback Roboto";
+  src: local("Roboto Bold"), local("Roboto-Bold");
+  font-weight: 551 900;
+  size-adjust: 99.6%;
+  ascent-override: 97.3%;
+  descent-override: 24.2%;
   line-gap-override: 0%;
 }
 
@@ -47,16 +80,16 @@
   --muted-foreground: oklch(0.48 0.003 49); /* ink2 ~62% opacity */
   --accent: oklch(0.958 0.008 83); /* subtle hover state */
   --accent-foreground: oklch(0.142 0.004 49);
-  --brand: #ff5a4a;
-  /* The brand color darkened for small text on light backgrounds (4.5:1 contrast). */
-  --brand-strong: #c0392b;
+  /* Coral darkened just enough for 4.5:1 contrast: as text on the page and tinted
+     sections, and behind white button text (was #ff5a4a). */
+  --brand: #d42e24;
   --brand-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.913 0.006 83); /* rgba(17,17,16,0.08) on bg */
   --line: rgba(17, 17, 16, 0.05); /* subtle dividers — headers, sections */
   --input: oklch(0.913 0.006 83);
-  --ring: #ff5a4a; /* coral focus ring */
+  --ring: #d42e24; /* coral focus ring */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -70,7 +103,7 @@
   --sidebar-accent: oklch(0.958 0.008 83);
   --sidebar-accent-foreground: oklch(0.142 0.004 49);
   --sidebar-border: oklch(0.913 0.006 83);
-  --sidebar-ring: #ff5a4a;
+  --sidebar-ring: #d42e24;
 }
 
 .dark {
@@ -89,7 +122,6 @@
   --accent: oklch(0.22 0.003 49);
   --accent-foreground: oklch(0.985 0 0);
   --brand: #ff5a4a;
-  --brand-strong: #ff5a4a;
   --brand-foreground: oklch(1 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
@@ -153,7 +185,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-brand: var(--brand);
-  --color-brand-strong: var(--brand-strong);
   --color-brand-foreground: var(--brand-foreground);
 }
 

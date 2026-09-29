@@ -33,7 +33,7 @@ export function FaqSection({
     <section id="faq" className="border-t border-border">
       <JsonLd data={faqPageJsonLd(faqs)} />
       <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-        <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+        <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
           {eyebrow}
         </p>
         <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">

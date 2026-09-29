@@ -49,7 +49,7 @@ export function PublicCardView({
       <main className="flex-1 p-4 pt-8 md:p-8 md:pt-12">
         <div className="mx-auto max-w-2xl">
           <section className="mb-8 text-center">
-            <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+            <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               A card arrived for you
             </p>
             <h1 className="text-4xl leading-[1.05] font-semibold tracking-tight md:text-5xl">

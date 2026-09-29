@@ -193,7 +193,7 @@ function LoginFormInner() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-xs text-brand-strong hover:underline"
+              className="text-xs text-brand hover:underline"
             >
               Forgot?
             </Link>

@@ -41,7 +41,7 @@ const HIGHLIGHT_COUNT = 3
 
 function FreeBadge() {
   return (
-    <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+    <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
       Free
     </span>
   )
@@ -117,7 +117,7 @@ export default async function ComparePage({ params }: PageProps) {
               <span className="mx-2" aria-hidden>
                 /
               </span>
-              <span aria-current="page" className="text-brand-strong">
+              <span aria-current="page" className="text-brand">
                 {config.competitor} alternative
               </span>
             </nav>
@@ -176,7 +176,7 @@ export default async function ComparePage({ params }: PageProps) {
       {/* ===== AT A GLANCE ===== */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-16 md:px-15">
-          <h2 className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+          <h2 className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             At a glance
           </h2>
           <dl className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -204,7 +204,7 @@ export default async function ComparePage({ params }: PageProps) {
       {/* ===== TABLE ===== */}
       <section id="compare" className="scroll-mt-20 border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Side by side
           </p>
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
@@ -298,7 +298,7 @@ export default async function ComparePage({ params }: PageProps) {
       {/* ===== WHICH TO PICK ===== */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Which to pick
           </p>
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
@@ -318,7 +318,7 @@ export default async function ComparePage({ params }: PageProps) {
       {/* ===== OCCASIONS ===== */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Every occasion
           </p>
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">

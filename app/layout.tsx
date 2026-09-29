@@ -18,7 +18,12 @@ const interTight = Inter_Tight({
   // Metric-matched fallback faces live in globals.css: one per weight range, since the
   // bold fallback is much wider than Inter Tight's semibold headings.
   adjustFontFallback: false,
-  fallback: ["Inter Tight Fallback", "system-ui", "sans-serif"],
+  fallback: [
+    "Inter Tight Fallback",
+    "Inter Tight Fallback Roboto",
+    "system-ui",
+    "sans-serif",
+  ],
 })
 const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],

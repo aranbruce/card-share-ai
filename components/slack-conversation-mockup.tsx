@@ -15,7 +15,7 @@ export function SlackConversationMockup({
         className,
       )}
     >
-      <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/60 uppercase">
+      <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/85 uppercase">
         <div className="flex gap-1.5">
           <div className="h-2.5 w-2.5 rounded-full bg-border" />
           <div className="h-2.5 w-2.5 rounded-full bg-border" />

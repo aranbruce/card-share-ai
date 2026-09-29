@@ -84,7 +84,7 @@ export default function SlackInstallPage() {
         <ol className="mt-6 flex flex-col gap-5">
           {STEPS.map((s) => (
             <li key={s.n} className="flex gap-4">
-              <span className="mt-0.5 shrink-0 font-mono text-sm text-muted-foreground/60">
+              <span className="mt-0.5 shrink-0 font-mono text-sm text-muted-foreground/90">
                 {s.n}
               </span>
               <div>

@@ -65,7 +65,7 @@ export function HomeMarketingSections({
     <>
       <section className="border-t border-border">
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Built for group cards
           </p>
           <h2 className="mt-4 max-w-3xl text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
@@ -74,7 +74,7 @@ export function HomeMarketingSections({
           <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
             {FEATURES.map((f) => (
               <div key={f.n}>
-                <div className="font-mono text-sm text-muted-foreground/60">
+                <div className="font-mono text-sm text-muted-foreground/90">
                   {f.n}
                 </div>
                 <h3 className="mt-2 text-lg font-semibold tracking-[-0.015em]">
@@ -93,7 +93,7 @@ export function HomeMarketingSections({
         <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
             <div>
-              <p className="font-mono text-[11px] tracking-[0.15em] text-brand-strong uppercase">
+              <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
                 Works with Slack
               </p>
               <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl">
@@ -122,7 +122,7 @@ export function HomeMarketingSections({
                   },
                 ].map((s) => (
                   <li key={s.n} className="flex gap-4">
-                    <span className="mt-0.5 shrink-0 font-mono text-sm text-muted-foreground/60">
+                    <span className="mt-0.5 shrink-0 font-mono text-sm text-muted-foreground/90">
                       {s.n}
                     </span>
                     <div>
@@ -172,7 +172,7 @@ export function HomeMarketingSections({
             <Button asChild size="lg">
               <Link href="/create">
                 Start a card
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
                   Free
                 </span>
               </Link>
