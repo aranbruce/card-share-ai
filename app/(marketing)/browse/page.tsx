@@ -194,7 +194,7 @@ export default function CardsPage() {
               <Button asChild size="lg">
                 <Link href="/create">
                   Start a card
-                  <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
                     Free
                   </span>
                 </Link>
@@ -315,7 +315,7 @@ export default function CardsPage() {
             <Button asChild size="lg">
               <Link href="/create">
                 Start a card
-                <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
                   Free
                 </span>
               </Link>

@@ -41,7 +41,7 @@ const HIGHLIGHT_COUNT = 3
 
 function FreeBadge() {
   return (
-    <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
+    <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
       Free
     </span>
   )

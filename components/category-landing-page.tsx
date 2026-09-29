@@ -57,7 +57,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               <Button asChild size="lg">
                 <Link href="/create">
                   {config.ctaText}
-                  <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
                     Free
                   </span>
                 </Link>
@@ -314,7 +314,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
             <Button asChild size="lg">
               <Link href="/create">
                 {config.ctaText}
-                <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-semibold">
+                <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
                   Free
                 </span>
               </Link>

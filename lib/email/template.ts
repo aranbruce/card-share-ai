@@ -7,8 +7,8 @@ export const EMAIL_BRAND = {
   muted: "#7a7a78",
   border: "#e8e6e0",
   card: "#ffffff",
-  brand: "#d42e24",
-  brandDark: "#d42e24",
+  brand: "#ff5a4a",
+  brandDark: "#e54a3c",
 } as const
 
 export type EmailLayoutInput = {
