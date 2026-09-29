@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
 import { getBrowseCategories } from "@/lib/category-pages"
-import { COMPARE_CONFIGS } from "@/lib/compare-pages"
 
 const OCCASIONS = getBrowseCategories().map((cat) => ({
   label: cat.label,
@@ -71,16 +70,14 @@ export function SiteFooter() {
                   Slack app
                 </Link>
               </li>
-              {Object.values(COMPARE_CONFIGS).map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/compare/${c.slug}`}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    vs {c.competitor}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link
+                  href="/compare"
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Compare
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/privacy"

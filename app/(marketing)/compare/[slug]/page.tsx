@@ -64,6 +64,7 @@ export default async function ComparePage({
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
+          { name: "Compare", path: "/compare" },
           { name: config.h1, path: `/compare/${config.slug}` },
         ])}
       />
