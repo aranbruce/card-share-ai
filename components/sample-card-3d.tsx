@@ -37,16 +37,20 @@ function useDeferredCardBook3D() {
     const el = ref.current
     if (!el) return
     let started = false
+    let loaded = false
     let idleId: number | undefined
     const load = () => {
       if (started) return
       started = true
-      void import("@/components/card-book-3d").then((m) =>
-        setLoaded(() => m.CardBook3D),
-      )
+      void import("@/components/card-book-3d").then((m) => {
+        loaded = true
+        setLoaded(() => m.CardBook3D)
+      })
     }
+    // A click before the 3D card is ready (even if hovering already started loading it)
+    // opens it once it takes over; after that, the card handles clicks itself.
     const loadAndOpen = () => {
-      if (started) return
+      if (loaded) return
       setOpenOnLoad(true)
       load()
     }
