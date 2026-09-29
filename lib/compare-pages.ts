@@ -26,11 +26,12 @@ export interface CompareConfig {
 
   rows: CompareRow[]
 
-  /** Honest reasons someone might still pick the competitor. */
-  pickThemTitle: string
-  pickThem: string[]
-  pickUsTitle: string
+  /** A short, even-handed bottom line: who each product suits. */
+  verdict: string
+  /** When CardShare.ai is the better choice. */
   pickUs: string[]
+  /** Honest reasons someone might still pick the competitor. */
+  pickThem: string[]
 
   faqs: { q: string; a: string }[]
 }
@@ -99,13 +100,13 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       },
     ],
 
-    pickThemTitle: "When Kudoboard might suit you better",
     pickThem: [
       "You want a printed book or poster of the board",
       "You need Microsoft Teams, HR system integrations or SSO",
       "You want automated birthday and anniversary boards across a large company",
     ],
-    pickUsTitle: "When CardShare.ai is the better fit",
+    verdict:
+      "If you want a free group card with a cover designed for the person, especially for a team that lives in Slack, CardShare.ai does the job without a subscription. If you need printed keepsakes, Microsoft Teams, HR integrations or automated boards across a large company, Kudoboard's paid plans cover more ground.",
     pickUs: [
       "You want to send a group card without paying for it",
       "You'd rather not design the cover yourself: the AI does it from one sentence",
@@ -199,12 +200,12 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       },
     ],
 
-    pickThemTitle: "When GroupGreeting might suit you better",
     pickThem: [
       "You want the card delivered automatically at a set date and time",
       "You want a PDF copy of the finished card",
     ],
-    pickUsTitle: "When CardShare.ai is the better fit",
+    verdict:
+      "Both handle the basics well: one link, no account to sign and no limit on signers. CardShare.ai is free and designs a cover for each person. GroupGreeting is the better pick if you need a card delivered automatically on a set date, or a PDF copy to keep.",
     pickUs: [
       "You want to send a group card without paying per card",
       "You want a cover designed for this person and occasion",
@@ -288,13 +289,13 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       },
     ],
 
-    pickThemTitle: "When Padlet might suit you better",
     pickThem: [
       "You want one tool for brainstorming, classrooms and cards",
       "You want contributors to post videos, audio or files",
       "Your school already uses Padlet with Microsoft Teams",
     ],
-    pickUsTitle: "When CardShare.ai is the better fit",
+    verdict:
+      "Padlet is a flexible board for all sorts of collaboration, and it works for a group card in a pinch. If what you're making is a card, CardShare.ai is built for it: a real greeting card with an AI-designed cover, free to send, with a Slack app. If you'll also use the board for classes, brainstorms or posts with video and audio, Padlet does more.",
     pickUs: [
       "You want it to feel like a real greeting card, not a board",
       "You'd like the cover designed for you from one sentence",
@@ -381,13 +382,13 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       },
     ],
 
-    pickThemTitle: "When SendWishOnline might suit you better",
     pickThem: [
       "You want the card delivered automatically on a set date",
       "You send lots of cards and want bulk scheduling from a spreadsheet",
       "You'd rather choose a ready-made template",
     ],
-    pickUsTitle: "When CardShare.ai is the better fit",
+    verdict:
+      "Both are free to start and let people sign without an account. CardShare.ai keeps free cards ad-free and designs a cover for each person. SendWishOnline is stronger if you want scheduled or bulk delivery, or a large library of ready-made templates.",
     pickUs: [
       "You want free cards without ads",
       "You want a cover designed for this person and occasion",

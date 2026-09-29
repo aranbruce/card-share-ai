@@ -3,9 +3,9 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Check } from "lucide-react"
 import { CardTileRow } from "@/components/card-tile-row"
-import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { FaqSection } from "@/components/faq-section"
 import { JsonLd } from "@/components/json-ld"
+import { OccasionCardStage } from "@/components/occasion-card-stage"
 import { Button } from "@/components/ui/button"
 import { getCategoryConfig, occasionTiles } from "@/lib/category-pages"
 import { ALL_COMPARE_SLUGS, getCompareConfig } from "@/lib/compare-pages"
@@ -47,12 +47,12 @@ function FreeBadge() {
   )
 }
 
-function ReasonList({
-  title,
+function PickCard({
+  name,
   items,
   highlighted = false,
 }: {
-  title: string
+  name: string
   items: string[]
   highlighted?: boolean
 }) {
@@ -60,25 +60,27 @@ function ReasonList({
     <div
       className={
         highlighted
-          ? "rounded-2xl border border-brand/30 bg-brand/5 p-7"
-          : "rounded-2xl border border-border bg-card p-7"
+          ? "rounded-2xl border border-brand/30 bg-brand/5 p-7 md:p-8"
+          : "rounded-2xl border border-border bg-card p-7 md:p-8"
       }
     >
-      <h3 className="text-lg font-semibold tracking-[-0.015em]">{title}</h3>
-      <ul className="mt-5 flex flex-col gap-3.5">
+      <p className="text-sm text-muted-foreground">Choose</p>
+      <h3 className="mt-1 text-2xl font-semibold tracking-[-0.02em]">
+        {name} <span className="font-normal text-muted-foreground">if…</span>
+      </h3>
+      <ul className="mt-6 flex flex-col gap-4">
         {items.map((item) => (
-          <li key={item} className="flex gap-2.5 text-[15px] leading-relaxed">
-            <Check
+          <li key={item} className="flex gap-3 text-[15px] leading-relaxed">
+            <span
               className={
                 highlighted
-                  ? "mt-1 size-4 shrink-0 text-brand"
-                  : "mt-1 size-4 shrink-0 text-muted-foreground"
+                  ? "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-brand text-white"
+                  : "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-foreground text-background"
               }
-              aria-hidden
-            />
-            <span className={highlighted ? "" : "text-muted-foreground"}>
-              {item}
+            >
+              <Check className="size-3" strokeWidth={3} aria-hidden />
             </span>
+            {item}
           </li>
         ))}
       </ul>
@@ -107,20 +109,9 @@ export default async function ComparePage({ params }: PageProps) {
       <section className="py-16 md:py-20">
         <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
           <div>
-            <nav
-              aria-label="Breadcrumb"
-              className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground uppercase"
-            >
-              <Link href="/" className="hover:text-foreground">
-                Home
-              </Link>
-              <span className="mx-2" aria-hidden>
-                /
-              </span>
-              <span aria-current="page" className="text-brand">
-                {config.competitor} alternative
-              </span>
-            </nav>
+            <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+              {config.competitor} alternative
+            </p>
             <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
               {SITE_NAME}
               <br />
@@ -143,33 +134,7 @@ export default async function ComparePage({ params }: PageProps) {
             </div>
           </div>
 
-          <div className="relative mx-auto mt-12 w-full max-w-[440px] lg:mt-0">
-            <div
-              className="relative aspect-square overflow-hidden rounded-3xl shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset"
-              style={{ background: hero.frontGradient }}
-            >
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  background:
-                    "radial-gradient(90% 70% at 15% 0%, rgba(255,255,255,0.6), transparent 60%), radial-gradient(80% 60% at 100% 100%, rgba(20,14,6,0.12), transparent 70%)",
-                }}
-              />
-              <CardThumb3D
-                imageUrl={hero.coverImage}
-                headline={hero.cardTitle}
-                alt={`A ${SITE_NAME} ${hero.label.toLowerCase().replace(/s$/, "")}`}
-                hue={hero.coverHue}
-                cardHeight={72}
-                priority
-              />
-            </div>
-            <div className="absolute -bottom-5 -left-3 z-10 flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-sm shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] lg:-left-8">
-              <Check className="size-4 text-brand" aria-hidden />
-              Designed by AI, signed by everyone
-            </div>
-          </div>
+          <OccasionCardStage config={hero} />
         </div>
       </section>
 
@@ -304,13 +269,15 @@ export default async function ComparePage({ params }: PageProps) {
           <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             The honest version
           </h2>
+          <div className="mt-8 max-w-3xl border-l-2 border-brand pl-5">
+            <p className="text-sm font-medium text-muted-foreground">
+              The bottom line
+            </p>
+            <p className="mt-2 text-lg leading-relaxed">{config.verdict}</p>
+          </div>
           <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <ReasonList
-              title={config.pickUsTitle}
-              items={config.pickUs}
-              highlighted
-            />
-            <ReasonList title={config.pickThemTitle} items={config.pickThem} />
+            <PickCard name={SITE_NAME} items={config.pickUs} highlighted />
+            <PickCard name={config.competitor} items={config.pickThem} />
           </div>
         </div>
       </section>
