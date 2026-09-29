@@ -8,7 +8,8 @@
  */
 @font-face {
   font-family: "Inter Tight Fallback";
-  src: local("Arial"), local("ArialMT"), local("Liberation Sans"),
+  src:
+    local("Arial"), local("ArialMT"), local("Liberation Sans"),
     local("LiberationSans");
   font-weight: 100 550;
   size-adjust: 96.1%;
@@ -18,7 +19,8 @@
 }
 @font-face {
   font-family: "Inter Tight Fallback";
-  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"),
+  src:
+    local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"),
     local("LiberationSans-Bold");
   font-weight: 551 900;
   size-adjust: 94.1%;
