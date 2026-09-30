@@ -51,7 +51,7 @@ export async function generateCardHeadline(
     model: getHeadlineModel(),
     output: Output.object({ schema: cardHeadlineSchema }),
     messages,
-    system: HEADLINE_SYSTEM_PROMPT,
+    instructions: HEADLINE_SYSTEM_PROMPT,
     ...aiTelemetry("generate-card-headline", options?.distinctId),
   })
 

@@ -13,21 +13,48 @@ const tailwindCssEntry = path.join(__dirname, "app/globals.css")
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  ...tailwind.configs["flat/recommended"],
+  // ESLint 10 removed context.getFilename(); pinning the React version skips
+  // eslint-plugin-react's auto-detect path that still calls it.
   {
     settings: {
+      react: { version: "19.3" },
+    },
+  },
+  tailwind.configs.recommended,
+  {
+    plugins: { tailwindcss: tailwind },
+    settings: {
       tailwindcss: {
-        // v4: point at your main stylesheet (not tailwind.config.js).
-        // Resolves the same theme as `@tailwindcss/postcss` when you run the app.
-        config: tailwindCssEntry,
-        callees: ["classnames", "clsx", "ctl", "cva", "tv", "cn"],
-        // Marker / non-utility classes from shadcn + Radix (not generated utilities)
-        whitelist: ["toaster", "destructive", "origin-top-center"],
+        // v4: point at the main stylesheet (not tailwind.config.js).
+        cssConfigPath: tailwindCssEntry,
       },
     },
     rules: {
       // Class order is handled by prettier-plugin-tailwindcss
       "tailwindcss/classnames-order": "off",
+      // v4.4 recommended flags shorthand and spacing-number rewrites that this
+      // codebase still writes as explicit utilities and arbitrary values.
+      "tailwindcss/enforces-shorthand": "off",
+      "tailwindcss/no-unnecessary-arbitrary-value": "off",
+      "tailwindcss/enforces-canonical-classname": "off",
+      "tailwindcss/no-contradicting-classname": "off",
+      // Marker / non-utility classes from shadcn, Radix, and local CSS
+      "tailwindcss/no-custom-classname": [
+        "warn",
+        {
+          whitelist: [
+            "toaster",
+            "destructive",
+            "origin-top-center",
+            "inputs",
+            "hero-drift",
+            "demo-float",
+            "card-pastel",
+            "card-3d-.*",
+            "ai-refine-shimmer-.*",
+          ],
+        },
+      ],
     },
   },
   prettier,
