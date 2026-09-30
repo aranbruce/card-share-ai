@@ -64,6 +64,8 @@ export default defineConfig({
     command: `pnpm dev --port ${port}`,
     url: appUrl,
     reuseExistingServer: !process.env.CI,
+    // First compile of the home page on a cold dev server can exceed the 60s default.
+    timeout: 120_000,
     env: {
       NEXT_PUBLIC_SUPABASE_URL:
         process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321",
