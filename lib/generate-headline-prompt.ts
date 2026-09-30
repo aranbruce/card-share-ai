@@ -60,7 +60,12 @@ export function assembleHeadlineUserPrompt(
   fields: CardAiPromptFields,
   flags: ImagePromptFlags = {},
 ): string {
-  const context = formatContextBlock(fields, flags)
+  // Sympathy cards drop the picked tone entirely, so "Tone: Dad jokes" can't pull against the gentle guide.
+  const isSympathy = fields.cardType.trim().toLowerCase() === "sympathy"
+  const context = formatContextBlock(
+    isSympathy ? { ...fields, tone: undefined } : fields,
+    flags,
+  )
   const toneGuide = formatHeadlineToneGuide(fields.tone, fields.cardType)
   const suffix =
     fields.userPrompt?.trim() || fields.cardTitle?.trim()

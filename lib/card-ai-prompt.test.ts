@@ -137,6 +137,7 @@ describe("assembleHeadlineUserPrompt", () => {
     })
     expect(prompt).toContain("Tone guide (sympathy)")
     expect(prompt).not.toContain("groan")
+    expect(prompt).not.toContain("Tone: Dad jokes")
   })
 
   it("omits the tone guide for an unknown or missing tone", () => {
