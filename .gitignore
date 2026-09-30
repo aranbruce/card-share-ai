@@ -21,7 +21,9 @@ node_modules
 .next/
 .DS_Store
 .vercel
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 playwright-report/
 playwright/.auth/
 test-results/
