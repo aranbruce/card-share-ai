@@ -3,6 +3,7 @@ import {
   type CardAiPromptFields,
   type ImagePromptFlags,
 } from "./card-ai-prompt"
+import { getToneDefinition } from "./card-tones"
 
 const MAX_HEADLINE_CHARS = 300
 
@@ -27,7 +28,12 @@ export function assembleImageUserPrompt(
   const constraints = [COVER_ART_RULES, headlineBlock(fields.cardTitle)]
     .filter(Boolean)
     .join("\n")
-  const context = formatContextBlock(fields, flags)
+  // The tone's visual mood, not its name: "Roast" or "Dad jokes" read literally make odd covers.
+  const mood = getToneDefinition(fields.tone)?.imageMood
+  const context = formatContextBlock(
+    { ...fields, tone: mood ?? fields.tone },
+    flags,
+  )
   return context ? `${constraints}\n\n${context}` : constraints
 }
 

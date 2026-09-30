@@ -10,8 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Logo } from "@/components/logo"
 import { ArrowLeft, Paperclip, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
-
-const TONES = ["Warm", "Playful", "Sassy", "Sincere", "Short"]
+import { CARD_TONES, DEFAULT_CARD_TONE } from "@/lib/card-tones"
 
 interface CardDetailsFormProps {
   cardType: string
@@ -42,7 +41,7 @@ export function CardDetailsForm({
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")
   const [userContext, setUserContext] = useState("")
-  const [tone, setTone] = useState("Warm")
+  const [tone, setTone] = useState<string>(DEFAULT_CARD_TONE)
   const [formError, setFormError] = useState("")
   const [uploadError, setUploadError] = useState("")
   const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
@@ -266,7 +265,7 @@ export function CardDetailsForm({
             Tone
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {TONES.map((t) => (
+            {CARD_TONES.map((t) => (
               <ChipButton
                 key={t}
                 onClick={() => setTone(t)}

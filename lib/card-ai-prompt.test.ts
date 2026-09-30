@@ -103,33 +103,40 @@ describe("assembleHeadlineUserPrompt", () => {
 
   it("adds the matching tone guide and examples", () => {
     const prompt = assembleHeadlineUserPrompt({
-      tone: "Sassy",
+      tone: "Roast",
       cardType: "birthday",
       addressedTo: "Alex",
     })
-    expect(prompt).toContain("Tone guide (Sassy): Cheeky, confident")
+    expect(prompt).toContain("Tone guide (Roast): An affectionate roast")
     expect(prompt).toContain("- Leaving us, Dan? Bold. Rude, but bold")
     expect(prompt.endsWith("Write a headline for this card.")).toBe(true)
   })
 
-  it("keeps the old Dry tone working as Sassy", () => {
+  it("maps legacy tones on older cards to current ones", () => {
     expect(
       assembleHeadlineUserPrompt({
         tone: "Dry",
         cardType: "birthday",
         addressedTo: "Alex",
       }),
-    ).toContain("Cheeky, confident")
+    ).toContain("Tone guide (Roast)")
+    expect(
+      assembleHeadlineUserPrompt({
+        tone: "Warm",
+        cardType: "birthday",
+        addressedTo: "Alex",
+      }),
+    ).toContain("Tone guide (Heartfelt)")
   })
 
   it("uses the sympathy guide whatever the tone", () => {
     const prompt = assembleHeadlineUserPrompt({
-      tone: "Playful",
+      tone: "Dad jokes",
       cardType: "sympathy",
       addressedTo: "Alex",
     })
     expect(prompt).toContain("Tone guide (sympathy)")
-    expect(prompt).not.toContain("Laugh-out-loud")
+    expect(prompt).not.toContain("groan")
   })
 
   it("omits the tone guide for an unknown or missing tone", () => {
@@ -200,6 +207,15 @@ describe("assembleImageUserPrompt", () => {
     expect(assembleImageLeadingText(true, true)).toContain(
       "Refine the existing card cover",
     )
+  })
+
+  it("describes the tone as a visual mood, not by name", () => {
+    const prompt = assembleImageUserPrompt(
+      { cardType: "birthday", addressedTo: "Alex", tone: "Roast" },
+      {},
+    )
+    expect(prompt).toContain("Tone: bold, cheeky and mischievous")
+    expect(prompt).not.toContain("Tone: Roast")
   })
 
   it("includes headline constraints when cardTitle is set", () => {
