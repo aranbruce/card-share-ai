@@ -12,6 +12,6 @@ pnpm install --prefer-offline
 
 # Install the headless Chromium build that the locked Playwright version expects.
 # No-op when it's already present. A failed download shouldn't block the session.
-export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"
+# Installs to $PLAYWRIGHT_BROWSERS_PATH if set, the same place tests will look.
 pnpm exec playwright install --only-shell chromium ||
   echo "session-start: Playwright browser install failed; E2E tests may not run" >&2
