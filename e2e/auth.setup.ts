@@ -23,7 +23,8 @@ test("authenticate via login form", async ({ page }) => {
   await page.getByLabel("Password").fill(password)
   await page.getByRole("button", { name: /sign in/i }).click()
 
-  await expect(page).toHaveURL(/\/dashboard(\/|$)/)
+  // The dev server may still be compiling /dashboard on first visit.
+  await expect(page).toHaveURL(/\/dashboard(\/|$)/, { timeout: 15_000 })
   await expect(page.getByRole("heading", { name: "All cards" })).toBeVisible()
 
   mkdirSync(dirname(authFile), { recursive: true })

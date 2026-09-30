@@ -37,6 +37,8 @@ export default defineConfig({
     {
       name: "chromium",
       testIgnore: [/.*\.setup\.ts$/, /.*\.authenticated\.spec\.ts$/],
+      // Log in before the parallel specs start so they don't slow the login redirect.
+      dependencies: runAuthenticatedE2E ? ["setup"] : [],
       use: { ...devices["Desktop Chrome"] },
     },
     ...(runAuthenticatedE2E
