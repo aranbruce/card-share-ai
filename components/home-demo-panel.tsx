@@ -10,46 +10,56 @@ import { ClosedCardCover } from "@/components/card-book-3d/closed-card-cover"
 import { SampleCard3D, type SampleNote } from "@/components/sample-card-3d"
 
 const DEMO_STATES = {
-  Warm: {
+  Heartfelt: {
     base: {
-      imageUrl: "/demo/card-warm.webp",
+      imageUrl: "/demo/card-heartfelt.webp",
+      message: "Mira, you make the whole world look worth drawing",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-heartfelt-with-photo.webp",
+      message: "Mira, thirty years of noticing the beauty others pass by",
+    },
+  },
+  Roast: {
+    base: {
+      imageUrl: "/demo/card-roast.webp",
+      message: "Six hours on a train to draw one fern, Mira? Unhinged. Iconic",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-roast-with-photo.webp",
+      message: "Party's at eight, Mira. Take the fast train. Leave the ferns.",
+    },
+  },
+  "Dad jokes": {
+    base: {
+      imageUrl: "/demo/card-dad-jokes.webp",
+      message: "Mira, thirty suits you to a tree",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-dad-jokes-with-photo.webp",
+      message: "Mira, you're thirty and totally ex-train-ordinary",
+    },
+  },
+  Hype: {
+    base: {
+      imageUrl: "/demo/card-hype.webp",
+      message: "All aboard! Mira hits thirty and the platform ERUPTS",
+    },
+    withPhoto: {
+      imageUrl: "/demo/card-hype-with-photo.webp",
+      message: "Mira pulls into platform 30. Right on time. HISTORIC",
+    },
+  },
+  Epic: {
+    base: {
+      imageUrl: "/demo/card-epic.webp",
       message:
-        "Celebrating Your Blossoming 30s with Love, Laughter, and Adventure!",
+        "Thirty years. A thousand ferns. One window seat. This Thursday: Mira",
     },
     withPhoto: {
-      imageUrl: "/demo/card-warm-with-photo.webp",
-      message: "Blooming into 30: A Journey to Remember!",
-    },
-  },
-  Playful: {
-    base: {
-      imageUrl: "/demo/card-playful.webp",
-      message: "All Aboard the Fabulous 30s Express, Mira!",
-    },
-    withPhoto: {
-      imageUrl: "/demo/card-playful-with-photo.webp",
-      message: "All Aboard the Crazy Thirties Train, Mira!",
-    },
-  },
-  Dry: {
-    base: {
-      imageUrl: "/demo/card-dry.webp",
+      imageUrl: "/demo/card-epic-with-photo.webp",
       message:
-        "Turning 30: A Stop on Life's Train Where You Collect More Plants",
-    },
-    withPhoto: {
-      imageUrl: "/demo/card-dry-with-photo.webp",
-      message: "Turning 30: Embrace the Art of Aging Gracefully",
-    },
-  },
-  Sincere: {
-    base: {
-      imageUrl: "/demo/card-sincere.webp",
-      message: "So glad you're on our team - today is all yours!",
-    },
-    withPhoto: {
-      imageUrl: "/demo/card-sincere-with-photo.webp",
-      message: "Blossoming into Your Best Decade Yet, Mira!",
+        "In a world of express trains, Mira stopped to sketch every fern",
     },
   },
 } as const
@@ -86,7 +96,7 @@ type Phase = "idle" | "headline" | "cover" | "done"
  */
 export function HomeDemoPanel() {
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
-  const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("Warm")
+  const [demoKey, setDemoKey] = useState<keyof typeof DEMO_STATES>("Heartfelt")
   const [phase, setPhase] = useState<Phase>("idle")
   const [photoAttached, setPhotoAttached] = useState(false)
   const [result, setResult] = useState<{ imageUrl: string; message: string }>()
