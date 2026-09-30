@@ -1346,7 +1346,15 @@ export function CardBook3D({
         const heldByNote = onNote
         // A note drag or resize only keeps editing open for that one interaction.
         if (!pointerDown) onNote = false
-        if (pointerDown || heldByNote || pendingClickRef.current) return
+        // A touch tap on the card is handled on its click, which may still be on its way.
+        if (
+          pointerDown ||
+          heldByNote ||
+          pendingClickRef.current ||
+          pendingTapRef.current
+        ) {
+          return
+        }
         const active = document.activeElement
         if (inEditor(active) || inChrome(active)) return
         editPageAtRef.current(null)
@@ -1637,8 +1645,22 @@ export function CardBook3D({
   const handleTap = (clientX: number, clientY: number) => {
     const container = containerRef.current
     if (!container) return
-    // Clicking around the page being edited closes the editor.
     if (editPage !== null) {
+      // Until the camera arrives the editor cannot be clicked (e.g. a page that opened itself
+      // for editing), so a click on that page lands here: use it on the page, as the editor
+      // would, rather than closing it and needing a second click.
+      const point = overlayReady
+        ? null
+        : (sceneRef.current?.pickPage(
+            clientX,
+            clientY,
+            editPage % 2 === 1 ? "left" : "right",
+          ) ?? null)
+      if (point) {
+        openPageAt(editPage, point, { x: clientX, y: clientY })
+        return
+      }
+      // Clicking around the page being edited closes the editor.
       editPageAt(null)
       return
     }
