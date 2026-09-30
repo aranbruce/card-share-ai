@@ -90,7 +90,8 @@ export function buildEmailVerificationEmail({
   link,
 }: AuthEmailInput): EmailContent {
   const heading = "Verify your email"
-  const body = "Confirm your email to finish creating your CardShare.ai account."
+  const body =
+    "Confirm your email to finish creating your CardShare.ai account."
   const bodyHtml = `<p style="margin:0;">Confirm your email to finish creating your CardShare.ai account.</p>`
 
   return {
