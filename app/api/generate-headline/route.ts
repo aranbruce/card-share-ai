@@ -14,6 +14,8 @@ const EVAL_MODELS = [
   "anthropic/claude-opus-5.5",
   "openai/gpt-5.6-terra",
   "google/gemini-3.8-flash",
+  "moonshotai/kimi-k3",
+  "moonshotai/kimi-k2.6",
 ]
 
 export async function POST(request: NextRequest) {
@@ -85,12 +87,17 @@ export async function POST(request: NextRequest) {
         : []
     if (evalModels.length > 0) {
       const results = await Promise.all(
-        evalModels.map((model) =>
-          generateCardHeadline(params, { distinctId, model }).catch(
+        evalModels.map(async (model) => {
+          const start = Date.now()
+          const text = await generateCardHeadline(params, {
+            distinctId,
+            model,
+          }).catch(
             (e: unknown) =>
               `ERROR ${e instanceof Error ? e.message : String(e)}`,
-          ),
-        ),
+          )
+          return { text, ms: Date.now() - start }
+        }),
       )
       return NextResponse.json(
         {
