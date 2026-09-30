@@ -52,7 +52,7 @@ export function PublicCardView({
             <p className="mb-3 font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               A card arrived for you
             </p>
-            <h1 className="leading-1.05 text-4xl font-semibold tracking-tight md:text-5xl">
+            <h1 className="text-4xl leading-[1.05] font-semibold tracking-tight md:text-5xl">
               {card.recipient_name}
             </h1>
             <p className="mt-3 text-sm text-muted-foreground">

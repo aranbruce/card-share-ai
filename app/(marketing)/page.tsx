@@ -23,7 +23,7 @@ export default function HomePage() {
       <section className="py-20">
         <div className="mx-auto max-w-360 px-6 md:px-15">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="leading-0.95 text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
+            <h1 className="text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
               Group greeting cards,
               <br />
               <span className="text-muted-foreground">
@@ -63,7 +63,7 @@ export default function HomePage() {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Browse occasions
           </p>
-          <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+          <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl">
             Pick the moment worth marking together
           </h2>
           <CardTileRow tiles={occasionTiles()} />

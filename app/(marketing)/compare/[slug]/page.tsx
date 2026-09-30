@@ -112,7 +112,7 @@ export default async function ComparePage({ params }: PageProps) {
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               {config.competitor} alternative
             </p>
-            <h1 className="leading-0.95 mt-5 text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
+            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
               {SITE_NAME}
               <br />
               <span className="text-muted-foreground">vs</span>{" "}
@@ -172,7 +172,7 @@ export default async function ComparePage({ params }: PageProps) {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Side by side
           </p>
-          <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             How they compare
           </h2>
           {/* Small screens: one card per row, so neither column scrolls out of view. */}
@@ -266,7 +266,7 @@ export default async function ComparePage({ params }: PageProps) {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Which to pick
           </p>
-          <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             The honest version
           </h2>
           <div className="mt-8 max-w-3xl border-l-2 border-brand pl-5">
@@ -288,7 +288,7 @@ export default async function ComparePage({ params }: PageProps) {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Every occasion
           </p>
-          <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             See what your card could look like
           </h2>
           <CardTileRow tiles={occasionTiles()} />

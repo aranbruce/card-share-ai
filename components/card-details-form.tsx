@@ -109,7 +109,7 @@ export function CardDetailsForm({
 
       {/* Heading */}
       <div className="mt-6">
-        <h2 className="leading-1.05 text-[38px] font-semibold tracking-[-0.03em]">
+        <h2 className="text-[38px] leading-[1.05] font-semibold tracking-[-0.03em]">
           Tell us
           <br />
           {recipientName ? (

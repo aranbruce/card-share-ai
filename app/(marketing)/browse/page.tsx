@@ -178,7 +178,7 @@ export default function CardsPage() {
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               A card for every occasion
             </p>
-            <h1 className="leading-0.95 mt-5 text-4xl font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
+            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
               A group card for
               <br />
               <span className="text-muted-foreground">every moment</span>
@@ -235,7 +235,7 @@ export default function CardsPage() {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Browse occasions
           </p>
-          <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl">
+          <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl">
             Pick the moment worth marking together
           </h2>
 
@@ -249,7 +249,7 @@ export default function CardsPage() {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             How it works
           </p>
-          <h2 className="leading-1.02 mt-4 max-w-3xl text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
+          <h2 className="mt-4 max-w-3xl text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             From one sentence to a signed group card
           </h2>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
@@ -280,7 +280,7 @@ export default function CardsPage() {
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             FAQs
           </p>
-          <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
+          <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             Everything about group cards
           </h2>
           <div className="mt-10">

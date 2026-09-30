@@ -30,10 +30,13 @@ export default defineConfig([
       },
     },
     rules: {
+      // Autofix collapses unitless line-height ratios like leading-[0.95] into
+      // leading-0.95, which emits no CSS in Tailwind v4 (bare leading-N is a
+      // spacing multiple). Keep the other recommended rules on; leave these
+      // arbitrary values alone.
+      "tailwindcss/no-unnecessary-arbitrary-value": "off",
       // Marker / animation classes from local CSS. `inputs` silences a false
       // positive on `clsx(inputs)` in lib/utils.ts (variable name, not a class).
-      // Fractional `leading-*` / `opacity-*` are valid Tailwind v4 utilities;
-      // eslint-plugin-tailwindcss 4.4 still treats them as custom.
       "tailwindcss/no-custom-classname": [
         "warn",
         {
@@ -44,9 +47,6 @@ export default defineConfig([
             "card-pastel",
             "card-3d-.*",
             "ai-refine-shimmer-.*",
-            "leading-\\d+\\.\\d+",
-            "opacity-\\d+\\.\\d+",
-            "dark:opacity-\\d+\\.\\d+",
           ],
         },
       ],

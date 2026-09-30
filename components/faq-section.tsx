@@ -36,7 +36,7 @@ export function FaqSection({
         <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
           {eyebrow}
         </p>
-        <h2 className="leading-1.02 mt-4 text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
+        <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
           {title}
         </h2>
         <div className="mt-10">
