@@ -218,6 +218,15 @@ describe("assembleImageUserPrompt", () => {
     expect(prompt).not.toContain("Tone: Roast")
   })
 
+  it("keeps sympathy covers gentle whatever the tone", () => {
+    const prompt = assembleImageUserPrompt(
+      { cardType: "sympathy", addressedTo: "Alex", tone: "Roast" },
+      {},
+    )
+    expect(prompt).toContain("Tone: gentle, calm and comforting")
+    expect(prompt).not.toContain("mischievous")
+  })
+
   it("includes headline constraints when cardTitle is set", () => {
     expect(
       assembleImageUserPrompt(

@@ -105,3 +105,12 @@ export function getToneDefinition(tone?: string): ToneDefinition | null {
   const resolved = resolveCardTone(tone)
   return resolved ? TONE_DEFINITIONS[resolved] : null
 }
+
+const SYMPATHY_IMAGE_MOOD =
+  "gentle, calm and comforting, with soft muted light and nothing playful or jokey"
+
+/** Visual mood for the cover art. Sympathy cards stay gentle whatever tone was picked. */
+export function getImageMood(tone?: string, cardType?: string): string | null {
+  if (cardType?.trim().toLowerCase() === "sympathy") return SYMPATHY_IMAGE_MOOD
+  return getToneDefinition(tone)?.imageMood ?? null
+}

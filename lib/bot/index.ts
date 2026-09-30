@@ -323,7 +323,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
             id: "tone",
             label: "Tone",
             placeholder: "Select a tone",
-            initialOption: "Warm",
+            initialOption: DEFAULT_CARD_TONE,
             options: CARD_TONES.map((t) => ({
               type: "select_option",
               value: t,
