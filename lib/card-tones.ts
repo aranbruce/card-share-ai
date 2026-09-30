@@ -47,12 +47,12 @@ const TONE_DEFINITIONS: Record<CardTone, ToneDefinition> = {
   },
   "Dad jokes": {
     headlineStyle:
-      "A proudly terrible dad joke: an obvious, groan-worthy pun on a detail from the context. The groan is the goal. Keep it clean and short enough to deliver with a wink.",
+      "A proudly terrible dad joke. It MUST contain one obvious pun: swap a word for a sound-alike from the world of a detail in the context (baking: knead, loaf, crumbs; cycling: wheelie, tyred, gear; plants: grow, leaf, thyme). The pun should be impossible to miss, the kind that makes people groan and then smile. A headline without a real pun is a failure. Keep it clean and short.",
     headlineExamples: [
       "Jo, you're one in a melon",
-      "Thanks, Kate. You're simply tea-riffic",
       "Happy retirement, Pat. Time to un-wine-d",
       "Ben, you're a real fungi to work with",
+      "Kate, we think you're tea-riffic. Sorry, not sorry",
     ],
     imageMood:
       "light-hearted and goofy, with cheerful colours and a whimsical, silly feel",
