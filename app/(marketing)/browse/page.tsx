@@ -86,7 +86,7 @@ function HeroFan() {
   ].map((c, z) => ({ ...c, z, cat: byslug[c.slug] }))
 
   return (
-    <div className="relative grid min-h-[640px] place-items-center">
+    <div className="relative grid min-h-160 place-items-center">
       {/* An angled gradient square behind the cards. */}
       <div
         aria-hidden
@@ -102,7 +102,7 @@ function HeroFan() {
           key={c.slug}
           href={`/browse/${c.slug}`}
           aria-label={`${c.cat.label}: ${c.cat.cardTitle}`}
-          className="group @container absolute h-[400px] w-[300px] hover:z-10!"
+          className="group @container absolute h-100 w-75 hover:z-10!"
           style={{
             zIndex: c.z,
             transform: `rotate(${c.rotate}deg) translate(${c.tx}px, ${c.ty}px)`,
@@ -125,7 +125,7 @@ function HeroFan() {
 
       {/* Sig float — bottom right */}
       <div
-        className="hero-drift absolute right-[-10px] bottom-[40px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
+        className="hero-drift absolute right-[-10px] bottom-10 z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
         <span
@@ -142,7 +142,7 @@ function HeroFan() {
 
       {/* Sig float — top left */}
       <div
-        className="hero-drift absolute top-[40px] left-[-10px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
+        className="hero-drift absolute top-10 left-[-10px] z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2"
         style={{
           boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)",
           animationDelay: "-3s",
@@ -173,7 +173,7 @@ export default function CardsPage() {
       />
       {/* ===== HERO ===== */}
       <section className="py-20">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
+        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               A card for every occasion
@@ -185,7 +185,7 @@ export default function CardsPage() {
               <br />
               <span className="text-brand">worth marking</span>
             </h1>
-            <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-130 text-lg leading-relaxed text-muted-foreground">
               Pick the occasion, share one link, and the whole group signs from
               their own phone. AI designs the cover and drafts the opening note.
               You just say who it&apos;s for
@@ -231,7 +231,7 @@ export default function CardsPage() {
 
       {/* ===== OCCASIONS ===== */}
       <section id="occasions" className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Browse occasions
           </p>
@@ -245,7 +245,7 @@ export default function CardsPage() {
 
       {/* ===== HOW IT WORKS ===== */}
       <section id="how" className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             How it works
           </p>
@@ -276,7 +276,7 @@ export default function CardsPage() {
 
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             FAQs
           </p>
@@ -303,7 +303,7 @@ export default function CardsPage() {
 
       {/* ===== CTA BAND ===== */}
       <section className="border-t border-border bg-secondary/50">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 text-center md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-24 text-center md:px-15">
           <h2 className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             What&apos;s the occasion?
           </h2>

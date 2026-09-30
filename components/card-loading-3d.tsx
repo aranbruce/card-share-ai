@@ -83,7 +83,7 @@ export function CardLoading3D({
             <img
               src={imageUrl}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-70"
+              className="absolute inset-0 size-full object-cover opacity-70"
             />
           ) : (
             <div className="absolute inset-0" style={cover} />
@@ -99,12 +99,12 @@ export function CardLoading3D({
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
             <div
               className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-xl shadow-sm",
+                "flex size-11 items-center justify-center rounded-xl shadow-sm",
                 generating && "animate-pulse",
               )}
               style={{ background: `oklch(0.68 0.14 ${hue})` }}
             >
-              <Sparkles className="h-5 w-5 stroke-white" />
+              <Sparkles className="size-5 stroke-white" />
             </div>
             <p
               className="text-sm leading-relaxed font-medium"

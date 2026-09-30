@@ -64,7 +64,7 @@ export function HomeMarketingSections({
   return (
     <>
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Built for group cards
           </p>
@@ -90,7 +90,7 @@ export function HomeMarketingSections({
       </section>
 
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
             <div>
               <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">

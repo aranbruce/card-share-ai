@@ -19,7 +19,7 @@ export default function AuthLayout({
             style={{ aspectRatio: "3/4" }}
           >
             <div
-              className="h-full w-full"
+              className="size-full"
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.85 0.12 45) 0%, oklch(0.65 0.18 15) 100%)",
@@ -31,7 +31,7 @@ export default function AuthLayout({
             style={{ aspectRatio: "3/4" }}
           >
             <div
-              className="h-full w-full"
+              className="size-full"
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.88 0.1 80) 0%, oklch(0.7 0.14 60) 100%)",

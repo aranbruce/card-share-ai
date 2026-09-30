@@ -26,7 +26,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
     <main>
       {/* ===== HERO ===== */}
       <section className="py-20">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
+        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               {config.badge}
@@ -38,7 +38,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               <br />
               <span className="text-brand">{config.h1Pop}</span>
             </h1>
-            <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-130 text-lg leading-relaxed text-muted-foreground">
               {config.lede}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -115,7 +115,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
 
       {/* ===== HOW IT WORKS ===== */}
       <section id="how" className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             How it works
           </p>
@@ -145,7 +145,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
 
       {/* ===== USE CASES ===== */}
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             {config.usesEyebrow}
           </p>
@@ -169,7 +169,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
 
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             {config.faqEyebrow}
           </p>
@@ -196,7 +196,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
 
       {/* ===== RELATED CATEGORIES ===== */}
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             More occasions
           </p>
@@ -211,7 +211,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
 
       {/* ===== CTA BAND ===== */}
       <section className="border-t border-border bg-secondary/50">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 text-center md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-24 text-center md:px-15">
           <h2 className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             {config.ctaBandTitle}
           </h2>

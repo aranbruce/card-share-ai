@@ -77,7 +77,7 @@ export function CardTypeSelector({
           >
             {/* Colour swatch */}
             <div
-              className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl text-2xl"
+              className="mb-5 flex size-12 items-center justify-center rounded-xl text-2xl"
               style={{ background: `oklch(0.88 0.1 ${cardType.hue})` }}
             >
               {cardType.emoji}

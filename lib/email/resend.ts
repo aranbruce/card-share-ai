@@ -23,8 +23,7 @@ type SendEmailInput = {
 }
 
 export type SendEmailResult =
-  | { ok: true; id: string | null }
-  | { ok: false; error: string }
+  { ok: true; id: string | null } | { ok: false; error: string }
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY

@@ -13,21 +13,43 @@ const tailwindCssEntry = path.join(__dirname, "app/globals.css")
 export default defineConfig([
   ...nextVitals,
   ...nextTs,
-  ...tailwind.configs["flat/recommended"],
+  // ESLint 10 removed context.getFilename(); pinning the React version skips
+  // eslint-plugin-react's auto-detect path that still calls it.
   {
     settings: {
+      react: { version: "19.3" },
+    },
+  },
+  tailwind.configs.recommended,
+  {
+    plugins: { tailwindcss: tailwind },
+    settings: {
       tailwindcss: {
-        // v4: point at your main stylesheet (not tailwind.config.js).
-        // Resolves the same theme as `@tailwindcss/postcss` when you run the app.
-        config: tailwindCssEntry,
-        callees: ["classnames", "clsx", "ctl", "cva", "tv", "cn"],
-        // Marker / non-utility classes from shadcn + Radix (not generated utilities)
-        whitelist: ["toaster", "destructive", "origin-top-center"],
+        // v4: point at the main stylesheet (not tailwind.config.js).
+        cssConfigPath: tailwindCssEntry,
       },
     },
     rules: {
-      // Class order is handled by prettier-plugin-tailwindcss
-      "tailwindcss/classnames-order": "off",
+      // Autofix collapses unitless line-height ratios like leading-[0.95] into
+      // leading-0.95, which emits no CSS in Tailwind v4 (bare leading-N is a
+      // spacing multiple). Keep the other recommended rules on; leave these
+      // arbitrary values alone.
+      "tailwindcss/no-unnecessary-arbitrary-value": "off",
+      // Marker / animation classes from local CSS. `inputs` silences a false
+      // positive on `clsx(inputs)` in lib/utils.ts (variable name, not a class).
+      "tailwindcss/no-custom-classname": [
+        "warn",
+        {
+          whitelist: [
+            "inputs",
+            "hero-drift",
+            "demo-float",
+            "card-pastel",
+            "card-3d-.*",
+            "ai-refine-shimmer-.*",
+          ],
+        },
+      ],
     },
   },
   prettier,

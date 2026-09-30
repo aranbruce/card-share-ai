@@ -42,7 +42,7 @@ function CardDetailLayout({
 }) {
   return (
     <MessageFontVariables className="flex flex-1 flex-col md:grid md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_420px]">
-      <main className="flex flex-col gap-7 px-10 py-10 md:h-[calc(100dvh-56px)] md:overflow-y-auto md:px-12">
+      <main className="flex flex-col gap-7 p-10 md:h-[calc(100dvh-56px)] md:overflow-y-auto md:px-12">
         <Button
           asChild
           variant="outline"
@@ -273,9 +273,9 @@ export function CardDetailPageClient({
                 className="text-xs"
               >
                 {isRegeneratingImage ? (
-                  <Spinner className="h-3 w-3" />
+                  <Spinner className="size-3" />
                 ) : (
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3" />
                 )}
                 Edit image
               </ChipButton>
@@ -285,9 +285,9 @@ export function CardDetailPageClient({
                 className="text-xs"
               >
                 {isRegeneratingHeadline ? (
-                  <Spinner className="h-3 w-3" />
+                  <Spinner className="size-3" />
                 ) : (
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3" />
                 )}
                 Edit title
               </ChipButton>
@@ -320,9 +320,9 @@ export function CardDetailPageClient({
                       if (editImageFileRef.current)
                         editImageFileRef.current.value = ""
                     }}
-                    className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                    className="absolute top-2 right-2 size-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="size-3" />
                   </Button>
                 </div>
               )}
@@ -335,7 +335,7 @@ export function CardDetailPageClient({
                     !isReadingImageFile && editImageFileRef.current?.click()
                   }
                   disabled={isRegeneratingImage}
-                  className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                  className="absolute top-1/2 left-1 size-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                   aria-label="Attach a photo"
                   title="Attach a photo"
                 >
@@ -366,10 +366,10 @@ export function CardDetailPageClient({
                   size="icon"
                   variant="ghost"
                   aria-label="Close image edit panel"
-                  className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                  className="absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-full"
                   onClick={closeImagePanel}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="size-3.5" />
                 </Button>
               </div>
             </div>
@@ -394,10 +394,10 @@ export function CardDetailPageClient({
                 size="icon"
                 variant="ghost"
                 aria-label="Close title edit panel"
-                className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                className="absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-full"
                 onClick={() => setOpenAiPanel(null)}
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="size-3.5" />
               </Button>
             </div>
           )}

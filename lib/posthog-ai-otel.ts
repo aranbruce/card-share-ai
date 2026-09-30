@@ -1,6 +1,8 @@
+import { OpenTelemetry } from "@ai-sdk/otel"
 import { NodeSDK } from "@opentelemetry/sdk-node"
 import { resourceFromAttributes } from "@opentelemetry/resources"
 import { PostHogSpanProcessor } from "@posthog/ai/otel"
+import { registerTelemetry } from "ai"
 
 let sdk: NodeSDK | null = null
 
@@ -19,8 +21,8 @@ function getPostHogHost(): string {
 export async function startPostHogAiOtel(): Promise<void> {
   if (sdk) return
 
-  const apiKey = getPostHogToken()
-  if (!apiKey) return
+  const projectToken = getPostHogToken()
+  if (!projectToken) return
 
   const instance = new NodeSDK({
     resource: resourceFromAttributes({
@@ -29,7 +31,7 @@ export async function startPostHogAiOtel(): Promise<void> {
     // NodeSDK ^0.218: spanProcessors (plural) is the supported option; spanProcessor is deprecated.
     spanProcessors: [
       new PostHogSpanProcessor({
-        apiKey,
+        projectToken,
         host: getPostHogHost(),
       }),
     ],
@@ -37,6 +39,16 @@ export async function startPostHogAiOtel(): Promise<void> {
 
   try {
     await instance.start()
+    registerTelemetry(
+      new OpenTelemetry({
+        enrichSpan: ({ runtimeContext }) => ({
+          "posthog.distinct_id":
+            typeof runtimeContext?.distinctId === "string"
+              ? runtimeContext.distinctId
+              : undefined,
+        }),
+      }),
+    )
     sdk = instance
   } catch (error) {
     console.error("Failed to start PostHog AI OpenTelemetry:", error)

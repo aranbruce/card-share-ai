@@ -17,15 +17,15 @@ export function SlackConversationMockup({
     >
       <div className="flex items-center gap-2 border-b border-border px-4 py-3 font-mono text-[11px] tracking-widest text-muted-foreground/85 uppercase">
         <div className="flex gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-border" />
-          <div className="h-2.5 w-2.5 rounded-full bg-border" />
-          <div className="h-2.5 w-2.5 rounded-full bg-border" />
+          <div className="size-2.5 rounded-full bg-border" />
+          <div className="size-2.5 rounded-full bg-border" />
+          <div className="size-2.5 rounded-full bg-border" />
         </div>
         # general
       </div>
       <div className="flex flex-col gap-0 p-4 text-sm">
         <div className="flex items-start gap-3 rounded-lg px-2 py-1.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500 text-xs font-bold text-white">
+          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500 text-xs font-bold text-white">
             A
           </div>
           <div>
@@ -40,7 +40,7 @@ export function SlackConversationMockup({
         </div>
 
         <div className="mt-1 flex items-start gap-3 rounded-lg px-2 py-1.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">
+          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">
             C
           </div>
           <div>
@@ -59,7 +59,7 @@ export function SlackConversationMockup({
         </div>
 
         <div className="mt-1 flex items-start gap-3 rounded-lg px-2 py-1.5">
-          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">
+          <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">
             C
           </div>
           <div className="min-w-0">
@@ -76,7 +76,7 @@ export function SlackConversationMockup({
             </p>
             <div className="mt-2 rounded-lg border border-border bg-background p-3">
               <div className="flex items-center gap-2">
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-linear-to-br from-rose-300 to-pink-500" />
+                <div className="size-10 shrink-0 overflow-hidden rounded-md bg-linear-to-br from-rose-300 to-pink-500" />
                 <div className="min-w-0">
                   <p className="truncate text-xs font-semibold text-foreground">
                     Happy Birthday, Emily!

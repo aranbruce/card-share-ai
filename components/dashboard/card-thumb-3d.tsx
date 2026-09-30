@@ -86,13 +86,13 @@ export function CardThumb3D({
               className="object-cover"
             />
           ) : (
-            <div className="h-full w-full" style={fallbackCover} />
+            <div className="size-full" style={fallbackCover} />
           )}
           <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
           {/* Gloss that shifts as the card turns on hover */}
           <div className="absolute inset-0 bg-linear-to-br from-white/25 via-transparent to-transparent opacity-70 transition-opacity duration-500 group-hover:opacity-40" />
           {headline ? (
-            <div className="absolute right-0 bottom-0 left-0 card-preview-headline-inset text-center text-white">
+            <div className="absolute inset-x-0 bottom-0 card-preview-headline-inset text-center text-white">
               <p className="card-preview-headline font-bold">{headline}</p>
             </div>
           ) : null}

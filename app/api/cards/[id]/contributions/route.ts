@@ -226,8 +226,7 @@ export async function PATCH(
     const positionX = (body.positionX ?? body.position_x) as number | undefined
     const positionY = (body.positionY ?? body.position_y) as number | undefined
     const widthPercent = (body.widthPercent ?? body.width_percent) as
-      | number
-      | undefined
+      number | undefined
     const pageIndex = (body.pageIndex ?? body.page_index) as number | undefined
     const fontSize = (body.fontSize ?? body.font_size) as number | undefined
     const hasGiphyUrl =

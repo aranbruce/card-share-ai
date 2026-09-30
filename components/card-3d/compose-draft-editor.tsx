@@ -18,7 +18,7 @@ export function ComposeCanvasEmptyHint({
       className={
         variant === "centered"
           ? "pointer-events-none absolute inset-0 z-1 flex items-center justify-center px-8"
-          : "pointer-events-none absolute right-0 bottom-5 left-0 z-1 flex justify-center px-6"
+          : "pointer-events-none absolute inset-x-0 bottom-5 z-1 flex justify-center px-6"
       }
       aria-hidden
     >

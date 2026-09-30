@@ -13,8 +13,7 @@ export function DashboardSignOutButton() {
       className="text-muted-foreground hover:text-foreground"
       onClick={async () => {
         await supabase.auth.signOut()
-        // Full page load, not router.push: the client router can reuse a response
-        // for "/" fetched while signed in, which the proxy redirected to /dashboard.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full page load: client router can reuse a "/" response fetched while signed in (proxy redirected to /dashboard)
         window.location.assign("/")
       }}
     >

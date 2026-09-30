@@ -83,8 +83,9 @@ export default function PrivacyPage() {
       <p>
         We use trusted service providers for hosting, databases, authentication,
         email, analytics, AI, and (if you use it) Slack. They process data on
-        our instructions to operate CardShare.ai. When you share a card link, you
-        control who receives it. We do not publish cards in a public directory.
+        our instructions to operate CardShare.ai. When you share a card link,
+        you control who receives it. We do not publish cards in a public
+        directory.
       </p>
 
       <h2>Retention</h2>

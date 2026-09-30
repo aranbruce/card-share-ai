@@ -18,11 +18,9 @@ let loading: Promise<Loaded> | null = null
 /** Loads the 3D card's code once, falling back to the flat card on failure or timeout. */
 function loadCardBook3D(): Promise<Loaded> {
   loading ??= Promise.race([
-    import("./card-book-3d").then(
-      (m): Loaded => ({
-        default: m.CardBook3D as ComponentType<CardBook3DProps>,
-      }),
-    ),
+    import("./card-book-3d").then((m): Loaded => ({
+      default: m.CardBook3D as ComponentType<CardBook3DProps>,
+    })),
     new Promise<Loaded>((_, reject) =>
       window.setTimeout(() => reject(new Error("timed out")), LOAD_TIMEOUT_MS),
     ),

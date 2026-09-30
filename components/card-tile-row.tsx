@@ -46,7 +46,7 @@ export function CardTileRow({ tiles }: { tiles: readonly CardTile[] }) {
           <Link
             key={tile.key}
             href={tile.href}
-            className="group w-[180px] shrink-0 snap-start snap-always sm:w-[200px] md:w-[220px]"
+            className="group w-45 shrink-0 snap-start snap-always sm:w-50 md:w-55"
           >
             <div
               className="card-preview-aspect relative overflow-hidden rounded-2xl transition-all duration-200 group-hover:translate-y-[-3px] group-hover:shadow-[0_26px_48px_-28px_rgba(20,14,6,0.32)]"
