@@ -17,7 +17,7 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 - **Backend**: Next.js API Routes
 - **Database**: Supabase (PostgreSQL) with Row Level Security
 - **AI Services**:
-  - Text Generation: Vercel AI Gateway (default `anthropic/claude-opus-5.5`; override with `AI_TEXT_MODEL`)
+  - Text Generation: Vercel AI Gateway (default `google/gemini-3.8-flash`; override with `AI_TEXT_MODEL`)
   - Image Generation: Vercel AI SDK (Gemini 3.1 Flash Image Preview)
 - **Authentication**: Supabase Auth
 
@@ -41,8 +41,8 @@ RESEND_API_KEY=your_resend_api_key
 RESEND_FROM_EMAIL="CardShareAI <noreply@your-domain.com>"
 SEND_EMAIL_HOOK_SECRET="v1,whsec_<secret-from-supabase-dashboard>"
 
-# Optional: text model for generate-headline / generate-message. Defaults to anthropic/claude-opus-5.5 via the gateway.
-# AI_TEXT_MODEL=google/gemini-3.8-flash
+# Optional: text model for generate-headline / generate-message. Defaults to google/gemini-3.8-flash via the gateway.
+# AI_TEXT_MODEL=anthropic/claude-opus-5.5
 
 # PostHog (EU Cloud) — project API key from eu.posthog.com project settings
 NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_your_project_token

@@ -8,7 +8,7 @@ CardShareAI is an AI-powered virtual greeting card creator. Users create persona
 - **Package manager**: pnpm 9.8.0 (Node 24 LTS via `.nvmrc`; see README)
 - **Database**: Supabase (PostgreSQL with RLS) — `@supabase/supabase-js` 2.x, `@supabase/ssr` 0.10.x
 - **Auth**: Supabase Auth (Google + GitHub OAuth)
-- **AI**: Vercel AI SDK 6.x (`ai` package); Vercel AI Gateway for text (`anthropic/claude-opus-5.5` by default), Gemini for image generation
+- **AI**: Vercel AI SDK 6.x (`ai` package); Vercel AI Gateway for text (`google/gemini-3.8-flash` by default), Gemini for image generation
 - **Styling**: Tailwind CSS 4.2.4, shadcn/ui (Radix UI primitives, Lucide icons)
 - **Testing**: Vitest 4.x (unit), Playwright 1.60.x (E2E)
 
@@ -85,7 +85,7 @@ Copy `.env.local` from a team member or pull via `vercel env pull`. Key variable
 | `POSTGRES_URL`                      | Database connection string                                                        |
 | `GIPHY_API_KEY`                     | Giphy API for GIF search                                                          |
 | `AI_GATEWAY_API_KEY`                | Vercel AI Gateway key                                                             |
-| `AI_TEXT_MODEL`                     | Override default text model (optional, defaults to `anthropic/claude-opus-5.5`)   |
+| `AI_TEXT_MODEL`                     | Override default text model (optional, defaults to `google/gemini-3.8-flash`)     |
 | `AI_IMAGE_GATEWAY_MODEL`            | Override card cover image model (default `google/gemini-3.1-flash-image-preview`) |
 | `E2E_EMAIL` / `E2E_PASSWORD`        | Test account credentials for Playwright                                           |
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project API key (EU Cloud)                                                |
