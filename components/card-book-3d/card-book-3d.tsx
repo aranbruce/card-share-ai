@@ -1723,17 +1723,10 @@ export function CardBook3D({
     editor.style.transform = "none"
     editorFlatRef.current = true
     try {
-      // An empty note is not drawn on the 3D page, so a click there cannot aim for it: one
-      // that finds nothing else on the page writes in it.
-      const field =
-        nearestFieldInFlatEditor(editor, x, y) ??
-        editor.querySelector<HTMLElement>(
-          "[data-draggable-note] [data-inline-edit-empty]",
-        )
+      let target: Element | null = nearestFieldInFlatEditor(editor, x, y)
       const box = editor.getBoundingClientRect()
       let clientX = box.left + x
       let clientY = box.top + y
-      let target: Element | null = field
       if (!target && tap) {
         // Nothing to type into there: shift the flat editor so the point is under the
         // pointer (on screen) and click whatever is there.
@@ -1743,6 +1736,22 @@ export function CardBook3D({
         clientY = tap.y
         const hit = document.elementFromPoint(clientX, clientY)
         target = hit && editor.contains(hit) ? hit : null
+        // Blank page (nothing there to click, such as a spot to place a note): write in the
+        // user's own note on the page instead, carrying on at its end. An empty note is not
+        // even drawn on the 3D page, so a click could not aim for it.
+        if (!target?.closest(CLICKABLE_IN_EDITOR)) {
+          const note = nearestFieldInFlatEditor(
+            editor,
+            x,
+            y,
+            OWN_NOTE_FIELD,
+            Infinity,
+          )
+          if (note) {
+            target = note
+            ;({ x: clientX, y: clientY } = textEndPoint(note))
+          }
+        }
       }
       if (!target) return
       pendingClickRef.current = null
@@ -1983,6 +1992,11 @@ function editedPageFrame(progress: number, lift: number, side: Side) {
 
 /** Slack around a text field (editor px) within which a click still counts as on it. */
 const TEXT_FIELD_SLOP = 14
+/** A field in a note the user may write in (their own, e.g. the creator's message). */
+const OWN_NOTE_FIELD = "[data-draggable-note] [data-inline-edit-own]"
+/** What a click on the editor does something with, rather than landing on blank page. */
+const CLICKABLE_IN_EDITOR =
+  "button, a[href], input, textarea, select, [role='button'], [data-inline-edit]"
 
 /**
  * The inline text field at (or within a few px of) a point in the editor's own layout, found
@@ -2058,17 +2072,28 @@ function nearestTextField(
   }
 }
 
+/** Screen point just after a field's last character, where a click carries on writing. */
+function textEndPoint(field: HTMLElement): { x: number; y: number } {
+  const range = document.createRange()
+  range.selectNodeContents(field)
+  const rects = range.getClientRects()
+  const last = rects[rects.length - 1]
+  if (last) return { x: last.right, y: last.top + last.height / 2 }
+  const box = field.getBoundingClientRect()
+  return { x: box.left, y: box.top + box.height / 2 }
+}
+
 function nearestFieldInFlatEditor(
   editor: HTMLElement,
   x: number,
   y: number,
+  selector = "[data-inline-edit]",
+  slop = TEXT_FIELD_SLOP,
 ): HTMLElement | null {
   const origin = editor.getBoundingClientRect()
   let best: HTMLElement | null = null
-  let bestDistance = TEXT_FIELD_SLOP
-  for (const field of editor.querySelectorAll<HTMLElement>(
-    "[data-inline-edit]",
-  )) {
+  let bestDistance = slop
+  for (const field of editor.querySelectorAll<HTMLElement>(selector)) {
     // Anywhere on a note (its padding or GIF) counts as its text.
     const box = (
       field.closest<HTMLElement>("[data-draggable-note]") ?? field
