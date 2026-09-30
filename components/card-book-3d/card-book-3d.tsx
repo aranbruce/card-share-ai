@@ -144,8 +144,13 @@ const KEYBOARD_WAIT_MS = 700
 const CARET_REVEAL_WAIT_MS = 200
 /** Room kept around the note when bringing it into view. */
 const REVEAL_MARGIN_PX = 16
-/** Longest a touch tap waits for its click before it is handled without one. */
-const TAP_CLICK_WAIT_MS = 400
+/**
+ * Longest a touch tap waits for its click before it is handled without one. Handled without
+ * it, a tap cannot raise the phone's keyboard, so this must outlast a slow click: iOS can
+ * deliver it well after the finger lifts (waiting out a possible double tap, or while the
+ * page is busy, e.g. animating GIFs on the card).
+ */
+const TAP_CLICK_WAIT_MS = 1000
 /** Longest the card waits for its cover image and fonts before showing anyway. */
 const REVEAL_TIMEOUT_MS = 2500
 /** Cross-fade from the placeholder cover to the 3D card. */
@@ -1341,7 +1346,15 @@ export function CardBook3D({
         const heldByNote = onNote
         // A note drag or resize only keeps editing open for that one interaction.
         if (!pointerDown) onNote = false
-        if (pointerDown || heldByNote || pendingClickRef.current) return
+        // A touch tap on the card is handled on its click, which may still be on its way.
+        if (
+          pointerDown ||
+          heldByNote ||
+          pendingClickRef.current ||
+          pendingTapRef.current
+        ) {
+          return
+        }
         const active = document.activeElement
         if (inEditor(active) || inChrome(active)) return
         editPageAtRef.current(null)
@@ -1605,7 +1618,7 @@ export function CardBook3D({
     if (cancelled) return
     // A touch tap is handled on its click: phones send emulated mouse events after the tap
     // that would move focus off a field it opens, and only a tap or click lets them focus a
-    // field and raise the keyboard. The click normally follows at once.
+    // field and raise the keyboard. The click normally follows within a few hundred ms.
     if (e.pointerType !== "mouse") {
       const tap = { x: e.clientX, y: e.clientY, timer: 0 }
       window.clearTimeout(pendingTapRef.current?.timer)
@@ -1632,8 +1645,22 @@ export function CardBook3D({
   const handleTap = (clientX: number, clientY: number) => {
     const container = containerRef.current
     if (!container) return
-    // Clicking around the page being edited closes the editor.
     if (editPage !== null) {
+      // Until the camera arrives the editor cannot be clicked (e.g. a page that opened itself
+      // for editing), so a click on that page lands here: use it on the page, as the editor
+      // would, rather than closing it and needing a second click.
+      const point = overlayReady
+        ? null
+        : (sceneRef.current?.pickPage(
+            clientX,
+            clientY,
+            editPage % 2 === 1 ? "left" : "right",
+          ) ?? null)
+      if (point) {
+        openPageAt(editPage, point, { x: clientX, y: clientY })
+        return
+      }
+      // Clicking around the page being edited closes the editor.
       editPageAt(null)
       return
     }
@@ -1696,7 +1723,13 @@ export function CardBook3D({
     editor.style.transform = "none"
     editorFlatRef.current = true
     try {
-      const field = nearestFieldInFlatEditor(editor, x, y)
+      // An empty note is not drawn on the 3D page, so a click there cannot aim for it: one
+      // that finds nothing else on the page writes in it.
+      const field =
+        nearestFieldInFlatEditor(editor, x, y) ??
+        editor.querySelector<HTMLElement>(
+          "[data-draggable-note] [data-inline-edit-empty]",
+        )
       const box = editor.getBoundingClientRect()
       let clientX = box.left + x
       let clientY = box.top + y
