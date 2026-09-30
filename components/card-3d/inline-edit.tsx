@@ -430,6 +430,10 @@ export const InlineEdit = forwardRef<
         <div
           ref={editRef}
           data-inline-edit
+          // Marks a field the user can write in that has nothing in it yet (see CardBook3D).
+          data-inline-edit-empty={
+            editable && onChange && !value.trim() ? "" : undefined
+          }
           onPointerDown={
             canDragNote && !isEditing
               ? (e) => {

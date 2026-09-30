@@ -1723,7 +1723,13 @@ export function CardBook3D({
     editor.style.transform = "none"
     editorFlatRef.current = true
     try {
-      const field = nearestFieldInFlatEditor(editor, x, y)
+      // An empty note is not drawn on the 3D page, so a click there cannot aim for it: one
+      // that finds nothing else on the page writes in it.
+      const field =
+        nearestFieldInFlatEditor(editor, x, y) ??
+        editor.querySelector<HTMLElement>(
+          "[data-draggable-note] [data-inline-edit-empty]",
+        )
       const box = editor.getBoundingClientRect()
       let clientX = box.left + x
       let clientY = box.top + y
