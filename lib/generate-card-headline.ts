@@ -33,7 +33,7 @@ export type GenerateCardHeadlineParams = {
 
 export async function generateCardHeadline(
   params: GenerateCardHeadlineParams,
-  options?: { distinctId?: string | null },
+  options?: { distinctId?: string | null; model?: string },
 ): Promise<string> {
   const fields = resolvePromptFields(params)
   const flags = {
@@ -48,7 +48,7 @@ export async function generateCardHeadline(
   })
 
   const { output } = await generateText({
-    model: getTextModel(),
+    model: options?.model ?? getTextModel(),
     output: Output.object({ schema: cardHeadlineSchema }),
     messages,
     system: HEADLINE_SYSTEM_PROMPT,
