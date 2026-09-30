@@ -100,6 +100,30 @@ describe("assembleHeadlineUserPrompt", () => {
   it("exports a system prompt", () => {
     expect(HEADLINE_SYSTEM_PROMPT).toContain("creative greeting card writer")
   })
+
+  it("adds the matching tone guide and examples", () => {
+    const prompt = assembleHeadlineUserPrompt({
+      tone: "Dry",
+      cardType: "birthday",
+      addressedTo: "Alex",
+    })
+    expect(prompt).toContain("Tone guide (Dry): Deadpan and understated")
+    expect(prompt).toContain("- Five years, Sarah. Would recommend")
+    expect(prompt.endsWith("Write a headline for this card.")).toBe(true)
+  })
+
+  it("omits the tone guide for an unknown or missing tone", () => {
+    expect(
+      assembleHeadlineUserPrompt({ cardType: "birthday", addressedTo: "Alex" }),
+    ).not.toContain("Tone guide")
+    expect(
+      assembleHeadlineUserPrompt({
+        tone: "Mysterious",
+        cardType: "birthday",
+        addressedTo: "Alex",
+      }),
+    ).not.toContain("Tone guide")
+  })
 })
 
 describe("assembleMessageUserPrompt", () => {

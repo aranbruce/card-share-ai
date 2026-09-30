@@ -16,7 +16,7 @@ const cardHeadlineSchema = z.object({
   headline: z
     .string()
     .describe(
-      "A catchy, celebratory headline for the card. Plain text only — no surrounding quotation marks.",
+      "The card's front headline, written in the requested tone. Plain text only, no surrounding quotation marks.",
     ),
 })
 
