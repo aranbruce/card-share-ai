@@ -3,6 +3,7 @@ import { NodeSDK } from "@opentelemetry/sdk-node"
 import { resourceFromAttributes } from "@opentelemetry/resources"
 import { PostHogSpanProcessor } from "@posthog/ai/otel"
 import { registerTelemetry } from "ai"
+import { setPostHogAiSpanProcessor } from "@/lib/posthog-ai-flush"
 
 let sdk: NodeSDK | null = null
 
@@ -24,17 +25,16 @@ export async function startPostHogAiOtel(): Promise<void> {
   const projectToken = getPostHogToken()
   if (!projectToken) return
 
+  const processor = new PostHogSpanProcessor({
+    projectToken,
+    host: getPostHogHost(),
+  })
   const instance = new NodeSDK({
     resource: resourceFromAttributes({
       "service.name": "card-share-ai",
     }),
     // NodeSDK ^0.218: spanProcessors (plural) is the supported option; spanProcessor is deprecated.
-    spanProcessors: [
-      new PostHogSpanProcessor({
-        projectToken,
-        host: getPostHogHost(),
-      }),
-    ],
+    spanProcessors: [processor],
   })
 
   try {
@@ -50,6 +50,7 @@ export async function startPostHogAiOtel(): Promise<void> {
       }),
     )
     sdk = instance
+    setPostHogAiSpanProcessor(processor)
   } catch (error) {
     console.error("Failed to start PostHog AI OpenTelemetry:", error)
   }

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server"
+import { after, NextRequest, NextResponse } from "next/server"
+import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { generateCardCoverArt } from "@/lib/generate-card-cover-art"
 import { buildCardCoverArtContext } from "@/lib/generate-card-image"
 import { getDistinctIdFromRequest } from "@/lib/posthog-distinct-id-from-request"
@@ -118,6 +119,8 @@ export async function POST(request: NextRequest) {
       previous,
     })
 
+    // Registered before the call so spans are flushed on success and failure.
+    after(flushPostHogAiSpans)
     const imageUrl = await generateCardCoverArt(ctx, {
       persist: true,
       distinctId,

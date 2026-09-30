@@ -24,6 +24,7 @@ import {
 } from "./internal-api"
 import type { CardRow } from "@/lib/create-card"
 import { cardPreviewImagePath } from "@/lib/card-preview"
+import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { SLACK_HELP_MESSAGE, type MessagesTabOpen } from "./slack-app-home"
 
 const CARD_TYPES = [
@@ -44,25 +45,33 @@ async function generateAndCreateCard(
   userContext?: string,
 ): Promise<CardRow | null> {
   const telemetryOptions = { distinctId: supabaseUserId }
-  const headline = await generateHeadline(
-    {
-      cardType,
-      recipientName,
-      tone,
-      userContext,
-    },
-    telemetryOptions,
-  )
-  const imageUrl = await generateImageUrl(
-    {
-      cardType,
-      recipientName,
-      coverHeadline: headline,
-      tone,
-      userContext,
-    },
-    telemetryOptions,
-  )
+  let headline: string
+  let imageUrl: string
+  try {
+    headline = await generateHeadline(
+      {
+        cardType,
+        recipientName,
+        tone,
+        userContext,
+      },
+      telemetryOptions,
+    )
+    imageUrl = await generateImageUrl(
+      {
+        cardType,
+        recipientName,
+        coverHeadline: headline,
+        tone,
+        userContext,
+      },
+      telemetryOptions,
+    )
+  } finally {
+    // Bot work already runs after the Slack response (inside `after`), so await
+    // the flush here rather than registering another `after` callback.
+    await flushPostHogAiSpans()
+  }
 
   return createBotCard(supabaseUserId, {
     cardType,
