@@ -312,7 +312,7 @@ export function HomeDemoPanel() {
                       style={{ color: `oklch(0.28 0.07 ${BIRTHDAY_HUE})` }}
                     >
                       {phase === "headline"
-                        ? "Writing your headline…"
+                        ? "Creating your card…"
                         : phase === "cover"
                           ? "Designing your cover…"
                           : "Hit Generate to see Mira's card"}
