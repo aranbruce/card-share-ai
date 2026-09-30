@@ -100,7 +100,6 @@ describe("createCardForUser", () => {
     } as unknown as Parameters<typeof createCardForUser>[0]
 
     await createCardForUser(supabase, "user-1", { ...params, extraPages: NaN })
-    expect(capturedInsertData).not.toBeNull()
-    expect(capturedInsertData!.extra_pages).toBe(0)
+    expect(capturedInsertData).toMatchObject({ extra_pages: 0 })
   })
 })

@@ -267,7 +267,7 @@ export function GiphyPicker({
              * forces every cell in a row to the row height, so previews looked like
              * identical wide strips even when aspect ratios differed.
              */
-            <div className="max-h-[min(55vh,28rem)] min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto pb-2">
+            <div className="max-h-[min(55vh,28rem)] min-h-0 overflow-x-hidden overflow-y-auto pb-2 scrollbar-gutter-stable">
               <div className="columns-2 gap-x-3 [column-fill:balance] sm:columns-3">
                 {gifs.map((gif) => {
                   const isSelected = (selectedUrl ?? null) === gif.gifUrl

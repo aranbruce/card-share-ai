@@ -4,13 +4,13 @@
 
 CardShareAI is an AI-powered virtual greeting card creator. Users create personalized cards with AI-generated text and images, and can invite group contributions via shareable links.
 
-- **Framework**: Next.js 16.2.5 (App Router), React 19.2.6, TypeScript 6.0.3
+- **Framework**: Next.js 16.3.8 (App Router), React 19.3, TypeScript 6.0.3
 - **Package manager**: pnpm 9.8.0 (Node 24 LTS via `.nvmrc`; see README)
-- **Database**: Supabase (PostgreSQL with RLS) — `@supabase/supabase-js` 2.x, `@supabase/ssr` 0.10.x
+- **Database**: Supabase (PostgreSQL with RLS) — `@supabase/supabase-js` 2.x, `@supabase/ssr` 0.12.x
 - **Auth**: Supabase Auth (Google + GitHub OAuth)
-- **AI**: Vercel AI SDK 6.x (`ai` package); Vercel AI Gateway for text (`google/gemini-3.8-flash` by default for headlines and messages), Gemini for image generation
-- **Styling**: Tailwind CSS 4.2.4, shadcn/ui (Radix UI primitives, Lucide icons)
-- **Testing**: Vitest 4.x (unit), Playwright 1.60.x (E2E)
+- **AI**: Vercel AI SDK 7.x (`ai` package); Vercel AI Gateway for text (`google/gemini-3.8-flash` by default for headlines and messages), Gemini for image generation
+- **Styling**: Tailwind CSS 4.3.x, shadcn/ui (Radix UI primitives, Lucide icons)
+- **Testing**: Vitest 5.x (unit), Playwright 1.63.x (E2E)
 
 ## Before Pushing Changes
 

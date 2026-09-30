@@ -34,18 +34,15 @@ export default defineConfig([
       "tailwindcss/classnames-order": "off",
       // v4.4 recommended flags shorthand and spacing-number rewrites that this
       // codebase still writes as explicit utilities and arbitrary values.
+      // Follow-up: enable and clean up (~180 / ~77 hits).
       "tailwindcss/enforces-shorthand": "off",
       "tailwindcss/no-unnecessary-arbitrary-value": "off",
-      "tailwindcss/enforces-canonical-classname": "off",
-      "tailwindcss/no-contradicting-classname": "off",
-      // Marker / non-utility classes from shadcn, Radix, and local CSS
+      // Marker / animation classes from local CSS. `inputs` silences a false
+      // positive on `clsx(inputs)` in lib/utils.ts (variable name, not a class).
       "tailwindcss/no-custom-classname": [
         "warn",
         {
           whitelist: [
-            "toaster",
-            "destructive",
-            "origin-top-center",
             "inputs",
             "hero-drift",
             "demo-float",
