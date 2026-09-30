@@ -2,7 +2,8 @@ import { generateCardHeadline } from "@/lib/generate-card-headline"
 import { getDistinctIdFromRequest } from "@/lib/posthog-distinct-id-from-request"
 import { resolveCardAiImages } from "@/lib/resolve-card-ai-images"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
-import { NextRequest, NextResponse } from "next/server"
+import { after, NextRequest, NextResponse } from "next/server"
+import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 
 export async function POST(request: NextRequest) {
   const rateLimit = checkFixedWindowRateLimit(request, {
@@ -45,6 +46,8 @@ export async function POST(request: NextRequest) {
 
     const { attached, previous } = await resolveCardAiImages(body)
 
+    // Registered before the call so spans are flushed on success and failure.
+    after(flushPostHogAiSpans)
     const text = await generateCardHeadline(
       {
         cardType,
