@@ -44,7 +44,7 @@ export default function TermsPage() {
 
       <h2>Your content</h2>
       <p>
-        You keep ownership of content you submit. You give us a licence to host,
+        You keep ownership of content you submit. You give us a license to host,
         display, reproduce, and process that content (including through AI) so
         we can operate the service, show cards to people with your links, and
         improve our tools. You confirm you have the right to use any names,

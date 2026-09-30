@@ -15,36 +15,54 @@ const caveat = Caveat({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-message-caveat",
+  // Card surfaces load these on demand (see card-book-3d); preloading them on every
+  // page competed with the page font and delayed it, shifting the layout when it swapped.
+  preload: false,
 })
 
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-message-dancing-script",
+  // Card surfaces load these on demand (see card-book-3d); preloading them on every
+  // page competed with the page font and delayed it, shifting the layout when it swapped.
+  preload: false,
 })
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-message-playfair",
+  // Card surfaces load these on demand (see card-book-3d); preloading them on every
+  // page competed with the page font and delayed it, shifting the layout when it swapped.
+  preload: false,
 })
 
 const lora = Lora({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-message-lora",
+  // Card surfaces load these on demand (see card-book-3d); preloading them on every
+  // page competed with the page font and delayed it, shifting the layout when it swapped.
+  preload: false,
 })
 
 const pacifico = Pacifico({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-message-pacifico",
+  // Card surfaces load these on demand (see card-book-3d); preloading them on every
+  // page competed with the page font and delayed it, shifting the layout when it swapped.
+  preload: false,
 })
 
 const merriweather = Merriweather({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-message-merriweather",
+  // Card surfaces load these on demand (see card-book-3d); preloading them on every
+  // page competed with the page font and delayed it, shifting the layout when it swapped.
+  preload: false,
 })
 
 const MESSAGE_FONT_VARIABLE_CLASSES = [

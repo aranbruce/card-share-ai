@@ -72,6 +72,8 @@ export function buildPageMetadata({
       description,
       images: imageUrl ? [imageUrl] : [DEFAULT_OG_IMAGE_PATH],
     },
-    robots,
+    // Only when set: a `robots: undefined` key would replace the root layout's robots
+    // (which keeps preview deployments out of search) rather than inherit it.
+    ...(robots ? { robots } : {}),
   }
 }

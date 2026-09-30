@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
 import { HomeDemoPanel } from "@/components/home-demo-panel"
@@ -8,7 +7,6 @@ import { HomeMarketingSections } from "@/components/home-marketing-sections"
 import { getAppUrl } from "@/lib/app-url"
 import { occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata, DEFAULT_DESCRIPTION } from "@/lib/site-metadata"
-import { createClient } from "@/lib/supabase/server"
 
 export const metadata: Metadata = buildPageMetadata({
   title: "AI Group Greeting Cards for Teams & Slack",
@@ -16,16 +14,8 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/",
 })
 
-export default async function HomePage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect("/dashboard")
-  }
-
+// Signed-in visitors are sent to /dashboard by `proxy.ts`, so this page can be static.
+export default function HomePage() {
   const appHostname = getAppUrl().replace(/^https?:\/\//, "")
 
   return (
@@ -34,7 +24,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-[1440px] px-6 md:px-15">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
-              Greeting cards,
+              Group greeting cards,
               <br />
               <span className="text-muted-foreground">
                 generated in seconds,

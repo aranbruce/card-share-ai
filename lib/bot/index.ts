@@ -335,7 +335,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
             id: "context",
             label: "Context",
             placeholder:
-              "Any details to personalise the card? e.g. loves botanical illustration, just got promoted, turning 30",
+              "Any details to personalize the card? e.g. loves botanical illustration, just got promoted, turning 30",
             multiline: true,
             optional: true,
           },

@@ -31,7 +31,7 @@ const TONE_DEFINITIONS: Record<CardTone, ToneDefinition> = {
       "Everything we built, we built with you",
     ],
     imageMood:
-      "soft, warm and tender, with gentle light and cosy, personal detail",
+      "soft, warm and tender, with gentle light and cozy, personal detail",
   },
   Roast: {
     headlineStyle:
@@ -43,7 +43,7 @@ const TONE_DEFINITIONS: Record<CardTone, ToneDefinition> = {
       "Promoted, Mia? We'll pretend we're not jealous",
     ],
     imageMood:
-      "bold, cheeky and mischievous, with bright colours and a comic, playful energy",
+      "bold, cheeky and mischievous, with bright colors and a comic, playful energy",
   },
   "Dad jokes": {
     headlineStyle:
@@ -55,7 +55,7 @@ const TONE_DEFINITIONS: Record<CardTone, ToneDefinition> = {
       "Kate, we think you're tea-riffic. Sorry, not sorry",
     ],
     imageMood:
-      "light-hearted and goofy, with cheerful colours and a whimsical, silly feel",
+      "light-hearted and goofy, with cheerful colors and a whimsical, silly feel",
   },
   Hype: {
     headlineStyle:

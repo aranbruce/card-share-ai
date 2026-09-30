@@ -181,7 +181,7 @@ export function CardDetailsForm({
             id="context"
             value={userContext}
             onChange={(e) => setUserContext(e.target.value)}
-            placeholder="Any details to personalise the card? e.g. loves botanical illustration, just got promoted, turning 30"
+            placeholder="Any details to personalize the card? e.g. loves botanical illustration, just got promoted, turning 30"
             disabled={isLoading}
             variant="card"
           />

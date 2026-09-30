@@ -14,7 +14,7 @@ How to write it:
 - Be specific. Build on one concrete detail from the user context (a hobby, a habit, a milestone) or, when an image is provided, one object or scene in it. A headline that could go on anyone's card is a weak headline.
 - Unless the tone guide asks for puns, skip the first pun that comes to mind: it is what every other card says. Prefer an observation, a twist on what the reader expects, or a detail exaggerated to absurdity.
 - Punch sideways, never down: the joke is on the situation or a harmless quirk, and the recipient should laugh hardest. Keep it safe for work. No jokes about age, weight, looks or money unless the user context asks for them.
-- Sentence case, not Title Case, unless the tone guide says otherwise. No full stop at the end. At most one exclamation mark. No emojis or hashtags.
+- US English spelling. Sentence case, not Title Case, unless the tone guide says otherwise. No period at the end. At most one exclamation mark. No emojis or hashtags.
 - Up to about 10 words unless the tone guide says otherwise. Use the recipient's name when it reads naturally.
 
 Avoid: a bare "Happy [occasion], [Name]", "Here's to...", "Cheers to...", "Another trip around the sun", "Wishing you...", "Celebrating...".

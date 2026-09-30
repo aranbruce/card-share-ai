@@ -119,7 +119,7 @@ export async function buildViewCardMetadata(linkId: string): Promise<Metadata> {
       shareCardTitle(card, "A card for {name}"),
       shareCardDescription(
         card,
-        "Open a personalised greeting card for {name}",
+        "Open a personalized greeting card for {name}",
       ),
     )
   } catch {
