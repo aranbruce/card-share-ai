@@ -44,6 +44,9 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
           })
+          // Next writes refreshed cookies onto request.headers, not the
+          // requestHeaders copy taken at the start of updateSession.
+          requestHeaders.set("cookie", request.headers.get("cookie") ?? "")
           // Rebuild so refreshed request cookies reach the page for this request,
           // while keeping x-pathname on the forwarded headers.
           supabaseResponse = NextResponse.next({
