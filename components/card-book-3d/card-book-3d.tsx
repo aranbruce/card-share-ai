@@ -1736,7 +1736,7 @@ export function CardBook3D({
         clientY = tap.y
         const hit = document.elementFromPoint(clientX, clientY)
         target = hit && editor.contains(hit) ? hit : null
-        // Blank page (nothing there to click, such as a spot to place a note): write in the
+        // Blank page (not a control, such as a spot to place a note, nor a note): write in the
         // user's own note on the page instead, carrying on at its end. An empty note is not
         // even drawn on the 3D page, so a click could not aim for it.
         if (!target?.closest(CLICKABLE_IN_EDITOR)) {
@@ -1994,9 +1994,10 @@ function editedPageFrame(progress: number, lift: number, side: Side) {
 const TEXT_FIELD_SLOP = 14
 /** A field in a note the user may write in (their own, e.g. the creator's message). */
 const OWN_NOTE_FIELD = "[data-draggable-note] [data-inline-edit-own]"
-/** What a click on the editor does something with, rather than landing on blank page. */
+/** What a click on the editor lands on rather than blank page: controls and notes (anyone's,
+ * so tapping someone else's note does not jump into your own). */
 const CLICKABLE_IN_EDITOR =
-  "button, a[href], input, textarea, select, [role='button'], [data-inline-edit]"
+  "button, a[href], input, textarea, select, [role='button'], [data-draggable-note]"
 
 /**
  * The inline text field at (or within a few px of) a point in the editor's own layout, found
