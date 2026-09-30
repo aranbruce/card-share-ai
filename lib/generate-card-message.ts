@@ -4,7 +4,7 @@ import {
   MESSAGE_SYSTEM_PROMPT,
 } from "@/lib/generate-message-prompt"
 import { aiTelemetry } from "@/lib/ai-telemetry"
-import { getTextModel } from "@/lib/ai-text-model"
+import { getMessageModel } from "@/lib/ai-text-model"
 import { resolvePromptFields } from "@/lib/card-ai-prompt"
 import { stripSurroundingQuotes } from "@/lib/strip-surrounding-quotes"
 
@@ -24,7 +24,7 @@ export async function generateCardMessage(
   const userContent = assembleMessageUserPrompt(fields)
 
   const { text } = await generateText({
-    model: getTextModel(),
+    model: getMessageModel(),
     system: MESSAGE_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
     ...aiTelemetry("generate-card-message", options?.distinctId),

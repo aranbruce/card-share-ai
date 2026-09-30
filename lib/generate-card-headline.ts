@@ -5,7 +5,7 @@ import {
   HEADLINE_SYSTEM_PROMPT,
 } from "@/lib/generate-headline-prompt"
 import { aiTelemetry } from "@/lib/ai-telemetry"
-import { getTextModel } from "@/lib/ai-text-model"
+import { getHeadlineModel } from "@/lib/ai-text-model"
 import {
   buildMultimodalUserMessage,
   resolvePromptFields,
@@ -48,7 +48,7 @@ export async function generateCardHeadline(
   })
 
   const { output } = await generateText({
-    model: getTextModel(),
+    model: getHeadlineModel(),
     output: Output.object({ schema: cardHeadlineSchema }),
     messages,
     system: HEADLINE_SYSTEM_PROMPT,
