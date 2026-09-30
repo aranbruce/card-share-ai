@@ -694,7 +694,7 @@ export function DraggableWrapper({
             onPointerDown={(e) => handlePointerDown(e, "drag")}
             className={moveHandleClassName}
           >
-            <Move className="h-2.5 w-2.5 text-muted-foreground" />
+            <Move className="size-2.5 text-muted-foreground" />
           </button>
         )}
         {editable && (
@@ -706,7 +706,7 @@ export function DraggableWrapper({
             onPointerDown={(e) => handlePointerDown(e, "resize")}
             className={resizeHandleClassName}
           >
-            <Maximize2 className="h-2.5 w-2.5 text-muted-foreground" />
+            <Maximize2 className="size-2.5 text-muted-foreground" />
           </button>
         )}
         <DraggableNoteMoveContext.Provider value={moveDragContext}>

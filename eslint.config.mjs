@@ -30,15 +30,10 @@ export default defineConfig([
       },
     },
     rules: {
-      // Class order is handled by prettier-plugin-tailwindcss
-      "tailwindcss/classnames-order": "off",
-      // v4.4 recommended flags shorthand and spacing-number rewrites that this
-      // codebase still writes as explicit utilities and arbitrary values.
-      // Follow-up: enable and clean up (~180 / ~77 hits).
-      "tailwindcss/enforces-shorthand": "off",
-      "tailwindcss/no-unnecessary-arbitrary-value": "off",
       // Marker / animation classes from local CSS. `inputs` silences a false
       // positive on `clsx(inputs)` in lib/utils.ts (variable name, not a class).
+      // Fractional `leading-*` / `opacity-*` are valid Tailwind v4 utilities;
+      // eslint-plugin-tailwindcss 4.4 still treats them as custom.
       "tailwindcss/no-custom-classname": [
         "warn",
         {
@@ -49,6 +44,9 @@ export default defineConfig([
             "card-pastel",
             "card-3d-.*",
             "ai-refine-shimmer-.*",
+            "leading-\\d+\\.\\d+",
+            "opacity-\\d+\\.\\d+",
+            "dark:opacity-\\d+\\.\\d+",
           ],
         },
       ],

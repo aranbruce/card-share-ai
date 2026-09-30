@@ -1804,7 +1804,7 @@ export function CardBook3D({
           )}
           <div
             ref={imageHostRef}
-            className="pointer-events-none absolute top-0 left-0 h-px w-px overflow-hidden opacity-0"
+            className="pointer-events-none absolute top-0 left-0 size-px overflow-hidden opacity-0"
             aria-hidden
           />
         </div>
@@ -1869,7 +1869,7 @@ export function CardBook3D({
                     if (editPage !== null) editPageAt(null)
                     goTo(spreadForFace(i, faces.length), sideOfFace(i))
                   }}
-                  className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                  className={`size-2 cursor-pointer rounded-full transition-colors ${
                     facesInView.includes(i)
                       ? "bg-primary"
                       : "bg-muted-foreground/30 hover:bg-muted-foreground/50"

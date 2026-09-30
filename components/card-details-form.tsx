@@ -109,7 +109,7 @@ export function CardDetailsForm({
 
       {/* Heading */}
       <div className="mt-6">
-        <h2 className="text-[38px] leading-[1.05] font-semibold tracking-[-0.03em]">
+        <h2 className="leading-1.05 text-[38px] font-semibold tracking-[-0.03em]">
           Tell us
           <br />
           {recipientName ? (
@@ -203,7 +203,7 @@ export function CardDetailsForm({
           />
           {isReadingFile ? (
             <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground">
-              <Spinner className="h-3.5 w-3.5" />
+              <Spinner className="size-3.5" />
               Compressing…
             </div>
           ) : attachedImageDataUrl ? (
@@ -236,9 +236,9 @@ export function CardDetailsForm({
                   if (fileInputRef.current) fileInputRef.current.value = ""
                 }}
                 disabled={isLoading}
-                className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                className="absolute top-2 right-2 size-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
               >
-                <X className="h-3 w-3" />
+                <X className="size-3" />
               </Button>
             </div>
           ) : (
@@ -248,7 +248,7 @@ export function CardDetailsForm({
               disabled={isLoading}
               className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Paperclip className="h-3.5 w-3.5" />
+              <Paperclip className="size-3.5" />
               Attach a reference photo
             </button>
           )}

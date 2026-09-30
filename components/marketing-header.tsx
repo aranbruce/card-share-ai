@@ -6,7 +6,7 @@ import { Logo } from "@/components/logo"
 export function MarketingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-6 md:px-15">
+      <div className="mx-auto flex h-16 max-w-360 items-center justify-between px-6 md:px-15">
         <div className="flex items-center gap-[34px]">
           <Logo />
           <nav

@@ -63,7 +63,7 @@ export function NotePanel(props: NotePanelProps) {
     return (
       <aside
         data-card-editor-chrome
-        className="flex flex-col border-t border-line bg-muted/20 md:fixed md:top-14 md:right-0 md:h-[calc(100dvh-56px)] md:w-[320px] md:border-t-0 md:border-l lg:w-[420px]"
+        className="flex flex-col border-t border-line bg-muted/20 md:fixed md:top-14 md:right-0 md:h-[calc(100dvh-56px)] md:w-80 md:border-t-0 md:border-l lg:w-105"
       >
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
           <div className="space-y-1.5">
@@ -114,7 +114,7 @@ export function NotePanel(props: NotePanelProps) {
   return (
     <aside
       data-card-editor-chrome
-      className="flex flex-col border-t border-line bg-muted/20 md:fixed md:top-14 md:right-0 md:h-[calc(100dvh-56px)] md:w-[320px] md:border-t-0 md:border-l lg:w-[420px]"
+      className="flex flex-col border-t border-line bg-muted/20 md:fixed md:top-14 md:right-0 md:h-[calc(100dvh-56px)] md:w-80 md:border-t-0 md:border-l lg:w-105"
     >
       <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-6 md:p-7">
         <div>
@@ -159,10 +159,10 @@ export function NotePanel(props: NotePanelProps) {
                   size="icon"
                   variant="ghost"
                   aria-label="Close refine panel"
-                  className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                  className="absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-full"
                   onClick={() => setRefineOpen(false)}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="size-3.5" />
                 </Button>
               </div>
             ) : (
@@ -172,7 +172,7 @@ export function NotePanel(props: NotePanelProps) {
                   disabled={isRegenerating}
                   className="text-xs"
                 >
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3" />
                   Improve
                 </ChipButton>
                 <ChipButton
@@ -206,7 +206,7 @@ export function NotePanel(props: NotePanelProps) {
               <button
                 key={color}
                 onClick={() => onTextColorChange(color)}
-                className="h-7 w-7 cursor-pointer rounded-full border-2 transition-all"
+                className="size-7 cursor-pointer rounded-full border-2 transition-all"
                 style={{
                   backgroundColor: color,
                   borderColor:
@@ -284,7 +284,7 @@ export function NotePanel(props: NotePanelProps) {
               onClick={onOpenGifPicker}
               className="self-start text-xs"
             >
-              <ImagePlus className="h-3 w-3" />
+              <ImagePlus className="size-3" />
               Add GIF
             </ChipButton>
           )}
@@ -318,7 +318,7 @@ export function NotePanel(props: NotePanelProps) {
               className="flex h-full cursor-pointer items-center justify-center rounded-l-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
               title="Rotate counter-clockwise"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="size-3.5" />
             </button>
             <div className="h-4 w-px bg-border" />
             <span className="min-w-12 text-center font-mono text-xs text-foreground">
@@ -332,7 +332,7 @@ export function NotePanel(props: NotePanelProps) {
               className="flex h-full cursor-pointer items-center justify-center rounded-r-xl px-3 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
               title="Rotate clockwise"
             >
-              <RotateCw className="h-3.5 w-3.5" />
+              <RotateCw className="size-3.5" />
             </button>
           </div>
         </div>

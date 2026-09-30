@@ -512,14 +512,14 @@ export function Card3D({
           >
             <div className="absolute inset-0 bg-linear-to-br from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-900" />
             <div
-              className="absolute inset-0 opacity-[0.04] mix-blend-multiply dark:opacity-[0.02] dark:mix-blend-overlay"
+              className="opacity-0.04 dark:opacity-0.02 absolute inset-0 mix-blend-multiply dark:mix-blend-overlay"
               style={{
                 backgroundImage:
                   "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
               }}
             />
             {currentPage > 0 && (
-              <div className="absolute top-0 bottom-0 left-0 z-10 w-12 bg-linear-to-r from-black/6 to-transparent dark:from-black/20" />
+              <div className="absolute inset-y-0 left-0 z-10 w-12 bg-linear-to-r from-black/6 to-transparent dark:from-black/20" />
             )}
           </div>
 
@@ -531,7 +531,7 @@ export function Card3D({
                     <div
                       className={cn(
                         "relative w-full flex-1 overflow-hidden bg-border",
-                        !embedded && "min-h-[280px] rounded-2xl",
+                        !embedded && "min-h-70 rounded-2xl",
                       )}
                     >
                       <RegenerateShimmerOverlay
@@ -575,7 +575,7 @@ export function Card3D({
                     </div>
                   ) : null}
 
-                  <div className="absolute right-0 bottom-0 left-0 p-6 text-center text-white">
+                  <div className="absolute inset-x-0 bottom-0 p-6 text-center text-white">
                     <InlineEdit
                       value={headline}
                       onChange={onHeadlineChange}
@@ -597,7 +597,7 @@ export function Card3D({
               <div
                 className={cn(
                   "relative flex flex-1 flex-col overscroll-contain p-1",
-                  !embedded && "min-h-[460px]",
+                  !embedded && "min-h-115",
                 )}
                 data-card-canvas
               >
@@ -605,12 +605,7 @@ export function Card3D({
                   {MESSAGES_SECTION_LABEL}
                 </p>
 
-                <div
-                  className={cn(
-                    "relative flex-1",
-                    !embedded && "min-h-[380px]",
-                  )}
-                >
+                <div className={cn("relative flex-1", !embedded && "min-h-95")}>
                   {!composeDraft && onComposeCanvasPlace && (
                     <button
                       type="button"
@@ -634,7 +629,7 @@ export function Card3D({
                     <div
                       className={cn(
                         "pointer-events-none relative z-10 flex flex-col justify-center *:pointer-events-auto",
-                        embedded ? "h-full" : "min-h-[360px]",
+                        embedded ? "h-full" : "min-h-90",
                       )}
                     >
                       <DraggableWrapper editable={editable}>
@@ -703,7 +698,7 @@ export function Card3D({
                 key={i}
                 type="button"
                 onClick={() => setCurrentPage(i)}
-                className={`h-2 w-2 cursor-pointer rounded-full transition-colors ${
+                className={`size-2 cursor-pointer rounded-full transition-colors ${
                   i === currentPage
                     ? "bg-primary"
                     : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
