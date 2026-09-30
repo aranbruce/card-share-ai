@@ -74,8 +74,8 @@ Proxying is implemented in [`proxy.ts`](proxy.ts) via [`lib/posthog-proxy.ts`](l
 
 LLM calls (headline, message, and image generation) send OpenTelemetry spans to PostHog when `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` is set. Uses the same token and `NEXT_PUBLIC_POSTHOG_HOST` as product analytics (no extra env vars).
 
-- Bootstrap: [`instrumentation.ts`](instrumentation.ts) → [`lib/posthog-ai-otel.ts`](lib/posthog-ai-otel.ts)
-- Per-call telemetry: [`lib/ai-telemetry.ts`](lib/ai-telemetry.ts) on each Vercel AI SDK `generateText` call
+- Bootstrap: [`instrumentation.ts`](instrumentation.ts) → [`lib/posthog-ai-otel.ts`](lib/posthog-ai-otel.ts) (`@ai-sdk/otel` + PostHog span processor)
+- Per-call telemetry: [`lib/ai-telemetry.ts`](lib/ai-telemetry.ts) on each Vercel AI SDK `generateText` call (`telemetry` + optional `runtimeContext`)
 - User linking: browser sends `X-POSTHOG-DISTINCT-ID` on AI API requests (see [`lib/posthog-client.ts`](lib/posthog-client.ts))
 
 After generating a card locally, confirm events under **AI Observability → Traces / Generations** in the PostHog EU project. Restart the dev server after changing instrumentation.

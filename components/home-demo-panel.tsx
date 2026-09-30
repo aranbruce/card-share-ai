@@ -140,9 +140,9 @@ export function HomeDemoPanel() {
       {/* Browser chrome */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <div className="flex gap-1.5">
-          <div className="h-2.5 w-2.5 rounded-full bg-border" />
-          <div className="h-2.5 w-2.5 rounded-full bg-border" />
-          <div className="h-2.5 w-2.5 rounded-full bg-border" />
+          <div className="size-2.5 rounded-full bg-border" />
+          <div className="size-2.5 rounded-full bg-border" />
+          <div className="size-2.5 rounded-full bg-border" />
         </div>
         <div className="mx-auto w-full max-w-sm truncate rounded-md bg-background px-3 py-1 text-center font-mono text-[11px] text-muted-foreground">
           cardshare.ai/create
@@ -150,7 +150,7 @@ export function HomeDemoPanel() {
         <div className="w-[46px]" aria-hidden />
       </div>
 
-      <div className="grid min-h-[620px] grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
+      <div className="grid min-h-155 grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
         {/* The create page's details form, filled in */}
         <aside className="flex flex-col border-r border-border bg-card px-7 py-6 text-left">
           <div className="flex flex-1 flex-col gap-4">
@@ -214,9 +214,9 @@ export function HomeDemoPanel() {
                     aria-label="Remove reference photo"
                     onClick={() => setPhotoAttached(false)}
                     disabled={isGenerating}
-                    className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                    className="absolute top-2 right-2 size-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="size-3" />
                   </Button>
                 </div>
               ) : (
@@ -226,7 +226,7 @@ export function HomeDemoPanel() {
                   disabled={isGenerating}
                   className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Paperclip className="h-3.5 w-3.5" />
+                  <Paperclip className="size-3.5" />
                   Attach a reference photo
                 </button>
               )}
@@ -268,8 +268,8 @@ export function HomeDemoPanel() {
         </aside>
 
         {/* The create page's live preview */}
-        <div className="flex min-w-0 items-center justify-center overflow-hidden bg-background px-8 py-8">
-          <div className="w-full max-w-[564px] text-center">
+        <div className="flex min-w-0 items-center justify-center overflow-hidden bg-background p-8">
+          <div className="w-full max-w-141 text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview
             </p>
@@ -300,19 +300,19 @@ export function HomeDemoPanel() {
                     shimmer={isGenerating}
                   >
                     <div
-                      className={`flex h-[12cqh] w-[12cqh] items-center justify-center rounded-[3cqh] shadow-sm ${
+                      className={`flex size-[12cqh] items-center justify-center rounded-[3cqh] shadow-sm ${
                         isGenerating ? "animate-pulse" : ""
                       }`}
                       style={{ background: `oklch(0.68 0.14 ${BIRTHDAY_HUE})` }}
                     >
-                      <Sparkles className="h-1/2 w-1/2 stroke-white" />
+                      <Sparkles className="size-1/2 stroke-white" />
                     </div>
                     <p
                       className="mt-[3cqh] text-[3.6cqh] leading-relaxed font-medium"
                       style={{ color: `oklch(0.28 0.07 ${BIRTHDAY_HUE})` }}
                     >
                       {phase === "headline"
-                        ? "Writing your headline…"
+                        ? "Creating your card…"
                         : phase === "cover"
                           ? "Designing your cover…"
                           : "Hit Generate to see Mira's card"}

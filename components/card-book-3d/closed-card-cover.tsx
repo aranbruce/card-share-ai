@@ -145,7 +145,7 @@ export function ClosedCardCover({
                   }
                 }}
                 className={cn(
-                  "absolute inset-0 h-full w-full object-cover transition-opacity duration-300 motion-reduce:transition-none",
+                  "absolute inset-0 size-full object-cover transition-opacity duration-300 motion-reduce:transition-none",
                   imageLoaded ? "opacity-100" : "opacity-0",
                 )}
               />

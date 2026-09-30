@@ -11,7 +11,7 @@ const textareaVariants = cva(
         default:
           "min-h-16 rounded-md border-input px-3 py-2 focus-visible:border-ring dark:bg-input/30",
         /** Card details / long-form on tinted panels */
-        card: "min-h-[120px] resize-y rounded-2xl border border-border/50 bg-background/50 px-4 py-3 focus-visible:border-ring focus-visible:ring-1 dark:bg-background/50",
+        card: "min-h-30 resize-y rounded-2xl border border-border/50 bg-background/50 px-4 py-3 focus-visible:border-ring focus-visible:ring-1 dark:bg-background/50",
       },
     },
     defaultVariants: {

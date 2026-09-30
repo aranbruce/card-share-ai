@@ -25,7 +25,7 @@ export async function generateCardMessage(
 
   const { text } = await generateText({
     model: getMessageModel(),
-    system: MESSAGE_SYSTEM_PROMPT,
+    instructions: MESSAGE_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userContent }],
     ...aiTelemetry("generate-card-message", options?.distinctId),
   })

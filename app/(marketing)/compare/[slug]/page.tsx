@@ -107,7 +107,7 @@ export default async function ComparePage({ params }: PageProps) {
 
       {/* ===== HERO ===== */}
       <section className="py-16 md:py-20">
-        <div className="mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
+        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               {config.competitor} alternative
@@ -118,7 +118,7 @@ export default async function ComparePage({ params }: PageProps) {
               <span className="text-muted-foreground">vs</span>{" "}
               <span className="text-brand">{config.competitor}</span>
             </h1>
-            <p className="mt-6 max-w-[560px] text-lg leading-relaxed text-muted-foreground">
+            <p className="mt-6 max-w-140 text-lg leading-relaxed text-muted-foreground">
               {config.lede}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -140,7 +140,7 @@ export default async function ComparePage({ params }: PageProps) {
 
       {/* ===== AT A GLANCE ===== */}
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-16 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-16 md:px-15">
           <h2 className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             At a glance
           </h2>
@@ -168,7 +168,7 @@ export default async function ComparePage({ params }: PageProps) {
 
       {/* ===== TABLE ===== */}
       <section id="compare" className="scroll-mt-20 border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Side by side
           </p>
@@ -199,7 +199,7 @@ export default async function ComparePage({ params }: PageProps) {
             ))}
           </dl>
           <div className="mt-10 hidden overflow-x-auto rounded-2xl border border-border bg-card md:block">
-            <table className="w-full min-w-[600px] text-left text-sm">
+            <table className="w-full min-w-150 text-left text-sm">
               <thead>
                 <tr>
                   <th scope="col" className="w-[28%] px-6 py-5 font-medium">
@@ -262,7 +262,7 @@ export default async function ComparePage({ params }: PageProps) {
 
       {/* ===== WHICH TO PICK ===== */}
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Which to pick
           </p>
@@ -284,7 +284,7 @@ export default async function ComparePage({ params }: PageProps) {
 
       {/* ===== OCCASIONS ===== */}
       <section className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Every occasion
           </p>
@@ -303,7 +303,7 @@ export default async function ComparePage({ params }: PageProps) {
 
       {/* ===== CTA BAND ===== */}
       <section className="border-t border-border bg-secondary/50">
-        <div className="mx-auto max-w-[1440px] px-6 py-24 text-center md:px-15">
+        <div className="mx-auto max-w-360 px-6 py-24 text-center md:px-15">
           <h2 className="text-3xl font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
             Try it on your next card
           </h2>

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { getOwnerCardDetail, listOwnerCards } from "@/lib/owner-cards"
 
 const CARD_ID = "550e8400-e29b-41d4-a716-446655440000"
@@ -27,7 +28,7 @@ function mockSupabase(handlers: {
     }
     throw new Error(`unexpected table ${table}`)
   })
-  return { from } as never
+  return { from } as unknown as SupabaseClient & { from: typeof from }
 }
 
 describe("listOwnerCards", () => {

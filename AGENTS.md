@@ -26,3 +26,13 @@ CardShareAI is a single Next.js 16 app (App Router, React 19) for creating AI-po
 - **Creating test users via Supabase Admin API**: You can create and email-confirm a test user with `POST /auth/v1/signup` then `PUT /auth/v1/admin/users/{id}` with `{"email_confirm":true}` using the service role key. Set `E2E_EMAIL`/`E2E_PASSWORD` to those credentials for authenticated E2E tests.
 - **Password reset / auth emails**: Branded reset and verification mail go through Supabase's **Send Email** hook → `POST /api/auth/send-email` (Resend). Requires `SEND_EMAIL_HOOK_SECRET`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL` on the deployment Supabase calls (not only `.env.local`). Supabase cannot reach `localhost`; use a deployed URL or ngrok for the hook. Add `…/recovery-callback` to Supabase redirect URLs. `Error sending recovery email` usually means the hook URL 404s, the secret is missing/wrong, or Resend rejected the send.
 - **PostHog proxy**: Client analytics use `NEXT_PUBLIC_POSTHOG_API_HOST` (`/t` locally, `https://t.cardshare.ai` in production). Production needs the `t.cardshare.ai` domain on Vercel plus DNS; see README “PostHog reverse proxy”.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

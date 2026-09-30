@@ -64,7 +64,7 @@ export function RegeneratePromptBar({
           className="rounded-full"
           title="Cancel"
         >
-          <X className="h-4 w-4 text-muted-foreground" />
+          <X className="size-4 text-muted-foreground" />
         </Button>
       </div>
     </div>

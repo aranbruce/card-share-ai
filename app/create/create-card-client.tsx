@@ -369,7 +369,7 @@ export function CreateCardPageClient() {
     <div className="min-h-screen bg-background">
       {/* Select type — logo + back above content, no sidebar */}
       {step === "select-type" && (
-        <div className="mx-auto max-w-[1440px] px-6 md:px-15">
+        <div className="mx-auto max-w-360 px-6 md:px-15">
           <div className="flex h-16 items-center justify-between">
             <Logo className="" />
           </div>
@@ -434,9 +434,9 @@ export function CreateCardPageClient() {
                           className="text-xs"
                         >
                           {isRegeneratingImage ? (
-                            <Spinner className="h-3 w-3" />
+                            <Spinner className="size-3" />
                           ) : (
-                            <Sparkles className="h-3 w-3" />
+                            <Sparkles className="size-3" />
                           )}
                           Edit image
                         </ChipButton>
@@ -448,9 +448,9 @@ export function CreateCardPageClient() {
                           className="text-xs"
                         >
                           {isRegeneratingHeadline ? (
-                            <Spinner className="h-3 w-3" />
+                            <Spinner className="size-3" />
                           ) : (
-                            <Sparkles className="h-3 w-3" />
+                            <Sparkles className="size-3" />
                           )}
                           Edit title
                         </ChipButton>
@@ -505,9 +505,9 @@ export function CreateCardPageClient() {
                                 if (editImageFileRef.current)
                                   editImageFileRef.current.value = ""
                               }}
-                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
+                              className="absolute top-2 right-2 size-6 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 hover:text-white/80 disabled:pointer-events-auto disabled:cursor-not-allowed"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="size-3" />
                             </Button>
                           </div>
                         )}
@@ -521,7 +521,7 @@ export function CreateCardPageClient() {
                               editImageFileRef.current?.click()
                             }
                             disabled={isRegeneratingImage}
-                            className="absolute top-1/2 left-1 h-7 w-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
+                            className="absolute top-1/2 left-1 size-7 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground"
                             aria-label="Attach a photo"
                             title="Attach a photo"
                           >
@@ -564,7 +564,7 @@ export function CreateCardPageClient() {
                             size="icon"
                             variant="ghost"
                             aria-label="Close image edit panel"
-                            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                            className="absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-full"
                             onClick={() => {
                               editImageRequestRef.current++
                               setIsReadingImageFile(false)
@@ -575,7 +575,7 @@ export function CreateCardPageClient() {
                                 editImageFileRef.current.value = ""
                             }}
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="size-3.5" />
                           </Button>
                         </div>
                         {editImageError && (
@@ -608,10 +608,10 @@ export function CreateCardPageClient() {
                           size="icon"
                           variant="ghost"
                           aria-label="Close title edit panel"
-                          className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 rounded-full"
+                          className="absolute top-1/2 right-1 size-7 -translate-y-1/2 rounded-full"
                           onClick={() => setOpenAiPanel(null)}
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X className="size-3.5" />
                         </Button>
                       </div>
                     )}

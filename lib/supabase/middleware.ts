@@ -2,6 +2,19 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { buildLoginRedirectUrl } from "@/lib/safe-redirect-path"
 
+function applySessionArtifacts(
+  from: NextResponse,
+  to: NextResponse,
+  authHeaders: Record<string, string>,
+) {
+  from.cookies.getAll().forEach((cookie) => {
+    to.cookies.set(cookie)
+  })
+  Object.entries(authHeaders).forEach(([key, value]) => {
+    to.headers.set(key, value)
+  })
+}
+
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const pathnameWithSearch = pathname + request.nextUrl.search
@@ -10,11 +23,14 @@ export async function updateSession(request: NextRequest) {
     requestHeaders.set("x-pathname", pathnameWithSearch)
   }
 
-  const supabaseResponse = NextResponse.next({
+  let supabaseResponse = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   })
+  // Headers from @supabase/ssr setAll (Cache-Control / Expires / Pragma) must also
+  // land on redirect responses that carry refreshed auth cookies.
+  let authResponseHeaders: Record<string, string> = {}
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,9 +40,26 @@ export async function updateSession(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value)
+          })
+          // Next writes refreshed cookies onto request.headers, not the
+          // requestHeaders copy taken at the start of updateSession.
+          requestHeaders.set("cookie", request.headers.get("cookie") ?? "")
+          // Rebuild so refreshed request cookies reach the page for this request,
+          // while keeping x-pathname on the forwarded headers.
+          supabaseResponse = NextResponse.next({
+            request: {
+              headers: requestHeaders,
+            },
+          })
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, options)
+          })
+          authResponseHeaders = headers
+          Object.entries(headers).forEach(([key, value]) => {
+            supabaseResponse.headers.set(key, value)
           })
         },
       },
@@ -41,9 +74,11 @@ export async function updateSession(request: NextRequest) {
     const redirectResponse = NextResponse.redirect(
       new URL(buildLoginRedirectUrl(pathnameWithSearch), request.url),
     )
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie)
-    })
+    applySessionArtifacts(
+      supabaseResponse,
+      redirectResponse,
+      authResponseHeaders,
+    )
     return redirectResponse
   }
 
@@ -53,9 +88,11 @@ export async function updateSession(request: NextRequest) {
     const redirectResponse = NextResponse.redirect(
       new URL("/dashboard", request.url),
     )
-    supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie)
-    })
+    applySessionArtifacts(
+      supabaseResponse,
+      redirectResponse,
+      authResponseHeaders,
+    )
     return redirectResponse
   }
 

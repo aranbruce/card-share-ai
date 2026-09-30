@@ -25,6 +25,7 @@ const runAuthenticatedE2E = Boolean(
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.ts",
   timeout: 30_000,
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
@@ -71,6 +72,10 @@ export default defineConfig({
         process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321",
       NEXT_PUBLIC_SUPABASE_ANON_KEY:
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "test-anon-key",
+      // Keep test traffic out of PostHog: browser analytics, server events and
+      // AI tracing all no-op without a token. An empty value set here takes
+      // precedence over .env.local, which Next never lets override set vars.
+      NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: "",
     },
   },
 })

@@ -7,8 +7,7 @@ import {
 import { fetchHttpsSourceImageBytes } from "./https-source-image"
 
 export type SourceImageResult =
-  | { ok: true; bytes: Uint8Array }
-  | { ok: false; message: string }
+  { ok: true; bytes: Uint8Array } | { ok: false; message: string }
 
 /**
  * Validates and resolves a user-supplied image source to raw bytes.

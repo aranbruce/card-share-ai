@@ -236,7 +236,7 @@ export function GiphyPicker({
             }}
           >
             <div className="relative flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -253,7 +253,7 @@ export function GiphyPicker({
           <p className="mb-3 text-xs text-muted-foreground">{title}</p>
           {loading ? (
             <div className="flex flex-1 items-center justify-center">
-              <Spinner className="h-6 w-6" />
+              <Spinner className="size-6" />
             </div>
           ) : initialError ? (
             <Alert variant="destructive">
@@ -267,7 +267,7 @@ export function GiphyPicker({
              * forces every cell in a row to the row height, so previews looked like
              * identical wide strips even when aspect ratios differed.
              */
-            <div className="max-h-[min(55vh,28rem)] min-h-0 [scrollbar-gutter:stable] overflow-x-hidden overflow-y-auto pb-2">
+            <div className="max-h-[min(55vh,28rem)] min-h-0 scrollbar-gutter-stable overflow-x-hidden overflow-y-auto pb-2">
               <div className="columns-2 gap-x-3 [column-fill:balance] sm:columns-3">
                 {gifs.map((gif) => {
                   const isSelected = (selectedUrl ?? null) === gif.gifUrl
@@ -309,7 +309,7 @@ export function GiphyPicker({
                         loading="lazy"
                         decoding="async"
                       />
-                      <div className="pointer-events-none absolute right-2 bottom-2 left-2 rounded bg-black/55 px-2 py-1 text-left text-[11px] leading-tight text-white opacity-0 transition group-hover:opacity-100">
+                      <div className="pointer-events-none absolute inset-x-2 bottom-2 rounded bg-black/55 px-2 py-1 text-left text-[11px] leading-tight text-white opacity-0 transition group-hover:opacity-100">
                         {gif.title}
                       </div>
                     </button>
@@ -340,7 +340,7 @@ export function GiphyPicker({
                     aria-busy={loadingMore}
                   >
                     {loadingMore ? (
-                      <Spinner className="h-4 w-4" />
+                      <Spinner className="size-4" />
                     ) : loadMoreError ? (
                       "Retry"
                     ) : (
