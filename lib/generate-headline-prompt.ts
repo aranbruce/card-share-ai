@@ -4,20 +4,21 @@ import {
   type ImagePromptFlags,
 } from "./card-ai-prompt"
 
-export const HEADLINE_SYSTEM_PROMPT = `You are a creative greeting card writer with a sharp sense of humour. Generate a single headline for the front of the greeting card described in the user's message.
+export const HEADLINE_SYSTEM_PROMPT = `You are the funniest writer at a greeting card company, the one whose cards people pin to the fridge. Write a single headline for the front of the greeting card described in the user's message.
 
 Use the labeled context fields (tone, card type, addressed to, optional user context, user prompt, card title, previous user message, and any images) to guide the headline.
 
-What makes a good headline:
-- It is specific. Build it on one concrete detail: something from the user context (a hobby, a habit, a milestone, a place) or, when an image is provided, one object or scene in that image. A headline that could go on anyone's card is a weak headline.
-- It follows the tone guide in the user's message closely. The tone decides whether and how to be funny.
-- Humour is warm and inclusive: laugh with the recipient, never at them. Keep it safe for work. No jokes about age, weight, looks or money unless the user context asks for them.
-- Sympathy cards are never jokey, whatever the tone: be gentle and sincere.
-- Up to about 10 words. Use the recipient's name when it reads naturally.
+How to write it:
+- Follow the tone guide in the user's message closely. It decides whether and how to be funny.
+- Be specific. Build on one concrete detail from the user context (a hobby, a habit, a milestone) or, when an image is provided, one object or scene in it. A headline that could go on anyone's card is a weak headline.
+- When being funny, skip the first pun that comes to mind: it is what every other card says. Prefer an observation, a twist on what the reader expects, understatement, or a detail exaggerated to absurdity. Write like a funny friend, not like a greeting card.
+- Punch sideways, never down: the joke is on the situation or a harmless quirk, and the recipient should laugh hardest. Keep it safe for work. No jokes about age, weight, looks or money unless the user context asks for them.
+- Sentence case, not Title Case. At most one exclamation mark. No emojis or hashtags.
+- Up to about 10 words unless the tone guide says otherwise. Use the recipient's name when it reads naturally.
 
-Avoid: a bare "Happy [occasion], [Name]", "Here's to...", "Cheers to...", "Another trip around the sun", "Wishing you...", emojis, hashtags, and more than one exclamation mark.
+Avoid: a bare "Happy [occasion], [Name]", "Here's to...", "Cheers to...", "Another trip around the sun", "Wishing you...", "Celebrating...".
 
-Silently consider several angles, then output only the best headline: plain text, no surrounding quotation marks, no labels like "Headline:".`
+Silently draft several headlines from different angles, then output only the best one: plain text, no surrounding quotation marks, no labels like "Headline:".`
 
 type ToneGuide = {
   style: string
@@ -28,17 +29,17 @@ type ToneGuide = {
 export const HEADLINE_TONE_GUIDES: Record<string, ToneGuide> = {
   warm: {
     style:
-      "Affectionate and personal, like a close friend talking. Lightly witty at most, never sarcastic. Make the recipient feel liked.",
+      "Affectionate and personal, like a close friend talking. A gentle smile, not a joke: no puns, no sarcasm. Make the recipient feel liked.",
     examples: [
       "Mira, the office is better with you in it",
-      "Omar, we'd be lost without you. Literally",
-      "You make work a lot less like work",
+      "Everyone's favourite person, officially a year older",
       "Tea in the garden, Mum. You've earned it",
+      "We'd be lost without you, Jo. Literally, you have the map",
     ],
   },
   playful: {
     style:
-      "Genuinely funny. Affectionate teasing, puns on a specific detail, playful exaggeration, a wink. Big, fun energy.",
+      "Laugh-out-loud funny. Silly exaggeration, absurd scenarios, affectionate teasing, big energy. Wordplay only if it is genuinely clever.",
     examples: [
       "Sam, we were one snail away from on time",
       "Frank, twenty years and still not a stump",
@@ -46,14 +47,14 @@ export const HEADLINE_TONE_GUIDES: Record<string, ToneGuide> = {
       "Lucy, all aboard the no-more-standups express",
     ],
   },
-  dry: {
+  sassy: {
     style:
-      "Deadpan and understated, like an Onion headline or an Em & Friends card. Irony, flat delivery, say less than you mean. No exclamation marks.",
+      "Cheeky, confident and a little bit savage, like a best friend's roast. Mock outrage, affectionate burns, a raised eyebrow. The burn always lands as love.",
     examples: [
-      "5 stars. A+ would marry again",
-      "Five years, Sarah. Would recommend",
-      "Happy retirement, Pat. Nobody will fix the printer now",
-      "Ravi did a good job. We've been told to mention it",
+      "Leaving us, Dan? Bold. Rude, but bold",
+      "Retiring, Pat? And who fixes the printer now?",
+      "Five years, Sarah. Honestly, who let this happen",
+      "Congrats on the promotion. We'll pretend we're not jealous",
     ],
   },
   sincere: {
@@ -68,21 +69,44 @@ export const HEADLINE_TONE_GUIDES: Record<string, ToneGuide> = {
   },
   short: {
     style:
-      "Five words or fewer. Punchy, no clauses. Can be warm or witty, but every word must earn its place.",
+      "Four words or fewer. Punchy and confident, like a sticker or a shout. Can be warm or witty, but no puns or wordplay.",
     examples: [
       "OMG you're done",
-      "Legend.",
+      "Legend. Obviously.",
       "Thirty. Wow.",
       "Proud of you, Aria",
     ],
   },
 }
 
-export function formatHeadlineToneGuide(tone?: string): string {
-  const guide = tone ? HEADLINE_TONE_GUIDES[tone.trim().toLowerCase()] : null
+/** Cards made before the Dry tone was renamed still send "Dry" on regenerate. */
+HEADLINE_TONE_GUIDES.dry = HEADLINE_TONE_GUIDES.sassy
+
+/** Sympathy cards are never jokey, whatever tone was picked. */
+const SYMPATHY_GUIDE: ToneGuide = {
+  style:
+    "This is a sympathy card: gentle, sincere and kind. No jokes, puns or wordplay, whatever tone was selected. A soft, specific acknowledgement of who or what was lost.",
+  examples: [
+    "Thinking of you and Luna",
+    "We're so sorry, Sam. We're here",
+    "Holding you close this week",
+  ],
+}
+
+export function formatHeadlineToneGuide(
+  tone?: string,
+  cardType?: string,
+): string {
+  const isSympathy = cardType?.trim().toLowerCase() === "sympathy"
+  const guide = isSympathy
+    ? SYMPATHY_GUIDE
+    : tone
+      ? HEADLINE_TONE_GUIDES[tone.trim().toLowerCase()]
+      : null
   if (!guide) return ""
+  const label = isSympathy ? "sympathy" : tone!.trim()
   const examples = guide.examples.map((e) => `- ${e}`).join("\n")
-  return `Tone guide (${tone!.trim()}): ${guide.style}\nExample headlines in this tone (match the style, not the content):\n${examples}`
+  return `Tone guide (${label}): ${guide.style}\nExample headlines in this tone (match the style, never reuse the content):\n${examples}`
 }
 
 const HEADLINE_CREATE_SUFFIX = "Write a headline for this card."
@@ -94,7 +118,7 @@ export function assembleHeadlineUserPrompt(
   flags: ImagePromptFlags = {},
 ): string {
   const context = formatContextBlock(fields, flags)
-  const toneGuide = formatHeadlineToneGuide(fields.tone)
+  const toneGuide = formatHeadlineToneGuide(fields.tone, fields.cardType)
   const suffix =
     fields.userPrompt?.trim() || fields.cardTitle?.trim()
       ? HEADLINE_REGEN_SUFFIX

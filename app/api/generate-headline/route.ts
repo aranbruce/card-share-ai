@@ -4,6 +4,18 @@ import { resolveCardAiImages } from "@/lib/resolve-card-ai-images"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { NextRequest, NextResponse } from "next/server"
 
+/**
+ * TEMPORARY, for comparing headline models on preview deployments only.
+ * Remove before merging.
+ */
+const EVAL_MODELS = [
+  "openai/gpt-4o",
+  "anthropic/claude-sonnet-5.5",
+  "anthropic/claude-opus-5.5",
+  "openai/gpt-5.6-terra",
+  "google/gemini-3.8-flash",
+]
+
 export async function POST(request: NextRequest) {
   const rateLimit = checkFixedWindowRateLimit(request, {
     namespace: "api:generate-headline",
@@ -28,6 +40,7 @@ export async function POST(request: NextRequest) {
       attachedImageUrl?: string
       existingCardCoverImageUrl?: string
       posthogDistinctId?: unknown
+      evalModels?: unknown
     }
 
     const cardType =
@@ -45,28 +58,51 @@ export async function POST(request: NextRequest) {
 
     const { attached, previous } = await resolveCardAiImages(body)
 
-    const text = await generateCardHeadline(
-      {
-        cardType,
-        recipientName,
-        tone: typeof body.tone === "string" ? body.tone.trim() : undefined,
-        userContext:
-          typeof body.userContext === "string"
-            ? body.userContext.trim()
-            : undefined,
-        userPrompt:
-          typeof body.userPrompt === "string"
-            ? body.userPrompt.trim()
-            : undefined,
-        cardTitle:
-          typeof body.cardTitle === "string"
-            ? body.cardTitle.trim()
-            : undefined,
-        attached,
-        previous,
-      },
-      { distinctId },
-    )
+    const params = {
+      cardType,
+      recipientName,
+      tone: typeof body.tone === "string" ? body.tone.trim() : undefined,
+      userContext:
+        typeof body.userContext === "string"
+          ? body.userContext.trim()
+          : undefined,
+      userPrompt:
+        typeof body.userPrompt === "string"
+          ? body.userPrompt.trim()
+          : undefined,
+      cardTitle:
+        typeof body.cardTitle === "string" ? body.cardTitle.trim() : undefined,
+      attached,
+      previous,
+    }
+
+    const evalModels =
+      process.env.VERCEL_ENV === "preview" && Array.isArray(body.evalModels)
+        ? body.evalModels.filter(
+            (m): m is string =>
+              typeof m === "string" && EVAL_MODELS.includes(m),
+          )
+        : []
+    if (evalModels.length > 0) {
+      const results = await Promise.all(
+        evalModels.map((model) =>
+          generateCardHeadline(params, { distinctId, model }).catch(
+            (e: unknown) =>
+              `ERROR ${e instanceof Error ? e.message : String(e)}`,
+          ),
+        ),
+      )
+      return NextResponse.json(
+        {
+          evalResults: Object.fromEntries(
+            evalModels.map((m, i) => [m, results[i]]),
+          ),
+        },
+        { headers: rateLimit.headers },
+      )
+    }
+
+    const text = await generateCardHeadline(params, { distinctId })
 
     return NextResponse.json({ text }, { headers: rateLimit.headers })
   } catch (error) {

@@ -98,18 +98,38 @@ describe("assembleHeadlineUserPrompt", () => {
   })
 
   it("exports a system prompt", () => {
-    expect(HEADLINE_SYSTEM_PROMPT).toContain("creative greeting card writer")
+    expect(HEADLINE_SYSTEM_PROMPT).toContain("greeting card")
   })
 
   it("adds the matching tone guide and examples", () => {
     const prompt = assembleHeadlineUserPrompt({
-      tone: "Dry",
+      tone: "Sassy",
       cardType: "birthday",
       addressedTo: "Alex",
     })
-    expect(prompt).toContain("Tone guide (Dry): Deadpan and understated")
-    expect(prompt).toContain("- Five years, Sarah. Would recommend")
+    expect(prompt).toContain("Tone guide (Sassy): Cheeky, confident")
+    expect(prompt).toContain("- Leaving us, Dan? Bold. Rude, but bold")
     expect(prompt.endsWith("Write a headline for this card.")).toBe(true)
+  })
+
+  it("keeps the old Dry tone working as Sassy", () => {
+    expect(
+      assembleHeadlineUserPrompt({
+        tone: "Dry",
+        cardType: "birthday",
+        addressedTo: "Alex",
+      }),
+    ).toContain("Cheeky, confident")
+  })
+
+  it("uses the sympathy guide whatever the tone", () => {
+    const prompt = assembleHeadlineUserPrompt({
+      tone: "Playful",
+      cardType: "sympathy",
+      addressedTo: "Alex",
+    })
+    expect(prompt).toContain("Tone guide (sympathy)")
+    expect(prompt).not.toContain("Laugh-out-loud")
   })
 
   it("omits the tone guide for an unknown or missing tone", () => {

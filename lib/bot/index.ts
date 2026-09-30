@@ -34,7 +34,7 @@ const CARD_TYPES = [
   "custom",
 ]
 
-const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
+const TONES = ["Warm", "Playful", "Sassy", "Sincere", "Short"]
 
 async function generateAndCreateCard(
   supabaseUserId: string,

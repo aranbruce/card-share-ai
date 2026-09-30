@@ -11,7 +11,7 @@ import { Logo } from "@/components/logo"
 import { ArrowLeft, Paperclip, Sparkles, X } from "lucide-react"
 import { handleImageFileChange } from "@/lib/handle-image-file-change"
 
-const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
+const TONES = ["Warm", "Playful", "Sassy", "Sincere", "Short"]
 
 interface CardDetailsFormProps {
   cardType: string
