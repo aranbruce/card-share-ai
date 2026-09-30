@@ -98,7 +98,59 @@ describe("assembleHeadlineUserPrompt", () => {
   })
 
   it("exports a system prompt", () => {
-    expect(HEADLINE_SYSTEM_PROMPT).toContain("creative greeting card writer")
+    expect(HEADLINE_SYSTEM_PROMPT).toContain("greeting card")
+  })
+
+  it("adds the matching tone guide and examples", () => {
+    const prompt = assembleHeadlineUserPrompt({
+      tone: "Roast",
+      cardType: "birthday",
+      addressedTo: "Alex",
+    })
+    expect(prompt).toContain("Tone guide (Roast): An affectionate roast")
+    expect(prompt).toContain("- Leaving us, Dan? Bold. Rude, but bold")
+    expect(prompt.endsWith("Write a headline for this card.")).toBe(true)
+  })
+
+  it("maps legacy tones on older cards to current ones", () => {
+    expect(
+      assembleHeadlineUserPrompt({
+        tone: "Dry",
+        cardType: "birthday",
+        addressedTo: "Alex",
+      }),
+    ).toContain("Tone guide (Roast)")
+    expect(
+      assembleHeadlineUserPrompt({
+        tone: "Warm",
+        cardType: "birthday",
+        addressedTo: "Alex",
+      }),
+    ).toContain("Tone guide (Heartfelt)")
+  })
+
+  it("uses the sympathy guide whatever the tone", () => {
+    const prompt = assembleHeadlineUserPrompt({
+      tone: "Dad jokes",
+      cardType: "sympathy",
+      addressedTo: "Alex",
+    })
+    expect(prompt).toContain("Tone guide (sympathy)")
+    expect(prompt).not.toContain("groan")
+    expect(prompt).not.toContain("Tone: Dad jokes")
+  })
+
+  it("omits the tone guide for an unknown or missing tone", () => {
+    expect(
+      assembleHeadlineUserPrompt({ cardType: "birthday", addressedTo: "Alex" }),
+    ).not.toContain("Tone guide")
+    expect(
+      assembleHeadlineUserPrompt({
+        tone: "Mysterious",
+        cardType: "birthday",
+        addressedTo: "Alex",
+      }),
+    ).not.toContain("Tone guide")
   })
 })
 
@@ -156,6 +208,24 @@ describe("assembleImageUserPrompt", () => {
     expect(assembleImageLeadingText(true, true)).toContain(
       "Refine the existing card cover",
     )
+  })
+
+  it("describes the tone as a visual mood, not by name", () => {
+    const prompt = assembleImageUserPrompt(
+      { cardType: "birthday", addressedTo: "Alex", tone: "Roast" },
+      {},
+    )
+    expect(prompt).toContain("Tone: bold, cheeky and mischievous")
+    expect(prompt).not.toContain("Tone: Roast")
+  })
+
+  it("keeps sympathy covers gentle whatever the tone", () => {
+    const prompt = assembleImageUserPrompt(
+      { cardType: "sympathy", addressedTo: "Alex", tone: "Roast" },
+      {},
+    )
+    expect(prompt).toContain("Tone: gentle, calm and comforting")
+    expect(prompt).not.toContain("mischievous")
   })
 
   it("includes headline constraints when cardTitle is set", () => {

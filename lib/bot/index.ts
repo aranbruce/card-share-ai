@@ -9,6 +9,7 @@ import {
 } from "chat"
 import { createSlackAdapter } from "@chat-adapter/slack"
 import { getAppUrl } from "@/lib/app-url"
+import { CARD_TONES, DEFAULT_CARD_TONE } from "@/lib/card-tones"
 import { createPostgresState } from "@chat-adapter/state-pg"
 import pg from "pg"
 import type { ModalSubmitEvent, SlashCommandEvent } from "chat"
@@ -33,8 +34,6 @@ const CARD_TYPES = [
   "sympathy",
   "custom",
 ]
-
-const TONES = ["Warm", "Playful", "Dry", "Sincere", "Short"]
 
 async function generateAndCreateCard(
   supabaseUserId: string,
@@ -324,8 +323,8 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
             id: "tone",
             label: "Tone",
             placeholder: "Select a tone",
-            initialOption: "Warm",
-            options: TONES.map((t) => ({
+            initialOption: DEFAULT_CARD_TONE,
+            options: CARD_TONES.map((t) => ({
               type: "select_option",
               value: t,
               label: t,
@@ -416,7 +415,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
     const cardType = values.card_type || "custom"
     const recipientName = (values.recipient_name || "").trim()
     const senderName = (values.sender_name || "").trim()
-    const tone = values.tone || "Warm"
+    const tone = values.tone || DEFAULT_CARD_TONE
     const userContext = (values.context || "").trim() || undefined
 
     if (!recipientName || !senderName) {
