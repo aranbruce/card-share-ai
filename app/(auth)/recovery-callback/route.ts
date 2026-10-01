@@ -1,43 +1,14 @@
-import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
-import { NextResponse } from "next/server"
+import { completeAuthCallback } from "@/lib/auth/complete-auth-callback"
 import type { NextRequest } from "next/server"
 
 /**
- * Password-reset emails should use redirect_to → this URL (path only, no query).
- * PKCE exchange + Set-Cookie must run on a Route Handler with cookies on the response.
+ * Password-reset emails link here with a token_hash (or, for older emails, a
+ * PKCE code via redirect_to). The session must be set on a Route Handler
+ * response so /reset-password can call updateUser.
  */
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-
-  const errorParam = requestUrl.searchParams.get("error")
-  const errorDescription = requestUrl.searchParams.get("error_description")
-  if (errorParam) {
-    return NextResponse.redirect(
-      new URL(
-        `/login?error=${encodeURIComponent(errorDescription ?? errorParam)}`,
-        requestUrl.origin,
-      ),
-    )
-  }
-
-  const code = requestUrl.searchParams.get("code")
-  if (code) {
-    const redirectUrl = new URL("/reset-password", requestUrl.origin)
-    const response = NextResponse.redirect(redirectUrl)
-    const supabase = createSupabaseRouteHandlerClient(request, response)
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return response
-    }
-    return NextResponse.redirect(
-      new URL(
-        `/login?error=${encodeURIComponent(error.message)}`,
-        requestUrl.origin,
-      ),
-    )
-  }
-
-  return NextResponse.redirect(
-    new URL("/login?error=auth_callback_failed", requestUrl.origin),
-  )
+  return completeAuthCallback(request, {
+    successPath: "/reset-password",
+    otpType: "recovery",
+  })
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, afterEach } from "vitest"
 
 import {
-  buildEmailConfirmationLink,
   buildSupabaseAuthLink,
+  buildTokenHashAuthLink,
   isHandledAuthEmailType,
   resolveAuthEmailDeliveries,
   sendAuthEmail,
@@ -25,19 +25,13 @@ const baseEmailData = {
   token_hash_new: "",
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
 describe("buildSupabaseAuthLink", () => {
-  const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
-  afterEach(() => {
-    if (originalUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL
-    } else {
-      process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl
-    }
-  })
-
   it("builds a Supabase verify URL with encoded params", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co/"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co/")
 
     const link = buildSupabaseAuthLink({
       ...baseEmailData,
@@ -56,7 +50,7 @@ describe("buildSupabaseAuthLink", () => {
   })
 
   it("supports overriding the token hash for secure email change", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
 
     const link = buildSupabaseAuthLink(
       {
@@ -71,13 +65,15 @@ describe("buildSupabaseAuthLink", () => {
   })
 })
 
-describe("buildEmailConfirmationLink", () => {
-  it("links to /callback with a token_hash instead of the Supabase verify URL", () => {
+describe("buildTokenHashAuthLink", () => {
+  const confirm = { path: "/callback", type: "email" } as const
+
+  it("links to the callback route with a token_hash instead of the Supabase verify URL", () => {
     const link = new URL(
-      buildEmailConfirmationLink({
-        ...baseEmailData,
-        email_action_type: "signup",
-      }),
+      buildTokenHashAuthLink(
+        { ...baseEmailData, email_action_type: "signup" },
+        confirm,
+      ),
     )
 
     expect(link.origin + link.pathname).toBe("https://app.example.com/callback")
@@ -88,39 +84,85 @@ describe("buildEmailConfirmationLink", () => {
 
   it("keeps the next param from redirect_to", () => {
     const link = new URL(
-      buildEmailConfirmationLink({
-        ...baseEmailData,
-        email_action_type: "signup",
-        redirect_to:
-          "https://app.example.com/callback?next=%2Fcreate%3Faction%3Dsave",
-      }),
+      buildTokenHashAuthLink(
+        {
+          ...baseEmailData,
+          email_action_type: "signup",
+          redirect_to:
+            "https://app.example.com/callback?next=%2Fcreate%3Faction%3Dsave",
+        },
+        confirm,
+      ),
     )
 
     expect(link.searchParams.get("next")).toBe("/create?action=save")
   })
 
-  it("falls back to site_url's /callback when redirect_to is elsewhere or empty", () => {
+  it("links recovery emails to /recovery-callback", () => {
+    const link = new URL(
+      buildTokenHashAuthLink(
+        {
+          ...baseEmailData,
+          email_action_type: "recovery",
+          redirect_to: "https://app.example.com/recovery-callback",
+        },
+        { path: "/recovery-callback", type: "recovery" },
+      ),
+    )
+
+    expect(link.origin + link.pathname).toBe(
+      "https://app.example.com/recovery-callback",
+    )
+    expect(link.searchParams.get("type")).toBe("recovery")
+  })
+
+  it("falls back to site_url's callback when redirect_to is elsewhere or empty", () => {
     const elsewhere = new URL(
-      buildEmailConfirmationLink({
-        ...baseEmailData,
-        email_action_type: "signup",
-        redirect_to: "https://app.example.com/?next=/evil",
-      }),
+      buildTokenHashAuthLink(
+        {
+          ...baseEmailData,
+          email_action_type: "signup",
+          redirect_to: "https://app.example.com/?next=/evil",
+        },
+        confirm,
+      ),
     )
     expect(elsewhere.pathname).toBe("/callback")
     expect(elsewhere.searchParams.has("next")).toBe(false)
 
     const empty = new URL(
-      buildEmailConfirmationLink({
-        ...baseEmailData,
-        email_action_type: "signup",
-        redirect_to: "",
-      }),
+      buildTokenHashAuthLink(
+        { ...baseEmailData, email_action_type: "signup", redirect_to: "" },
+        confirm,
+      ),
     )
     expect(empty.origin + empty.pathname).toBe(
       "https://app.example.com/callback",
     )
   })
+
+  it.each(["app.example.com", "localhost:3000", "cardshare.ai:443"])(
+    "falls back to the Supabase verify link when site_url is %s",
+    (siteUrl) => {
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
+
+      const link = new URL(
+        buildTokenHashAuthLink(
+          {
+            ...baseEmailData,
+            email_action_type: "signup",
+            redirect_to: "",
+            site_url: siteUrl,
+          },
+          confirm,
+        ),
+      )
+
+      expect(link.origin + link.pathname).toBe(
+        "https://project.supabase.co/auth/v1/verify",
+      )
+    },
+  )
 })
 
 describe("isHandledAuthEmailType", () => {
@@ -168,7 +210,7 @@ describe("resolveAuthEmailDeliveries", () => {
   })
 
   it("maps secure email-change hashes per Supabase hook docs", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
 
     const deliveries = resolveAuthEmailDeliveries(
       { email: "current@example.com", new_email: "new@example.com" },
@@ -240,7 +282,7 @@ describe("sendAuthEmail", () => {
   })
 
   it("sends verification email for signup", async () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
     mockSend.mockResolvedValue({ ok: true, id: "email-id" })
 
     await sendAuthEmail({
@@ -255,13 +297,15 @@ describe("sendAuthEmail", () => {
       expect.objectContaining({
         to: "user@example.com",
         subject: "Verify your CardShare.ai email",
-        text: expect.stringContaining("Verify email"),
+        text: expect.stringContaining(
+          "https://app.example.com/callback?token_hash=hash&type=email",
+        ),
       }),
     )
   })
 
   it("sends reset email for recovery", async () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
     mockSend.mockResolvedValue({ ok: true, id: "email-id" })
 
     await sendAuthEmail({
@@ -276,7 +320,9 @@ describe("sendAuthEmail", () => {
     expect(mockSend).toHaveBeenCalledWith(
       expect.objectContaining({
         subject: "Reset your CardShare.ai password",
-        text: expect.stringContaining("Reset password"),
+        text: expect.stringContaining(
+          "https://app.example.com/recovery-callback?token_hash=hash&type=recovery",
+        ),
       }),
     )
   })

@@ -12,6 +12,7 @@ import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
 import type { OAuthProviderId } from "@/lib/oauth-auth"
 import { usePendingSaveIntent } from "@/hooks/use-pending-save-intent"
+import { hasPendingCard as hasStoredPendingCard } from "@/lib/pending-card-storage"
 import {
   persistPendingCardAfterAuth,
   persistPendingCardErrorMessage,
@@ -77,10 +78,10 @@ function SignUpFormInner() {
     setError("")
 
     try {
-      // When saving a guest draft, land on /create after email confirmation so
-      // it persists the pending card from localStorage.
+      // When a guest draft is stored, land on /create after email confirmation
+      // so it persists the pending card from localStorage.
       const emailRedirectTo = new URL("/callback", window.location.origin)
-      if (hasPendingCard) {
+      if (hasStoredPendingCard()) {
         emailRedirectTo.searchParams.set("next", "/create?action=save")
       }
 

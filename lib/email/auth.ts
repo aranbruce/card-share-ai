@@ -114,27 +114,42 @@ export function buildSupabaseAuthLink(
   return `${baseUrl}?${params.toString()}`
 }
 
+/** Parses an http(s) URL. Scheme-less values like "localhost:3000" parse as a
+ * custom scheme with a "null" origin, so they're rejected too. */
+function parseHttpUrl(value: string): URL | null {
+  try {
+    const url = new URL(value)
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null
+  } catch {
+    return null
+  }
+}
+
 /**
- * Links straight to our /callback with a token_hash, which the callback verifies
- * with verifyOtp. Unlike the PKCE `code` flow, this works when the email is
- * opened in a different browser or device from the one that signed up.
- * Keeps the `next` param from redirect_to (already allowlisted by Supabase).
+ * Links straight to one of our callback routes with a token_hash, which the
+ * route verifies with verifyOtp. Unlike the PKCE `code` flow, this works when
+ * the email is opened in a different browser or device from the one that
+ * requested it. Keeps the `next` param from redirect_to (already allowlisted by
+ * Supabase). Falls back to the Supabase verify link when neither redirect_to
+ * nor site_url is a usable URL, so a misconfigured Site URL can't block emails.
  */
-export function buildEmailConfirmationLink(
+export function buildTokenHashAuthLink(
   emailData: SupabaseEmailData,
+  { path, type }: { path: string; type: "email" | "recovery" },
   tokenHash: string = emailData.token_hash,
 ): string {
-  const redirectTo = new URL(emailData.redirect_to || emailData.site_url)
-  const link = new URL("/callback", redirectTo.origin)
+  const redirectTo =
+    parseHttpUrl(emailData.redirect_to) ?? parseHttpUrl(emailData.site_url)
+  if (!redirectTo) return buildSupabaseAuthLink(emailData, tokenHash)
+
+  const link = new URL(path, redirectTo.origin)
 
   const next =
-    redirectTo.pathname === "/callback"
-      ? redirectTo.searchParams.get("next")
-      : null
+    redirectTo.pathname === path ? redirectTo.searchParams.get("next") : null
   if (next) link.searchParams.set("next", next)
 
   link.searchParams.set("token_hash", tokenHash)
-  link.searchParams.set("type", "email")
+  link.searchParams.set("type", type)
   return link.toString()
 }
 
@@ -142,23 +157,37 @@ function buildLinkAuthEmailContent(
   emailData: SupabaseEmailData,
   tokenHash: string,
 ): EmailContent {
-  const link = buildSupabaseAuthLink(emailData, tokenHash)
-
   switch (emailData.email_action_type) {
     case "signup":
     case "email":
       return buildEmailVerificationEmail({
-        link: buildEmailConfirmationLink(emailData, tokenHash),
+        link: buildTokenHashAuthLink(
+          emailData,
+          { path: "/callback", type: "email" },
+          tokenHash,
+        ),
       })
     case "recovery":
-      return buildPasswordResetEmail({ link })
+      return buildPasswordResetEmail({
+        link: buildTokenHashAuthLink(
+          emailData,
+          { path: "/recovery-callback", type: "recovery" },
+          tokenHash,
+        ),
+      })
+    // Magic links and invites aren't sent by the app, so they keep Supabase's
+    // verify link rather than guessing which route should handle them.
     case "magiclink":
-      return buildMagicLinkEmail({ link })
+      return buildMagicLinkEmail({
+        link: buildSupabaseAuthLink(emailData, tokenHash),
+      })
     case "invite":
-      return buildInviteEmail({ link })
+      return buildInviteEmail({
+        link: buildSupabaseAuthLink(emailData, tokenHash),
+      })
     case "email_change":
       return buildEmailChangeEmail({
-        link,
+        link: buildSupabaseAuthLink(emailData, tokenHash),
         newEmail: undefined,
       })
     default:
