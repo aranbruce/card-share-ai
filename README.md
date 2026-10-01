@@ -34,6 +34,9 @@ An AI-powered app for creating and sharing personalized virtual greeting cards w
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_key
+# Optional: new-style secret key (sb_secret_…) for server-side Auth calls only, so Supabase
+# rate-limits per visitor IP (sb-forwarded-for) instead of per server. See "Auth rate limits" below.
+SUPABASE_SECRET_KEY=your_secret_key
 SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID=your_github_oauth_app_client_id
 SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET=your_github_oauth_app_client_secret
 GIPHY_API_KEY=your_giphy_api_key
@@ -55,6 +58,23 @@ NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
 # Client reverse proxy: /t for local dev; https://t.cardshare.ai in production (see PostHog proxy below)
 NEXT_PUBLIC_POSTHOG_API_HOST=/t
 ```
+
+### Auth rate limits (IP forwarding)
+
+Supabase rate-limits Auth per IP (e.g. 30 token refreshes and 30 OTP verifications per 5 minutes).
+The middleware session refresh and the `/callback` / `/recovery-callback` routes call Supabase Auth
+from the server, so without forwarding every visitor shares the server's budget.
+
+`lib/supabase/auth-server.ts` builds an auth-only client for those calls. When `SUPABASE_SECRET_KEY`
+is set, it uses that key and sends `sb-forwarded-for` with the visitor's IP (the first
+`x-forwarded-for` hop, which Vercel sets). Supabase only honours the header for secret keys, so:
+
+1. Create a secret key in the Supabase dashboard (Project Settings → API Keys) and set `SUPABASE_SECRET_KEY`.
+2. Turn on **Enable IP address forwarding** under Auth → Rate Limits.
+
+The secret key bypasses RLS, so this client exposes only the Auth API. Data queries stay on the
+anon-key clients (`lib/supabase/server.ts`, `client.ts`). Without the env var it falls back to the
+anon key and per-server limits. See https://supabase.com/docs/guides/auth/rate-limits.
 
 ### PostHog reverse proxy (EU, ad-blocker safe)
 

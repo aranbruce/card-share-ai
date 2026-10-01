@@ -5,9 +5,7 @@ const verifyOtp = vi.fn()
 const exchangeCodeForSession = vi.fn()
 
 vi.mock("@/lib/supabase/route-handler", () => ({
-  createSupabaseRouteHandlerClient: () => ({
-    auth: { verifyOtp, exchangeCodeForSession },
-  }),
+  createSupabaseRouteHandlerAuth: () => ({ verifyOtp, exchangeCodeForSession }),
 }))
 
 import { completeAuthCallback, formParams } from "./complete-auth-callback"
