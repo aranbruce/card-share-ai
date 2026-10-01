@@ -21,6 +21,9 @@ describe("summarizeCard", () => {
     expect(card.editUrl).toBe(`${APP}/dashboard/cards/card-1`)
     expect(card.contributeUrl).toBe(`${APP}/contribute/link-1`)
     expect(card.viewUrl).toBe(`${APP}/view/link-1`)
+    expect(card.previewImageUrl).toMatch(
+      new RegExp(`^${APP}/og/card/link-1\\?for=view&v=`),
+    )
     expect(card.status).toBe("collecting")
     expect(card).not.toHaveProperty("messageCount")
   })
@@ -44,6 +47,7 @@ describe("summarizeCard", () => {
     expect(card.coverImageUrl).toBeNull()
     expect(card.contributeUrl).toBeNull()
     expect(card.viewUrl).toBeNull()
+    expect(card.previewImageUrl).toBeNull()
     expect(card.cardType).toBe("custom")
   })
 })

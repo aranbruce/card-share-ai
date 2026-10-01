@@ -125,7 +125,7 @@ If you use **email / password** sign-up, enable HaveIBeenPwned checks in the Sup
 
 ### MCP server (Claude and ChatGPT connectors)
 
-`/mcp` is a remote MCP server (Streamable HTTP, via `mcp-handler`) with three tools: `create_card`, `list_cards` and `get_card`. Users sign in with OAuth 2.1, using **Supabase Auth's OAuth server** as the authorization server; our consent screen is `/oauth/consent`. Tool calls run as the signed-in user, so RLS applies.
+`/mcp` is a remote MCP server (Streamable HTTP, via `mcp-handler`) with three tools: `create_card`, `list_cards` and `get_card`. Each tool also renders an MCP Apps view (`lib/mcp/card-widget.ts`) that shows the card, or a grid of cards, inline in Claude and ChatGPT; other clients get the same text and links as before. Users sign in with OAuth 2.1, using **Supabase Auth's OAuth server** as the authorization server; our consent screen is `/oauth/consent`. Tool calls run as the signed-in user, so RLS applies.
 
 One-time Supabase setup (Dashboard → **Authentication → OAuth Server**):
 

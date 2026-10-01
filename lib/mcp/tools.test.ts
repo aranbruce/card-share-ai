@@ -45,6 +45,23 @@ describe("MCP card tools", () => {
     expect(Object.keys(create.inputSchema.properties)).toContain("tone")
   })
 
+  it("links every tool to the card view", async () => {
+    const { result } = await rpc("tools/list")
+    for (const tool of result.tools) {
+      expect(tool._meta.ui.resourceUri).toBe("ui://cardshare/cards.html")
+    }
+  })
+
+  it("serves the card view as an MCP Apps resource", async () => {
+    const { result } = await rpc("resources/read", {
+      uri: "ui://cardshare/cards.html",
+    })
+    const [content] = result.contents
+    expect(content.mimeType).toBe("text/html;profile=mcp-app")
+    expect(content.text).toContain('<div id="root"></div>')
+    expect(content._meta.ui.csp.resourceDomains).toHaveLength(1)
+  })
+
   it("refuses tool calls without a signed-in user", async () => {
     const { result } = await rpc("tools/call", {
       name: "list_cards",

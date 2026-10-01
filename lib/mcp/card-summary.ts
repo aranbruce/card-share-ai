@@ -1,3 +1,5 @@
+import { cardPreviewImagePath } from "@/lib/card-preview"
+
 /** Card fields the MCP tools read back from the `cards` table. */
 export type McpCardRow = {
   id: string
@@ -21,6 +23,8 @@ export type McpCardSummary = {
   senderName: string
   headline: string
   coverImageUrl: string | null
+  /** The card's front on a pastel backdrop (1200×630), served by this app. */
+  previewImageUrl: string | null
   status: "collecting" | "sent"
   sentAt: string | null
   createdAt: string | null
@@ -47,6 +51,14 @@ export function summarizeCard(
     headline: card.copy_headline || "",
     coverImageUrl: card.image_url?.startsWith("https://")
       ? card.image_url
+      : null,
+    previewImageUrl: linkId
+      ? `${appUrl}${cardPreviewImagePath(linkId, "view", {
+          recipient_name: card.recipient_name ?? null,
+          sender_name: card.sender_name ?? null,
+          copy_headline: card.copy_headline ?? null,
+          image_url: card.image_url ?? null,
+        })}`
       : null,
     status: card.sent_at ? "sent" : "collecting",
     sentAt: card.sent_at ?? null,

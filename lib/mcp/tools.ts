@@ -9,7 +9,9 @@ import { generateCardCoverImage } from "@/lib/generate-card-image"
 import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { captureServerEvent } from "@/lib/posthog-server"
 import { checkFixedWindowRateLimitForKey } from "@/lib/request-rate-limit"
+import { registerAppTool } from "@modelcontextprotocol/ext-apps/server"
 import { createUserScopedClient, mcpUserId } from "@/lib/mcp/auth"
+import { CARD_WIDGET_URI, registerCardWidget } from "@/lib/mcp/card-widget"
 import {
   formatCardText,
   MCP_CARD_COLUMNS,
@@ -43,8 +45,14 @@ function requireUser(ctx: ServerContext) {
 const NOT_SIGNED_IN =
   "You're not signed in to CardShare.ai. Reconnect the CardShare.ai connector and try again."
 
+// Shows the card(s) inline in hosts that support MCP Apps
+const CARD_WIDGET_META = { ui: { resourceUri: CARD_WIDGET_URI } }
+
 export function registerCardTools(server: McpServer): void {
-  server.registerTool(
+  registerCardWidget(server)
+
+  registerAppTool(
+    server,
     "create_card",
     {
       title: "Create greeting card",
@@ -91,6 +99,7 @@ export function registerCardTools(server: McpServer): void {
         idempotentHint: false,
         openWorldHint: false,
       },
+      _meta: CARD_WIDGET_META,
     },
     async ({ recipientName, senderName, cardType, tone, context }, ctx) => {
       const user = requireUser(ctx)
@@ -181,7 +190,8 @@ export function registerCardTools(server: McpServer): void {
     },
   )
 
-  server.registerTool(
+  registerAppTool(
+    server,
     "list_cards",
     {
       title: "List my cards",
@@ -201,6 +211,7 @@ export function registerCardTools(server: McpServer): void {
         readOnlyHint: true,
         openWorldHint: false,
       },
+      _meta: CARD_WIDGET_META,
     },
     async ({ limit }, ctx) => {
       const user = requireUser(ctx)
@@ -236,7 +247,8 @@ export function registerCardTools(server: McpServer): void {
     },
   )
 
-  server.registerTool(
+  registerAppTool(
+    server,
     "get_card",
     {
       title: "Get card details",
@@ -252,6 +264,7 @@ export function registerCardTools(server: McpServer): void {
         readOnlyHint: true,
         openWorldHint: false,
       },
+      _meta: CARD_WIDGET_META,
     },
     async ({ cardId }, ctx) => {
       const user = requireUser(ctx)
