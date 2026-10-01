@@ -27,6 +27,7 @@ export function buildLlmsTxt(): string {
     `- [Browse occasions](${base}/browse): every occasion with a group card`,
     `- [Start a card](${base}/create): create a card, free`,
     `- [Slack app](${base}/slack/install): create cards with /cardshareai in Slack`,
+    `- [Claude connector](${base}/claude): create, edit and add photos to cards from a chat with Claude`,
     "",
     "## Occasions",
     "",

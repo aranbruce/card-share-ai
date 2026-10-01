@@ -18,7 +18,7 @@ export function protectedResourceMetadataResponse(req: Request): Response {
     resourceUrl: `${getPublicOrigin(req)}/mcp`,
     additionalMetadata: {
       resource_name: "CardShare.ai",
-      resource_documentation: `${getPublicOrigin(req)}/llms.txt`,
+      resource_documentation: `${getPublicOrigin(req)}/claude`,
     },
   })
   return Response.json(metadata, {
