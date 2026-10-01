@@ -114,6 +114,30 @@ export function buildSupabaseAuthLink(
   return `${baseUrl}?${params.toString()}`
 }
 
+/**
+ * Links straight to our /callback with a token_hash, which the callback verifies
+ * with verifyOtp. Unlike the PKCE `code` flow, this works when the email is
+ * opened in a different browser or device from the one that signed up.
+ * Keeps the `next` param from redirect_to (already allowlisted by Supabase).
+ */
+export function buildEmailConfirmationLink(
+  emailData: SupabaseEmailData,
+  tokenHash: string = emailData.token_hash,
+): string {
+  const redirectTo = new URL(emailData.redirect_to || emailData.site_url)
+  const link = new URL("/callback", redirectTo.origin)
+
+  const next =
+    redirectTo.pathname === "/callback"
+      ? redirectTo.searchParams.get("next")
+      : null
+  if (next) link.searchParams.set("next", next)
+
+  link.searchParams.set("token_hash", tokenHash)
+  link.searchParams.set("type", "email")
+  return link.toString()
+}
+
 function buildLinkAuthEmailContent(
   emailData: SupabaseEmailData,
   tokenHash: string,
@@ -123,7 +147,9 @@ function buildLinkAuthEmailContent(
   switch (emailData.email_action_type) {
     case "signup":
     case "email":
-      return buildEmailVerificationEmail({ link })
+      return buildEmailVerificationEmail({
+        link: buildEmailConfirmationLink(emailData, tokenHash),
+      })
     case "recovery":
       return buildPasswordResetEmail({ link })
     case "magiclink":

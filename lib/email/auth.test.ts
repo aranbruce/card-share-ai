@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from "vitest"
 
 import {
+  buildEmailConfirmationLink,
   buildSupabaseAuthLink,
   isHandledAuthEmailType,
   resolveAuthEmailDeliveries,
@@ -67,6 +68,58 @@ describe("buildSupabaseAuthLink", () => {
     )
 
     expect(new URL(link).searchParams.get("token")).toBe("current-hash")
+  })
+})
+
+describe("buildEmailConfirmationLink", () => {
+  it("links to /callback with a token_hash instead of the Supabase verify URL", () => {
+    const link = new URL(
+      buildEmailConfirmationLink({
+        ...baseEmailData,
+        email_action_type: "signup",
+      }),
+    )
+
+    expect(link.origin + link.pathname).toBe("https://app.example.com/callback")
+    expect(link.searchParams.get("token_hash")).toBe("hash")
+    expect(link.searchParams.get("type")).toBe("email")
+    expect(link.searchParams.has("next")).toBe(false)
+  })
+
+  it("keeps the next param from redirect_to", () => {
+    const link = new URL(
+      buildEmailConfirmationLink({
+        ...baseEmailData,
+        email_action_type: "signup",
+        redirect_to:
+          "https://app.example.com/callback?next=%2Fcreate%3Faction%3Dsave",
+      }),
+    )
+
+    expect(link.searchParams.get("next")).toBe("/create?action=save")
+  })
+
+  it("falls back to site_url's /callback when redirect_to is elsewhere or empty", () => {
+    const elsewhere = new URL(
+      buildEmailConfirmationLink({
+        ...baseEmailData,
+        email_action_type: "signup",
+        redirect_to: "https://app.example.com/?next=/evil",
+      }),
+    )
+    expect(elsewhere.pathname).toBe("/callback")
+    expect(elsewhere.searchParams.has("next")).toBe(false)
+
+    const empty = new URL(
+      buildEmailConfirmationLink({
+        ...baseEmailData,
+        email_action_type: "signup",
+        redirect_to: "",
+      }),
+    )
+    expect(empty.origin + empty.pathname).toBe(
+      "https://app.example.com/callback",
+    )
   })
 })
 

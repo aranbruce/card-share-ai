@@ -29,6 +29,27 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // Email confirmation links (see buildEmailConfirmationLink) carry a token_hash,
+  // which verifies without the PKCE code verifier so any browser can open them.
+  const tokenHash = requestUrl.searchParams.get("token_hash")
+  if (tokenHash && type === "email") {
+    const response = NextResponse.redirect(new URL(next, requestUrl.origin))
+    const supabase = createSupabaseRouteHandlerClient(request, response)
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "email",
+    })
+    if (!error) {
+      return response
+    }
+    return NextResponse.redirect(
+      new URL(
+        `/login?error=${encodeURIComponent(error.message)}`,
+        requestUrl.origin,
+      ),
+    )
+  }
+
   if (code) {
     const redirectUrl = new URL(next, requestUrl.origin)
     const response = NextResponse.redirect(redirectUrl)
