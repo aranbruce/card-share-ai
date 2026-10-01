@@ -95,9 +95,7 @@ const newCardInputSchema = z.object({
     .trim()
     .min(1)
     .max(100)
-    .describe(
-      "Who the card is from, e.g. 'Alex' or 'The design team'. Use the user's name if unsure.",
-    ),
+    .describe("Who the card is from, e.g. 'Alex' or 'The design team'"),
   cardType: z.enum(MCP_CARD_TYPES).default("custom").describe("The occasion"),
   tone: z
     .enum(CARD_TONES)
@@ -111,7 +109,7 @@ const newCardInputSchema = z.object({
     .max(1000)
     .optional()
     .describe(
-      "Details to personalise the headline and cover, e.g. 'loves botanical illustration, just got promoted, turning 30'. If the user attached a photo, include a short description of it here.",
+      "Details that personalise the headline and cover, e.g. 'loves botanical illustration, just got promoted, turning 30'",
     ),
 })
 
@@ -124,7 +122,7 @@ export function registerCardTools(server: McpServer): void {
     {
       title: "Create greeting card",
       description:
-        "Creates a new CardShare.ai greeting card with an AI-written headline and AI-generated cover art, saved to the user's account. Returns links to edit the card, to invite a group to sign it, and to view it. Takes around 20–40 seconds. Ask for the recipient's name if you don't know it; use any details the user shares (hobbies, inside jokes, the occasion) as context. If the user wants their own photo on the cover, use create_card_from_photo instead.",
+        "Creates a new greeting card in the user's CardShare.ai account, with an AI-written headline and AI-generated cover art based on the recipient, occasion, tone and personal details. Returns the card with links to edit it, to invite a group to sign it, and to view it. Takes around 20–40 seconds.",
       inputSchema: newCardInputSchema,
       annotations: {
         title: "Create greeting card",
@@ -172,7 +170,7 @@ export function registerCardTools(server: McpServer): void {
     {
       title: "Create card from a photo",
       description:
-        "Starts a new card whose cover is drawn from the user's own photo. Use this instead of create_card when the user wants a photo of theirs on the cover, including when they attach one to the chat: attachments can't be passed to this tool, so this shows a photo picker in the chat and the card is created once they choose the photo there. Tell the user to pick the photo in the picker. Takes the same details as create_card.",
+        "Starts a new greeting card whose cover is drawn from a photo of the user's. Shows a photo picker in the chat; the card, with its headline and cover, is created in the user's account once they choose a photo there. Photos attached to the chat itself aren't available to this tool.",
       inputSchema: newCardInputSchema,
       annotations: {
         title: "Create card from a photo",
@@ -188,7 +186,7 @@ export function registerCardTools(server: McpServer): void {
       if (!user) return errorResult(NOT_SIGNED_IN)
       if (!photoUploadsEnabled()) {
         return errorResult(
-          "Photo covers aren't available right now. Use create_card to make the card without a photo.",
+          "Photo covers aren't available right now. Cards can still be created without a photo.",
         )
       }
 
@@ -196,7 +194,7 @@ export function registerCardTools(server: McpServer): void {
         content: [
           {
             type: "text" as const,
-            text: `A photo picker is now showing in the chat. Ask the user to choose their photo there; the card for ${inputs.recipientName} is created once they do, and you'll get its details then. Don't call create_card for this card.`,
+            text: `A photo picker is now showing in the chat. The card for ${inputs.recipientName} is created when the user chooses a photo there, and its details are added to the conversation then.`,
           },
         ],
         structuredContent: {
@@ -266,7 +264,7 @@ export function registerCardTools(server: McpServer): void {
               (card, i) => `${i + 1}. [id ${card.id}]\n${formatCardText(card)}`,
             )
             .join("\n\n")
-        : "No cards yet. Use create_card to make one."
+        : "No cards yet."
 
       return {
         content: [{ type: "text" as const, text }],
@@ -281,11 +279,9 @@ export function registerCardTools(server: McpServer): void {
     {
       title: "Get card details",
       description:
-        "Gets one of the user's greeting cards by id, including how many people have signed it and the links to edit, share and view it. The card shown in the chat has a button for the user to add or change the cover photo.",
+        "Gets one of the user's greeting cards by id: its headline, names, the user's own message, how many people have signed it, and links to edit it, invite people to sign it and view it. The card shown in the chat has a button for the user to add or change the cover photo.",
       inputSchema: z.object({
-        cardId: z
-          .string()
-          .describe("The card id, from list_cards or create_card"),
+        cardId: z.string().describe("The card's id"),
       }),
       annotations: {
         title: "Get card details",
@@ -311,11 +307,9 @@ export function registerCardTools(server: McpServer): void {
     {
       title: "Edit card",
       description:
-        "Edits one of the user's cards: the headline on the front, the recipient or sender names, or the user's own message inside the card. Only pass the fields to change. To refine the headline, write the new wording yourself (keep it short, like the original) and confirm it with the user first. The user's message appears inside the card; if they haven't placed it yet, it goes in the middle of the message page and they can move it from the edit link. To put a photo on the cover, use get_card: the card shown has an add-photo button.",
+        "Edits one of the user's cards: the headline on the front, the recipient or sender names, or the user's own message inside the card. Fields that aren't passed stay as they are. The user's message appears inside the card; if they haven't placed it yet, it goes in the middle of the message page, and they can move it from the edit link.",
       inputSchema: z.object({
-        cardId: z
-          .string()
-          .describe("The card id, from list_cards or create_card"),
+        cardId: z.string().describe("The card's id"),
         headline: z
           .string()
           .trim()
