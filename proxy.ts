@@ -30,7 +30,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - mcp, .well-known (MCP endpoint and OAuth metadata use bearer tokens, not cookies)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|mcp(?:/|$)|\\.well-known/).*)",
   ],
 }
