@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "cardshare-ai",
   "version": "1.0.0",
-  "description": "Create group greeting cards with an AI-written headline and cover art, put your own photo on the cover, edit cards, and share a link for everyone to sign.",
+  "description": "Create group greeting cards that everyone signs: an AI-written headline and cover art, your own photo on the cover, card editing, and a link for the group to sign.",
   "author": {
     "name": "CardShare.ai",
     "email": "cardshareai@gmail.com",
@@ -21,7 +21,7 @@
       "interface": {
         "displayName": "CardShare.ai",
         "shortDescription": "Group greeting cards to sign",
-        "longDescription": "CardShare.ai makes group greeting cards for birthdays, farewells, thank-yous, congratulations, holidays and sympathy. Tell ChatGPT who the card is for and a few personal details, and it writes the headline and draws the cover art. The card appears right in the chat, with buttons to open it, copy the invite link and use your own photo.\n\nWhat you can do:\n- Create a card in one of five tones: Heartfelt, Roast, Dad jokes, Hype or Epic. Sympathy cards always stay gentle.\n- Put your own photo on the cover. Choose it in the picker that appears in the chat and the cover is drawn from it.\n- Edit the headline, the names, or your own message inside the card.\n- List your cards and see how many people have signed each one.\n\nShare the invite link and everyone can add a message or GIF from any device, without an account. When everyone has signed, send the recipient a card they can open and keep.\n\nCardShare.ai only works with cards in the account you connect. Moving notes, adding GIFs and sending the finished card happen on the website, through the card's edit link. Free to use; sign in with Google, GitHub or email.",
+        "longDescription": "CardShare.ai creates group greeting cards that a team, family or group of friends signs together, for birthdays, farewells, thank-yous, congratulations, holidays and sympathy. Tell ChatGPT who the card is for and a few personal details, and it writes the headline and draws the cover art. The card appears right in the chat, with buttons to open it, copy the invite link and use your own photo.\n\nWhat you can do:\n- Create a card in one of five tones: Heartfelt, Roast, Dad jokes, Hype or Epic. Sympathy cards always stay gentle.\n- Put your own photo on the cover. Choose it in the picker that appears in the chat and the cover is drawn from it.\n- Edit the headline, the names, or your own message inside the card.\n- List your cards and see how many people have signed each one.\n\nShare the invite link and everyone can add a message or GIF from any device, without an account. When everyone has signed, send the recipient a card they can open and keep.\n\nCardShare.ai only works with cards in the account you connect. Moving notes, adding GIFs and sending the finished card happen on the website, through the card's edit link. Sign in with Google, GitHub or email.",
         "developerName": "CardShare.ai",
         "category": "Productivity",
         "capabilities": [
