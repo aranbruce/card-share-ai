@@ -21,8 +21,11 @@ describe("summarizeCard", () => {
     expect(card.editUrl).toBe(`${APP}/dashboard/cards/card-1`)
     expect(card.contributeUrl).toBe(`${APP}/contribute/link-1`)
     expect(card.viewUrl).toBe(`${APP}/view/link-1`)
+    expect(card.previewImageUrl).toMatch(
+      new RegExp(`^${APP}/og/card/link-1\\?for=view&v=`),
+    )
     expect(card.status).toBe("collecting")
-    expect(card).not.toHaveProperty("messageCount")
+    expect(card).not.toHaveProperty("signedCount")
   })
 
   it("marks sent cards and keeps the message count", () => {
@@ -32,7 +35,7 @@ describe("summarizeCard", () => {
       3,
     )
     expect(card.status).toBe("sent")
-    expect(card.messageCount).toBe(3)
+    expect(card.signedCount).toBe(3)
   })
 
   it("drops covers that aren't https and links without a link id", () => {
@@ -44,6 +47,7 @@ describe("summarizeCard", () => {
     expect(card.coverImageUrl).toBeNull()
     expect(card.contributeUrl).toBeNull()
     expect(card.viewUrl).toBeNull()
+    expect(card.previewImageUrl).toBeNull()
     expect(card.cardType).toBe("custom")
   })
 })
@@ -53,7 +57,8 @@ describe("formatCardText", () => {
     const text = formatCardText(summarizeCard(APP, row, 2))
     expect(text).toContain("Card for Sarah from The design team (thank you)")
     expect(text).toContain('Headline: "Sarah, thank you for every single year"')
-    expect(text).toContain("Group messages: 2")
+    expect(text).toContain("Signed by: 2")
+    expect(text).toContain("Your message: (not written yet)")
     expect(text).toContain(`Invite others to sign: ${APP}/contribute/link-1`)
   })
 })

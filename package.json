@@ -24,6 +24,7 @@
     "@ai-sdk/otel": "^1.0.124",
     "@chat-adapter/slack": "^4.41.1",
     "@chat-adapter/state-pg": "^4.41.1",
+    "@modelcontextprotocol/ext-apps": "^2.0.3",
     "@modelcontextprotocol/server": "^2",
     "@opentelemetry/resources": "^2.11.0",
     "@opentelemetry/sdk-node": "^0.222.0",

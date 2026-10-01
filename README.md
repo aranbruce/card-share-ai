@@ -45,6 +45,10 @@ SEND_EMAIL_HOOK_SECRET="v1,whsec_<secret-from-supabase-dashboard>"
 # AI_HEADLINE_MODEL=anthropic/claude-opus-5.5  # card front headline (generate-headline)
 # AI_MESSAGE_MODEL=anthropic/claude-opus-5.5   # card inside note (generate-message)
 
+# MCP connector: signs the short-lived photo upload links in the card view.
+# Any long random string (openssl rand -base64 32). Without it, photo covers are off.
+MCP_PHOTO_TOKEN_SECRET=your_random_secret
+
 # PostHog (EU Cloud) — project API key from eu.posthog.com project settings
 NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_your_project_token
 NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
@@ -125,15 +129,17 @@ If you use **email / password** sign-up, enable HaveIBeenPwned checks in the Sup
 
 ### MCP server (Claude and ChatGPT connectors)
 
-`/mcp` is a remote MCP server (Streamable HTTP, via `mcp-handler`) with three tools: `create_card`, `list_cards` and `get_card`. Users sign in with OAuth 2.1, using **Supabase Auth's OAuth server** as the authorization server; our consent screen is `/oauth/consent`. Tool calls run as the signed-in user, so RLS applies.
+`/mcp` is a remote MCP server (Streamable HTTP, via `mcp-handler`) with three tools: `create_card`, `list_cards` and `get_card`. Each tool also renders an MCP Apps view (`lib/mcp/card-widget.ts`) that shows the card, or a grid of cards, inline in Claude and ChatGPT; other clients get the same text and links as before. Users sign in with OAuth 2.1, using **Supabase Auth's OAuth server** as the authorization server; our consent screen is `/oauth/consent`. Tool calls run as the signed-in user, so RLS applies.
 
 One-time Supabase setup (Dashboard → **Authentication → OAuth Server**):
 
 1. Turn on **OAuth 2.1 server**.
 2. Set **Authorization path** to `/oauth/consent` (the Site URL must be the app's URL).
 3. Leave **Allow Dynamic OAuth Apps** off. Tokens are full Supabase sessions, so only clients we register ourselves may ask users for access.
-4. Under **OAuth Apps**, add one confidential app per platform, named as users should see it on the consent screen (e.g. "Claude" with redirect URI `https://claude.ai/api/mcp/auth_callback`). Store the client ID and secret in the team password manager.
+4. Under **OAuth Apps**, add one confidential app per platform, named as users should see it on the consent screen (e.g. "Claude" with redirect URI `https://claude.ai/api/mcp/auth_callback`). Claude needs the token endpoint auth method set to **Request body (`client_secret_post`)**; with `client_secret_basic` the connection fails after the consent screen. Store the client ID and secret in the team password manager.
 5. Use asymmetric JWT signing keys (Project Settings → JWT Keys) so `getClaims` verifies tokens locally.
+
+**Photo covers.** A photo attached to a Claude chat never reaches a connector's tools, so the card view has its own picker. `create_card_from_photo` shows the picker first; every card view has a "Use my photo" button. The view shrinks the photo in the browser and posts it to `/api/mcp/photo` with a 30-minute token signed with `MCP_PHOTO_TOKEN_SECRET`. That token sits in the tool result's `_meta`, which the view reads but the model never sees. The photo goes straight to the image model and isn't stored, as with reference photos on the website. Photo-first links are single-use: `mcp_photo_card_claims` records the card each one created, so a picker shown again (a reopened chat) or a retried upload returns that card instead of making another.
 
 Try it: add `https://<your-domain>/mcp` as a custom connector in Claude (Settings → Connectors, with the client ID and secret under Advanced settings) or in ChatGPT developer mode, or run `npx @modelcontextprotocol/inspector` against `http://localhost:3000/mcp`.
 
