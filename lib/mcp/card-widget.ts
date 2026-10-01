@@ -6,6 +6,7 @@ import {
   registerAppResource,
 } from "@modelcontextprotocol/ext-apps/server"
 import { getAppUrl } from "@/lib/app-url"
+import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
 
 /** The MCP Apps view that shows cards inline in Claude, ChatGPT and other hosts. */
 export const CARD_WIDGET_URI = "ui://cardshare/cards.html"
@@ -106,6 +107,8 @@ body {
   border-left: 3px solid var(--brand);
   padding: 2px 0 2px 10px;
 }
+.picker { padding: 20px 16px; display: grid; gap: 8px; text-align: center; }
+.actions.centered { justify-content: center; margin-top: 8px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 button {
   font: inherit;
@@ -148,6 +151,14 @@ const WIDGET_SCRIPT = `
 const { App } = globalThis.${SDK_GLOBAL};
 const root = document.getElementById("root");
 const app = new App({ name: "CardShare.ai cards", version: "1.0.0" });
+
+// Where to send a photo for the card on screen: { token, url } from the tool
+// result's _meta (never shown to the model), or null when photos are off.
+const PHOTO_META_KEY = "cardshare/photoUpload";
+const MAX_PHOTO_BYTES = ${MAX_SOURCE_IMAGE_BYTES};
+const MAX_PHOTO_SIDE = 2048;
+let upload = null;
+let lastCard = null;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -208,6 +219,108 @@ async function copy(text, button) {
   setTimeout(() => (button.textContent = label), 1800);
 }
 
+function canvasBlob(canvas, quality) {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Couldn't read that photo."))), "image/jpeg", quality),
+  );
+}
+
+function blobDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Couldn't read that photo."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Shrinks the photo to a JPEG the server accepts, like the website does
+async function photoDataUrl(file) {
+  if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error("Couldn't read that photo. Try a JPEG or PNG.");
+  }
+  let scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  for (let attempt = 0; attempt < 4; attempt++) {
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const quality of [0.85, 0.7, 0.55]) {
+      const blob = await canvasBlob(canvas, quality);
+      if (blob.size <= MAX_PHOTO_BYTES) return blobDataUrl(blob);
+    }
+    scale *= 0.7;
+  }
+  throw new Error("That photo is too large. Try a smaller one.");
+}
+
+function choosePhoto(busyText) {
+  const target = upload;
+  if (!target) return;
+  const input = el("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    renderStatus(busyText, true);
+    try {
+      const photo = await photoDataUrl(file);
+      const res = await fetch(target.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: target.token, photo }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.card) throw new Error(body.error || "Something went wrong. Please try again.");
+      upload = body.upload || null;
+      lastCard = body.card;
+      root.replaceChildren(renderCard(body.card));
+      // Tell the model what happened, since no tool call of its own did this
+      if (body.text) {
+        app.updateModelContext({ content: [{ type: "text", text: body.text }] }).catch(() => {});
+      }
+    } catch (err) {
+      renderPhotoError(err && err.message ? err.message : "Something went wrong. Please try again.", busyText);
+    }
+  });
+  input.click();
+}
+
+function renderPhotoError(message, busyText) {
+  const box = el("div", "panel status");
+  box.append(el("div", "", message));
+  const actions = el("div", "actions centered");
+  const retry = el("button", "primary", "Choose another photo");
+  retry.addEventListener("click", () => choosePhoto(busyText));
+  actions.append(retry);
+  if (lastCard) {
+    const back = el("button", "", "Back to card");
+    back.addEventListener("click", () => root.replaceChildren(renderCard(lastCard)));
+    actions.append(back);
+  }
+  box.append(actions);
+  root.replaceChildren(box);
+}
+
+function renderPhotoPicker(recipientName) {
+  const box = el("div", "panel picker");
+  box.append(el("div", "title", "Choose a photo for " + (recipientName ? recipientName + "'s" : "your") + " card"));
+  box.append(el("div", "meta", "We'll draw the cover from it. Your photo is only used for that; we don't keep it."));
+  const actions = el("div", "actions centered");
+  const pick = el("button", "primary", "Choose photo");
+  pick.addEventListener("click", () =>
+    choosePhoto("Drawing the card from your photo… this takes about 30 seconds"),
+  );
+  actions.append(pick);
+  box.append(actions);
+  root.replaceChildren(box);
+}
+
 function renderCard(card) {
   const panel = el("div", "panel");
   panel.append(preview(card));
@@ -233,6 +346,13 @@ function renderCard(card) {
     const viewButton = el("button", "", "View as recipient");
     viewButton.addEventListener("click", () => open(card.viewUrl));
     actions.append(viewButton);
+  }
+  if (upload && card.status !== "sent") {
+    const photoButton = el("button", "", "Use my photo");
+    photoButton.addEventListener("click", () =>
+      choosePhoto("Redrawing the cover from your photo… this takes about 30 seconds"),
+    );
+    actions.append(photoButton);
   }
   body.append(actions);
   panel.append(body);
@@ -266,12 +386,16 @@ function renderStatus(text, busy) {
 
 function render(result) {
   const data = result.structuredContent || {};
+  upload = (result._meta && result._meta[PHOTO_META_KEY]) || null;
   if (result.isError) {
     const text = (result.content || []).find((c) => c.type === "text");
     renderStatus(text ? text.text : "Something went wrong.", false);
     return;
   }
-  if (data.card) {
+  if (data.pendingPhoto) {
+    renderPhotoPicker(data.pendingPhoto.recipientName);
+  } else if (data.card) {
+    lastCard = data.card;
     root.replaceChildren(renderCard(data.card));
   } else if (Array.isArray(data.cards)) {
     root.replaceChildren(
@@ -331,8 +455,11 @@ export async function buildCardWidgetHtml(): Promise<string> {
 }
 
 function widgetResourceMeta() {
-  // Card preview images are served by this app
-  return { ui: { csp: { resourceDomains: [new URL(getAppUrl()).origin] } } }
+  // Card preview images and photo uploads are served by this app
+  const origin = new URL(getAppUrl()).origin
+  return {
+    ui: { csp: { resourceDomains: [origin], connectDomains: [origin] } },
+  }
 }
 
 export function registerCardWidget(server: McpServer): void {

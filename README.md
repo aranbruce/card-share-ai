@@ -45,6 +45,10 @@ SEND_EMAIL_HOOK_SECRET="v1,whsec_<secret-from-supabase-dashboard>"
 # AI_HEADLINE_MODEL=anthropic/claude-opus-5.5  # card front headline (generate-headline)
 # AI_MESSAGE_MODEL=anthropic/claude-opus-5.5   # card inside note (generate-message)
 
+# MCP connector: signs the short-lived photo upload links in the card view.
+# Any long random string (openssl rand -base64 32). Without it, photo covers are off.
+MCP_PHOTO_TOKEN_SECRET=your_random_secret
+
 # PostHog (EU Cloud) — project API key from eu.posthog.com project settings
 NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_your_project_token
 NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
@@ -134,6 +138,8 @@ One-time Supabase setup (Dashboard → **Authentication → OAuth Server**):
 3. Leave **Allow Dynamic OAuth Apps** off. Tokens are full Supabase sessions, so only clients we register ourselves may ask users for access.
 4. Under **OAuth Apps**, add one confidential app per platform, named as users should see it on the consent screen (e.g. "Claude" with redirect URI `https://claude.ai/api/mcp/auth_callback`). Store the client ID and secret in the team password manager.
 5. Use asymmetric JWT signing keys (Project Settings → JWT Keys) so `getClaims` verifies tokens locally.
+
+**Photo covers.** A photo attached to a Claude chat never reaches a connector's tools, so the card view has its own picker. `create_card_from_photo` shows the picker first; every card view has a "Use my photo" button. The view shrinks the photo in the browser and posts it to `/api/mcp/photo` with a 30-minute token signed with `MCP_PHOTO_TOKEN_SECRET`. That token sits in the tool result's `_meta`, which the view reads but the model never sees. The photo goes straight to the image model and isn't stored, as with reference photos on the website.
 
 Try it: add `https://<your-domain>/mcp` as a custom connector in Claude (Settings → Connectors, with the client ID and secret under Advanced settings) or in ChatGPT developer mode, or run `npx @modelcontextprotocol/inspector` against `http://localhost:3000/mcp`.
 
