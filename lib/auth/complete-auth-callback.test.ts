@@ -10,16 +10,18 @@ vi.mock("@/lib/supabase/route-handler", () => ({
   }),
 }))
 
-import { completeAuthCallback } from "./complete-auth-callback"
+import { completeAuthCallback, formParams } from "./complete-auth-callback"
 
-type Options = Parameters<typeof completeAuthCallback>[1]
+type Options = Parameters<typeof completeAuthCallback>[2]
 
 function run(
   query: string,
   options: Options = { successPath: "/dashboard", otpType: "email" },
 ) {
+  const request = new NextRequest(`https://app.example.com/callback?${query}`)
   return completeAuthCallback(
-    new NextRequest(`https://app.example.com/callback?${query}`),
+    request,
+    new URL(request.url).searchParams,
     options,
   )
 }
@@ -35,6 +37,8 @@ describe("completeAuthCallback", () => {
 
     expect(verifyOtp).toHaveBeenCalledWith({ token_hash: "abc", type: "email" })
     expect(exchangeCodeForSession).not.toHaveBeenCalled()
+    // 303 so a POST from /confirm is followed by a GET.
+    expect(response.status).toBe(303)
     expect(response.headers.get("location")).toBe(
       "https://app.example.com/dashboard",
     )
@@ -60,14 +64,37 @@ describe("completeAuthCallback", () => {
   })
 
   it("redirects to login with the verification error", async () => {
-    verifyOtp.mockResolvedValue({ error: { message: "Token has expired" } })
+    verifyOtp.mockResolvedValue({
+      error: { code: "unexpected_failure", message: "Something broke" },
+    })
 
     const response = await run("token_hash=abc&type=email")
 
     expect(response.headers.get("location")).toBe(
-      "https://app.example.com/login?error=Token%20has%20expired",
+      "https://app.example.com/login?error=Something%20broke",
     )
   })
+
+  it.each([
+    ["email", "already confirmed your email, sign in below"],
+    ["recovery", "Use Forgot password to request a new one"],
+  ] as const)(
+    "explains expired or used %s links",
+    async (otpType, expected) => {
+      verifyOtp.mockResolvedValue({
+        error: { code: "otp_expired", message: "Email link is invalid" },
+      })
+
+      const response = await run(`token_hash=abc&type=${otpType}`, {
+        successPath: "/next",
+        otpType,
+      })
+
+      const location = new URL(response.headers.get("location") ?? "")
+      expect(location.pathname).toBe("/login")
+      expect(location.searchParams.get("error")).toContain(expected)
+    },
+  )
 
   it("redirects to login with the provider error description", async () => {
     const response = await run("error=access_denied&error_description=Denied")
@@ -91,5 +118,26 @@ describe("completeAuthCallback", () => {
     expect(response.headers.get("location")).toBe(
       "https://app.example.com/reset-password",
     )
+  })
+})
+
+describe("formParams", () => {
+  it("reads string fields from a form POST", async () => {
+    const body = new URLSearchParams({
+      token_hash: "abc",
+      type: "email",
+      next: "/create?action=save",
+    })
+    const request = new NextRequest("https://app.example.com/callback", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body,
+    })
+
+    const params = await formParams(request)
+
+    expect(params.get("token_hash")).toBe("abc")
+    expect(params.get("type")).toBe("email")
+    expect(params.get("next")).toBe("/create?action=save")
   })
 })

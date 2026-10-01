@@ -125,27 +125,37 @@ function parseHttpUrl(value: string): URL | null {
   }
 }
 
+// The callback route each token type is redeemed on (see app/(auth)/confirm).
+const TOKEN_HASH_CALLBACK_PATHS = {
+  email: "/callback",
+  recovery: "/recovery-callback",
+} as const
+
 /**
- * Links straight to one of our callback routes with a token_hash, which the
- * route verifies with verifyOtp. Unlike the PKCE `code` flow, this works when
- * the email is opened in a different browser or device from the one that
- * requested it. Keeps the `next` param from redirect_to (already allowlisted by
- * Supabase). Falls back to the Supabase verify link when neither redirect_to
- * nor site_url is a usable URL, so a misconfigured Site URL can't block emails.
+ * Links to our /confirm page with a token_hash. The user clicks a button there
+ * to redeem it (POST to the callback route, verified with verifyOtp), so email
+ * scanners that open links in advance can't use up the single-use token.
+ * Unlike the PKCE `code` flow, this works when the email is opened in a
+ * different browser or device from the one that requested it. Keeps the `next`
+ * param from redirect_to (already allowlisted by Supabase). Falls back to the
+ * Supabase verify link when neither redirect_to nor site_url is a usable URL,
+ * so a misconfigured Site URL can't block emails.
  */
 export function buildTokenHashAuthLink(
   emailData: SupabaseEmailData,
-  { path, type }: { path: string; type: "email" | "recovery" },
+  type: keyof typeof TOKEN_HASH_CALLBACK_PATHS,
   tokenHash: string = emailData.token_hash,
 ): string {
   const redirectTo =
     parseHttpUrl(emailData.redirect_to) ?? parseHttpUrl(emailData.site_url)
   if (!redirectTo) return buildSupabaseAuthLink(emailData, tokenHash)
 
-  const link = new URL(path, redirectTo.origin)
+  const link = new URL("/confirm", redirectTo.origin)
 
   const next =
-    redirectTo.pathname === path ? redirectTo.searchParams.get("next") : null
+    redirectTo.pathname === TOKEN_HASH_CALLBACK_PATHS[type]
+      ? redirectTo.searchParams.get("next")
+      : null
   if (next) link.searchParams.set("next", next)
 
   link.searchParams.set("token_hash", tokenHash)
@@ -161,19 +171,11 @@ function buildLinkAuthEmailContent(
     case "signup":
     case "email":
       return buildEmailVerificationEmail({
-        link: buildTokenHashAuthLink(
-          emailData,
-          { path: "/callback", type: "email" },
-          tokenHash,
-        ),
+        link: buildTokenHashAuthLink(emailData, "email", tokenHash),
       })
     case "recovery":
       return buildPasswordResetEmail({
-        link: buildTokenHashAuthLink(
-          emailData,
-          { path: "/recovery-callback", type: "recovery" },
-          tokenHash,
-        ),
+        link: buildTokenHashAuthLink(emailData, "recovery", tokenHash),
       })
     // Magic links and invites aren't sent by the app, so they keep Supabase's
     // verify link rather than guessing which route should handle them.

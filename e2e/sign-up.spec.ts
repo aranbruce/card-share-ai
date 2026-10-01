@@ -95,6 +95,7 @@ test.describe("email sign-up", () => {
     await submitSignUp(page, "Sign up & save card")
 
     await expect(page).toHaveURL(/\/sign-up-success$/)
+    expect(requests).toHaveLength(1)
     const redirectTo = new URL(requests[0].redirectTo ?? "")
     expect(redirectTo.pathname).toBe("/callback")
     expect(redirectTo.searchParams.get("next")).toBe("/create?action=save")

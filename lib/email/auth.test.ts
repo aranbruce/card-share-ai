@@ -66,17 +66,15 @@ describe("buildSupabaseAuthLink", () => {
 })
 
 describe("buildTokenHashAuthLink", () => {
-  const confirm = { path: "/callback", type: "email" } as const
-
-  it("links to the callback route with a token_hash instead of the Supabase verify URL", () => {
+  it("links to the /confirm page with a token_hash instead of the Supabase verify URL", () => {
     const link = new URL(
       buildTokenHashAuthLink(
         { ...baseEmailData, email_action_type: "signup" },
-        confirm,
+        "email",
       ),
     )
 
-    expect(link.origin + link.pathname).toBe("https://app.example.com/callback")
+    expect(link.origin + link.pathname).toBe("https://app.example.com/confirm")
     expect(link.searchParams.get("token_hash")).toBe("hash")
     expect(link.searchParams.get("type")).toBe("email")
     expect(link.searchParams.has("next")).toBe(false)
@@ -91,14 +89,14 @@ describe("buildTokenHashAuthLink", () => {
           redirect_to:
             "https://app.example.com/callback?next=%2Fcreate%3Faction%3Dsave",
         },
-        confirm,
+        "email",
       ),
     )
 
     expect(link.searchParams.get("next")).toBe("/create?action=save")
   })
 
-  it("links recovery emails to /recovery-callback", () => {
+  it("keeps recovery links on /confirm with type=recovery", () => {
     const link = new URL(
       buildTokenHashAuthLink(
         {
@@ -106,17 +104,15 @@ describe("buildTokenHashAuthLink", () => {
           email_action_type: "recovery",
           redirect_to: "https://app.example.com/recovery-callback",
         },
-        { path: "/recovery-callback", type: "recovery" },
+        "recovery",
       ),
     )
 
-    expect(link.origin + link.pathname).toBe(
-      "https://app.example.com/recovery-callback",
-    )
+    expect(link.origin + link.pathname).toBe("https://app.example.com/confirm")
     expect(link.searchParams.get("type")).toBe("recovery")
   })
 
-  it("falls back to site_url's callback when redirect_to is elsewhere or empty", () => {
+  it("ignores next from other paths and uses site_url when redirect_to is empty", () => {
     const elsewhere = new URL(
       buildTokenHashAuthLink(
         {
@@ -124,20 +120,20 @@ describe("buildTokenHashAuthLink", () => {
           email_action_type: "signup",
           redirect_to: "https://app.example.com/?next=/evil",
         },
-        confirm,
+        "email",
       ),
     )
-    expect(elsewhere.pathname).toBe("/callback")
+    expect(elsewhere.pathname).toBe("/confirm")
     expect(elsewhere.searchParams.has("next")).toBe(false)
 
     const empty = new URL(
       buildTokenHashAuthLink(
         { ...baseEmailData, email_action_type: "signup", redirect_to: "" },
-        confirm,
+        "email",
       ),
     )
     expect(empty.origin + empty.pathname).toBe(
-      "https://app.example.com/callback",
+      "https://app.example.com/confirm",
     )
   })
 
@@ -154,7 +150,7 @@ describe("buildTokenHashAuthLink", () => {
             redirect_to: "",
             site_url: siteUrl,
           },
-          confirm,
+          "email",
         ),
       )
 
@@ -298,7 +294,7 @@ describe("sendAuthEmail", () => {
         to: "user@example.com",
         subject: "Verify your CardShare.ai email",
         text: expect.stringContaining(
-          "https://app.example.com/callback?token_hash=hash&type=email",
+          "https://app.example.com/confirm?token_hash=hash&type=email",
         ),
       }),
     )
@@ -321,7 +317,7 @@ describe("sendAuthEmail", () => {
       expect.objectContaining({
         subject: "Reset your CardShare.ai password",
         text: expect.stringContaining(
-          "https://app.example.com/recovery-callback?token_hash=hash&type=recovery",
+          "https://app.example.com/confirm?token_hash=hash&type=recovery",
         ),
       }),
     )
