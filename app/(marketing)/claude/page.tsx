@@ -203,10 +203,10 @@ export default function ClaudeConnectorPage() {
         <p className="mt-6 text-sm text-muted-foreground">
           Still stuck? Email{" "}
           <a
-            href="mailto:hello@cardshare.ai"
+            href="mailto:cardshareai@gmail.com"
             className="text-foreground underline underline-offset-4"
           >
-            hello@cardshare.ai
+            cardshareai@gmail.com
           </a>
           . Read our{" "}
           <Link
