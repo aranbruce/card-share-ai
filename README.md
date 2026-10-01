@@ -51,6 +51,9 @@ SEND_EMAIL_HOOK_SECRET="v1,whsec_<secret-from-supabase-dashboard>"
 # MCP connector: signs the short-lived photo upload links in the card view.
 # Any long random string (openssl rand -base64 32). Without it, photo covers are off.
 MCP_PHOTO_TOKEN_SECRET=your_random_secret
+# Optional: OpenAI's domain check for publishing the ChatGPT app, served at
+# /.well-known/openai-apps-challenge. Paste the token from platform.openai.com/plugins.
+# OPENAI_APPS_CHALLENGE_TOKEN=your_challenge_token
 
 # PostHog (EU Cloud) — project API key from eu.posthog.com project settings
 NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_your_project_token

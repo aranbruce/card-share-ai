@@ -235,6 +235,7 @@ export function registerCardTools(server: McpServer): void {
       annotations: {
         title: "List my cards",
         readOnlyHint: true,
+        destructiveHint: false,
         openWorldHint: false,
       },
       _meta: CARD_WIDGET_META,
@@ -286,6 +287,7 @@ export function registerCardTools(server: McpServer): void {
       annotations: {
         title: "Get card details",
         readOnlyHint: true,
+        destructiveHint: false,
         openWorldHint: false,
       },
       _meta: CARD_WIDGET_META,
