@@ -8,6 +8,7 @@ import { generateCardHeadline } from "@/lib/generate-card-headline"
 import { generateCardCoverImage } from "@/lib/generate-card-image"
 import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { captureServerEvent } from "@/lib/posthog-server"
+import { checkFixedWindowRateLimitForKey } from "@/lib/request-rate-limit"
 import { createUserScopedClient, mcpUserId } from "@/lib/mcp/auth"
 import {
   formatCardText,
@@ -94,6 +95,19 @@ export function registerCardTools(server: McpServer): void {
     async ({ recipientName, senderName, cardType, tone, context }, ctx) => {
       const user = requireUser(ctx)
       if (!user) return errorResult(NOT_SIGNED_IN)
+
+      // Keyed by user: every MCP call arrives from the client platform's IPs
+      const rate = checkFixedWindowRateLimitForKey(user.userId, {
+        namespace: "mcp:create-card",
+        maxRequests: 10,
+        windowMs: 10 * 60 * 1000,
+      })
+      if (!rate.allowed) {
+        const minutes = Math.ceil(Number(rate.headers["Retry-After"]) / 60)
+        return errorResult(
+          `You've made a lot of cards in a short time. Please try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
+        )
+      }
 
       const telemetry = { distinctId: user.userId }
       const userContext = context || undefined
@@ -257,13 +271,21 @@ export function registerCardTools(server: McpServer): void {
       if (!data) return errorResult("No card with that id in your account.")
 
       // Messages from the group, not the creator's own (often empty) note
-      const { count } = await user.supabase
+      const { count, error: countError } = await user.supabase
         .from("card_contributions")
         .select("id", { count: "exact", head: true })
         .eq("card_id", cardId)
         .eq("is_creator", false)
+      if (countError) {
+        console.error("[mcp/get_card] count FAIL:", countError)
+      }
 
-      const card = summarizeCard(getAppUrl(), data as McpCardRow, count ?? 0)
+      // Leave the count out rather than report 0 when it couldn't be loaded
+      const card = summarizeCard(
+        getAppUrl(),
+        data as McpCardRow,
+        countError ? undefined : (count ?? 0),
+      )
       return {
         content: [{ type: "text" as const, text: formatCardText(card) }],
         structuredContent: { card },

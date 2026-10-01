@@ -58,7 +58,7 @@ export default function SubprocessorsPage() {
   return (
     <LegalPage title="Sub-processors">
       <p>
-        <strong>Last updated:</strong> 28 September 2026
+        <strong>Last updated:</strong> 1 October 2026
       </p>
       <p>
         CardShare.ai uses the third-party service providers below
@@ -82,6 +82,14 @@ export default function SubprocessorsPage() {
           </li>
         ))}
       </ul>
+
+      <h2>AI assistants you connect</h2>
+      <p>
+        If you connect CardShare.ai to an AI assistant such as Claude
+        (Anthropic) or ChatGPT (OpenAI), that company is not our sub-processor.
+        You choose to share data with it, and it handles that data under its own
+        terms and privacy policy.
+      </p>
 
       <h2>How we choose sub-processors</h2>
       <p>
