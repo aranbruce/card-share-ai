@@ -1,0 +1,107 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "cardshare-ai",
+  "version": "1.0.0",
+  "description": "Create group greeting cards that everyone signs: an AI-written headline and cover art, your own photo on the cover, card editing, and a link for the group to sign.",
+  "author": {
+    "name": "CardShare.ai",
+    "email": "cardshareai@gmail.com",
+    "url": "https://www.cardshare.ai"
+  },
+  "homepage": "https://www.cardshare.ai",
+  "keywords": [
+    "greeting cards",
+    "group cards",
+    "birthday",
+    "farewell",
+    "thank you"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "CardShare.ai",
+        "shortDescription": "Group greeting cards to sign",
+        "longDescription": "CardShare.ai creates group greeting cards that a team, family or group of friends signs together, for birthdays, farewells, thank-yous, congratulations, holidays and sympathy. Tell ChatGPT who the card is for and a few personal details, and it writes the headline and draws the cover art. The card appears right in the chat, with buttons to open it, copy the invite link and use your own photo.\n\nWhat you can do:\n- Create a card in one of five tones: Heartfelt, Roast, Dad jokes, Hype or Epic. Sympathy cards always stay gentle.\n- Put your own photo on the cover. Choose it in the picker that appears in the chat and the cover is drawn from it.\n- Edit the headline, the names, or your own message inside the card.\n- List your cards and see how many people have signed each one.\n\nShare the invite link and everyone can add a message or GIF from any device, without an account. When everyone has signed, send the recipient a card they can open and keep.\n\nCardShare.ai only works with cards in the account you connect. Moving notes, adding GIFs and sending the finished card happen on the website, through the card's edit link. Sign in with Google, GitHub or email.",
+        "developerName": "CardShare.ai",
+        "category": "Productivity",
+        "capabilities": [
+          "Create greeting cards",
+          "Draw a cover from your photo",
+          "Edit cards",
+          "See who has signed"
+        ],
+        "websiteURL": "https://www.cardshare.ai",
+        "supportURL": "https://www.cardshare.ai/support",
+        "privacyPolicyURL": "https://www.cardshare.ai/privacy",
+        "termsOfServiceURL": "https://www.cardshare.ai/terms",
+        "defaultPrompt": [
+          "Make a birthday card for Sarah from the team. She loves rock climbing, make it Hype",
+          "Make a farewell card for Dan with a photo of him on the cover",
+          "Show me the cards I've made and how many people have signed"
+        ],
+        "brandColor": "#FF5A4A",
+        "brandColorDark": "#FF5A4A",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Create a card from a description",
+              "prompt": "Make a birthday card for Sarah from the design team. She loves rock climbing, make it Hype.",
+              "tools_triggered": "create_card",
+              "expected_behavior": "After 20 to 40 seconds a new card for Sarah appears in the chat with an AI-written headline about climbing and an AI-drawn cover, plus Open card, Copy invite link and Use my photo buttons. The reply includes the edit and invite links."
+            },
+            {
+              "description": "Create a card with the user's own photo on the cover",
+              "prompt": "Make Dan a farewell card from the team, with a photo of him on the cover.",
+              "tools_triggered": "create_card_from_photo",
+              "expected_behavior": "A photo picker appears in the chat. After choosing an image file (for example the attached one), the card is created within about 30 seconds with a cover drawn from the photo and is shown in the chat.",
+              "file_attachment_urls": [
+                "https://www.cardshare.ai/occasions/farewell.webp"
+              ]
+            },
+            {
+              "description": "List the user's cards",
+              "prompt": "Show me the cards I've made.",
+              "tools_triggered": "list_cards",
+              "expected_behavior": "A grid of the test account's cards appears, newest first, each with its cover and status (collecting messages or sent). Clicking a card opens its edit page."
+            },
+            {
+              "description": "Check how many people have signed a card. The test account already has a card for Sarah that several people have signed, so this case works whichever order the cases are run in.",
+              "prompt": "How many people have signed Sarah's card?",
+              "tools_triggered": "list_cards, get_card",
+              "expected_behavior": "Finds the existing card for Sarah and shows it with how many people have signed it (more than zero in the test account) and its edit, invite and view links."
+            },
+            {
+              "description": "Edit a card's headline and the user's own message. The test account already has a card for Sarah that several people have signed, so this case works whichever order the cases are run in.",
+              "prompt": "Change the headline on Sarah's card to \"Sarah, the crag will miss you\" and add my message inside: Happy birthday, have the best day!",
+              "tools_triggered": "list_cards, update_card",
+              "expected_behavior": "Finds the existing card for Sarah, updates it, and shows it again with the new headline on its cover and the message inside. Opening the edit link shows the message on the card's inside page."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Deleting cards isn't supported",
+              "prompt": "Delete all of my cards."
+            },
+            {
+              "description": "Sending the card to the recipient isn't supported from the chat",
+              "prompt": "Email Sarah's card to sarah@example.com now."
+            },
+            {
+              "description": "Purchases aren't supported",
+              "prompt": "Buy Sarah a birthday present and send it with the card."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "CardShare.ai doesn't sell products or process payments."
+      },
+      "publication": {
+        "release_notes": "Initial release: create group greeting cards with an AI headline and cover, use your own photo, edit cards and check who has signed."
+      }
+    }
+  }
+}
