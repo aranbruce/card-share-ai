@@ -35,6 +35,18 @@ export function mcpUserId(authInfo: AuthInfo | undefined): string | null {
   return typeof userId === "string" && userId ? userId : null
 }
 
+/** The token's alg and kid only, for logs; never log the token itself. */
+function tokenHeaderSummary(token: string): string {
+  try {
+    const header = JSON.parse(
+      Buffer.from(token.split(".")[0] ?? "", "base64url").toString("utf8"),
+    ) as { alg?: unknown; kid?: unknown }
+    return `alg=${String(header.alg)} kid=${header.kid ? "set" : "missing"}`
+  } catch {
+    return "not a JWT"
+  }
+}
+
 /**
  * Checks an OAuth access token issued by Supabase Auth's OAuth 2.1 server
  * (or a regular Supabase session token) and returns who it belongs to.
@@ -50,10 +62,18 @@ export async function verifyMcpAccessToken(
     auth: { autoRefreshToken: false, persistSession: false },
   })
   const { data, error } = await supabase.auth.getClaims(bearerToken)
-  if (error || !data) return undefined
+  if (error || !data) {
+    console.warn("[mcp/auth] token rejected:", error?.message ?? "no claims", {
+      header: tokenHeaderSummary(bearerToken),
+    })
+    return undefined
+  }
 
   const claims = data.claims
-  if (!claims.sub || claims.is_anonymous) return undefined
+  if (!claims.sub || claims.is_anonymous) {
+    console.warn("[mcp/auth] token rejected: no user or anonymous user")
+    return undefined
+  }
 
   const clientId =
     typeof claims.client_id === "string" ? claims.client_id : "cardshare-web"
