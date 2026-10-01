@@ -25,6 +25,12 @@ describe("resolveSafePostAuthRedirectPath", () => {
     )
   })
 
+  it("rejects backslash and whitespace tricks that resolve off-origin", () => {
+    for (const path of ["/\\evil.com", "/\\/evil.com", "/\t/evil.com"]) {
+      expect(resolveSafePostAuthRedirectPath(path)).toBe("/dashboard")
+    }
+  })
+
   it("respects custom fallback", () => {
     expect(resolveSafePostAuthRedirectPath(null, "/login")).toBe("/login")
   })

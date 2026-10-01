@@ -1,6 +1,8 @@
-import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
+import {
+  completeAuthCallback,
+  formParams,
+} from "@/lib/auth/complete-auth-callback"
 import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
-import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 function resolveSafeNextPath(
@@ -11,41 +13,20 @@ function resolveSafeNextPath(
   return resolveSafePostAuthRedirectPath(nextParam, fallback)
 }
 
+function complete(request: NextRequest, params: URLSearchParams) {
+  const next = resolveSafeNextPath(params.get("next"), params.get("type"))
+  return completeAuthCallback(request, params, {
+    successPath: next,
+    otpType: "email",
+  })
+}
+
+/** OAuth and older email links redirect here with a PKCE code. */
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
-  const type = requestUrl.searchParams.get("type")
-  const nextParam = requestUrl.searchParams.get("next")
-  const next = resolveSafeNextPath(nextParam, type)
+  return complete(request, new URL(request.url).searchParams)
+}
 
-  const errorParam = requestUrl.searchParams.get("error")
-  const errorDescription = requestUrl.searchParams.get("error_description")
-  if (errorParam) {
-    return NextResponse.redirect(
-      new URL(
-        `/login?error=${encodeURIComponent(errorDescription ?? errorParam)}`,
-        requestUrl.origin,
-      ),
-    )
-  }
-
-  if (code) {
-    const redirectUrl = new URL(next, requestUrl.origin)
-    const response = NextResponse.redirect(redirectUrl)
-    const supabase = createSupabaseRouteHandlerClient(request, response)
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return response
-    }
-    return NextResponse.redirect(
-      new URL(
-        `/login?error=${encodeURIComponent(error.message)}`,
-        requestUrl.origin,
-      ),
-    )
-  }
-
-  return NextResponse.redirect(
-    new URL("/login?error=auth_callback_failed", requestUrl.origin),
-  )
+/** The /confirm page posts the email token_hash here when the user clicks. */
+export async function POST(request: NextRequest) {
+  return complete(request, await formParams(request))
 }

@@ -12,6 +12,7 @@ import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
 import type { OAuthProviderId } from "@/lib/oauth-auth"
 import { usePendingSaveIntent } from "@/hooks/use-pending-save-intent"
+import { hasPendingCard as hasStoredPendingCard } from "@/lib/pending-card-storage"
 import {
   persistPendingCardAfterAuth,
   persistPendingCardErrorMessage,
@@ -77,11 +78,18 @@ function SignUpFormInner() {
     setError("")
 
     try {
+      // When a guest draft is stored, land on /create after email confirmation
+      // so it persists the pending card from localStorage.
+      const emailRedirectTo = new URL("/callback", window.location.origin)
+      if (hasStoredPendingCard()) {
+        emailRedirectTo.searchParams.set("next", "/create?action=save")
+      }
+
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/callback`,
+          emailRedirectTo: emailRedirectTo.toString(),
         },
       })
 
@@ -91,16 +99,20 @@ function SignUpFormInner() {
         return
       }
 
-      if (
-        data.user &&
-        data.user.identities &&
-        data.user.identities.length > 0
-      ) {
-        captureAuthEvent(
-          "user_signed_up",
-          { provider: "email" },
-          { id: data.user.id, email: data.user.email },
-        )
+      // An empty identities array means the email is already registered
+      // (Supabase obfuscates this), so it isn't a new sign-up.
+      const isNewUser = (data.user?.identities?.length ?? 0) > 0
+
+      // A session is only returned when email confirmation is disabled.
+      // Otherwise the user must confirm their email before signing in.
+      if (data.user && data.session) {
+        if (isNewUser) {
+          captureAuthEvent(
+            "user_signed_up",
+            { provider: "email" },
+            { id: data.user.id, email: data.user.email },
+          )
+        }
 
         const { cardId, error: persistError } = await tryPersistPendingCard()
 
@@ -114,7 +126,7 @@ function SignUpFormInner() {
           router.push("/dashboard")
         }
       } else {
-        if (data.user) {
+        if (data.user && isNewUser) {
           captureAuthEvent(
             "user_signed_up",
             {

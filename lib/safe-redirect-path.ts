@@ -10,6 +10,9 @@ export function resolveSafePostAuthRedirectPath(
   if (redirect == null || redirect === "") return fallback
   if (!redirect.startsWith("/")) return fallback
   if (redirect.startsWith("//")) return fallback
+  // Browsers treat "\" like "/" in URLs, so "/\evil.com" is protocol-relative too.
+  // Tabs and newlines are stripped by the URL parser, so "/\t/evil.com" is as well.
+  if (/[\\\t\n\r]/.test(redirect)) return fallback
   return redirect
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it, vi, afterEach } from "vitest"
 
 import {
   buildSupabaseAuthLink,
+  buildTokenHashAuthLink,
   isHandledAuthEmailType,
   resolveAuthEmailDeliveries,
   sendAuthEmail,
@@ -24,19 +25,13 @@ const baseEmailData = {
   token_hash_new: "",
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
 describe("buildSupabaseAuthLink", () => {
-  const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-
-  afterEach(() => {
-    if (originalUrl === undefined) {
-      delete process.env.NEXT_PUBLIC_SUPABASE_URL
-    } else {
-      process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl
-    }
-  })
-
   it("builds a Supabase verify URL with encoded params", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co/"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co/")
 
     const link = buildSupabaseAuthLink({
       ...baseEmailData,
@@ -55,7 +50,7 @@ describe("buildSupabaseAuthLink", () => {
   })
 
   it("supports overriding the token hash for secure email change", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
 
     const link = buildSupabaseAuthLink(
       {
@@ -68,6 +63,102 @@ describe("buildSupabaseAuthLink", () => {
 
     expect(new URL(link).searchParams.get("token")).toBe("current-hash")
   })
+})
+
+describe("buildTokenHashAuthLink", () => {
+  it("links to the /confirm page with a token_hash instead of the Supabase verify URL", () => {
+    const link = new URL(
+      buildTokenHashAuthLink(
+        { ...baseEmailData, email_action_type: "signup" },
+        "email",
+      ),
+    )
+
+    expect(link.origin + link.pathname).toBe("https://app.example.com/confirm")
+    expect(link.searchParams.get("token_hash")).toBe("hash")
+    expect(link.searchParams.get("type")).toBe("email")
+    expect(link.searchParams.has("next")).toBe(false)
+  })
+
+  it("keeps the next param from redirect_to", () => {
+    const link = new URL(
+      buildTokenHashAuthLink(
+        {
+          ...baseEmailData,
+          email_action_type: "signup",
+          redirect_to:
+            "https://app.example.com/callback?next=%2Fcreate%3Faction%3Dsave",
+        },
+        "email",
+      ),
+    )
+
+    expect(link.searchParams.get("next")).toBe("/create?action=save")
+  })
+
+  it("keeps recovery links on /confirm with type=recovery", () => {
+    const link = new URL(
+      buildTokenHashAuthLink(
+        {
+          ...baseEmailData,
+          email_action_type: "recovery",
+          redirect_to: "https://app.example.com/recovery-callback",
+        },
+        "recovery",
+      ),
+    )
+
+    expect(link.origin + link.pathname).toBe("https://app.example.com/confirm")
+    expect(link.searchParams.get("type")).toBe("recovery")
+  })
+
+  it("ignores next from other paths and uses site_url when redirect_to is empty", () => {
+    const elsewhere = new URL(
+      buildTokenHashAuthLink(
+        {
+          ...baseEmailData,
+          email_action_type: "signup",
+          redirect_to: "https://app.example.com/?next=/evil",
+        },
+        "email",
+      ),
+    )
+    expect(elsewhere.pathname).toBe("/confirm")
+    expect(elsewhere.searchParams.has("next")).toBe(false)
+
+    const empty = new URL(
+      buildTokenHashAuthLink(
+        { ...baseEmailData, email_action_type: "signup", redirect_to: "" },
+        "email",
+      ),
+    )
+    expect(empty.origin + empty.pathname).toBe(
+      "https://app.example.com/confirm",
+    )
+  })
+
+  it.each(["app.example.com", "localhost:3000", "cardshare.ai:443"])(
+    "falls back to the Supabase verify link when site_url is %s",
+    (siteUrl) => {
+      vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
+
+      const link = new URL(
+        buildTokenHashAuthLink(
+          {
+            ...baseEmailData,
+            email_action_type: "signup",
+            redirect_to: "",
+            site_url: siteUrl,
+          },
+          "email",
+        ),
+      )
+
+      expect(link.origin + link.pathname).toBe(
+        "https://project.supabase.co/auth/v1/verify",
+      )
+    },
+  )
 })
 
 describe("isHandledAuthEmailType", () => {
@@ -115,7 +206,7 @@ describe("resolveAuthEmailDeliveries", () => {
   })
 
   it("maps secure email-change hashes per Supabase hook docs", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
 
     const deliveries = resolveAuthEmailDeliveries(
       { email: "current@example.com", new_email: "new@example.com" },
@@ -187,7 +278,7 @@ describe("sendAuthEmail", () => {
   })
 
   it("sends verification email for signup", async () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
     mockSend.mockResolvedValue({ ok: true, id: "email-id" })
 
     await sendAuthEmail({
@@ -202,13 +293,15 @@ describe("sendAuthEmail", () => {
       expect.objectContaining({
         to: "user@example.com",
         subject: "Verify your CardShare.ai email",
-        text: expect.stringContaining("Verify email"),
+        text: expect.stringContaining(
+          "https://app.example.com/confirm?token_hash=hash&type=email",
+        ),
       }),
     )
   })
 
   it("sends reset email for recovery", async () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co"
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co")
     mockSend.mockResolvedValue({ ok: true, id: "email-id" })
 
     await sendAuthEmail({
@@ -223,7 +316,9 @@ describe("sendAuthEmail", () => {
     expect(mockSend).toHaveBeenCalledWith(
       expect.objectContaining({
         subject: "Reset your CardShare.ai password",
-        text: expect.stringContaining("Reset password"),
+        text: expect.stringContaining(
+          "https://app.example.com/confirm?token_hash=hash&type=recovery",
+        ),
       }),
     )
   })
