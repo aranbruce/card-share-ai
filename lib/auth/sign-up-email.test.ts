@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { clearPendingCard, savePendingCard } from "@/lib/pending-card-storage"
 import {
@@ -8,6 +8,7 @@ import {
   readSignUpEmailRaw,
   rememberSignUpEmail,
   secondsUntilResend,
+  subscribeSignUpEmail,
 } from "./sign-up-email"
 
 beforeEach(() => {
@@ -49,6 +50,18 @@ describe("rememberSignUpEmail", () => {
       email: "new@example.com",
       sentAt: 1_000,
     })
+  })
+
+  it("notifies subscribers in the same tab until they unsubscribe", () => {
+    const listener = vi.fn()
+    const unsubscribe = subscribeSignUpEmail(listener)
+
+    rememberSignUpEmail("new@example.com", 1_000)
+    expect(listener).toHaveBeenCalledTimes(1)
+
+    unsubscribe()
+    rememberSignUpEmail("new@example.com", 2_000)
+    expect(listener).toHaveBeenCalledTimes(1)
   })
 
   it("keeps the address out of localStorage", () => {

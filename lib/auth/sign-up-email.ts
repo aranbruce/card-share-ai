@@ -25,6 +25,16 @@ export function buildSignUpEmailRedirectTo(origin: string): string {
   return redirectTo.toString()
 }
 
+// sessionStorage doesn't fire "storage" events in the tab that wrote it, so
+// writes notify same-tab subscribers directly.
+const listeners = new Set<() => void>()
+
+/** For useSyncExternalStore: notified when rememberSignUpEmail writes. */
+export function subscribeSignUpEmail(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
 /**
  * Remembers the address a confirmation email was sent to, for the resend
  * button on /sign-up-success. Kept in sessionStorage (not the URL) so the
@@ -36,7 +46,9 @@ export function rememberSignUpEmail(email: string, sentAt = Date.now()): void {
     sessionStorage.setItem(KEY, JSON.stringify({ email, sentAt }))
   } catch {
     // Storage blocked — the success page falls back to "sign up again".
+    return
   }
+  listeners.forEach((listener) => listener())
 }
 
 /** Raw stored value; a string so it can be a stable useSyncExternalStore snapshot. */

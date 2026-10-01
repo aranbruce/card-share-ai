@@ -10,32 +10,28 @@ import {
   readSignUpEmailRaw,
   rememberSignUpEmail,
   secondsUntilResend,
+  subscribeSignUpEmail,
 } from "@/lib/auth/sign-up-email"
 import { createClient } from "@/lib/supabase/client"
 
-// sessionStorage doesn't notify the same tab, and this component writes its own
-// updates to state, so there is nothing to subscribe to.
-function subscribeNoop() {
-  return () => {}
-}
-
 export function ResendConfirmationEmail() {
   const raw = useSyncExternalStore(
-    subscribeNoop,
+    subscribeSignUpEmail,
     readSignUpEmailRaw,
     () => null,
   )
   const stored = useMemo(() => parseSignUpEmail(raw), [raw])
 
   const [supabase] = useState(() => createClient())
-  const [resentAt, setResentAt] = useState<number | null>(null)
   const [now, setNow] = useState(() => Date.now())
   const [sending, setSending] = useState(false)
+  // Only for the copy; the send time itself lives in storage.
   const [resent, setResent] = useState(false)
   const [error, setError] = useState("")
 
-  const sentAt = resentAt ?? stored?.sentAt
-  const remaining = sentAt === undefined ? 0 : secondsUntilResend(sentAt, now)
+  // secondsUntilResend clamps to the full cooldown, so a fresh sentAt that is
+  // ahead of `now` starts the countdown immediately.
+  const remaining = stored ? secondsUntilResend(stored.sentAt, now) : 0
   const counting = remaining > 0
 
   useEffect(() => {
@@ -62,25 +58,25 @@ export function ResendConfirmationEmail() {
     setSending(true)
     setError("")
 
-    const { error: resendError } = await supabase.auth.resend({
-      type: "signup",
-      email: stored.email,
-      options: {
-        emailRedirectTo: buildSignUpEmailRedirectTo(window.location.origin),
-      },
-    })
-
-    setSending(false)
-    if (resendError) {
-      setError(friendlyAuthError(resendError.message, resendError.status))
-      return
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: stored.email,
+        options: {
+          emailRedirectTo: buildSignUpEmailRedirectTo(window.location.origin),
+        },
+      })
+      if (resendError) {
+        setError(friendlyAuthError(resendError.message, resendError.status))
+        return
+      }
+      rememberSignUpEmail(stored.email)
+      setResent(true)
+    } catch {
+      setError("An unexpected error occurred")
+    } finally {
+      setSending(false)
     }
-
-    const sentNow = Date.now()
-    rememberSignUpEmail(stored.email, sentNow)
-    setResentAt(sentNow)
-    setNow(sentNow)
-    setResent(true)
   }
 
   return (
