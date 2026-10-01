@@ -131,10 +131,11 @@ One-time Supabase setup (Dashboard → **Authentication → OAuth Server**):
 
 1. Turn on **OAuth 2.1 server**.
 2. Set **Authorization path** to `/oauth/consent` (the Site URL must be the app's URL).
-3. Turn on **Dynamic client registration**, so Claude, ChatGPT and other MCP clients can register themselves.
-4. Use asymmetric JWT signing keys (Authentication → JWT Keys) so `getClaims` verifies tokens locally.
+3. Leave **Allow Dynamic OAuth Apps** off. Tokens are full Supabase sessions, so only clients we register ourselves may ask users for access.
+4. Under **OAuth Apps**, add one confidential app per platform, named as users should see it on the consent screen (e.g. "Claude" with redirect URI `https://claude.ai/api/mcp/auth_callback`). Store the client ID and secret in the team password manager.
+5. Use asymmetric JWT signing keys (Project Settings → JWT Keys) so `getClaims` verifies tokens locally.
 
-Try it: add `https://<your-domain>/mcp` as a custom connector in Claude (Settings → Connectors) or in ChatGPT developer mode, or run `npx @modelcontextprotocol/inspector` against `http://localhost:3000/mcp`.
+Try it: add `https://<your-domain>/mcp` as a custom connector in Claude (Settings → Connectors, with the client ID and secret under Advanced settings) or in ChatGPT developer mode, or run `npx @modelcontextprotocol/inspector` against `http://localhost:3000/mcp`.
 
 ### Installation
 
