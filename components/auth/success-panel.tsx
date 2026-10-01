@@ -30,7 +30,10 @@ export function AuthSuccessPanel({
       ) : null}
       {hint ? (
         <Alert className="mb-6 text-left">
-          <AlertDescription>{hint}</AlertDescription>
+          <AlertDescription>
+            {/* AlertDescription is a grid; wrap so inline links stay in the text flow */}
+            <p>{hint}</p>
+          </AlertDescription>
         </Alert>
       ) : null}
       <Button
