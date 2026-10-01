@@ -7,6 +7,7 @@ export type McpCardRow = {
   recipient_name?: string | null
   sender_name?: string | null
   copy_headline?: string | null
+  copy_message?: string | null
   image_url?: string | null
   contributor_link_id?: string | null
   sent_at?: string | null
@@ -14,7 +15,7 @@ export type McpCardRow = {
 }
 
 export const MCP_CARD_COLUMNS =
-  "id, card_type, recipient_name, sender_name, copy_headline, image_url, contributor_link_id, sent_at, created_at"
+  "id, card_type, recipient_name, sender_name, copy_headline, copy_message, image_url, contributor_link_id, sent_at, created_at"
 
 export type McpCardSummary = {
   id: string
@@ -22,6 +23,8 @@ export type McpCardSummary = {
   recipientName: string
   senderName: string
   headline: string
+  /** The author's own note inside the card (empty until they write one). */
+  myMessage: string
   coverImageUrl: string | null
   /** The card's front on a pastel backdrop (1200×630), served by this app. */
   previewImageUrl: string | null
@@ -34,13 +37,14 @@ export type McpCardSummary = {
   contributeUrl: string | null
   /** The finished card, for the recipient. */
   viewUrl: string | null
-  messageCount?: number
+  /** People who have signed: written a note or added a GIF, the author included. */
+  signedCount?: number
 }
 
 export function summarizeCard(
   appUrl: string,
   card: McpCardRow,
-  messageCount?: number,
+  signedCount?: number,
 ): McpCardSummary {
   const linkId = card.contributor_link_id || null
   return {
@@ -49,6 +53,7 @@ export function summarizeCard(
     recipientName: card.recipient_name || "",
     senderName: card.sender_name || "",
     headline: card.copy_headline || "",
+    myMessage: card.copy_message || "",
     coverImageUrl: card.image_url?.startsWith("https://")
       ? card.image_url
       : null,
@@ -66,7 +71,7 @@ export function summarizeCard(
     editUrl: `${appUrl}/dashboard/cards/${card.id}`,
     contributeUrl: linkId ? `${appUrl}/contribute/${linkId}` : null,
     viewUrl: linkId ? `${appUrl}/view/${linkId}` : null,
-    ...(messageCount === undefined ? {} : { messageCount }),
+    ...(signedCount === undefined ? {} : { signedCount }),
   }
 }
 
@@ -76,9 +81,8 @@ export function formatCardText(card: McpCardSummary): string {
     `Card for ${card.recipientName || "someone"} from ${card.senderName || "you"} (${card.cardType.replace(/_/g, " ")})`,
     card.headline ? `Headline: "${card.headline}"` : null,
     `Status: ${card.status === "sent" ? `sent ${card.sentAt}` : "collecting messages"}`,
-    card.messageCount === undefined
-      ? null
-      : `Group messages: ${card.messageCount}`,
+    card.signedCount === undefined ? null : `Signed by: ${card.signedCount}`,
+    `Your message: ${card.myMessage ? `"${card.myMessage}"` : "(not written yet)"}`,
     `Edit: ${card.editUrl}`,
     card.contributeUrl ? `Invite others to sign: ${card.contributeUrl}` : null,
     card.viewUrl ? `Recipient view: ${card.viewUrl}` : null,

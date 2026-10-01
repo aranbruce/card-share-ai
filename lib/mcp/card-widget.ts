@@ -99,6 +99,13 @@ body {
   font-weight: 500;
 }
 .chip.sent { background: color-mix(in srgb, var(--brand) 14%, transparent); color: var(--brand); }
+.note {
+  font-size: 13px;
+  color: var(--fg);
+  white-space: pre-wrap;
+  border-left: 3px solid var(--brand);
+  padding: 2px 0 2px 10px;
+}
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 button {
   font: inherit;
@@ -160,7 +167,7 @@ function open(url) {
 
 function statusChip(card) {
   if (card.status === "sent") return el("span", "chip sent", "Sent");
-  const signed = typeof card.messageCount === "number" ? " · " + card.messageCount + " signed" : "";
+  const signed = typeof card.signedCount === "number" ? " · " + card.signedCount + " signed" : "";
   return el("span", "chip", "Collecting messages" + signed);
 }
 
@@ -212,6 +219,7 @@ function renderCard(card) {
   const chips = el("div");
   chips.append(statusChip(card));
   body.append(chips);
+  if (card.myMessage) body.append(el("div", "note", "“" + card.myMessage + "”"));
 
   const actions = el("div", "actions");
   const openButton = el("button", "primary", "Open card");
@@ -273,8 +281,13 @@ function render(result) {
 }
 
 app.ontoolinput = (params) => {
-  const name = params.arguments && params.arguments.recipientName;
-  renderStatus(name ? "Creating a card for " + name + "…" : "Loading your cards…", true);
+  const args = params.arguments || {};
+  const text = args.recipientName && !args.cardId
+    ? "Creating a card for " + args.recipientName + "…"
+    : args.cardId && Object.keys(args).length > 1
+      ? "Updating your card…"
+      : "Loading…";
+  renderStatus(text, true);
 };
 app.ontoolresult = render;
 app.ontoolcancelled = () => renderStatus("Cancelled.", false);

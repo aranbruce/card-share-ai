@@ -11,12 +11,14 @@ import { captureServerEvent } from "@/lib/posthog-server"
 import { checkFixedWindowRateLimitForKey } from "@/lib/request-rate-limit"
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server"
 import { createUserScopedClient, mcpUserId } from "@/lib/mcp/auth"
+import { countSignatures, creatorNoteUpdate } from "@/lib/mcp/card-messages"
 import { CARD_WIDGET_URI, registerCardWidget } from "@/lib/mcp/card-widget"
 import {
   formatCardText,
   MCP_CARD_COLUMNS,
   summarizeCard,
   type McpCardRow,
+  type McpCardSummary,
 } from "@/lib/mcp/card-summary"
 
 export const MCP_CARD_TYPES = [
@@ -44,6 +46,56 @@ function requireUser(ctx: ServerContext) {
 
 const NOT_SIGNED_IN =
   "You're not signed in to CardShare.ai. Reconnect the CardShare.ai connector and try again."
+
+type McpUser = NonNullable<ReturnType<typeof requireUser>>
+
+/**
+ * One of the user's cards with its signature count, or an error message to
+ * return. The count is left out when it can't be loaded, rather than shown as 0.
+ */
+async function loadCardSummary(
+  user: McpUser,
+  cardId: string,
+  logTag: string,
+): Promise<{ card: McpCardSummary } | { error: string }> {
+  const { data, error } = await user.supabase
+    .from("cards")
+    .select(MCP_CARD_COLUMNS)
+    .eq("id", cardId)
+    .eq("user_id", user.userId)
+    .maybeSingle()
+  if (error) {
+    console.error(`[mcp/${logTag}] FAIL:`, error)
+    return { error: "Sorry, the card couldn't be loaded." }
+  }
+  if (!data) return { error: "No card with that id in your account." }
+
+  const { data: rows, error: rowsError } = await user.supabase
+    .from("card_contributions")
+    .select("message, giphy_url")
+    .eq("card_id", cardId)
+  if (rowsError) {
+    console.error(`[mcp/${logTag}] signatures FAIL:`, rowsError)
+  }
+
+  return {
+    card: summarizeCard(
+      getAppUrl(),
+      data as McpCardRow,
+      rowsError ? undefined : countSignatures(rows ?? []),
+    ),
+  }
+}
+
+function cardResult(card: McpCardSummary, note?: string) {
+  const text = formatCardText(card)
+  return {
+    content: [
+      { type: "text" as const, text: note ? `${note}\n\n${text}` : text },
+    ],
+    structuredContent: { card },
+  }
+}
 
 // Shows the card(s) inline in hosts that support MCP Apps
 const CARD_WIDGET_META = { ui: { resourceUri: CARD_WIDGET_URI } }
@@ -271,38 +323,137 @@ export function registerCardTools(server: McpServer): void {
       if (!user) return errorResult(NOT_SIGNED_IN)
       if (!isValidUuid(cardId)) return errorResult("That card id isn't valid.")
 
-      const { data, error } = await user.supabase
-        .from("cards")
-        .select(MCP_CARD_COLUMNS)
-        .eq("id", cardId)
-        .eq("user_id", user.userId)
-        .maybeSingle()
-      if (error) {
-        console.error("[mcp/get_card] FAIL:", error)
-        return errorResult("Sorry, the card couldn't be loaded.")
-      }
-      if (!data) return errorResult("No card with that id in your account.")
-
-      // Messages from the group, not the creator's own (often empty) note
-      const { count, error: countError } = await user.supabase
-        .from("card_contributions")
-        .select("id", { count: "exact", head: true })
-        .eq("card_id", cardId)
-        .eq("is_creator", false)
-      if (countError) {
-        console.error("[mcp/get_card] count FAIL:", countError)
-      }
-
-      // Leave the count out rather than report 0 when it couldn't be loaded
-      const card = summarizeCard(
-        getAppUrl(),
-        data as McpCardRow,
-        countError ? undefined : (count ?? 0),
-      )
-      return {
-        content: [{ type: "text" as const, text: formatCardText(card) }],
-        structuredContent: { card },
-      }
+      const result = await loadCardSummary(user, cardId, "get_card")
+      if ("error" in result) return errorResult(result.error)
+      return cardResult(result.card)
     },
   )
+
+  registerAppTool(
+    server,
+    "update_card",
+    {
+      title: "Edit card",
+      description:
+        "Edits one of the user's cards: the headline on the front, the recipient or sender names, or the user's own message inside the card. Only pass the fields to change. To refine the headline, write the new wording yourself (keep it short, like the original) and confirm it with the user first. The user's message appears inside the card; if they haven't placed it yet, it goes in the middle of the message page and they can move it from the edit link.",
+      inputSchema: z.object({
+        cardId: z
+          .string()
+          .describe("The card id, from list_cards or create_card"),
+        headline: z
+          .string()
+          .trim()
+          .min(1)
+          .max(140)
+          .optional()
+          .describe("New headline for the front of the card"),
+        recipientName: z.string().trim().min(1).max(100).optional(),
+        senderName: z.string().trim().min(1).max(100).optional(),
+        myMessage: z
+          .string()
+          .trim()
+          .max(2000)
+          .optional()
+          .describe(
+            "The user's own message inside the card, replacing any they've written. An empty string removes it.",
+          ),
+      }),
+      annotations: {
+        title: "Edit card",
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      _meta: CARD_WIDGET_META,
+    },
+    async ({ cardId, headline, recipientName, senderName, myMessage }, ctx) => {
+      const user = requireUser(ctx)
+      if (!user) return errorResult(NOT_SIGNED_IN)
+      if (!isValidUuid(cardId)) return errorResult("That card id isn't valid.")
+
+      const cardUpdates: Record<string, string> = {}
+      if (headline !== undefined) cardUpdates.copy_headline = headline
+      if (recipientName !== undefined)
+        cardUpdates.recipient_name = recipientName
+      if (senderName !== undefined) cardUpdates.sender_name = senderName
+      // cards.copy_message mirrors the author's note, as in the web studio
+      if (myMessage !== undefined) cardUpdates.copy_message = myMessage
+      if (Object.keys(cardUpdates).length === 0) {
+        return errorResult("Nothing to change: pass at least one field.")
+      }
+
+      const { data: updated, error } = await user.supabase
+        .from("cards")
+        .update({ ...cardUpdates, updated_at: new Date().toISOString() })
+        .eq("id", cardId)
+        .eq("user_id", user.userId)
+        .select("id")
+      if (error) {
+        console.error("[mcp/update_card] FAIL:", error)
+        return errorResult("Sorry, the card couldn't be updated.")
+      }
+      if (!updated?.length) {
+        return errorResult("No card with that id in your account.")
+      }
+
+      if (myMessage !== undefined) {
+        const saved = await saveCreatorNote(user, cardId, myMessage)
+        if (!saved) {
+          return errorResult(
+            "The card was updated, but your message couldn't be saved. Please try again.",
+          )
+        }
+      }
+
+      captureServerEvent(user.userId, "card_updated", {
+        card_id: cardId,
+        fields: Object.keys(cardUpdates),
+        source: "mcp",
+        mcp_client_id: ctx.http?.authInfo?.clientId,
+      })
+
+      const result = await loadCardSummary(user, cardId, "update_card")
+      if ("error" in result) return errorResult(result.error)
+      return cardResult(result.card, "Card updated.")
+    },
+  )
+}
+
+/** Writes the author's note, placing it on the message page if it has no position yet. Returns whether it saved. */
+async function saveCreatorNote(
+  user: McpUser,
+  cardId: string,
+  message: string,
+): Promise<boolean> {
+  const { data: existing, error: readError } = await user.supabase
+    .from("card_contributions")
+    .select("id, position_x, position_y")
+    .eq("card_id", cardId)
+    .eq("is_creator", true)
+    .maybeSingle()
+  if (readError) {
+    console.error("[mcp/update_card] read note FAIL:", readError)
+    return false
+  }
+
+  const update = creatorNoteUpdate(existing, message || null)
+  const { error } = existing
+    ? await user.supabase
+        .from("card_contributions")
+        .update(update)
+        .eq("id", existing.id)
+    : // Cards from before author notes were pre-created have no row yet
+      await user.supabase.from("card_contributions").insert({
+        card_id: cardId,
+        is_creator: true,
+        font_size: 16,
+        rotation_degrees: 0,
+        ...update,
+      })
+  if (error) {
+    console.error("[mcp/update_card] save note FAIL:", error)
+    return false
+  }
+  return true
 }

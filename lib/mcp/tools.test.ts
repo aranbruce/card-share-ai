@@ -35,6 +35,7 @@ describe("MCP card tools", () => {
       "create_card",
       "get_card",
       "list_cards",
+      "update_card",
     ])
     for (const tool of tools) {
       expect(tool.annotations.title).toBeTruthy()
@@ -42,6 +43,11 @@ describe("MCP card tools", () => {
     }
     const create = tools.find((t) => t.name === "create_card")!
     expect(create.annotations.destructiveHint).toBe(false)
+    const update = tools.find((t) => t.name === "update_card")!
+    expect(update.annotations.destructiveHint).toBe(true)
+    expect(Object.keys(update.inputSchema.properties)).toEqual(
+      expect.arrayContaining(["headline", "myMessage"]),
+    )
     expect(Object.keys(create.inputSchema.properties)).toContain("tone")
   })
 
