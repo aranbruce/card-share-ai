@@ -1,7 +1,7 @@
 import type { AuthError, EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { createSupabaseRouteHandlerClient } from "@/lib/supabase/route-handler"
+import { createSupabaseRouteHandlerAuth } from "@/lib/supabase/route-handler"
 
 const EXPIRED_LINK_MESSAGES: Partial<Record<EmailOtpType, string>> = {
   email:
@@ -67,16 +67,16 @@ export async function completeAuthCallback(
   const code = params.get("code")
 
   const response = redirectTo(successPath, origin)
-  const supabase = createSupabaseRouteHandlerClient(request, response)
+  const auth = createSupabaseRouteHandlerAuth(request, response)
 
   let result
   if (tokenHash) {
-    result = await supabase.auth.verifyOtp({
+    result = await auth.verifyOtp({
       token_hash: tokenHash,
       type: otpType,
     })
   } else if (code) {
-    result = await supabase.auth.exchangeCodeForSession(code)
+    result = await auth.exchangeCodeForSession(code)
   } else {
     return loginErrorRedirect("auth_callback_failed", origin)
   }

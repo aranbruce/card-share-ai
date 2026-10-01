@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
 import { buildLoginRedirectUrl } from "@/lib/safe-redirect-path"
+import { createSupabaseServerAuth } from "@/lib/supabase/auth-server"
 
 function applySessionArtifacts(
   from: NextResponse,
@@ -32,43 +32,38 @@ export async function updateSession(request: NextRequest) {
   // land on redirect responses that carry refreshed auth cookies.
   let authResponseHeaders: Record<string, string> = {}
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet, headers) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value)
-          })
-          // Next writes refreshed cookies onto request.headers, not the
-          // requestHeaders copy taken at the start of updateSession.
-          requestHeaders.set("cookie", request.headers.get("cookie") ?? "")
-          // Rebuild so refreshed request cookies reach the page for this request,
-          // while keeping x-pathname on the forwarded headers.
-          supabaseResponse = NextResponse.next({
-            request: {
-              headers: requestHeaders,
-            },
-          })
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options)
-          })
-          authResponseHeaders = headers
-          Object.entries(headers).forEach(([key, value]) => {
-            supabaseResponse.headers.set(key, value)
-          })
-        },
-      },
+  // Auth only: refreshing here counts against Supabase's per-IP limits.
+  const auth = createSupabaseServerAuth(request.headers, {
+    getAll() {
+      return request.cookies.getAll()
     },
-  )
+    setAll(cookiesToSet, headers) {
+      cookiesToSet.forEach(({ name, value }) => {
+        request.cookies.set(name, value)
+      })
+      // Next writes refreshed cookies onto request.headers, not the
+      // requestHeaders copy taken at the start of updateSession.
+      requestHeaders.set("cookie", request.headers.get("cookie") ?? "")
+      // Rebuild so refreshed request cookies reach the page for this request,
+      // while keeping x-pathname on the forwarded headers.
+      supabaseResponse = NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      })
+      cookiesToSet.forEach(({ name, value, options }) => {
+        supabaseResponse.cookies.set(name, value, options)
+      })
+      authResponseHeaders = headers
+      Object.entries(headers).forEach(([key, value]) => {
+        supabaseResponse.headers.set(key, value)
+      })
+    },
+  })
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await auth.getUser()
 
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     const redirectResponse = NextResponse.redirect(
