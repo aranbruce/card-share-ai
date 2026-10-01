@@ -59,7 +59,12 @@ describe("MCP card tools", () => {
     ])
     for (const tool of tools) {
       expect(tool.annotations.title).toBeTruthy()
-      expect(typeof tool.annotations.readOnlyHint).toBe("boolean")
+      // ChatGPT asks for all three hints as explicit booleans on every tool
+      for (const hint of ["readOnlyHint", "destructiveHint", "openWorldHint"]) {
+        expect(typeof tool.annotations[hint], `${tool.name}.${hint}`).toBe(
+          "boolean",
+        )
+      }
     }
     const create = tools.find((t) => t.name === "create_card")!
     expect(create.annotations.destructiveHint).toBe(false)
