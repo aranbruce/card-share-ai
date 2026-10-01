@@ -10,7 +10,7 @@ export const metadata: Metadata = buildPageMetadata({
   robots: { index: true, follow: true },
 })
 
-const CONTACT_EMAIL = "hello@cardshare.ai"
+const CONTACT_EMAIL = "cardshareai@gmail.com"
 
 export default function PrivacyPage() {
   return (

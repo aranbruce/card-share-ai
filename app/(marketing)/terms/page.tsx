@@ -10,13 +10,13 @@ export const metadata: Metadata = buildPageMetadata({
   robots: { index: true, follow: true },
 })
 
-const CONTACT_EMAIL = "hello@cardshare.ai"
+const CONTACT_EMAIL = "cardshareai@gmail.com"
 
 export default function TermsPage() {
   return (
     <LegalPage title="Terms of use">
       <p>
-        <strong>Last updated:</strong> 4 June 2026
+        <strong>Last updated:</strong> 1 October 2026
       </p>
       <p>
         These terms are a contract between you and CardShare.ai (&quot;we&quot;,
