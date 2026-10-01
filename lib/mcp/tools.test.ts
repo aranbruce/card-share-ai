@@ -71,6 +71,22 @@ describe("MCP card tools", () => {
     expect(Object.keys(create.inputSchema.properties)).toContain("tone")
   })
 
+  it("keeps tool descriptions to what each tool does", async () => {
+    // Directory policy: no instructions about other tools in descriptions.
+    // Usage guidance lives in the server instructions instead.
+    const { result } = await rpc("tools/list")
+    const names: string[] = result.tools.map((t: { name: string }) => t.name)
+    for (const tool of result.tools) {
+      const text = JSON.stringify({
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      })
+      for (const other of names.filter((n) => n !== tool.name)) {
+        expect(text, `${tool.name} mentions ${other}`).not.toContain(other)
+      }
+    }
+  })
+
   it("links every tool to the card view", async () => {
     const { result } = await rpc("tools/list")
     for (const tool of result.tools) {
@@ -146,7 +162,7 @@ describe("MCP card tools", () => {
         { signedInAs: "user-1" },
       )
       expect(result.isError).toBe(true)
-      expect(result.content[0].text).toMatch(/create_card/)
+      expect(result.content[0].text).toMatch(/without a photo/)
     })
   })
 })
