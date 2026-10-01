@@ -43,6 +43,7 @@ pnpm fix              # Auto-fix formatting and lint issues
 
 ```
 app/
+  mcp/                # Remote MCP server (Claude / ChatGPT connectors)
   api/                # API routes (cards, generate-headline, generate-message, generate-image, giphy, contribute)
   (auth)/             # Auth pages at /login, /sign-up, /callback, etc. (route group)
   create/             # Card creation flow
@@ -90,6 +91,7 @@ Copy `.env.local` from a team member or pull via `vercel env pull`. Key variable
 | `AI_MESSAGE_MODEL`                  | Override the inside-message model (optional, defaults to `google/gemini-3.8-flash`) |
 | `AI_IMAGE_GATEWAY_MODEL`            | Override card cover image model (default `google/gemini-3.1-flash-image-preview`)   |
 | `E2E_EMAIL` / `E2E_PASSWORD`        | Test account credentials for Playwright                                             |
+| `MCP_PHOTO_TOKEN_SECRET`            | Signs photo upload links in the MCP card view; photo covers are off without it      |
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project API key (EU Cloud)                                                  |
 | `NEXT_PUBLIC_POSTHOG_HOST`          | PostHog ingest API for server-side SDK (`https://eu.i.posthog.com`)                 |
 | `NEXT_PUBLIC_POSTHOG_API_HOST`      | Client proxy: `/t` locally, `https://t.cardshare.ai` in production                  |
@@ -104,4 +106,5 @@ PostHog **AI observability** reuses `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEX
 - **Pending card storage**: `lib/pending-card-storage.ts` preserves in-progress card state across auth redirects
 - **AI text models**: Configured via `lib/ai-text-model.ts`; headlines read `AI_HEADLINE_MODEL`, inside messages read `AI_MESSAGE_MODEL`
 - **PostHog AI observability**: `instrumentation.ts` + `lib/posthog-ai-otel.ts` (`@ai-sdk/otel`) export LLM spans; `lib/ai-telemetry.ts` on `generateText`; distinct ID via `X-POSTHOG-DISTINCT-ID` from the client
+- **MCP server**: `app/mcp/route.ts` (tools in `lib/mcp/tools.ts`) for Claude/ChatGPT connectors; OAuth via Supabase Auth's OAuth 2.1 server with the consent page at `/oauth/consent`; protected resource metadata under `app/.well-known/`. Tools use an RLS-scoped client built from the bearer token
 - **Supabase RLS**: All database access enforces Row Level Security; use the service role key only in API routes, never client-side

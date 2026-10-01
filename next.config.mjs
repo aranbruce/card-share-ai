@@ -11,6 +11,10 @@ const nextConfig = {
   // Occasion preview images are re-rendered on the server (weekly) from the cover art.
   outputFileTracingIncludes: {
     "/og/occasion/[slug]": ["./public/occasions/*.webp"],
+    // Inlined into the MCP Apps card view (lib/mcp/card-widget.ts)
+    "/mcp": [
+      "./node_modules/@modelcontextprotocol/ext-apps/dist/src/app-with-deps.js",
+    ],
   },
   // Belt-and-braces with robots.txt: if a card URL is linked publicly, Google
   // can still discover it — noindex drops it instead of indexing a bare URL.
