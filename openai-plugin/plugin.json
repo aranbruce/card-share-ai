@@ -69,16 +69,16 @@
               "expected_behavior": "A grid of the test account's cards appears, newest first, each with its cover and status (collecting messages or sent). Clicking a card opens its edit page."
             },
             {
-              "description": "Check how many people have signed a card",
+              "description": "Check how many people have signed a card. The test account already has a card for Sarah that several people have signed, so this case works whichever order the cases are run in.",
               "prompt": "How many people have signed Sarah's card?",
               "tools_triggered": "list_cards, get_card",
-              "expected_behavior": "Finds the card for Sarah and shows it with how many people have signed it and its edit, invite and view links."
+              "expected_behavior": "Finds the existing card for Sarah and shows it with how many people have signed it (more than zero in the test account) and its edit, invite and view links."
             },
             {
-              "description": "Edit a card's headline and the user's own message",
+              "description": "Edit a card's headline and the user's own message. The test account already has a card for Sarah that several people have signed, so this case works whichever order the cases are run in.",
               "prompt": "Change the headline on Sarah's card to \"Sarah, the crag will miss you\" and add my message inside: Happy birthday, have the best day!",
               "tools_triggered": "list_cards, update_card",
-              "expected_behavior": "The card is updated and shown again with the new headline on its cover and the message inside. Opening the edit link shows the message on the card's inside page."
+              "expected_behavior": "Finds the existing card for Sarah, updates it, and shows it again with the new headline on its cover and the message inside. Opening the edit link shows the message on the card's inside page."
             }
           ],
           "negative": [
