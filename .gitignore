@@ -28,3 +28,6 @@ node_modules
 playwright-report/
 playwright/.auth/
 test-results/
+
+# Built ChatGPT plugin package (pnpm openai:plugin)
+cardshare-ai-openai-plugin.zip
