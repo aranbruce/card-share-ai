@@ -1,0 +1,75 @@
+/** Card fields the MCP tools read back from the `cards` table. */
+export type McpCardRow = {
+  id: string
+  card_type?: string | null
+  recipient_name?: string | null
+  sender_name?: string | null
+  copy_headline?: string | null
+  image_url?: string | null
+  contributor_link_id?: string | null
+  sent_at?: string | null
+  created_at?: string | null
+}
+
+export const MCP_CARD_COLUMNS =
+  "id, card_type, recipient_name, sender_name, copy_headline, image_url, contributor_link_id, sent_at, created_at"
+
+export type McpCardSummary = {
+  id: string
+  cardType: string
+  recipientName: string
+  senderName: string
+  headline: string
+  coverImageUrl: string | null
+  status: "collecting" | "sent"
+  sentAt: string | null
+  createdAt: string | null
+  /** Where the owner edits the card and places their own message. */
+  editUrl: string
+  /** Share with the group so they can sign the card. */
+  contributeUrl: string | null
+  /** The finished card, for the recipient. */
+  viewUrl: string | null
+  messageCount?: number
+}
+
+export function summarizeCard(
+  appUrl: string,
+  card: McpCardRow,
+  messageCount?: number,
+): McpCardSummary {
+  const linkId = card.contributor_link_id || null
+  return {
+    id: card.id,
+    cardType: card.card_type || "custom",
+    recipientName: card.recipient_name || "",
+    senderName: card.sender_name || "",
+    headline: card.copy_headline || "",
+    coverImageUrl: card.image_url?.startsWith("https://")
+      ? card.image_url
+      : null,
+    status: card.sent_at ? "sent" : "collecting",
+    sentAt: card.sent_at ?? null,
+    createdAt: card.created_at ?? null,
+    editUrl: `${appUrl}/dashboard/cards/${card.id}`,
+    contributeUrl: linkId ? `${appUrl}/contribute/${linkId}` : null,
+    viewUrl: linkId ? `${appUrl}/view/${linkId}` : null,
+    ...(messageCount === undefined ? {} : { messageCount }),
+  }
+}
+
+/** Plain-text version of a card for clients that ignore structured content. */
+export function formatCardText(card: McpCardSummary): string {
+  const lines = [
+    `Card for ${card.recipientName || "someone"} from ${card.senderName || "you"} (${card.cardType.replace(/_/g, " ")})`,
+    card.headline ? `Headline: "${card.headline}"` : null,
+    `Status: ${card.status === "sent" ? `sent ${card.sentAt}` : "collecting messages"}`,
+    card.messageCount === undefined
+      ? null
+      : `Group messages: ${card.messageCount}`,
+    `Edit: ${card.editUrl}`,
+    card.contributeUrl ? `Invite others to sign: ${card.contributeUrl}` : null,
+    card.viewUrl ? `Recipient view: ${card.viewUrl}` : null,
+  ]
+  return lines.filter(Boolean).join("\n")
+}

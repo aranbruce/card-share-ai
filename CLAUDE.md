@@ -43,6 +43,7 @@ pnpm fix              # Auto-fix formatting and lint issues
 
 ```
 app/
+  mcp/                # Remote MCP server (Claude / ChatGPT connectors)
   api/                # API routes (cards, generate-headline, generate-message, generate-image, giphy, contribute)
   (auth)/             # Auth pages at /login, /sign-up, /callback, etc. (route group)
   create/             # Card creation flow
@@ -104,4 +105,5 @@ PostHog **AI observability** reuses `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEX
 - **Pending card storage**: `lib/pending-card-storage.ts` preserves in-progress card state across auth redirects
 - **AI text models**: Configured via `lib/ai-text-model.ts`; headlines read `AI_HEADLINE_MODEL`, inside messages read `AI_MESSAGE_MODEL`
 - **PostHog AI observability**: `instrumentation.ts` + `lib/posthog-ai-otel.ts` (`@ai-sdk/otel`) export LLM spans; `lib/ai-telemetry.ts` on `generateText`; distinct ID via `X-POSTHOG-DISTINCT-ID` from the client
+- **MCP server**: `app/mcp/route.ts` (tools in `lib/mcp/tools.ts`) for Claude/ChatGPT connectors; OAuth via Supabase Auth's OAuth 2.1 server with the consent page at `/oauth/consent`; protected resource metadata under `app/.well-known/`. Tools use an RLS-scoped client built from the bearer token
 - **Supabase RLS**: All database access enforces Row Level Security; use the service role key only in API routes, never client-side

@@ -123,6 +123,20 @@ If `/forgot-password` shows **Error sending recovery email**, the Send Email hoo
 
 If you use **email / password** sign-up, enable HaveIBeenPwned checks in the Supabase Dashboard so the linter warning clears and weak passwords are rejected: **Authentication** → **Providers** → **Email** → enable **Prevent use of leaked passwords** (wording may vary by dashboard version). See [Password security](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). OAuth-only projects can skip this.
 
+### MCP server (Claude and ChatGPT connectors)
+
+`/mcp` is a remote MCP server (Streamable HTTP, via `mcp-handler`) with three tools: `create_card`, `list_cards` and `get_card`. Users sign in with OAuth 2.1, using **Supabase Auth's OAuth server** as the authorization server; our consent screen is `/oauth/consent`. Tool calls run as the signed-in user, so RLS applies.
+
+One-time Supabase setup (Dashboard → **Authentication → OAuth Server**):
+
+1. Turn on **OAuth 2.1 server**.
+2. Set **Authorization path** to `/oauth/consent` (the Site URL must be the app's URL).
+3. Leave **Allow Dynamic OAuth Apps** off. Tokens are full Supabase sessions, so only clients we register ourselves may ask users for access.
+4. Under **OAuth Apps**, add one confidential app per platform, named as users should see it on the consent screen (e.g. "Claude" with redirect URI `https://claude.ai/api/mcp/auth_callback`). Store the client ID and secret in the team password manager.
+5. Use asymmetric JWT signing keys (Project Settings → JWT Keys) so `getClaims` verifies tokens locally.
+
+Try it: add `https://<your-domain>/mcp` as a custom connector in Claude (Settings → Connectors, with the client ID and secret under Advanced settings) or in ChatGPT developer mode, or run `npx @modelcontextprotocol/inspector` against `http://localhost:3000/mcp`.
+
 ### Installation
 
 1. Install dependencies:
