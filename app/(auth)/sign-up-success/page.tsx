@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { ResendConfirmationEmail } from "@/components/auth/resend-confirmation-email"
 import { AuthSuccessPanel } from "@/components/auth/success-panel"
 import { privatePageMetadata } from "@/lib/site-metadata"
 
@@ -17,8 +18,8 @@ export default function SignUpSuccessPage() {
       }
       hint={
         <>
-          Didn&apos;t receive the email? Check your spam folder or try signing
-          up again. If you&apos;ve already confirmed your email,{" "}
+          Didn&apos;t receive the email? Check your spam folder. If you&apos;ve
+          already confirmed your email,{" "}
           <Link
             href="/login"
             className="font-medium text-brand hover:underline"
@@ -29,6 +30,8 @@ export default function SignUpSuccessPage() {
         </>
       }
       action={{ href: "/", label: "Return Home" }}
-    />
+    >
+      <ResendConfirmationEmail />
+    </AuthSuccessPanel>
   )
 }

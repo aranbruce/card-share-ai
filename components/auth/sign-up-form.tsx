@@ -12,7 +12,10 @@ import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
 import type { OAuthProviderId } from "@/lib/oauth-auth"
 import { usePendingSaveIntent } from "@/hooks/use-pending-save-intent"
-import { hasPendingCard as hasStoredPendingCard } from "@/lib/pending-card-storage"
+import {
+  buildSignUpEmailRedirectTo,
+  rememberSignUpEmail,
+} from "@/lib/auth/sign-up-email"
 import {
   persistPendingCardAfterAuth,
   persistPendingCardErrorMessage,
@@ -78,18 +81,11 @@ function SignUpFormInner() {
     setError("")
 
     try {
-      // When a guest draft is stored, land on /create after email confirmation
-      // so it persists the pending card from localStorage.
-      const emailRedirectTo = new URL("/callback", window.location.origin)
-      if (hasStoredPendingCard()) {
-        emailRedirectTo.searchParams.set("next", "/create?action=save")
-      }
-
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: emailRedirectTo.toString(),
+          emailRedirectTo: buildSignUpEmailRedirectTo(window.location.origin),
         },
       })
 
@@ -136,6 +132,9 @@ function SignUpFormInner() {
             { id: data.user.id, email: data.user.email },
           )
         }
+        // Also remembered for already-registered emails, so the page doesn't
+        // reveal which addresses have accounts.
+        rememberSignUpEmail(email)
         router.push("/sign-up-success")
       }
     } catch {

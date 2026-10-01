@@ -101,3 +101,99 @@ test.describe("email sign-up", () => {
     expect(redirectTo.searchParams.get("next")).toBe("/create?action=save")
   })
 })
+
+test.describe("resend confirmation email", () => {
+  test("enables resend after 60s and sends to the same address", async ({
+    page,
+  }) => {
+    await page.clock.install()
+    await stubSignUp(page, {
+      identities: [{ id: "identity-1", provider: "email" }],
+    })
+    const resends: Array<{
+      body: Record<string, unknown>
+      redirectTo: string | null
+    }> = []
+    await page.route("**/auth/v1/resend**", async (route) => {
+      resends.push({
+        body: route.request().postDataJSON(),
+        redirectTo: new URL(route.request().url()).searchParams.get(
+          "redirect_to",
+        ),
+      })
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: "{}",
+      })
+    })
+
+    await page.goto("/sign-up")
+    await submitSignUp(page)
+    await expect(page).toHaveURL(/\/sign-up-success$/)
+
+    await expect(page.getByText("Sent to new-user@example.com")).toBeVisible()
+    const waiting = page.getByRole("button", { name: /Resend email in \d+s/ })
+    await expect(waiting).toBeDisabled()
+
+    await page.clock.fastForward("01:01")
+    const resend = page.getByRole("button", { name: "Resend email" })
+    await expect(resend).toBeEnabled()
+    await resend.click()
+
+    await expect(
+      page.getByText("Sent another email to new-user@example.com"),
+    ).toBeVisible()
+    await expect(waiting).toBeDisabled()
+    expect(resends).toHaveLength(1)
+    expect(resends[0].body).toMatchObject({
+      type: "signup",
+      email: "new-user@example.com",
+    })
+    expect(new URL(resends[0].redirectTo ?? "").pathname).toBe("/callback")
+  })
+
+  test("shows the rate-limit message when Supabase refuses", async ({
+    page,
+  }) => {
+    await page.clock.install()
+    await stubSignUp(page, {
+      identities: [{ id: "identity-1", provider: "email" }],
+    })
+    await page.route("**/auth/v1/resend**", (route) =>
+      route.fulfill({
+        status: 429,
+        contentType: "application/json",
+        body: JSON.stringify({
+          code: "over_email_send_rate_limit",
+          msg: "email rate limit exceeded",
+        }),
+      }),
+    )
+
+    await page.goto("/sign-up")
+    await submitSignUp(page)
+    await expect(page).toHaveURL(/\/sign-up-success$/)
+
+    await page.clock.fastForward("01:01")
+    await page.getByRole("button", { name: "Resend email" }).click()
+
+    await expect(page.getByText(/Too many attempts/)).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "Resend email" }),
+    ).toBeEnabled()
+  })
+
+  test("links back to sign-up when the address isn't known", async ({
+    page,
+  }) => {
+    await page.goto("/sign-up-success")
+
+    await expect(
+      page.getByRole("link", { name: "Sign up again" }),
+    ).toHaveAttribute("href", "/sign-up")
+    await expect(
+      page.getByRole("button", { name: /Resend email/ }),
+    ).toHaveCount(0)
+  })
+})
