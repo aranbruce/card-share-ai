@@ -7,6 +7,8 @@ export type PhotoTokenPayload =
   | {
       purpose: "new-card-photo"
       userId: string
+      /** Makes the link single-use: see lib/mcp/photo-claims. */
+      nonce: string
       card: {
         recipientName: string
         senderName: string

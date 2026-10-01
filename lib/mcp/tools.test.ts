@@ -131,6 +131,7 @@ describe("MCP card tools", () => {
       expect(verifyPhotoToken(upload.token)).toEqual({
         purpose: "new-card-photo",
         userId: "user-1",
+        nonce: expect.stringMatching(/^[0-9a-f-]{36}$/),
         card: args,
       })
       // The model never sees the token

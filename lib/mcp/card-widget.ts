@@ -159,6 +159,7 @@ const MAX_PHOTO_BYTES = ${MAX_SOURCE_IMAGE_BYTES};
 const MAX_PHOTO_SIDE = 2048;
 let upload = null;
 let lastCard = null;
+let uploading = false;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -268,6 +269,7 @@ function choosePhoto(busyText) {
     const file = input.files && input.files[0];
     if (!file) return;
     renderStatus(busyText, true);
+    uploading = true;
     try {
       const photo = await photoDataUrl(file);
       const res = await fetch(target.url, {
@@ -286,6 +288,8 @@ function choosePhoto(busyText) {
       }
     } catch (err) {
       renderPhotoError(err && err.message ? err.message : "Something went wrong. Please try again.", busyText);
+    } finally {
+      uploading = false;
     }
   });
   input.click();
@@ -307,8 +311,38 @@ function renderPhotoError(message, busyText) {
   root.replaceChildren(box);
 }
 
+// The picker can show again for a card that already exists (a reopened chat).
+// Each link makes one card, so show that card instead of asking for a photo.
+async function showCardIfAlreadyCreated() {
+  const target = upload;
+  if (!target) return;
+  try {
+    const res = await fetch(target.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: target.token }),
+    });
+    const body = await res.json();
+    // Only swap if the user hasn't started an upload meanwhile
+    if (res.ok && body.card && upload === target && !uploading) {
+      upload = body.upload || null;
+      lastCard = body.card;
+      root.replaceChildren(renderCard(body.card));
+    }
+  } catch {
+    // Keep the picker; a real upload will report any problem
+  }
+}
+
 function renderPhotoPicker(recipientName) {
   const box = el("div", "panel picker");
+  if (!upload) {
+    // The host didn't pass on the upload link, so a picker would do nothing
+    box.append(el("div", "title", "Photo upload isn't available here"));
+    box.append(el("div", "meta", "Ask Claude to make the card without a photo instead."));
+    root.replaceChildren(box);
+    return;
+  }
   box.append(el("div", "title", "Choose a photo for " + (recipientName ? recipientName + "'s" : "your") + " card"));
   box.append(el("div", "meta", "We'll draw the cover from it. Your photo is only used for that; we don't keep it."));
   const actions = el("div", "actions centered");
@@ -394,6 +428,7 @@ function render(result) {
   }
   if (data.pendingPhoto) {
     renderPhotoPicker(data.pendingPhoto.recipientName);
+    showCardIfAlreadyCreated();
   } else if (data.card) {
     lastCard = data.card;
     root.replaceChildren(renderCard(data.card));

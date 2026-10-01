@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import type { McpServer, ServerContext } from "@modelcontextprotocol/server"
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server"
 import { validate as isValidUuid } from "uuid"
@@ -204,6 +205,7 @@ export function registerCardTools(server: McpServer): void {
         _meta: photoUploadMeta({
           purpose: "new-card-photo",
           userId: user.userId,
+          nonce: randomUUID(),
           card: {
             recipientName: inputs.recipientName,
             senderName: inputs.senderName,

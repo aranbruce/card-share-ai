@@ -44,4 +44,15 @@ describe("POST /api/mcp/photo", () => {
     const res = await post({ token, photo: "data:text/plain;base64,aGk=" })
     expect(res.status).toBe(400)
   })
+
+  it("has nothing to report for a card's own photo link", async () => {
+    const token = createPhotoToken({
+      purpose: "card-photo",
+      userId: "user-1",
+      cardId: "card-1",
+    })
+    const res = await post({ token })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ card: null })
+  })
 })
