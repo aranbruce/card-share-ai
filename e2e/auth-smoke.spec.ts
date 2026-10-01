@@ -10,6 +10,10 @@ test.describe("auth smoke flows", () => {
     await expect(
       page.getByRole("link", { name: "Return Home" }),
     ).toHaveAttribute("href", "/")
+    await expect(page.getByRole("link", { name: "sign in" })).toHaveAttribute(
+      "href",
+      "/login",
+    )
   })
 
   test("shows reset-password-success and sign-in link", async ({ page }) => {

@@ -30,8 +30,14 @@ test.describe("email link confirm page", () => {
 
     await page.getByRole("button", { name: "Confirm email" }).click()
 
-    // The fake token is rejected by Supabase, so we land on login with an error.
+    // The fake token is rejected by Supabase as expired/invalid, so we land on
+    // login with the explanation rather than Supabase's raw message.
     await expect(page).toHaveURL(/\/login\?error=/)
+    await expect(
+      page.getByText(
+        "This confirmation link has expired or was already used. If you've already confirmed your email, sign in below.",
+      ),
+    ).toBeVisible()
     expect(callbackPosts).toEqual(["/callback"])
   })
 
