@@ -27,14 +27,9 @@ const SUBPROCESSORS = [
     location: "United States",
   },
   {
-    name: "OpenAI",
+    name: "AI model providers (OpenAI, Anthropic, Google, xAI)",
     purpose:
-      "Generates card headlines and messages from the details you provide",
-    location: "United States",
-  },
-  {
-    name: "Google (Gemini)",
-    purpose: "Generates card cover images from the details you provide",
+      "Generate card headlines, messages, and cover images from the details you provide. We may use one or more of these, through Vercel's AI Gateway",
     location: "United States",
   },
   {
@@ -82,14 +77,6 @@ export default function SubprocessorsPage() {
           </li>
         ))}
       </ul>
-
-      <h2>AI assistants you connect</h2>
-      <p>
-        If you connect CardShare.ai to an AI assistant such as Claude
-        (Anthropic) or ChatGPT (OpenAI), that company is not our sub-processor.
-        You choose to share data with it, and it handles that data under its own
-        terms and privacy policy.
-      </p>
 
       <h2>How we choose sub-processors</h2>
       <p>

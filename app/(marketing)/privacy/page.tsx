@@ -67,12 +67,10 @@ export default function PrivacyPage() {
           and deliver card links in Slack.
         </li>
         <li>
-          <strong>AI assistant connectors</strong>: If you connect CardShare.ai
-          to an AI assistant such as Claude or ChatGPT, we receive the requests
-          it makes for you (for example a recipient&apos;s name and details to
-          personalize a card) and an identifier for the assistant app. We send
-          back the results, such as card headlines, cover images, card links,
-          and how many people have signed a card.
+          <strong>AI assistants</strong>: If you connect an AI assistant such as
+          Claude or ChatGPT, it sends us the card details you give it and
+          receives the results. The company that runs the assistant handles that
+          data under its own privacy policy.
         </li>
       </ul>
 
@@ -94,12 +92,6 @@ export default function PrivacyPage() {
         our instructions to operate CardShare.ai. When you share a card link,
         you control who receives it. We do not publish cards in a public
         directory.
-      </p>
-      <p>
-        If you connect an AI assistant, the information it requests on your
-        behalf, and the results we return, are shared with the company that runs
-        that assistant (for example Anthropic for Claude, or OpenAI for
-        ChatGPT). They handle it under their own privacy policies, not ours.
       </p>
 
       <h2>Retention</h2>
@@ -126,9 +118,6 @@ export default function PrivacyPage() {
         <li>
           Use browser controls or opt-out tools where available for analytics
           cookies
-        </li>
-        <li>
-          Disconnect an AI assistant at any time from its connector settings
         </li>
       </ul>
 
