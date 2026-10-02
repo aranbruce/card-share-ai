@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Caveat } from "next/font/google"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useScrollEdgeFade } from "@/hooks/use-scroll-edge-fade"
 import type {
   PhotoTemplateScene,
   PhotoTemplatesSectionData,
@@ -232,6 +233,12 @@ export function PhotoTemplatesSection({
   }, [])
 
   const arrow = arrowTo(main)
+  // The thumbnails stay in one row, swiped when they don't fit, fading at an edge with more.
+  const {
+    ref: thumbsRef,
+    onScroll: onThumbsScroll,
+    maskStyle: thumbsMask,
+  } = useScrollEdgeFade<HTMLDivElement>("2.5rem", [n])
 
   return (
     <section
@@ -243,10 +250,12 @@ export function PhotoTemplatesSection({
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false)
       }}
-      className="border-t border-border bg-background"
+      className="overflow-x-clip border-t border-border bg-background"
     >
-      <div className="mx-auto grid max-w-360 grid-cols-[repeat(auto-fit,minmax(min(100%,440px),1fr))] items-center gap-x-18 gap-y-12 px-6 py-20 md:px-15">
-        <div className="flex max-w-140 flex-col">
+      {/* One column on phones: heading, the stage, then the thumbnails and buttons. From
+          md the stage sits beside the text, which centres against it. */}
+      <div className="mx-auto grid max-w-360 grid-cols-1 gap-y-8 px-6 py-16 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:grid-rows-[auto_auto] md:gap-x-10 md:gap-y-0 md:px-15 md:py-20 lg:grid-cols-2 lg:gap-x-18">
+        <div className="flex max-w-140 flex-col md:col-start-1 md:row-start-1 md:self-end">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             {data.eyebrow}
           </p>
@@ -258,9 +267,14 @@ export function PhotoTemplatesSection({
           <p className="mt-5 text-lg leading-relaxed text-pretty text-muted-foreground">
             {data.body}
           </p>
+        </div>
 
+        <div className="flex max-w-140 flex-col md:col-start-1 md:row-start-2 md:self-start md:pt-8">
           <div
-            className="mt-8 flex flex-wrap gap-2.5"
+            ref={thumbsRef}
+            onScroll={onThumbsScroll}
+            style={thumbsMask}
+            className="-mx-6 -my-1 flex snap-x scroll-px-6 scrollbar-none gap-2.5 overflow-x-auto px-6 py-1 md:mx-0 md:scroll-px-0 md:px-0 [&::-webkit-scrollbar]:hidden"
             role="group"
             aria-label="Scenes"
           >
@@ -274,7 +288,7 @@ export function PhotoTemplatesSection({
                   aria-label={scene.name}
                   aria-pressed={active}
                   title={scene.name}
-                  className="relative h-18.75 w-15 cursor-pointer overflow-hidden rounded-lg shadow-[0_1px_2px_rgba(17,17,16,0.08)] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="relative h-18.75 w-15 shrink-0 cursor-pointer snap-start overflow-hidden rounded-lg shadow-[0_1px_2px_rgba(17,17,16,0.08)] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:outline-none"
                 >
                   <Image
                     src={scene.thumbnail}
@@ -292,7 +306,7 @@ export function PhotoTemplatesSection({
             {data.more > 0 && (
               <Link
                 href={data.moreHref}
-                className="grid h-18.75 w-15 place-items-center rounded-lg border border-dashed border-border text-center text-xs leading-tight font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
+                className="grid h-18.75 w-15 shrink-0 snap-start place-items-center rounded-lg border border-dashed border-border text-center text-xs leading-tight font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
               >
                 <span className="flex flex-col whitespace-nowrap">
                   <span className="text-[15px] text-foreground">
@@ -305,7 +319,7 @@ export function PhotoTemplatesSection({
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild variant="brand" size="lg">
+            <Button asChild variant="brand" size="lg" className="max-sm:flex-1">
               <Link href={main.href}>
                 {data.cta}
                 <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
@@ -313,16 +327,12 @@ export function PhotoTemplatesSection({
                 </span>
               </Link>
             </Button>
-            {data.secondary && (
-              <Button asChild variant="outline" size="lg">
-                <Link href={data.secondary.href}>{data.secondary.label}</Link>
-              </Button>
-            )}
           </div>
         </div>
 
-        {/* The stage: three dealt cards, the sample person and the arrow between them */}
-        <div className="@container relative aspect-600/620 w-full max-w-150 justify-self-center">
+        {/* The stage: three dealt cards, the sample person and the arrow between them. It
+            reaches a little into the page gutters on phones, so the cards read larger. */}
+        <div className="@container relative aspect-600/620 w-full max-w-120 justify-self-center max-md:row-start-2 max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] md:col-start-2 md:row-span-2 md:row-start-1 md:max-w-150 md:self-center">
           {[
             { scene: backLeft, at: BACK_LEFT, z: "z-[2]" },
             { scene: backRight, at: BACK_RIGHT, z: "z-[1]" },

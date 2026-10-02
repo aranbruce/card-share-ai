@@ -185,8 +185,6 @@ export type PhotoTemplatesSectionData = {
   h2: string
   body: string
   cta: string
-  /** The general variant's second button, to the full template picker. */
-  secondary: { label: string; href: string } | null
   scenes: PhotoTemplateScene[]
   /** Scenes not shown, in the template picker `moreHref` opens. */
   more: number
@@ -218,7 +216,6 @@ export function generalPhotoTemplatesSection(): PhotoTemplatesSectionData {
     h2: "of the cover",
     body: `Upload a photo of a friend, family member or colleague and pick one of ${CARD_TEMPLATES.length} scenes. AI redraws them into it, keeping their face and hair, then the whole group signs the card`,
     cta: "Start a card",
-    secondary: { label: "See every scene", href: pickerHref },
     scenes,
     more: CARD_TEMPLATES.length - scenes.length,
     moreHref: pickerHref,
@@ -239,7 +236,6 @@ export function occasionPhotoTemplatesSection(
     h2: copy.h2,
     body: `Upload a photo of ${copy.who} and pick a scene. AI redraws them into it as the star of the cover, then the whole group signs the card`,
     cta: copy.cta,
-    secondary: null,
     scenes: templates.map((t) => ({
       id: t.id,
       name: t.name,
