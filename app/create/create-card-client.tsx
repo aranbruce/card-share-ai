@@ -32,10 +32,7 @@ import {
   regenerateCardImage,
 } from "@/lib/regenerate-card-client"
 import posthog from "posthog-js"
-import {
-  CARD_TEMPLATES,
-  defaultOccasionForTemplate,
-} from "@/lib/card-templates"
+import { CARD_TEMPLATES } from "@/lib/card-templates"
 import { cn } from "@/lib/utils"
 import {
   CARD_OCCASIONS,
@@ -56,21 +53,22 @@ interface CardData {
 type Step = "select-type" | "details"
 
 export function CreateCardPageClient({
+  initialOccasion,
   initialTemplateId,
 }: {
-  /** A template linked from the gallery: start on the cover step with it picked. */
+  /** An occasion linked from a marketing page: start on the cover step with it picked. */
+  initialOccasion?: string
+  /** A template to pick on the cover step (offered for `initialOccasion`). */
   initialTemplateId?: string
 }) {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
   const initialTemplate = CARD_TEMPLATES.find((t) => t.id === initialTemplateId)
   const [step, setStep] = useState<Step>(
-    initialTemplate ? "details" : "select-type",
+    initialOccasion ? "details" : "select-type",
   )
   const [selectedType, setSelectedType] = useState(
-    initialTemplate
-      ? defaultOccasionForTemplate(initialTemplate)
-      : DEFAULT_CARD_OCCASION,
+    initialOccasion ?? DEFAULT_CARD_OCCASION,
   )
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")

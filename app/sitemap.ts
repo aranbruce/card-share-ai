@@ -9,8 +9,6 @@ const MARKETING_LAST_MODIFIED = new Date("2026-09-29")
 const SLACK_LAST_MODIFIED = new Date("2026-10-02")
 /** Bump when the Claude connector page changes meaningfully. */
 const CLAUDE_LAST_MODIFIED = new Date("2026-10-01")
-/** Bump when the photo templates page or the templates change meaningfully. */
-const TEMPLATES_LAST_MODIFIED = new Date("2026-10-02")
 /** Bump when the support page changes meaningfully. */
 const SUPPORT_LAST_MODIFIED = new Date("2026-10-01")
 /** Bump when the privacy, terms or sub-processors pages change. */
@@ -37,7 +35,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: base, lastModified: MARKETING_LAST_MODIFIED },
     { url: `${base}/browse`, lastModified: MARKETING_LAST_MODIFIED },
-    { url: `${base}/templates`, lastModified: TEMPLATES_LAST_MODIFIED },
     ...categoryPages,
     ...comparePages,
     { url: `${base}/slack/install`, lastModified: SLACK_LAST_MODIFIED },

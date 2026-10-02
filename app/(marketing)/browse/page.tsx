@@ -6,6 +6,7 @@ import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/json-ld"
+import { PhotoTemplatesSection } from "@/components/photo-templates-section"
 import { SlackStoryboard } from "@/components/slack-storyboard"
 import { StarMark } from "@/components/star-mark"
 import {
@@ -15,6 +16,7 @@ import {
   occasionTiles,
   slackStoryboardCard,
 } from "@/lib/category-pages"
+import { generalPhotoTemplatesSection } from "@/lib/photo-templates-section"
 import { sampleAvatarsFor } from "@/lib/sample-avatars"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
@@ -271,6 +273,8 @@ export default function CardsPage() {
         tabs={STEPS}
         sample={featureSample(getCategoryConfig("birthday")!)}
       />
+
+      <PhotoTemplatesSection data={generalPhotoTemplatesSection()} />
 
       <SlackStoryboard
         card={slackStoryboardCard(getCategoryConfig("birthday")!)}

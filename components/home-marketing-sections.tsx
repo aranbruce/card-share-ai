@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button"
 import { SlackFlowSection } from "@/components/slack-flow"
 import { FaqSection } from "@/components/faq-section"
 import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
+import { PhotoTemplatesSection } from "@/components/photo-templates-section"
 import { featureSample, getCategoryConfig } from "@/lib/category-pages"
+import { generalPhotoTemplatesSection } from "@/lib/photo-templates-section"
 
 const HOME_FAQS = [
   {
@@ -75,6 +77,8 @@ export function HomeMarketingSections() {
         tabs={FEATURES}
         sample={featureSample(getCategoryConfig("birthday")!)}
       />
+
+      <PhotoTemplatesSection data={generalPhotoTemplatesSection()} />
 
       <section className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">

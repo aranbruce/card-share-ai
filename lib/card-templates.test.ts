@@ -52,6 +52,15 @@ describe("templatesForOccasion", () => {
     }
   })
 
+  it("has a face position inside every thumbnail", () => {
+    for (const t of CARD_TEMPLATES) {
+      for (const v of t.face) {
+        expect(v, t.id).toBeGreaterThan(0)
+        expect(v, t.id).toBeLessThan(1)
+      }
+    }
+  })
+
   it("has unique ids", () => {
     const all = CARD_TEMPLATES.map((t) => t.id)
     expect(new Set(all).size).toBe(all.length)

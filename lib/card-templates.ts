@@ -7,6 +7,8 @@ export type CardTemplate = {
   /** Occasion page slugs (see `lib/category-pages.ts`) that show the scene in their gallery.
    * Scenes for "all" occasions show on every page that offers templates. */
   pages: string[]
+  /** Centre of the thumbnail's face oval, as fractions of its width and height. */
+  face: [number, number]
 }
 
 /** Occasions that never offer funny photo templates. */
@@ -14,6 +16,44 @@ export const TEMPLATE_EXCLUDED_OCCASIONS = ["sympathy"]
 
 /** Occasion pages that never show funny photo templates. */
 export const TEMPLATE_EXCLUDED_PAGES = ["sympathy"]
+
+/** Where each thumbnail's face oval sits (see `CardTemplate.face`). */
+const FACES: Record<string, [number, number]> = {
+  "moon-cake": [0.6, 0.35],
+  "banana-rockstar": [0.53, 0.39],
+  "ball-pit": [0.4, 0.43],
+  "corgi-knight": [0.57, 0.42],
+  "employee-of-century": [0.51, 0.24],
+  "office-superhero": [0.48, 0.21],
+  "town-statue": [0.5, 0.16],
+  "crowd-carry": [0.51, 0.29],
+  "olympic-gold": [0.49, 0.44],
+  "marathon-cape": [0.51, 0.36],
+  "champagne-rocket": [0.5, 0.23],
+  "head-elf": [0.51, 0.4],
+  "present-snowboard": [0.48, 0.29],
+  "jumper-shoot": [0.51, 0.21],
+  "office-chair-sunset": [0.49, 0.29],
+  "tie-escape": [0.47, 0.3],
+  "note-balloon": [0.49, 0.44],
+  "island-hammock": [0.38, 0.49],
+  "cruise-captain": [0.52, 0.42],
+  "golf-getaway": [0.54, 0.43],
+  "romcom-poster": [0.5, 0.47],
+  "cake-summit": [0.64, 0.18],
+  "nappy-juggler": [0.48, 0.36],
+  "pram-rally": [0.56, 0.29],
+  "rocket-launch": [0.51, 0.22],
+  "corner-office-throne": [0.5, 0.35],
+  "mortarboard-space": [0.52, 0.35],
+  "first-day-school": [0.54, 0.21],
+  "old-master": [0.49, 0.25],
+  "action-hero": [0.51, 0.43],
+  "nature-doc": [0.5, 0.48],
+  "album-cover": [0.45, 0.4],
+  "film-star": [0.56, 0.34],
+  "dino-ride": [0.52, 0.29],
+}
 
 /** Occasions that offer every template. */
 const OPEN_OCCASIONS = ["custom"]
@@ -24,7 +64,15 @@ function template(
   occasions: CardTemplate["occasions"],
   pages: string[] = [],
 ): CardTemplate {
-  return { id, name, thumbnail: `/templates/${id}.webp`, occasions, pages }
+  const face = FACES[id] ?? [0.5, 0.35]
+  return {
+    id,
+    name,
+    thumbnail: `/templates/${id}.webp`,
+    occasions,
+    pages,
+    face,
+  }
 }
 
 export const CARD_TEMPLATES: CardTemplate[] = [

@@ -5,14 +5,14 @@ import { CardTileRow } from "@/components/card-tile-row"
 import { FeatureTabs, type FeatureSketch } from "@/components/feature-tabs"
 import { OccasionCardStage } from "@/components/occasion-card-stage"
 import { SlackStoryboard } from "@/components/slack-storyboard"
-import { TemplateShowcase } from "@/components/template-showcase"
-import { templatesForPage } from "@/lib/card-templates"
+import { PhotoTemplatesSection } from "@/components/photo-templates-section"
 import {
   type CategoryConfig,
   featureSample,
   occasionTiles,
   slackStoryboardCard,
 } from "@/lib/category-pages"
+import { occasionPhotoTemplatesSection } from "@/lib/photo-templates-section"
 
 /** Every occasion's steps go describe it, everyone signs, then send it. */
 const OCCASION_STEP_SKETCHES: FeatureSketch[] = ["draft", "notes", "deliver"]
@@ -34,6 +34,7 @@ function PlusIcon() {
 }
 
 export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
+  const templatesSection = occasionPhotoTemplatesSection(config.slug)
   return (
     <main>
       {/* ===== HERO ===== */}
@@ -82,11 +83,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
       </section>
 
       {/* ===== PHOTO TEMPLATES ===== */}
-      <TemplateShowcase
-        templates={templatesForPage(config.slug)}
-        title="Star them on the cover"
-        description="Upload their photo and pick a scene. AI redraws them into it, then everyone signs the card"
-      />
+      {templatesSection && <PhotoTemplatesSection data={templatesSection} />}
 
       {/* ===== HOW IT WORKS ===== */}
       <FeatureTabs

@@ -25,7 +25,6 @@ export function buildLlmsTxt(): string {
     "",
     `- [Home](${base}): what ${SITE_NAME} is and how it works`,
     `- [Browse occasions](${base}/browse): every occasion with a group card`,
-    `- [Funny photo templates](${base}/templates): upload a photo of a friend, family member or colleague and AI redraws them into a funny scene on the cover`,
     `- [Start a card](${base}/create): create a card, free`,
     `- [Slack app](${base}/slack/install): create cards with /cardshareai in Slack`,
     `- [Claude connector](${base}/claude): create, edit and add photos to cards from a chat with Claude`,

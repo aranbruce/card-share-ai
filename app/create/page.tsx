@@ -1,5 +1,10 @@
 import type { Metadata } from "next"
-import { CARD_TEMPLATES } from "@/lib/card-templates"
+import { getCardOccasion } from "@/lib/card-occasions"
+import {
+  CARD_TEMPLATES,
+  defaultOccasionForTemplate,
+  templatesForOccasion,
+} from "@/lib/card-templates"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { CreateCardPageClient } from "./create-card-client"
 
@@ -13,10 +18,29 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function CreatePage({
   searchParams,
 }: {
-  searchParams: Promise<{ template?: string | string[] }>
+  searchParams: Promise<{
+    occasion?: string | string[]
+    template?: string | string[]
+  }>
 }) {
-  // `?template=<id>` (from the template gallery) opens the flow with that scene picked.
-  const { template } = await searchParams
-  const initialTemplate = CARD_TEMPLATES.find((t) => t.id === template)
-  return <CreateCardPageClient initialTemplateId={initialTemplate?.id} />
+  // Links from the photo templates section open the cover step with an occasion, and
+  // optionally a template, already picked.
+  const params = await searchParams
+  const template = CARD_TEMPLATES.find((t) => t.id === params.template)
+  const linkedOccasion =
+    typeof params.occasion === "string"
+      ? getCardOccasion(params.occasion)?.id
+      : undefined
+  const offered =
+    !!template &&
+    !!linkedOccasion &&
+    templatesForOccasion(linkedOccasion).includes(template)
+  const occasion =
+    template && !offered ? defaultOccasionForTemplate(template) : linkedOccasion
+  return (
+    <CreateCardPageClient
+      initialOccasion={occasion}
+      initialTemplateId={template?.id}
+    />
+  )
 }
