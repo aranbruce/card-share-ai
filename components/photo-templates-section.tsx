@@ -127,6 +127,9 @@ export function PhotoTemplatesSection({
 }) {
   const { scenes } = data
   const root = useRef<HTMLElement>(null)
+  // Autoplay and the intro wait for the stage itself to be on screen: on phones it sits
+  // well below the top of the section.
+  const stage = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -141,10 +144,11 @@ export function PhotoTemplatesSection({
   const backRight = scenes[(index + 1) % n]
 
   useEffect(() => {
-    const el = root.current
+    const el = stage.current
     if (!el) return
-    const observer = new IntersectionObserver(([entry]) =>
-      setVisible(entry.isIntersecting),
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0.4 },
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -234,6 +238,7 @@ export function PhotoTemplatesSection({
 
   const arrow = arrowTo(main)
   // The thumbnails stay in one row, swiped when they don't fit, fading at an edge with more.
+  // From md its 4px padding (offset by negative margin) keeps the end focus rings unclipped.
   const {
     ref: thumbsRef,
     onScroll: onThumbsScroll,
@@ -274,7 +279,7 @@ export function PhotoTemplatesSection({
             ref={thumbsRef}
             onScroll={onThumbsScroll}
             style={thumbsMask}
-            className="-mx-6 -my-1 flex snap-x scroll-px-6 scrollbar-none gap-2.5 overflow-x-auto px-6 py-1 md:mx-0 md:scroll-px-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+            className="-mx-6 -my-1 flex snap-x scroll-px-6 scrollbar-none gap-2.5 overflow-x-auto px-6 py-1 md:-mx-1 md:scroll-px-1 md:px-1 [&::-webkit-scrollbar]:hidden"
             role="group"
             aria-label="Scenes"
           >
@@ -319,7 +324,10 @@ export function PhotoTemplatesSection({
 
         {/* The stage: three dealt cards, the sample person and the arrow between them. It
             reaches a little into the page gutters on phones, so the cards read larger. */}
-        <div className="@container relative aspect-600/620 w-full max-w-120 justify-self-center max-md:row-start-2 max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] md:col-start-2 md:row-span-2 md:row-start-1 md:max-w-150 md:self-center">
+        <div
+          ref={stage}
+          className="@container relative aspect-600/620 w-full max-w-120 justify-self-center max-md:row-start-2 max-sm:-mx-3 max-sm:w-[calc(100%+1.5rem)] md:col-start-2 md:row-span-2 md:row-start-1 md:max-w-150 md:self-center"
+        >
           {[
             { scene: backLeft, at: BACK_LEFT, z: "z-[2]" },
             { scene: backRight, at: BACK_RIGHT, z: "z-[1]" },
