@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import type { OAuthAuthorizationDetails } from "@supabase/supabase-js"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { isAllowedOAuthRedirect } from "@/lib/auth/oauth-redirect-allowlist"
 import { createClient } from "@/lib/supabase/client"
 import { buildLoginRedirectUrl } from "@/lib/safe-redirect-path"
 
@@ -19,6 +20,10 @@ const ACCESS_SUMMARY = [
   "Access your CardShare.ai account on your behalf",
   "Create, view and change your cards and the messages on them",
 ]
+
+function notAllowedMessage(clientName?: string): string {
+  return `${clientName || "This app"} isn't allowed to connect to CardShare.ai. You can connect from Claude or ChatGPT instead.`
+}
 
 function OAuthConsentFormInner() {
   const router = useRouter()
@@ -60,8 +65,21 @@ function OAuthConsentFormInner() {
       }
       if ("redirect_url" in data) {
         // Already approved before: hand straight back to the app
+        if (!isAllowedOAuthRedirect(data.redirect_url)) {
+          setState({ status: "error", message: notAllowedMessage() })
+          return
+        }
         setState({ status: "redirecting" })
         window.location.assign(data.redirect_url)
+        return
+      }
+      // Anyone can register an app (dynamic client registration), so only
+      // let people approve apps that hand the sign-in to a supported assistant
+      if (!isAllowedOAuthRedirect(data.redirect_uri)) {
+        setState({
+          status: "error",
+          message: notAllowedMessage(data.client.name),
+        })
         return
       }
       setState({ status: "ready", details: data })
@@ -87,6 +105,11 @@ function OAuthConsentFormInner() {
         status: "error",
         message: "Something went wrong. Go back to the app and try again.",
       })
+      return
+    }
+    if (!isAllowedOAuthRedirect(data.redirect_url)) {
+      setSubmitting(false)
+      setState({ status: "error", message: notAllowedMessage() })
       return
     }
     setState({ status: "redirecting" })
