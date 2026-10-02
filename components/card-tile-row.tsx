@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
+import { EdgeFadeScroller } from "@/components/ui/edge-fade-scroller"
 
 export type CardTile = {
   key: string
@@ -40,8 +41,16 @@ function ArrowIcon() {
  */
 export function CardTileRow({ tiles }: { tiles: readonly CardTile[] }) {
   return (
-    <div className="relative mt-10 w-full overflow-scroll">
-      <div className="flex touch-pan-x snap-x snap-mandatory scroll-px-6 gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] md:scroll-px-15">
+    <div className="relative mt-10 w-full scrollbar-none overflow-scroll">
+      <EdgeFadeScroller
+        arrows={{
+          // Middle of a tile's 4:5 image at each tile width
+          className: "top-28 sm:top-[125px] md:top-[137px]",
+          backLabel: "Previous occasions",
+          forwardLabel: "More occasions",
+        }}
+        className="flex touch-pan-x snap-x snap-mandatory scroll-px-6 scrollbar-none gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] md:scroll-px-15 [&::-webkit-scrollbar]:hidden"
+      >
         {tiles.map((tile, i) => (
           <Link
             key={tile.key}
@@ -74,7 +83,7 @@ export function CardTileRow({ tiles }: { tiles: readonly CardTile[] }) {
           </Link>
         ))}
         <div aria-hidden className="w-6 shrink-0 md:w-15" />
-      </div>
+      </EdgeFadeScroller>
     </div>
   )
 }

@@ -4,14 +4,15 @@ import { CARD_TONES, getToneDefinition, resolveCardTone } from "./card-tones"
 describe("resolveCardTone", () => {
   it("resolves current tones in any case", () => {
     expect(resolveCardTone("dad jokes")).toBe("Dad jokes")
-    expect(resolveCardTone(" HYPE ")).toBe("Hype")
+    expect(resolveCardTone(" EPIC ")).toBe("Epic")
   })
 
   it("maps legacy tones", () => {
     expect(resolveCardTone("Warm")).toBe("Heartfelt")
     expect(resolveCardTone("Sincere")).toBe("Heartfelt")
     expect(resolveCardTone("Short")).toBe("Heartfelt")
-    expect(resolveCardTone("Playful")).toBe("Hype")
+    expect(resolveCardTone("Playful")).toBe("Dad jokes")
+    expect(resolveCardTone("Hype")).toBe("Epic")
     expect(resolveCardTone("Sassy")).toBe("Roast")
     expect(resolveCardTone("Dry")).toBe("Roast")
   })

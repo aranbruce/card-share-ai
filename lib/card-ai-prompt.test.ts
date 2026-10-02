@@ -11,7 +11,11 @@ import {
   assembleImageLeadingText,
   assembleImageUserPrompt,
 } from "@/lib/generate-image-prompt"
-import { formatContextBlock, resolvePromptFields } from "@/lib/card-ai-prompt"
+import {
+  buildMultimodalUserMessage,
+  formatContextBlock,
+  resolvePromptFields,
+} from "@/lib/card-ai-prompt"
 
 describe("resolvePromptFields", () => {
   it("maps recipient and userContext to prompt fields", () => {
@@ -239,5 +243,23 @@ describe("assembleImageUserPrompt", () => {
         {},
       ),
     ).toContain("Headline (JSON string)")
+  })
+})
+
+describe("buildMultimodalUserMessage", () => {
+  it("sends a template layout reference before the person photo", () => {
+    const layout = new Uint8Array([1])
+    const photo = new Uint8Array([2])
+    const [message] = buildMultimodalUserMessage("Scene", {
+      layout,
+      attached: photo,
+    })
+    expect(message.content).toEqual([
+      { type: "text", text: "Layout reference:" },
+      { type: "image", image: layout },
+      { type: "text", text: "Person photo:" },
+      { type: "image", image: photo },
+      { type: "text", text: "Scene" },
+    ])
   })
 })

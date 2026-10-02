@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createMcpHandler, withMcpAuth } from "mcp-handler"
+import { CARD_TONES } from "@/lib/card-tones"
 import { verifyPhotoToken } from "@/lib/mcp/photo-token"
 import { PHOTO_UPLOAD_META_KEY, registerCardTools } from "@/lib/mcp/tools"
 
@@ -74,6 +75,9 @@ describe("MCP card tools", () => {
       expect.arrayContaining(["headline", "myMessage"]),
     )
     expect(Object.keys(create.inputSchema.properties)).toContain("tone")
+    expect(create.inputSchema.properties.tone).toMatchObject({
+      enum: [...CARD_TONES],
+    })
   })
 
   it("keeps tool descriptions to what each tool does", async () => {
@@ -132,7 +136,7 @@ describe("MCP card tools", () => {
       recipientName: "Sarah",
       senderName: "The team",
       cardType: "birthday",
-      tone: "Hype",
+      tone: "Epic",
       context: "loves climbing",
     }
 
@@ -157,6 +161,22 @@ describe("MCP card tools", () => {
       })
       // The model never sees the token
       expect(JSON.stringify(result.content)).not.toContain(upload.token)
+    })
+
+    it("maps a retired tone to its closest current one", async () => {
+      const { result } = await rpc(
+        "tools/call",
+        {
+          name: "create_card_from_photo",
+          arguments: { ...args, tone: "Hype" },
+        },
+        { signedInAs: "user-1" },
+      )
+      expect(result.isError).toBeFalsy()
+      const upload = result._meta[PHOTO_UPLOAD_META_KEY]
+      expect(verifyPhotoToken(upload.token)).toMatchObject({
+        card: { tone: "Epic" },
+      })
     })
 
     it("says photos are unavailable without a token secret", async () => {

@@ -111,7 +111,7 @@ function Author({
   )
 }
 
-const TONES = ["Heartfelt", "Roast", "Dad jokes", "Hype"]
+const TONES = ["Heartfelt", "Roast", "Dad jokes", "Epic"]
 
 /** The /cardshareai form, open over the channel. */
 function CreateCardModal() {
