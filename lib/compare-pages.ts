@@ -43,8 +43,11 @@ export interface CompareConfig {
     usNote: string
     them: string
     themNote: string
-    /** What sits in the competitor's placeholder, e.g. "their board". */
-    themShot: string
+    /**
+     * A screenshot of the competitor's own public sample, cropped to 4:5, in
+     * `public/compare/`. Keep third-party GIFs of real people out of the crop.
+     */
+    themImage: { src: string; alt: string }
   }
 
   /** Table groups, in order. Leave a group out rather than leave it empty. */
@@ -93,7 +96,10 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       usNote: "AI-designed cover, opens like a card",
       them: "$6.99",
       themNote: "per board, or from $25/month",
-      themShot: "their board",
+      themImage: {
+        src: "/compare/kudoboard.webp",
+        alt: 'The cover of a Kudoboard sample birthday board, "Happy Birthday Tim!"',
+      },
     },
 
     groups: [
@@ -235,7 +241,10 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       usNote: "AI-designed cover, opens like a card",
       them: "$5.99",
       themNote: "per card, multi-page ecard",
-      themShot: "their ecard",
+      themImage: {
+        src: "/compare/groupgreeting.webp",
+        alt: "The cover of a GroupGreeting sample birthday ecard",
+      },
     },
 
     groups: [
@@ -377,7 +386,10 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       usNote: "made for group cards, free to send",
       them: "A board",
       themNote: "3 free padlets, then from $15/month",
-      themShot: "their board",
+      themImage: {
+        src: "/compare/padlet.webp",
+        alt: "A Padlet gallery birthday board with posts from the group",
+      },
     },
 
     groups: [
@@ -497,7 +509,10 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       usNote: "free cards stay ad-free",
       them: "Ads",
       themNote: "on free cards, or $2.99 per card to remove",
-      themShot: "their ecard",
+      themImage: {
+        src: "/compare/sendwishonline.webp",
+        alt: "The cover of a SendWishOnline sample birthday card",
+      },
     },
 
     groups: [
