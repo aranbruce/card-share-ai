@@ -43,7 +43,7 @@ Open questions:
 
 ### Occasion page galleries
 
-`components/category-landing-page.tsx` has a gallery TODO and the data in `lib/category-pages.ts` is waiting for it. Fill with real sample cards (and later, template examples).
+The gallery slot after the hero on `components/category-landing-page.tsx` now shows the photo templates section (#99). Real sample cards could still go on these pages; the unused `gallery*` fields in `lib/category-pages.ts` were meant for them.
 
 ## Later
 
@@ -59,6 +59,7 @@ Open questions:
 
 ## Done
 
+- 34 funny photo templates, and a photo templates section on the home, Browse and occasion pages (#92, #99)
 - MCP connector for Claude and ChatGPT (#82–#85)
 - Slack app with `/cardshareai` flow (#88, #89)
 - Supabase Auth IP forwarding (#81)
