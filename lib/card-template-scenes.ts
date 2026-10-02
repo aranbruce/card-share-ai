@@ -52,7 +52,7 @@ export const CARD_TEMPLATE_SCENES: Record<string, string> = {
   "cruise-captain":
     "They are the captain of a gigantic cruise ship, in a crisp white captain's uniform and cap, saluting proudly on the bridge wing, with sparkling sea, a sunset and waving passengers behind them. Photorealistic.",
   "golf-getaway":
-    "They drive a golf buggy flat out across a golf course like a getaway car in a heist movie, grinning, golf balls bouncing out of the back and a flock of startled geese taking off. Action photography with motion blur on the background, their face sharp.",
+    "They drive a plain, unbranded white golf buggy (no badges, logos or lettering) flat out across a golf course like a getaway car in a heist movie, grinning, golf balls bouncing out of the back and a flock of startled geese taking off. Action photography with motion blur on the background, their face sharp.",
   "romcom-poster":
     "A romantic comedy movie still: they stand beaming on a city street at night in the gentle rain under a glowing streetlight, holding a huge bouquet of flowers, while neighbours lean out of the windows above, applauding. Warm cinematic lighting.",
   "cake-summit":
@@ -60,7 +60,7 @@ export const CARD_TEMPLATE_SCENES: Record<string, string> = {
   "nappy-juggler":
     "They are a circus performer in the spotlight, calmly juggling baby bottles, nappies and a rubber duck, wearing a sparkly ringmaster jacket, while a delighted circus audience cheers. Photorealistic, dramatic circus lighting.",
   "pram-rally":
-    "They race a souped-up baby pram carrying a giant teddy bear through a muddy rally course, racing goggles pushed up on their forehead, mud spraying from the wheels and spectators cheering behind the barriers. Action sports photography.",
+    "They race a souped-up baby pram carrying a giant teddy bear through a muddy rally course, the pram with no race number, plates or stickers, racing goggles pushed up on their forehead, mud spraying from the wheels and spectators cheering behind the barriers. Action sports photography.",
   "rocket-launch":
     "They sit astride a gleaming rocket made from a giant office water cooler, blasting off from the middle of an open-plan office, giving a big thumbs up, with smoke and sparks billowing and colleagues in hard hats cheering. Cinematic, photorealistic.",
   "corner-office-throne":
