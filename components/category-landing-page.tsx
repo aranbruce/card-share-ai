@@ -7,6 +7,7 @@ import { OccasionCardStage } from "@/components/occasion-card-stage"
 import { SlackStoryboard } from "@/components/slack-storyboard"
 import {
   type CategoryConfig,
+  featureSample,
   occasionTiles,
   slackStoryboardCard,
 } from "@/lib/category-pages"
@@ -128,6 +129,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
         eyebrow="How it works"
         title={config.howTitle}
         description={config.howSub}
+        sample={featureSample(config)}
         tabs={config.steps.map((step, i) => ({
           ...step,
           sketch: OCCASION_STEP_SKETCHES[i] ?? "deliver",

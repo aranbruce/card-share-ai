@@ -1,6 +1,12 @@
 "use client"
 
+import Image from "next/image"
 import { useEffect, useRef, useState, type ReactNode } from "react"
+import { ArrowRight, Check, RefreshCw, Sparkles } from "lucide-react"
+import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
+import { MessageFontVariables } from "@/components/message-font-variables"
+import { getMessageFontFamily } from "@/lib/message-font-presets"
+import { sampleAvatarsFor } from "@/lib/sample-avatars"
 import { cn } from "@/lib/utils"
 
 /** How long each tab shows before the next, in ms (the progress bar's duration too). */
@@ -61,132 +67,231 @@ function useFeatureTab(count: number) {
   return { target, tab, autoplay, playing, pick }
 }
 
-const NOTE_LINE = "h-2 rounded bg-[rgba(17,17,16,0.18)]"
+/** The sample card the sketches are drawn from: an occasion's cover, title and notes. */
+export type FeatureSample = {
+  /** Seeds the signers' faces, so they're the same on every render. */
+  id: string
+  headline: string
+  coverImage: string | null
+  coverHue: number
+  message: string
+  notes: { message: string; font: string; color: string }[]
+}
 
-/** Notes, a GIF and a selected note placed anywhere on a card page. */
-function NotesSketch() {
+const SKETCH_SHADOW = "shadow-[0_40px_70px_-40px_rgba(17,17,16,0.4)]"
+
+/** A card cover as the site draws it: the art, a dark fade, and the title in white. */
+function Cover({
+  sample,
+  sizes,
+  className,
+}: {
+  sample: FeatureSample
+  sizes: string
+  className?: string
+}) {
   return (
-    <div className="relative h-100 w-105 rounded-[14px] bg-card shadow-[0_40px_70px_-40px_rgba(17,17,16,0.4)]">
-      <div className="absolute top-10 left-8.5 flex w-42 -rotate-5 flex-col gap-2 rounded-lg bg-[oklch(0.93_0.06_90)] p-4">
-        <div className={cn(NOTE_LINE, "w-[90%]")} />
-        <div className={cn(NOTE_LINE, "w-[70%]")} />
-        <div className={cn(NOTE_LINE, "w-[45%]")} />
-      </div>
-      <div className="absolute top-16 left-56.5 flex h-29 w-40 rotate-4 items-end justify-end rounded-lg bg-[oklch(0.86_0.06_300)] p-2.5">
-        <span className="rounded-[5px] bg-foreground px-1.75 py-0.75 font-mono text-[11px] font-medium text-background">
-          GIF
-        </span>
-      </div>
-      <div className="absolute top-56.5 left-24 flex w-52.5 rotate-2 flex-col gap-2 rounded-lg bg-[oklch(0.92_0.05_160)] p-4 outline-2 outline-offset-6 outline-brand outline-dashed">
-        <div className={cn(NOTE_LINE, "w-[85%]")} />
-        <div className={cn(NOTE_LINE, "w-[60%]")} />
-      </div>
-      <div className="absolute top-72.5 left-76.5 size-4 rounded-sm border-2 border-brand bg-card" />
+    <div
+      className={cn("relative overflow-hidden", className)}
+      style={
+        sample.coverImage
+          ? undefined
+          : {
+              background: `linear-gradient(135deg, oklch(0.9 0.08 ${sample.coverHue}) 0%, oklch(0.78 0.13 ${sample.coverHue - 15}) 100%)`,
+            }
+      }
+    >
+      {sample.coverImage ? (
+        <Image
+          src={sample.coverImage}
+          alt=""
+          fill
+          sizes={sizes}
+          className="object-cover"
+        />
+      ) : null}
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/60 to-transparent" />
+      <p className="absolute inset-x-4 bottom-4 text-center text-xl leading-tight font-semibold tracking-[-0.02em] text-balance text-white">
+        {sample.headline}
+      </p>
     </div>
   )
 }
 
-/** A drafted cover and a highlighted line being regenerated. */
-function DraftSketch() {
+/** A signed note: the signer's face and their message in their own ink and hand. */
+function Note({
+  note,
+  avatar,
+  className,
+}: {
+  note: FeatureSample["notes"][number]
+  avatar: string
+  className?: string
+}) {
   return (
-    <div className="relative flex w-85 flex-col gap-3.5 rounded-[14px] bg-card p-4 shadow-[0_40px_70px_-40px_rgba(17,17,16,0.4)]">
-      <div className="flex h-57.5 items-center justify-center rounded-lg bg-[repeating-linear-gradient(135deg,oklch(0.93_0.03_30)_0_10px,oklch(0.96_0.02_30)_10px_20px)] font-mono text-xs text-muted-foreground">
-        cover
+    <div
+      className={cn(
+        "flex items-start gap-2.5 rounded-xl border border-border bg-card px-3 py-2.5 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)]",
+        className,
+      )}
+    >
+      <Image
+        src={avatar}
+        alt=""
+        width={24}
+        height={24}
+        className="size-6 shrink-0 rounded-full object-cover"
+      />
+      <p
+        className="text-lg leading-tight"
+        style={{
+          color: note.color,
+          fontFamily: getMessageFontFamily(note.font),
+        }}
+      >
+        {note.message}
+      </p>
+    </div>
+  )
+}
+
+/** Notes placed anywhere on the card's page, a GIF among them, one picked up to move. */
+function NotesSketch({ sample }: { sample: FeatureSample }) {
+  const avatars = sampleAvatarsFor(sample.id, 3)
+  const [first, second, third] = sample.notes
+  return (
+    <div
+      className={cn(
+        "relative h-100 w-105 rounded-[14px] bg-card bg-[radial-gradient(oklch(0.9_0.006_83)_1px,transparent_1px)] bg-size-[20px_20px]",
+        SKETCH_SHADOW,
+      )}
+    >
+      {first ? (
+        <Note
+          note={first}
+          avatar={avatars[0]}
+          className="absolute top-9 left-7 w-50 -rotate-4"
+        />
+      ) : null}
+      <div className="absolute top-14 right-7 h-28 w-36 rotate-4 overflow-hidden rounded-xl shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)]">
+        <Cover
+          sample={{ ...sample, headline: "" }}
+          sizes="144px"
+          className="size-full"
+        />
+        <span className="absolute right-2 bottom-2 rounded-[5px] bg-foreground px-1.75 py-0.75 font-mono text-[11px] font-medium text-background">
+          GIF
+        </span>
       </div>
-      <div className="flex items-center gap-3 rounded-lg border-2 border-brand px-3.5 py-3">
-        <div className="flex flex-1 flex-col gap-1.5">
-          <div className="h-2 w-[95%] rounded bg-[rgba(17,17,16,0.2)]" />
-          <div className="h-2 w-[60%] rounded bg-[rgba(17,17,16,0.2)]" />
+      {second ? (
+        <div className="absolute top-55 left-20 rotate-2 outline-2 outline-offset-6 outline-brand outline-dashed">
+          <Note note={second} avatar={avatars[1]} className="w-56" />
+          <span className="absolute -right-3.5 -bottom-3.5 size-4 rounded-sm border-2 border-brand bg-card" />
         </div>
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-brand"
-        >
-          <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
-          <path d="M21 3v5h-5" />
-        </svg>
+      ) : null}
+      {third ? (
+        <Note
+          note={third}
+          avatar={avatars[2]}
+          className="absolute right-6 bottom-6 w-40 -rotate-3"
+        />
+      ) : null}
+    </div>
+  )
+}
+
+/** The drafted cover and opening note, with the note being regenerated. */
+function DraftSketch({ sample }: { sample: FeatureSample }) {
+  return (
+    <div
+      className={cn(
+        "relative flex w-85 flex-col gap-3.5 rounded-[14px] bg-card p-4",
+        SKETCH_SHADOW,
+      )}
+    >
+      <Cover
+        sample={sample}
+        sizes="308px"
+        className="aspect-4/3 rounded-[4px_10px_10px_4px]"
+      />
+      <div className="flex items-start gap-3 rounded-lg border-2 border-brand px-3.5 py-3">
+        <p className="line-clamp-3 flex-1 text-sm leading-snug text-foreground">
+          {sample.message}
+        </p>
+        <RefreshCw
+          className="mt-0.5 size-4.5 shrink-0 text-brand"
+          strokeWidth={2.5}
+        />
       </div>
-      <span className="absolute -right-12 bottom-7.5 rounded-full bg-foreground px-3.5 py-2 text-sm font-medium text-background shadow-[0_12px_24px_-12px_rgba(17,17,16,0.5)]">
+      <span className="absolute -right-12 bottom-9 flex items-center gap-1.5 rounded-full bg-foreground px-3.5 py-2 text-sm font-medium text-background shadow-[0_12px_24px_-12px_rgba(17,17,16,0.5)]">
+        <Sparkles className="size-3.5" />
         Regenerate
       </span>
     </div>
   )
 }
 
-const DELIVER_COLORS = [
-  "bg-[oklch(0.93_0.06_90)]",
-  "bg-[oklch(0.86_0.06_300)]",
-  "bg-[oklch(0.92_0.05_160)]",
-  "bg-[oklch(0.93_0.04_30)]",
-]
-
-function Arrow({ className }: { className?: string }) {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      className={cn("absolute text-brand", className)}
-    >
-      <path d="M5 12h14" />
-      <path d="m13 6 6 6-6 6" />
-    </svg>
-  )
-}
-
-/** Notes from around the page gathered into one finished card. */
-function DeliverSketch() {
+/** Everyone's notes coming together into the one finished card. */
+function DeliverSketch({ sample }: { sample: FeatureSample }) {
+  const avatars = sampleAvatarsFor(sample.id, 4)
   return (
     <div className="relative h-110 w-150">
-      <div
-        className={cn(
-          "absolute top-22.5 left-7.5 h-17.5 w-25 -rotate-8 rounded-lg",
-          DELIVER_COLORS[0],
-        )}
-      />
-      <div
-        className={cn(
-          "absolute top-62.5 left-5 h-16 w-22.5 rotate-6 rounded-lg",
-          DELIVER_COLORS[1],
-        )}
-      />
-      <div
-        className={cn(
-          "absolute top-27.5 right-7.5 h-16.5 w-23.5 rotate-7 rounded-lg",
-          DELIVER_COLORS[2],
-        )}
-      />
-      <div
-        className={cn(
-          "absolute top-67.5 right-9 h-16 w-24 -rotate-5 rounded-lg",
-          DELIVER_COLORS[3],
-        )}
-      />
-      <div className="absolute top-10 left-47.5 h-72.5 w-55 -rotate-4 rounded-xl bg-card shadow-[0_14px_30px_-20px_rgba(17,17,16,0.3)]" />
-      <div className="absolute top-10 left-47.5 grid h-72.5 w-55 grid-cols-2 content-start gap-2.5 rounded-xl bg-card p-4 shadow-[0_40px_70px_-40px_rgba(17,17,16,0.45)]">
-        {DELIVER_COLORS.map((color) => (
-          <div key={color} className={cn("h-16 rounded-md", color)} />
-        ))}
-        <div className="col-span-2 mt-2.5 h-2 w-[70%] rounded bg-[rgba(17,17,16,0.15)]" />
+      <div className="absolute top-1/2 left-1/2 h-90 w-60 -translate-1/2">
+        <CardThumb3D
+          imageUrl={sample.coverImage}
+          headline={sample.headline}
+          alt=""
+          hue={sample.coverHue}
+          cardHeight={92}
+          cardOffsetY={0}
+        />
       </div>
-      <Arrow className="top-42.5 left-35" />
-      <Arrow className="top-47.5 right-35 -scale-x-100" />
+      {avatars.map((src, i) => (
+        <Image
+          key={src}
+          src={src}
+          alt=""
+          width={44}
+          height={44}
+          className={cn(
+            "absolute size-11 rounded-full object-cover shadow-[0_18px_36px_-18px_rgba(20,14,6,0.4)] ring-4 ring-card",
+            DELIVER_AVATAR_SPOTS[i],
+          )}
+        />
+      ))}
+      <Arrow className="top-34 left-34 rotate-20" />
+      <Arrow className="top-66 left-34 -rotate-20" />
+      <Arrow className="top-34 right-34 rotate-160" />
+      <Arrow className="top-66 right-34 -rotate-160" />
+      <span className="absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)]">
+        <Check className="size-3.5 text-brand" strokeWidth={3} />
+        {sample.notes.length + 9} notes, one card
+      </span>
     </div>
   )
 }
 
-const SKETCHES: Record<FeatureSketch, () => ReactNode> = {
+/** Where the signers sit around the finished card, top left, bottom left, top right, bottom right. */
+const DELIVER_AVATAR_SPOTS = [
+  "top-22 left-14",
+  "top-74 left-10",
+  "top-24 right-12",
+  "top-72 right-14",
+]
+
+function Arrow({ className }: { className?: string }) {
+  return (
+    <ArrowRight
+      className={cn("absolute size-7 text-brand", className)}
+      strokeWidth={2}
+    />
+  )
+}
+
+const SKETCHES: Record<
+  FeatureSketch,
+  (props: { sample: FeatureSample }) => ReactNode
+> = {
   notes: NotesSketch,
   draft: DraftSketch,
   deliver: DeliverSketch,
@@ -202,12 +307,14 @@ export function FeatureTabs({
   title,
   description,
   tabs,
+  sample,
   id,
 }: {
   eyebrow: string
   title: string
   description?: string
   tabs: FeatureTab[]
+  sample: FeatureSample
   id?: string
 }) {
   const { target, tab, autoplay, playing, pick } = useFeatureTab(tabs.length)
@@ -238,9 +345,9 @@ export function FeatureTabs({
           aria-hidden
           className="flex h-72 items-center justify-center overflow-hidden rounded-3xl bg-secondary sm:h-100 lg:col-start-2 lg:row-span-4 lg:row-start-1 lg:h-120 xl:h-140"
         >
-          <div className="max-sm:zoom-[0.5] sm:max-lg:zoom-[0.8] lg:max-xl:zoom-[0.65] xl:max-[1440px]:zoom-[0.9]">
-            <Sketch />
-          </div>
+          <MessageFontVariables className="max-sm:zoom-[0.5] sm:max-lg:zoom-[0.8] lg:max-xl:zoom-[0.65] xl:max-[1440px]:zoom-[0.9]">
+            <Sketch sample={sample} />
+          </MessageFontVariables>
         </div>
 
         <ol className="flex flex-col gap-1.5 lg:col-start-1 lg:row-start-3 lg:mt-10">

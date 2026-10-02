@@ -9,6 +9,7 @@ import { JsonLd } from "@/components/json-ld"
 import { SlackStoryboard } from "@/components/slack-storyboard"
 import { StarMark } from "@/components/star-mark"
 import {
+  featureSample,
   getBrowseCategories,
   getCategoryConfig,
   occasionTiles,
@@ -268,6 +269,7 @@ export default function CardsPage() {
         title="From one sentence to a signed group card"
         description="The whole flow in three steps: cover, signatures, delivery. Takes about two minutes to set up"
         tabs={STEPS}
+        sample={featureSample(getCategoryConfig("birthday")!)}
       />
 
       <SlackStoryboard

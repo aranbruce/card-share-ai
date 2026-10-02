@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { SlackFlowSection } from "@/components/slack-flow"
 import { FaqSection } from "@/components/faq-section"
 import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
+import { featureSample, getCategoryConfig } from "@/lib/category-pages"
 
 const HOME_FAQS = [
   {
@@ -68,6 +69,7 @@ export function HomeMarketingSections() {
         eyebrow="Built for group cards"
         title="Group cards used to take ten follow-ups. Now it takes one link"
         tabs={FEATURES}
+        sample={featureSample(getCategoryConfig("birthday")!)}
       />
 
       <section className="border-t border-border">
