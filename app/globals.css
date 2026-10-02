@@ -288,11 +288,25 @@
   animation: demo-float 8s ease-in-out infinite;
 }
 
+/* Homepage hero: cover cards are dealt out from behind the browser. Each card sets
+   --fan-dx / --fan-dy (offset back to the browser centre) and a stagger delay */
+@keyframes hero-fan-deal {
+  from {
+    transform: translate(-50%, -50%) translate(var(--fan-dx), var(--fan-dy))
+      rotate(0deg) scale(0.9);
+  }
+}
+
+.hero-fan-deal {
+  animation: hero-fan-deal 1.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card-3d-float,
   .card-3d-float-shadow,
   .card-3d-peek,
   .hero-drift,
+  .hero-fan-deal,
   .demo-float {
     animation: none;
   }
