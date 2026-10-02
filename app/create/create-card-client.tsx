@@ -32,7 +32,10 @@ import {
   regenerateCardImage,
 } from "@/lib/regenerate-card-client"
 import posthog from "posthog-js"
-import { CARD_TEMPLATES } from "@/lib/card-templates"
+import {
+  CARD_TEMPLATES,
+  defaultOccasionForTemplate,
+} from "@/lib/card-templates"
 import { cn } from "@/lib/utils"
 import {
   CARD_OCCASIONS,
@@ -52,11 +55,23 @@ interface CardData {
 
 type Step = "select-type" | "details"
 
-export function CreateCardPageClient() {
+export function CreateCardPageClient({
+  initialTemplateId,
+}: {
+  /** A template linked from the gallery: start on the cover step with it picked. */
+  initialTemplateId?: string
+}) {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
-  const [step, setStep] = useState<Step>("select-type")
-  const [selectedType, setSelectedType] = useState(DEFAULT_CARD_OCCASION)
+  const initialTemplate = CARD_TEMPLATES.find((t) => t.id === initialTemplateId)
+  const [step, setStep] = useState<Step>(
+    initialTemplate ? "details" : "select-type",
+  )
+  const [selectedType, setSelectedType] = useState(
+    initialTemplate
+      ? defaultOccasionForTemplate(initialTemplate)
+      : DEFAULT_CARD_OCCASION,
+  )
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")
   const [cardData, setCardData] = useState<CardData | null>(null)
@@ -87,7 +102,7 @@ export function CreateCardPageClient() {
   const [cardTone, setCardTone] = useState<string | undefined>()
   const [cardUserContext, setCardUserContext] = useState<string | undefined>()
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(
-    null,
+    initialTemplate?.id ?? null,
   )
 
   // Check if user is logged in
@@ -413,6 +428,7 @@ export function CreateCardPageClient() {
         <CardDetailsForm
           hidden={step === "select-type"}
           cardType={selectedType}
+          initialTemplateId={initialTemplate?.id}
           onSubmit={handleDetailsSubmit}
           isLoading={isGeneratingHeadline || isGeneratingImage}
           onBack={handleBackToType}

@@ -62,7 +62,7 @@ export interface CategoryConfig {
   sampleMessage: string
   sampleNotes: { message: string; font: string; color: string }[]
 
-  // Gallery (not shown yet; see the gallery TODO in `category-landing-page.tsx`)
+  // Gallery (not shown; occasion pages show photo templates from `lib/card-templates.ts` instead)
   galleryEyebrow?: string
   galleryTitle?: string
   gallerySub?: string

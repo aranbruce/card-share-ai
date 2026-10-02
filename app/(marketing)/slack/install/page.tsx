@@ -28,7 +28,7 @@ export default function SlackInstallPage() {
       <div className="flex flex-col items-center gap-6 text-center">
         <div className="flex flex-col items-center gap-3">
           <h1 className="text-3xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-4xl md:text-5xl">
-            Add CardShare.ai to Slack
+            Add CardShare.ai to <span className="text-brand">Slack</span>
           </h1>
           <p className="max-w-lg text-muted-foreground">
             Create personalized AI greeting cards for birthdays, farewells and

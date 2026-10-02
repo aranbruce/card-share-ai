@@ -1,6 +1,13 @@
 import { existsSync } from "node:fs"
 import { describe, expect, it } from "vitest"
-import { CARD_TEMPLATES, templatesForOccasion } from "@/lib/card-templates"
+import { CARD_TEMPLATE_SCENES } from "@/lib/card-template-scenes"
+import {
+  CARD_TEMPLATES,
+  defaultOccasionForTemplate,
+  templatesForOccasion,
+  templatesForPage,
+} from "@/lib/card-templates"
+import { CATEGORY_CONFIGS } from "@/lib/category-pages"
 
 const ids = (occasion: string) =>
   templatesForOccasion(occasion).map((t) => t.id)
@@ -32,6 +39,61 @@ describe("templatesForOccasion", () => {
   it("has a thumbnail file for every template", () => {
     for (const t of CARD_TEMPLATES) {
       expect(existsSync(`public${t.thumbnail}`), t.thumbnail).toBe(true)
+    }
+  })
+
+  it("has a scene and a layout reference for every template", () => {
+    for (const t of CARD_TEMPLATES) {
+      expect(CARD_TEMPLATE_SCENES[t.id], t.id).toBeTruthy()
+      expect(
+        existsSync(`assets/template-layouts/${t.id}.webp`),
+        `layout for ${t.id}`,
+      ).toBe(true)
+    }
+  })
+
+  it("has unique ids", () => {
+    const all = CARD_TEMPLATES.map((t) => t.id)
+    expect(new Set(all).size).toBe(all.length)
+  })
+})
+
+describe("templatesForPage", () => {
+  it("only names occasion pages that exist", () => {
+    for (const t of CARD_TEMPLATES) {
+      for (const slug of t.pages) {
+        expect(CATEGORY_CONFIGS[slug], `${t.id} → ${slug}`).toBeDefined()
+      }
+    }
+  })
+
+  it("lists a page's own scenes, then the ones for any card", () => {
+    const page = templatesForPage("farewell").map((t) => t.id)
+    expect(page.slice(0, 3)).toEqual([
+      "crowd-carry",
+      "office-chair-sunset",
+      "tie-escape",
+    ])
+    expect(page.slice(-anyCard.length)).toEqual(anyCard)
+  })
+
+  it("shows no templates on the sympathy page", () => {
+    expect(templatesForPage("sympathy")).toEqual([])
+  })
+})
+
+describe("defaultOccasionForTemplate", () => {
+  it("opens on the template's first occasion, or birthday for any card", () => {
+    const byId = (id: string) => CARD_TEMPLATES.find((t) => t.id === id)!
+    expect(defaultOccasionForTemplate(byId("pram-rally"))).toBe(
+      "congratulations",
+    )
+    expect(defaultOccasionForTemplate(byId("old-master"))).toBe("birthday")
+  })
+
+  it("opens on an occasion that offers the template", () => {
+    for (const t of CARD_TEMPLATES) {
+      expect(templatesForOccasion(defaultOccasionForTemplate(t))).toContain(t)
     }
   })
 })

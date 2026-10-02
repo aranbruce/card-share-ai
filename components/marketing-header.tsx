@@ -20,6 +20,12 @@ export function MarketingHeader() {
               Browse
             </Link>
             <Link
+              href="/templates"
+              className="text-[14.5px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Photo templates
+            </Link>
+            <Link
               href="/slack/install"
               className="text-[14.5px] text-muted-foreground transition-colors hover:text-foreground"
             >

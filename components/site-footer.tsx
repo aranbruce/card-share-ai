@@ -12,6 +12,7 @@ const OCCASIONS: FooterLink[] = getBrowseCategories().map((cat) => ({
 
 const PRODUCT: FooterLink[] = [
   { label: "Browse", href: "/browse" },
+  { label: "Photo templates", href: "/templates" },
   { label: "Start a card", href: "/create" },
   { label: "Slack app", href: "/slack/install" },
   { label: "Claude connector", href: "/claude" },

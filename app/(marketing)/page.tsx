@@ -5,6 +5,8 @@ import { CardTileRow } from "@/components/card-tile-row"
 import { HeroCardFan } from "@/components/hero-card-fan"
 import { HomeDemoPanel } from "@/components/home-demo-panel"
 import { HomeMarketingSections } from "@/components/home-marketing-sections"
+import { TemplateShowcase } from "@/components/template-showcase"
+import { CARD_TEMPLATES } from "@/lib/card-templates"
 import { occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata, DEFAULT_DESCRIPTION } from "@/lib/site-metadata"
 
@@ -13,6 +15,16 @@ export const metadata: Metadata = buildPageMetadata({
   description: DEFAULT_DESCRIPTION,
   path: "/",
 })
+
+/** A spread of occasions for the home page's template strip. */
+const HOME_TEMPLATES = [
+  "corgi-knight",
+  "tie-escape",
+  "corner-office-throne",
+  "island-hammock",
+  "romcom-poster",
+  "dino-ride",
+]
 
 // Signed-in visitors are sent to /dashboard by `proxy.ts`, so this page can be static.
 export default function HomePage() {
@@ -70,6 +82,12 @@ export default function HomePage() {
           <CardTileRow tiles={occasionTiles()} />
         </div>
       </section>
+
+      <TemplateShowcase
+        templates={HOME_TEMPLATES.flatMap(
+          (id) => CARD_TEMPLATES.find((t) => t.id === id) ?? [],
+        )}
+      />
 
       <HomeMarketingSections />
     </>
