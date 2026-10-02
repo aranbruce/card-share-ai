@@ -44,6 +44,7 @@ import {
 import {
   BoxGeometry,
   CanvasTexture,
+  Group,
   Mesh,
   MeshBasicMaterial,
   PerspectiveCamera,
@@ -67,6 +68,18 @@ import {
   type BookContent,
 } from "./page-painter"
 import { ClosedCardCover } from "./closed-card-cover"
+import {
+  createEnvelope,
+  ENVELOPE_CLEAR_AT,
+  ENVELOPE_DONE_AT,
+  type Envelope,
+} from "./envelope"
+import {
+  DEFAULT_ENVELOPE_STYLE,
+  ENVELOPE_STYLES,
+  type EnvelopeStyleId,
+} from "./envelope-styles"
+import { burstConfetti } from "@/lib/confetti"
 import { cardBookFrameClass } from "./frame"
 import {
   BROWSE_PITCH,
@@ -155,6 +168,8 @@ const TAP_CLICK_WAIT_MS = 1000
 const REVEAL_TIMEOUT_MS = 2500
 /** Cross-fade from the placeholder cover to the 3D card. */
 const REVEAL_FADE_MS = 250
+/** Once the envelope is turned over, a beat before the flap opens. */
+const ENVELOPE_OPEN_BEAT_MS = 250
 /** How long the card shows closed before opening to a starting page inside. */
 const REVEAL_OPEN_DELAY_MS = 350
 
@@ -209,6 +224,13 @@ export type CardBook3DProps = {
   idleSway?: boolean
   /** Rounds the pages' fore-edge corners, as a share of the page's width (e.g. 0.04). */
   cornerRadius?: number
+  /** Starts sealed in an envelope; a tap opens it and the card slides out (to a burst of
+   * confetti). Pages can't be turned until it is out. */
+  envelope?: boolean
+  /** The envelope's paper, ink and liner. */
+  envelopeStyle?: EnvelopeStyleId
+  /** Called once the card is out of the envelope and resting on its own. */
+  onEnvelopeOpened?: () => void
   className?: string
   /** Rendered instead of the 3D card when WebGL is unavailable. */
   fallback?: ReactNode
@@ -242,6 +264,26 @@ type SceneHandle = {
 
 /** Mutable per-frame state the render loop reads without re-rendering React. */
 type LiveState = {
+  /**
+   * The envelope intro: `started` is when it was tapped open (ms, null while sealed). Null
+   * when there is no envelope, or once the card is out.
+   */
+  intro: {
+    started: number | null
+    confetti: boolean
+    /** Turned over from face down (0) to flap up (1), and where it is heading. */
+    turn: number
+    turnTarget: number
+    /** Which way it turns over (±1, from the drag). */
+    turnDirection: number
+    /** A drag turning the envelope over by hand. */
+    drag: {
+      id: number
+      startX: number
+      startTurn: number
+      moved: boolean
+    } | null
+  } | null
   /** The canvas is showing: until then it stays closed on the cover behind the placeholder. */
   revealed: boolean
   /** Reveal once the next frame has rendered (textures are ready). */
@@ -323,6 +365,9 @@ export function CardBook3D({
   renderPageEditor,
   autoEditPage,
   onAddPage,
+  envelope = false,
+  envelopeStyle = DEFAULT_ENVELOPE_STYLE,
+  onEnvelopeOpened,
   className,
   fallback = null,
 }: CardBook3DProps) {
@@ -378,12 +423,33 @@ export function CardBook3D({
   /** The 3D canvas is showing (see Reveal below); the placeholder cover goes once it has. */
   const [revealed, setRevealed] = useState(false)
   const [placeholderGone, setPlaceholderGone] = useState(false)
+  const [introPhase, setIntroPhase] = useState<"sealed" | "opening" | "done">(
+    envelope ? "sealed" : "done",
+  )
+  const onEnvelopeOpenedRef = useRef(onEnvelopeOpened)
+  /** Read when the scene is built (the envelope is drawn once). */
+  const envelopeStyleRef = useRef(envelopeStyle)
+  const recipientNameRef = useRef(recipientName)
+  useEffect(() => {
+    onEnvelopeOpenedRef.current = onEnvelopeOpened
+    recipientNameRef.current = recipientName
+  })
   /** The spread to open to once revealed (the latest `flipTarget`). */
   const flipTargetRef = useRef(flipTarget)
 
   // It starts closed on the cover, where the loading placeholder shows it, and opens to the
   // starting page once visible.
   const live = useRef<LiveState>({
+    intro: envelope
+      ? {
+          started: null,
+          confetti: false,
+          turn: 0,
+          turnTarget: 0,
+          turnDirection: 1,
+          drag: null,
+        }
+      : null,
     revealed: false,
     revealNext: false,
     flip: 0,
@@ -567,6 +633,9 @@ export function CardBook3D({
     container.appendChild(renderer.domElement)
 
     const scene = new Scene()
+    // The card (leaves and their shadow), moved as one when it comes out of the envelope.
+    const book = new Group()
+    scene.add(book)
     const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 50)
     const state = live.current
     state.dirty = true
@@ -608,7 +677,24 @@ export function CardBook3D({
     const shadowGeometry = new PlaneGeometry(1, 1)
     const shadow = new Mesh(shadowGeometry, shadowMaterial)
     shadow.renderOrder = -1
-    scene.add(shadow)
+    book.add(shadow)
+
+    let envelopeMesh: Envelope | null = null
+    if (state.intro) {
+      envelopeMesh = createEnvelope(
+        shadowTexture,
+        ENVELOPE_STYLES[envelopeStyleRef.current],
+      )
+      scene.add(envelopeMesh.group)
+      const family = fontFamily("caveat")
+      const paintEnvelope = () =>
+        envelopeMesh?.paintFront(recipientNameRef.current, family)
+      paintEnvelope()
+      void document.fonts?.load(`700 40px ${family}`).then(() => {
+        paintEnvelope()
+        state.dirty = true
+      })
+    }
 
     // Adding or removing pages keeps the renderer (and its GL context), camera and loop, and
     // reuses page textures; leaves are only added or removed at the end. The paint effect then
@@ -624,7 +710,7 @@ export function CardBook3D({
       const mesh = new Mesh(leafGeometry, material)
       // Vertices move in the shader; the static bounds would cull turning pages.
       mesh.frustumCulled = false
-      scene.add(mesh)
+      book.add(mesh)
       return { mesh, material }
     }
     const setFaces = (next: BookFaces) => {
@@ -648,7 +734,7 @@ export function CardBook3D({
       while (leaves.length > leafTotal) {
         const leaf = leaves.pop()
         if (leaf) {
-          scene.remove(leaf.mesh)
+          book.remove(leaf.mesh)
           leaf.material.dispose()
         }
       }
@@ -659,6 +745,7 @@ export function CardBook3D({
           i === leafTotal - 1 ? COVER_GLOSS : PAGE_GLOSS
       })
       shadow.position.z = -LEAF_GAP * (leafTotal + 2)
+      envelopeMesh?.setLeafCount(leafTotal, LEAF_GAP)
       state.flip = Math.min(state.flip, leafTotal)
       state.target = Math.min(state.target, leafTotal)
       state.dirty = true
@@ -803,6 +890,58 @@ export function CardBook3D({
       last = now
       let moving = state.dirty
       state.dirty = false
+
+      // The envelope intro: sealed (bobbing gently) until tapped, then the card comes out.
+      let introPull = 1
+      if (state.intro && envelopeMesh) {
+        const intro = state.intro
+        // Turning over (by hand, or easing after a tap or release), then a beat before it
+        // opens.
+        if (!intro.drag) {
+          const diff = intro.turnTarget - intro.turn
+          if (Math.abs(diff) > 0.002) {
+            intro.turn += diff * (1 - Math.exp(-dt * 5))
+          } else {
+            intro.turn = intro.turnTarget
+          }
+        }
+        if (intro.turn === 1 && intro.started === null) {
+          intro.started = now + ENVELOPE_OPEN_BEAT_MS
+        }
+        const t = intro.started === null ? null : (now - intro.started) / 1000
+        const pose = envelopeMesh.pose(t, intro.turn, intro.turnDirection, now)
+        // Turn about the card's centre (where the envelope turns), not its spine, in the
+        // envelope's order: over first, then the roll.
+        book.rotation.set(0, pose.cardYaw, pose.cardRoll, "ZYX")
+        book.scale.z = pose.cardDepth
+        const centre = new Vector3(PAGE_W / 2, 0, 0).applyEuler(book.rotation)
+        book.position.set(
+          PAGE_W / 2 - centre.x,
+          pose.cardY - centre.y,
+          pose.cardZ - centre.z,
+        )
+        shadowMaterial.opacity = pose.settled
+        introPull = pose.cameraPull
+        moving = true
+        if (t !== null && t >= ENVELOPE_CLEAR_AT && !intro.confetti) {
+          intro.confetti = true
+          const rect = container.getBoundingClientRect()
+          burstConfetti({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height * 0.35,
+          })
+        }
+        if (t !== null && t >= ENVELOPE_DONE_AT) {
+          state.intro = null
+          book.position.set(0, 0, 0)
+          book.rotation.set(0, 0, 0, "XYZ")
+          book.scale.z = 1
+          shadowMaterial.opacity = 1
+          envelopeMesh.group.visible = false
+          setIntroPhase("done")
+          onEnvelopeOpenedRef.current?.()
+        }
+      }
 
       // Turn toward the target spread (drags set `flip` directly).
       // While editing, a turn waits until the camera has pulled back from the page.
@@ -1004,6 +1143,7 @@ export function CardBook3D({
         distance =
           Math.max(distH / state.closedZoom, distReach) * (1 + 0.2 * turning)
       }
+      distance *= introPull
       const closedSide = state.flip < leafTotal / 2 ? 1 : -1
       const yaw = state.tilt.x * 0.22 + CLOSED_YAW * closed * closedSide
       const pitch = BROWSE_PITCH + CLOSED_PITCH * closed - state.tilt.y * 0.12
@@ -1141,10 +1281,11 @@ export function CardBook3D({
       shadowTexture.dispose()
       shadowMaterial.dispose()
       shadowGeometry.dispose()
+      envelopeMesh?.dispose()
       renderer.dispose()
       renderer.domElement.remove()
     }
-  }, [gifPlayersRef])
+  }, [gifPlayersRef, fontFamily])
 
   // Builds the leaves when the scene is created and whenever pages are added or removed.
   // Declared after the scene effect and before the paint effect, so it runs between them.
@@ -1552,8 +1693,34 @@ export function CardBook3D({
     [narrow, flipTarget, leafCount, currentSide, goTo],
   )
 
+  /** Turns the envelope over and opens it: the card comes out (at once, with reduced motion). */
+  const openEnvelope = () => {
+    const intro = live.current.intro
+    if (!intro || intro.started !== null || !revealed) return
+    if (live.current.reducedMotion) {
+      intro.turn = intro.turnTarget = 1
+      intro.started = performance.now() - ENVELOPE_DONE_AT * 1000
+    } else {
+      intro.turnTarget = 1
+    }
+    live.current.dirty = true
+    setIntroPhase("opening")
+  }
+
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === "mouse" && e.button !== 0) return
+    if (introPhase !== "done") {
+      const intro = live.current.intro
+      if (intro && intro.started === null && revealed) {
+        intro.drag = {
+          id: e.pointerId,
+          startX: e.clientX,
+          startTurn: intro.turn,
+          moved: false,
+        }
+      }
+      return
+    }
     live.current.pointer = {
       id: e.pointerId,
       startX: e.clientX,
@@ -1575,6 +1742,27 @@ export function CardBook3D({
         x: ((e.clientX - rect.left) / rect.width) * 2 - 1,
         y: ((e.clientY - rect.top) / rect.height) * 2 - 1,
       }
+    }
+    // Turning the envelope over by hand.
+    const intro = state.intro
+    if (intro?.drag && intro.drag.id === e.pointerId) {
+      const drag = intro.drag
+      const dx = e.clientX - drag.startX
+      if (!drag.moved) {
+        if (Math.abs(dx) < DRAG_THRESHOLD_PX) return
+        intro.drag = { ...drag, moved: true }
+        if (drag.startTurn === 0) intro.turnDirection = Math.sign(dx)
+        e.currentTarget.setPointerCapture(e.pointerId)
+      }
+      intro.turn = Math.min(
+        1,
+        Math.max(
+          0,
+          drag.startTurn + (dx * intro.turnDirection) / (rect.width * 0.9),
+        ),
+      )
+      state.dirty = true
+      return
     }
     const pointer = state.pointer
     if (!pointer || pointer.id !== e.pointerId) return
@@ -1603,6 +1791,22 @@ export function CardBook3D({
     cancelled: boolean,
   ) => {
     const state = live.current
+    const intro = state.intro
+    if (intro?.drag && intro.drag.id === e.pointerId) {
+      const { moved } = intro.drag
+      intro.drag = null
+      if (!moved) {
+        if (!cancelled) openEnvelope()
+      } else if (intro.turn > 0.3 && !cancelled) {
+        // Past a third of the way over, it finishes turning and opens.
+        intro.turnTarget = 1
+        setIntroPhase("opening")
+      } else {
+        intro.turnTarget = 0
+      }
+      state.dirty = true
+      return
+    }
     const pointer = state.pointer
     if (!pointer || pointer.id !== e.pointerId) return
     state.pointer = null
@@ -1788,6 +1992,13 @@ export function CardBook3D({
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (introPhase !== "done") {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault()
+        openEnvelope()
+      }
+      return
+    }
     if (e.key === "ArrowRight") {
       e.preventDefault()
       next()
@@ -1813,9 +2024,11 @@ export function CardBook3D({
           role="group"
           aria-roledescription="3D card"
           aria-label={
-            editable
-              ? `Card for ${recipientName}. Click any text on a page to edit it; use the arrow keys to move between pages and Escape to finish.`
-              : `Card for ${recipientName}. Use the arrow keys or drag to turn pages.`
+            introPhase !== "done"
+              ? `A sealed envelope for ${recipientName}. Press Enter, or drag it over, to open it.`
+              : editable
+                ? `Card for ${recipientName}. Click any text on a page to edit it; use the arrow keys to move between pages and Escape to finish.`
+                : `Card for ${recipientName}. Use the arrow keys or drag to turn pages.`
           }
           tabIndex={0}
           className={cn(
@@ -1835,7 +2048,7 @@ export function CardBook3D({
           onKeyDown={onKeyDown}
         >
           <span ref={fontProbeRef} className="hidden" aria-hidden />
-          {placeholderGone ? null : (
+          {placeholderGone || envelope ? null : (
             <ClosedCardCover
               imageUrl={coverUrl}
               headline={headline}
@@ -1890,7 +2103,19 @@ export function CardBook3D({
         ) : null}
       </div>
 
-      {showPager ? (
+      {introPhase !== "done" ? (
+        <Button
+          size="sm"
+          onClick={openEnvelope}
+          disabled={!revealed}
+          className={cn(
+            "transition-opacity duration-200",
+            (introPhase !== "sealed" || !revealed) && "invisible opacity-0",
+          )}
+        >
+          Open your card
+        </Button>
+      ) : showPager ? (
         <div className="flex items-center justify-center gap-4">
           <Button
             variant="outline"
