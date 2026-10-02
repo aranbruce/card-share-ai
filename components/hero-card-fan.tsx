@@ -65,14 +65,20 @@ function useProximityTilt() {
 
     const tick = () => {
       let moving = false
+      // Measure every card before writing any transforms, so each frame lays out once.
+      // The untilted wrapper is measured so a card's own tilt doesn't feed back into it
+      const rects = cards.current.map((el) =>
+        pointer.inside ? el?.parentElement?.getBoundingClientRect() : undefined,
+      )
       cards.current.forEach((el, i) => {
         if (!el) return
         const t = tilts[i]
+        const r = rects[i]
         let rx = 0
         let ry = 0
         let sc = 1
-        if (pointer.inside) {
-          const r = el.getBoundingClientRect()
+        // Zero-size while the fan is hidden below md
+        if (r && r.width > 0) {
           const dx = pointer.x - (r.left + r.width / 2)
           const dy = pointer.y - (r.top + r.height / 2)
           const near = clamp(1 - Math.hypot(dx, dy) / (r.width * 1.5), 0, 1)
