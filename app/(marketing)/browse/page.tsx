@@ -183,7 +183,8 @@ export default function CardsPage() {
         ])}
       />
       {/* ===== HERO ===== */}
-      <section className="py-20">
+      {/* overflow-x-clip: a safety net for the fan's outer cards at the page edge */}
+      <section className="overflow-x-clip py-20">
         <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
@@ -234,7 +235,9 @@ export default function CardsPage() {
             </div>
           </div>
 
-          <div className="hidden lg:block">
+          {/* The fan is ~630px wide, wider than its column until ~1360px, so it's zoomed
+              down until then to stay inside the page */}
+          <div className="hidden lg:block lg:max-xl:zoom-[0.75] xl:max-[1360px]:zoom-[0.92]">
             <HeroFan />
           </div>
         </div>

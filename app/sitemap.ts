@@ -6,7 +6,7 @@ import { COMPARE_CONFIGS } from "@/lib/compare-pages"
 /** Bump when the homepage or browse page content changes meaningfully. */
 const MARKETING_LAST_MODIFIED = new Date("2026-09-29")
 /** Bump when the Slack install page changes meaningfully. */
-const SLACK_LAST_MODIFIED = new Date("2026-09-28")
+const SLACK_LAST_MODIFIED = new Date("2026-10-02")
 /** Bump when the Claude connector page changes meaningfully. */
 const CLAUDE_LAST_MODIFIED = new Date("2026-10-01")
 /** Bump when the support page changes meaningfully. */
