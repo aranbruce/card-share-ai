@@ -43,6 +43,7 @@ export default defineConfig([
           whitelist: [
             "inputs",
             "hero-drift",
+            "hero-fan-deal",
             "demo-float",
             "card-pastel",
             "card-3d-.*",
