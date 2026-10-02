@@ -5,8 +5,12 @@
  */
 export const MAX_SOURCE_IMAGE_BYTES = 3 * 1024 * 1024
 
-/** Hard cap on the raw uploaded file before any canvas processing. */
-export const MAX_UPLOAD_FILE_BYTES = 20 * 1024 * 1024
+/**
+ * Hard cap on the raw uploaded file before any canvas processing. The original
+ * never leaves the browser (only the compressed JPEG is sent), so this only
+ * guards against files too big to decode on low-memory devices.
+ */
+export const MAX_UPLOAD_FILE_BYTES = 50 * 1024 * 1024
 
 /** Max base64 payload length in a `data:` URL before decode (~4/3 expansion + padding). */
 export const MAX_SOURCE_IMAGE_BASE64_CHARS =
