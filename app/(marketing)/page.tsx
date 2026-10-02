@@ -5,7 +5,6 @@ import { CardTileRow } from "@/components/card-tile-row"
 import { HeroCardFan } from "@/components/hero-card-fan"
 import { HomeDemoPanel } from "@/components/home-demo-panel"
 import { HomeMarketingSections } from "@/components/home-marketing-sections"
-import { getAppUrl } from "@/lib/app-url"
 import { occasionTiles } from "@/lib/category-pages"
 import { buildPageMetadata, DEFAULT_DESCRIPTION } from "@/lib/site-metadata"
 
@@ -17,8 +16,6 @@ export const metadata: Metadata = buildPageMetadata({
 
 // Signed-in visitors are sent to /dashboard by `proxy.ts`, so this page can be static.
 export default function HomePage() {
-  const appHostname = getAppUrl().replace(/^https?:\/\//, "")
-
   return (
     <>
       {/* overflow-x-clip: the outer fan cards reach past the browser into the page gutters */}
@@ -74,7 +71,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <HomeMarketingSections appHostname={appHostname} />
+      <HomeMarketingSections />
     </>
   )
 }

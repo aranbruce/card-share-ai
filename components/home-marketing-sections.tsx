@@ -1,6 +1,7 @@
 import Link from "next/link"
+import { AddToSlackPromo } from "@/components/add-to-slack-promo"
 import { Button } from "@/components/ui/button"
-import { SlackConversationMockup } from "@/components/slack-conversation-mockup"
+import { SlackFlowSection } from "@/components/slack-flow"
 import { FaqSection } from "@/components/faq-section"
 
 const HOME_FAQS = [
@@ -56,11 +57,7 @@ const FEATURES = [
   },
 ]
 
-export function HomeMarketingSections({
-  appHostname,
-}: {
-  appHostname: string
-}) {
+export function HomeMarketingSections() {
   return (
     <>
       <section className="border-t border-border">
@@ -91,70 +88,23 @@ export function HomeMarketingSections({
 
       <section className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
-          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
-            <div>
-              <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-                Works with Slack
-              </p>
-              <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl">
-                Create cards without leaving Slack
-              </h2>
-              <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
-                Install the CardShare.ai bot and send a personalized card in
-                seconds, directly from any channel or DM
-              </p>
-              <ol className="mt-8 flex flex-col gap-5">
-                {[
-                  {
-                    n: "01",
-                    title: "Type /cardshareai in any channel",
-                    desc: "A form opens inline. Choose the card type, add the recipient's name, pick a tone, and drop in any context",
-                  },
-                  {
-                    n: "02",
-                    title: "Hit Create",
-                    desc: "AI generates a personalized headline and cover image. No prompting required",
-                  },
-                  {
-                    n: "03",
-                    title: "Card link lands in the channel",
-                    desc: "Share it with the team so everyone can sign, or send it straight to the recipient",
-                  },
-                ].map((s) => (
-                  <li key={s.n} className="flex gap-4">
-                    <span className="mt-0.5 shrink-0 font-mono text-sm text-muted-foreground/90">
-                      {s.n}
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold tracking-[-0.015em]">
-                        {s.title}
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                        {s.desc}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-              <div className="mt-8">
-                <Link href="/slack/install">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    alt="Add to Slack"
-                    height="40"
-                    width="139"
-                    src="https://platform.slack-edge.com/img/add_to_slack.png"
-                    srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x"
-                  />
-                </Link>
-              </div>
-            </div>
-
-            <SlackConversationMockup
-              appHostname={appHostname}
-              className="hidden lg:block"
-            />
-          </div>
+          <SlackFlowSection
+            intro={
+              <>
+                <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
+                  Works with Slack
+                </p>
+                <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl">
+                  Create cards without leaving Slack
+                </h2>
+                <p className="mt-4 max-w-md leading-relaxed text-muted-foreground">
+                  Install the CardShare.ai bot and send a personalized card in
+                  seconds, directly from any channel or DM
+                </p>
+              </>
+            }
+            footer={<AddToSlackPromo href="/slack/install" className="mt-8" />}
+          />
         </div>
       </section>
 

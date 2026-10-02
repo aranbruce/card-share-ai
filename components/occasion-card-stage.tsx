@@ -1,6 +1,20 @@
+import Image from "next/image"
 import { MousePointerClick } from "lucide-react"
 import { SampleCard3D } from "@/components/sample-card-3d"
 import type { CategoryConfig } from "@/lib/category-pages"
+import { sampleAvatarsFor } from "@/lib/sample-avatars"
+
+function Avatar({ src, className }: { src: string; className?: string }) {
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={20}
+      height={20}
+      className={`size-5 shrink-0 rounded-full object-cover ${className ?? ""}`}
+    />
+  )
+}
 
 /**
  * An occasion's sample card as the interactive 3D card on its gradient stage, with a hint to
@@ -8,6 +22,12 @@ import type { CategoryConfig } from "@/lib/category-pages"
  * page heroes.
  */
 export function OccasionCardStage({ config }: { config: CategoryConfig }) {
+  // The note's signer first, then a different face for each in the "signed" stack
+  const [noteAvatar, ...stackAvatars] = sampleAvatarsFor(
+    config.slug,
+    config.sampleNotes.length + 1,
+  )
+
   return (
     <div className="relative mx-auto mt-12 w-full max-w-120 lg:mt-0">
       <div
@@ -60,12 +80,8 @@ export function OccasionCardStage({ config }: { config: CategoryConfig }) {
         className="absolute -top-4 -right-3 z-20 hidden items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-xs shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-right-6"
       >
         <div className="flex -space-x-1.5">
-          {config.sampleNotes.map((note) => (
-            <span
-              key={note.message}
-              className="size-5 rounded-full ring-2 ring-card"
-              style={{ background: note.color }}
-            />
+          {stackAvatars.map((src) => (
+            <Avatar key={src} src={src} className="ring-2 ring-card" />
           ))}
         </div>
         <div>
@@ -81,10 +97,7 @@ export function OccasionCardStage({ config }: { config: CategoryConfig }) {
         aria-hidden
         className="absolute -bottom-5 -left-3 z-20 hidden max-w-55 items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)] sm:flex lg:-left-8"
       >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: config.sampleNotes[0].color }}
-        />
+        <Avatar src={noteAvatar} />
         <div className="text-sm leading-tight">
           {config.sampleNotes[0].message}
         </div>

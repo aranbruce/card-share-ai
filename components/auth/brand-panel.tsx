@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { SAMPLE_AVATARS } from "@/lib/sample-avatars"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Logo } from "@/components/logo"
 import { MessageFontVariables } from "@/components/message-font-variables"
@@ -26,17 +27,6 @@ const CARD_SLOTS = [
   { className: "top-[38%] left-[21%]", rotate: -1 },
 ]
 
-/**
- * Signers' faces for the chips: free-license Unsplash portraits, face-cropped to 96px. In
- * order, unsplash.com/photos/ mEZ3PoFGs_k, iFgRcqHznqg, IF9TK5Uy-KI, AR9mvykzSOA,
- * COOrCB6qqO0, UpiF461EAHU, MQ2xYBHImKM, v7Jja2ChN6s, B41fY4dhX18, N8lRH2uxih4,
- * y3kC_7Qhmjk and 0pOlBhSsF80.
- */
-const AVATARS = Array.from(
-  { length: 12 },
-  (_, i) => `/avatars/person-${i + 1}.webp`,
-)
-
 /** Faces in the "people signed" stack; the note's signer is a different face again. */
 const STACK_SIZE = 4
 
@@ -50,7 +40,7 @@ function pickStage(): { cards: CategoryConfig[]; avatars: string[] } {
     cards: [1, 2, 0].map(
       (offset) => STAGE_OCCASIONS[(front + offset) % STAGE_OCCASIONS.length],
     ),
-    avatars: AVATARS.map((src) => ({ src, sort: Math.random() }))
+    avatars: SAMPLE_AVATARS.map((src) => ({ src, sort: Math.random() }))
       .sort((a, b) => a.sort - b.sort)
       .slice(0, STACK_SIZE + 1)
       .map(({ src }) => src),

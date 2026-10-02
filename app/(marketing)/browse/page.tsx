@@ -1,10 +1,19 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import { CardTileRow } from "@/components/card-tile-row"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/json-ld"
-import { getBrowseCategories, occasionTiles } from "@/lib/category-pages"
+import { SlackStoryboard } from "@/components/slack-storyboard"
+import { StarMark } from "@/components/star-mark"
+import {
+  getBrowseCategories,
+  getCategoryConfig,
+  occasionTiles,
+  slackStoryboardCard,
+} from "@/lib/category-pages"
+import { sampleAvatarsFor } from "@/lib/sample-avatars"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
 
@@ -128,10 +137,9 @@ function HeroFan() {
         className="hero-drift absolute right-[-10px] bottom-10 z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: "oklch(0.82 0.1 18)" }}
-        />
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+          <StarMark className="size-2.5" />
+        </span>
         <div>
           <div className="font-medium">Free to start</div>
           <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
@@ -148,9 +156,12 @@ function HeroFan() {
           animationDelay: "-3s",
         }}
       >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: "oklch(0.84 0.08 330)" }}
+        <Image
+          src={sampleAvatarsFor("browse", 1)[0]}
+          alt=""
+          width={20}
+          height={20}
+          className="size-5 shrink-0 rounded-full object-cover"
         />
         <div className="text-sm leading-tight">
           <div>So happy for you!</div>
@@ -172,7 +183,8 @@ export default function CardsPage() {
         ])}
       />
       {/* ===== HERO ===== */}
-      <section className="py-20">
+      {/* overflow-x-clip: a safety net for the fan's outer cards at the page edge */}
+      <section className="overflow-x-clip py-20">
         <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
@@ -223,7 +235,9 @@ export default function CardsPage() {
             </div>
           </div>
 
-          <div className="hidden lg:block">
+          {/* The fan is ~630px wide, wider than its column until ~1360px, so it's zoomed
+              down until then to stay inside the page */}
+          <div className="hidden lg:block lg:max-xl:zoom-[0.75] xl:max-[1360px]:zoom-[0.92]">
             <HeroFan />
           </div>
         </div>
@@ -274,6 +288,10 @@ export default function CardsPage() {
         </div>
       </section>
 
+      <SlackStoryboard
+        card={slackStoryboardCard(getCategoryConfig("birthday")!)}
+      />
+
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
@@ -288,7 +306,7 @@ export default function CardsPage() {
               <details key={i} className="group border-b border-border py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium tracking-[-0.015em]">
                   {faq.q}
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border transition-transform group-open:rotate-45 group-open:border-foreground group-open:bg-foreground group-open:text-background">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border bg-card transition-transform group-open:rotate-45">
                     <PlusIcon />
                   </span>
                 </summary>
