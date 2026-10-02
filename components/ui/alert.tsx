@@ -10,7 +10,7 @@ const alertVariants = cva(
       variant: {
         default: "my-2 rounded-2xl bg-secondary/50 p-4",
         destructive:
-          "border-destructive/20 bg-destructive/10 text-destructive *:data-[slot=alert-description]:text-destructive/90 [&>svg]:text-current",
+          "border-destructive/20 bg-destructive/8 leading-[1.45] text-destructive-text *:data-[slot=alert-description]:leading-[1.45] *:data-[slot=alert-description]:text-destructive-text [&>svg]:text-current",
       },
     },
     defaultVariants: {

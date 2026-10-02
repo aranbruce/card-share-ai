@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { CreateStepIndicator } from "@/components/create-step-indicator"
@@ -20,12 +21,15 @@ export function OccasionStep({
   onContinue,
   backHref,
   backLabel,
+  error,
 }: {
   selected: string
   onSelect: (id: string) => void
   onContinue: () => void
   backHref: string
   backLabel: string
+  /** Shown above Continue, e.g. when saving a card after sign-in failed. */
+  error?: string
 }) {
   return (
     <aside className="flex min-h-svh flex-col border-r border-line bg-card px-7 py-4 md:sticky md:top-0 md:h-svh md:min-h-0 md:overflow-y-auto">
@@ -68,7 +72,16 @@ export function OccasionStep({
         ))}
       </div>
 
-      <Button type="button" className="mt-auto w-full" onClick={onContinue}>
+      {error && (
+        <Alert variant="destructive" className="mt-auto mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Button
+        type="button"
+        className={cn("w-full", !error && "mt-auto")}
+        onClick={onContinue}
+      >
         Continue
         <ArrowRight />
       </Button>

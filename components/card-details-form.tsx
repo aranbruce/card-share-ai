@@ -10,6 +10,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { ChipButton } from "@/components/ui/chip-button"
+import { FieldError } from "@/components/ui/field-error"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
@@ -48,7 +49,12 @@ interface CardDetailsFormProps {
   onShowCard?: () => void
   /** Called with the chosen template (or null), so the preview can show it. */
   onTemplateChange?: (templateId: string | null) => void
+  /** An error from generating or saving, shown above the buttons. */
+  actionError?: string
 }
+
+const NAMES_REQUIRED_ERROR = "Please fill in the To and From fields"
+const PHOTO_REQUIRED_ERROR = "Add a photo to put in the scene"
 
 export function CardDetailsForm({
   cardType,
@@ -63,6 +69,7 @@ export function CardDetailsForm({
   onShowCard,
   onTemplateChange,
   isStale,
+  actionError,
 }: CardDetailsFormProps) {
   // Steps 2 and 3 of creating a card: the cover, then who it's for.
   const [page, setPage] = useState<"cover" | "about">("cover")
@@ -72,6 +79,9 @@ export function CardDetailsForm({
   const [tone, setTone] = useState<string>(DEFAULT_CARD_TONE)
   const [formError, setFormError] = useState("")
   const [uploadError, setUploadError] = useState("")
+  // Required-field errors show after a submit, then follow the fields until fixed.
+  const [showNameErrors, setShowNameErrors] = useState(false)
+  const [showPhotoError, setShowPhotoError] = useState(false)
   const [attachedImageDataUrl, setAttachedImageDataUrl] = useState<
     string | null
   >(null)
@@ -83,6 +93,13 @@ export function CardDetailsForm({
     ? pickedTemplateId
     : null
   const useTemplate = templateId !== null
+  const namesMissing = !senderName || !recipientName
+  const nameError = showNameErrors && namesMissing ? NAMES_REQUIRED_ERROR : ""
+  const photoError =
+    uploadError ||
+    (showPhotoError && useTemplate && !attachedImageDataUrl
+      ? PHOTO_REQUIRED_ERROR
+      : "")
 
   useEffect(() => {
     onTemplateChange?.(templateId)
@@ -115,7 +132,7 @@ export function CardDetailsForm({
     setFormError("")
 
     if (useTemplate && !attachedImageDataUrl) {
-      setFormError("Add a photo to put in the scene")
+      setShowPhotoError(true)
       setPage("cover")
       return
     }
@@ -123,8 +140,9 @@ export function CardDetailsForm({
       setPage("about")
       return
     }
-    if (!senderName || !recipientName) {
-      setFormError("Please fill in the To and From fields")
+    if (namesMissing) {
+      setShowNameErrors(true)
+      document.getElementById(recipientName ? "sender" : "recipient")?.focus()
       return
     }
 
@@ -199,13 +217,11 @@ export function CardDetailsForm({
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="mt-7 flex flex-1 flex-col gap-4">
-        {formError && (
-          <Alert variant="destructive">
-            <AlertDescription>{formError}</AlertDescription>
-          </Alert>
-        )}
-
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="mt-7 flex flex-1 flex-col gap-4"
+      >
         {page === "about" ? (
           <>
             {/* To */}
@@ -222,7 +238,10 @@ export function CardDetailsForm({
                 onChange={(e) => setRecipientName(e.target.value)}
                 placeholder="Recipient's name"
                 disabled={isLoading}
-                required
+                aria-invalid={nameError && !recipientName ? true : undefined}
+                aria-describedby={
+                  nameError && !recipientName ? "names-error" : undefined
+                }
                 variant="soft"
               />
             </div>
@@ -241,9 +260,13 @@ export function CardDetailsForm({
                 onChange={(e) => setSenderName(e.target.value)}
                 placeholder="Your name or group name"
                 disabled={isLoading}
-                required
+                aria-invalid={nameError && !senderName ? true : undefined}
+                aria-describedby={
+                  nameError && !senderName ? "names-error" : undefined
+                }
                 variant="soft"
               />
+              <FieldError id="names-error">{nameError}</FieldError>
             </div>
 
             {/* Context */}
@@ -372,7 +395,9 @@ export function CardDetailsForm({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50"
+                  data-invalid={photoError ? "" : undefined}
+                  aria-describedby={photoError ? "photo-error" : undefined}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-xs text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground/70 disabled:cursor-not-allowed disabled:opacity-50 data-invalid:border-destructive data-invalid:hover:border-destructive"
                 >
                   <Paperclip className="size-3.5" />
                   {useTemplate
@@ -380,98 +405,101 @@ export function CardDetailsForm({
                     : "Attach a reference photo"}
                 </button>
               )}
-              {uploadError && (
-                <Alert variant="destructive" className="mt-1.5">
-                  <AlertDescription>{uploadError}</AlertDescription>
-                </Alert>
-              )}
+              <FieldError id="photo-error">{photoError}</FieldError>
             </div>
           </>
         )}
 
         {/* Actions */}
-        <div className="mt-auto flex gap-2.5 pt-4">
-          {page === "cover" ? (
-            <Button
-              type="submit"
-              size="default"
-              className="flex-1"
-              disabled={isReadingFile}
-            >
-              Continue
-              <ArrowRight />
-            </Button>
-          ) : hasGenerated ? (
-            <>
+        <div className="mt-auto flex flex-col gap-4 pt-4">
+          {(formError || actionError) && (
+            <Alert variant="destructive">
+              <AlertDescription>{formError || actionError}</AlertDescription>
+            </Alert>
+          )}
+          <div className="flex gap-2.5">
+            {page === "cover" ? (
               <Button
                 type="submit"
-                variant="outline"
                 size="default"
                 className="flex-1"
-                disabled={isLoading || isContinuing || isReadingFile}
+                disabled={isReadingFile}
+              >
+                Continue
+                <ArrowRight />
+              </Button>
+            ) : hasGenerated ? (
+              <>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  size="default"
+                  className="flex-1"
+                  disabled={isLoading || isContinuing || isReadingFile}
+                >
+                  {isLoading ? (
+                    <>
+                      <Spinner />
+                      Regenerating…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles />
+                      Regenerate
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  size="default"
+                  className="flex-1"
+                  disabled={isLoading || isContinuing}
+                  onClick={() => {
+                    // Phones show the form or the card, not both: Continue goes back to the
+                    // card, where its own Continue saves it.
+                    if (
+                      onShowCard &&
+                      window.matchMedia("(max-width: 767px)").matches
+                    ) {
+                      onShowCard()
+                    } else {
+                      onContinue?.()
+                    }
+                  }}
+                >
+                  {isContinuing ? (
+                    <>
+                      <Spinner />
+                      Saving…
+                    </>
+                  ) : (
+                    "Continue"
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="submit"
+                size="default"
+                className="flex-1"
+                disabled={isLoading || isReadingFile}
               >
                 {isLoading ? (
                   <>
                     <Spinner />
-                    Regenerating…
+                    Generating…
                   </>
-                ) : (
+                ) : isStale ? (
                   <>
                     <Sparkles />
                     Regenerate
                   </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                size="default"
-                className="flex-1"
-                disabled={isLoading || isContinuing}
-                onClick={() => {
-                  // Phones show the form or the card, not both: Continue goes back to the
-                  // card, where its own Continue saves it.
-                  if (
-                    onShowCard &&
-                    window.matchMedia("(max-width: 767px)").matches
-                  ) {
-                    onShowCard()
-                  } else {
-                    onContinue?.()
-                  }
-                }}
-              >
-                {isContinuing ? (
-                  <>
-                    <Spinner />
-                    Saving…
-                  </>
                 ) : (
-                  "Continue"
+                  <>Generate card</>
                 )}
               </Button>
-            </>
-          ) : (
-            <Button
-              type="submit"
-              size="default"
-              className="flex-1"
-              disabled={isLoading || isReadingFile}
-            >
-              {isLoading ? (
-                <>
-                  <Spinner />
-                  Generating…
-                </>
-              ) : isStale ? (
-                <>
-                  <Sparkles />
-                  Regenerate
-                </>
-              ) : (
-                <>Generate card</>
-              )}
-            </Button>
-          )}
+            )}
+          </div>
         </div>
       </form>
     </aside>
