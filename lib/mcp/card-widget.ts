@@ -6,7 +6,10 @@ import {
   registerAppResource,
 } from "@modelcontextprotocol/ext-apps/server"
 import { getAppUrl } from "@/lib/app-url"
-import { MAX_SOURCE_IMAGE_BYTES } from "@/lib/source-image-limits"
+import {
+  MAX_SOURCE_IMAGE_BYTES,
+  MAX_UPLOAD_FILE_BYTES,
+} from "@/lib/source-image-limits"
 
 /** The MCP Apps view that shows cards inline in Claude, ChatGPT and other hosts. */
 export const CARD_WIDGET_URI = "ui://cardshare/cards.html"
@@ -156,6 +159,7 @@ const app = new App({ name: "CardShare.ai cards", version: "1.0.0" });
 // result's _meta (never shown to the model), or null when photos are off.
 const PHOTO_META_KEY = "cardshare/photoUpload";
 const MAX_PHOTO_BYTES = ${MAX_SOURCE_IMAGE_BYTES};
+const MAX_PHOTO_FILE_BYTES = ${MAX_UPLOAD_FILE_BYTES};
 const MAX_PHOTO_SIDE = 2048;
 let upload = null;
 let lastCard = null;
@@ -235,28 +239,112 @@ function blobDataUrl(blob) {
   });
 }
 
+// Reads the Orientation tag from a JPEG's Exif block (0 when there isn't one)
+function exifOrientation(view, start) {
+  if (view.getUint32(start) !== 0x45786966) return 0; // "Exif"
+  const tiff = start + 6;
+  const little = view.getUint16(tiff) === 0x4949;
+  const ifd = tiff + view.getUint32(tiff + 4, little);
+  const count = view.getUint16(ifd, little);
+  for (let i = 0; i < count; i++) {
+    const entry = ifd + 2 + i * 12;
+    if (view.getUint16(entry, little) === 0x0112) return view.getUint16(entry + 8, little);
+  }
+  return 0;
+}
+
+// A JPEG's upright size from its header, so it can be decoded straight at a
+// smaller size. Null for other formats or a header it can't follow.
+async function jpegUprightSize(file) {
+  const view = new DataView(await file.slice(0, 512 * 1024).arrayBuffer());
+  if (view.getUint16(0) !== 0xffd8) return null;
+  let orientation = 1;
+  let offset = 2;
+  while (offset + 9 < view.byteLength) {
+    if (view.getUint8(offset) !== 0xff) return null;
+    const marker = view.getUint8(offset + 1);
+    if (marker === 0xff) {
+      offset++;
+      continue;
+    }
+    if (marker === 0xda || marker === 0xd9) return null; // image data before a size
+    const length = view.getUint16(offset + 2);
+    if (marker === 0xe1) {
+      orientation = exifOrientation(view, offset + 4) || orientation;
+    } else if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      const height = view.getUint16(offset + 5);
+      const width = view.getUint16(offset + 7);
+      // Orientations 5-8 turn the photo on its side
+      return orientation >= 5 ? { width: height, height: width } : { width, height };
+    }
+    offset += 2 + length;
+  }
+  return null;
+}
+
+// Decodes big JPEGs straight at the size we send, so a large photo never
+// needs a full-resolution copy in memory; anything else decodes in full.
+async function decodePhoto(file) {
+  let size = null;
+  try {
+    size = await jpegUprightSize(file);
+  } catch {
+    // Unreadable header: decode in full below
+  }
+  const scale = size ? Math.min(1, MAX_PHOTO_SIDE / Math.max(size.width, size.height)) : 1;
+  if (size && scale < 1) {
+    const width = Math.round(size.width * scale);
+    const height = Math.round(size.height * scale);
+    try {
+      const bitmap = await createImageBitmap(file, {
+        resizeWidth: width,
+        resizeHeight: height,
+        resizeQuality: "high",
+        imageOrientation: "from-image",
+      });
+      // Browsers that resize before applying the rotation return the wrong shape
+      if (bitmap.width === width && bitmap.height === height) return bitmap;
+      bitmap.close();
+    } catch {
+      // Resize options unsupported: decode in full below
+    }
+  }
+  return createImageBitmap(file);
+}
+
 // Shrinks the photo to a JPEG the server accepts, like the website does
 async function photoDataUrl(file) {
   if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+  if (file.size > MAX_PHOTO_FILE_BYTES) {
+    throw new Error("That photo is over " + MAX_PHOTO_FILE_BYTES / (1024 * 1024) + " MB. Try a smaller one.");
+  }
   let bitmap;
   try {
-    bitmap = await createImageBitmap(file);
+    bitmap = await decodePhoto(file);
   } catch {
     throw new Error("Couldn't read that photo. Try a JPEG or PNG.");
   }
-  let scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  for (let attempt = 0; attempt < 4; attempt++) {
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    for (const quality of [0.85, 0.7, 0.55]) {
-      const blob = await canvasBlob(canvas, quality);
-      if (blob.size <= MAX_PHOTO_BYTES) return blobDataUrl(blob);
+  try {
+    let scale = Math.min(1, MAX_PHOTO_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    for (let attempt = 0; attempt < 4; attempt++) {
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const ctx = canvas.getContext("2d");
+      // JPEG has no transparency; without this, see-through areas turn black
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      for (const quality of [0.85, 0.7, 0.55]) {
+        const blob = await canvasBlob(canvas, quality);
+        if (blob.size <= MAX_PHOTO_BYTES) return blobDataUrl(blob);
+      }
+      scale *= 0.7;
     }
-    scale *= 0.7;
+    throw new Error("That photo is too large. Try a smaller one.");
+  } finally {
+    bitmap.close();
   }
-  throw new Error("That photo is too large. Try a smaller one.");
 }
 
 function choosePhoto(busyText) {

@@ -7,7 +7,7 @@ import { cardBookFrameClass } from "./frame"
 
 /**
  * Shown on the server and while the 3D card's code loads: the closed card's cover, drawn
- * exactly where the 3D card will draw it, in a frame the same size as the real one, so nothing
+ * exactly where the 3D card will draw it (or nothing, for a card in an envelope), in a frame the same size as the real one, so nothing
  * moves or resizes when it takes over.
  */
 export function CardBook3DPlaceholder({
@@ -20,6 +20,7 @@ export function CardBook3DPlaceholder({
   closedZoom,
   cornerRadius,
   renderPageEditor,
+  envelope = false,
   className,
 }: CardBook3DProps) {
   return (
@@ -34,13 +35,16 @@ export function CardBook3DPlaceholder({
             cardBookFrameClass(coverOnly, Boolean(renderPageEditor)),
         )}
       >
-        <ClosedCardCover
-          imageUrl={imageUrl || null}
-          headline={headline}
-          recipientName={recipientName}
-          zoom={closedZoom}
-          cornerRadius={cornerRadius}
-        />
+        {/* A card arriving in an envelope stays hidden until the envelope shows. */}
+        {envelope ? null : (
+          <ClosedCardCover
+            imageUrl={imageUrl || null}
+            headline={headline}
+            recipientName={recipientName}
+            zoom={closedZoom}
+            cornerRadius={cornerRadius}
+          />
+        )}
       </div>
       {/* Room for the pager underneath the real card. */}
       {showPager ? <div className="h-8" aria-hidden /> : null}

@@ -51,6 +51,8 @@ interface CardDetailsFormProps {
   onTemplateChange?: (templateId: string | null) => void
   /** An error from generating or saving, shown above the buttons. */
   actionError?: string
+  /** The template picked when the form first shows. */
+  initialTemplateId?: string
 }
 
 const NAMES_REQUIRED_ERROR = "Please fill in the To and From fields"
@@ -70,6 +72,7 @@ export function CardDetailsForm({
   onTemplateChange,
   isStale,
   actionError,
+  initialTemplateId,
 }: CardDetailsFormProps) {
   // Steps 2 and 3 of creating a card: the cover, then who it's for.
   const [page, setPage] = useState<"cover" | "about">("cover")
@@ -86,7 +89,9 @@ export function CardDetailsForm({
     string | null
   >(null)
   const [isReadingFile, setIsReadingFile] = useState(false)
-  const [pickedTemplateId, setTemplateId] = useState<string | null>(null)
+  const [pickedTemplateId, setTemplateId] = useState<string | null>(
+    initialTemplateId ?? null,
+  )
   const templates = templatesForOccasion(cardType)
   // A template picked for a different occasion no longer applies.
   const templateId = templates.some((t) => t.id === pickedTemplateId)

@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useEffect } from "react"
 import { Check, Sparkles } from "lucide-react"
 import { ScrollArrow, scrollByPage } from "@/components/ui/edge-fade-scroller"
 import { useScrollEdgeFade } from "@/hooks/use-scroll-edge-fade"
@@ -33,6 +34,20 @@ export function CoverTemplatePicker({
     canScroll,
     maskStyle,
   } = useScrollEdgeFade<HTMLDivElement>(EDGE_FADE, [templates])
+
+  // A template picked before the picker shows (linked from the gallery) starts in view.
+  useEffect(() => {
+    const scroller = scrollerRef.current
+    const tile = scroller?.querySelector<HTMLElement>('[aria-checked="true"]')
+    if (!scroller || !tile) return
+    const gutter = parseFloat(getComputedStyle(scroller).paddingLeft)
+    scroller.scrollLeft +=
+      tile.getBoundingClientRect().left -
+      scroller.getBoundingClientRect().left -
+      gutter
+    // Only on mount: later picks scroll themselves into view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const select = (id: string | null, tile: HTMLElement) => {
     onSelect(id)

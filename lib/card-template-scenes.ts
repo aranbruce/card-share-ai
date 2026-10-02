@@ -41,6 +41,40 @@ export const CARD_TEMPLATE_SCENES: Record<string, string> = {
     "A full-bleed 1980s action movie still: they walk towards the camera, away from a huge explosion in slow motion, wearing sunglasses pushed up on their head and a leather jacket, holding a party popper. Dramatic cinematic lighting.",
   "nature-doc":
     "They are a nature documentary presenter in a safari hat and khakis, crouching in tall grass and whispering to camera, while a curious giraffe peers over their shoulder. Golden hour wildlife photography.",
+  "office-chair-sunset":
+    "They ride off into a golden desert sunset on a rolling office chair like a cowboy on horseback, wearing a cowboy hat, turned back towards the camera and waving goodbye, with tumbleweeds rolling by and a computer cable coiled like a lasso. Cinematic western, photorealistic.",
+  "tie-escape":
+    "An action movie still: they abseil down the outside of a glass office tower on a rope made of knotted neckties, grinning at the camera, a briefcase under one arm, while colleagues wave from the windows. Bright daylight, dramatic low angle, photorealistic.",
+  "note-balloon":
+    "They lean out of the basket of a hot-air balloon made entirely of blank, brightly coloured sticky notes, waving goodbye as it rises above an office building, with colleagues waving back from below. Cheerful, sunny photography.",
+  "island-hammock":
+    "They lounge blissfully in a hammock between two palm trees on a tiny desert island, sunglasses pushed up on their head and a cocktail with a paper umbrella in hand, with a laptop half-buried in the sand beside them and a turquoise sea all around. Bright holiday photography.",
+  "cruise-captain":
+    "They are the captain of a gigantic cruise ship, in a crisp white captain's uniform and cap, saluting proudly on the bridge wing, with sparkling sea, a sunset and waving passengers behind them. Photorealistic.",
+  "golf-getaway":
+    "They drive a golf buggy flat out across a golf course like a getaway car in a heist movie, grinning, golf balls bouncing out of the back and a flock of startled geese taking off. Action photography with motion blur on the background, their face sharp.",
+  "romcom-poster":
+    "A romantic comedy movie still: they stand beaming on a city street at night in the gentle rain under a glowing streetlight, holding a huge bouquet of flowers, while neighbours lean out of the windows above, applauding. Warm cinematic lighting.",
+  "cake-summit":
+    "They are a mountaineer triumphantly reaching the summit of a towering mountain made of white wedding cake, ice axe raised, planting a plain white flag, with frosting cliffs and sugar-flower ledges far below. Epic adventure photography.",
+  "nappy-juggler":
+    "They are a circus performer in the spotlight, calmly juggling baby bottles, nappies and a rubber duck, wearing a sparkly ringmaster jacket, while a delighted circus audience cheers. Photorealistic, dramatic circus lighting.",
+  "pram-rally":
+    "They race a souped-up baby pram carrying a giant teddy bear through a muddy rally course, racing goggles pushed up on their forehead, mud spraying from the wheels and spectators cheering behind the barriers. Action sports photography.",
+  "rocket-launch":
+    "They sit astride a gleaming rocket made from a giant office water cooler, blasting off from the middle of an open-plan office, giving a big thumbs up, with smoke and sparks billowing and colleagues in hard hats cheering. Cinematic, photorealistic.",
+  "corner-office-throne":
+    "They sit regally on a golden throne in a corner office with floor-to-ceiling windows over a city skyline, wearing a crown with a sharp business suit, a pug in their lap and a red carpet leading up to the desk. Dramatic, regal photography.",
+  "mortarboard-space":
+    "They float in space in a graduation gown, tossing their mortarboard towards the camera, tassel drifting in zero gravity and the Earth glowing below. Whimsical, so they wear no helmet and their face is fully visible. Cinematic, photorealistic.",
+  "first-day-school":
+    "A classic first-day-of-school photo on a front doorstep, except they are a grown adult, beaming proudly in a slightly too-small school uniform, with an enormous backpack, a lunchbox and a bulging briefcase. Warm morning light, family snapshot.",
+  "album-cover":
+    "A dramatic 1980s album cover portrait: they gaze into the distance in a sparkly jacket with huge shoulder pads, against a purple laser-grid background with smoke and a lens flare. Glossy retro studio photography.",
+  "film-star":
+    "A glamorous 1940s Hollywood studio portrait: they look over their shoulder with movie-star poise, in an elegant evening outfit, in black and white with dramatic soft lighting.",
+  "dino-ride":
+    "They ride a single friendly Tyrannosaurus rex (one head) down a busy city high street like a parade horse, wearing a party hat and waving to astonished shoppers. The shopfronts have plain awnings and no signs. Photorealistic, bright daytime.",
 }
 
 /** Layout reference for a template (see scripts/generate-template-thumbnails.mjs), if it has one. */

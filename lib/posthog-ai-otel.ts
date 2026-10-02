@@ -25,6 +25,8 @@ export async function startPostHogAiOtel(): Promise<void> {
   const projectToken = getPostHogToken()
   if (!projectToken) return
 
+  // Spans record prompts, including uploaded photos; this processor redacts base64 media
+  // before export, so photos never reach PostHog (pinned by posthog-ai-otel.test.ts).
   const processor = new PostHogSpanProcessor({
     projectToken,
     host: getPostHogHost(),
