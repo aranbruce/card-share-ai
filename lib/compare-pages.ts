@@ -625,6 +625,318 @@ export const COMPARE_CONFIGS: Record<string, CompareConfig> = {
       },
     ],
   },
+  thankbox: {
+    slug: "thankbox",
+    lastModified: "2026-10-02",
+    competitor: "Thankbox",
+    checkedOn: "October 2026",
+    sources: [
+      { label: "Thankbox pricing", url: "https://www.thankbox.com/pricing" },
+      {
+        label: "Thankbox how it works",
+        url: "https://www.thankbox.com/how-it-works",
+      },
+      {
+        label: "Thankbox help on team plans",
+        url: "https://support.thankbox.com/article/145-what-features-does-a-thankbox-for-teams-subscription-provide",
+      },
+    ],
+
+    metaTitle: "CardShare.ai vs Thankbox: A Free Alternative",
+    metaDescription:
+      "Comparing CardShare.ai and Thankbox for group cards. CardShare.ai is free to send, designs the cover and opening note with AI, and includes a Slack app.",
+
+    h1: "CardShare.ai vs Thankbox",
+    lede: "Both let a group sign one card from a single link, with no account needed to sign. Thankbox charges per card and adds a gift collection. CardShare.ai is free to send, and its AI designs the cover and drafts the opening note",
+
+    headToHead: {
+      us: "Free",
+      usNote: "AI-designed cover, opens like a card",
+      them: "$5.99",
+      themNote: "per card, or £4.99 in the UK",
+      themImage: {
+        src: "/compare/thankbox.webp",
+        alt: "The cover of a Thankbox sample birthday card",
+      },
+    },
+
+    groups: [
+      {
+        name: "Price",
+        rows: [
+          {
+            feature: "Price to send a card",
+            us: "Free",
+            usMark: "yes",
+            them: "Classic from $5.99 (£4.99) per card, Premium £8.99; team plans from £19/month billed annually",
+          },
+        ],
+      },
+      {
+        name: "Design and writing",
+        rows: [
+          {
+            feature: "AI-designed cover image",
+            us: "Yes, from one sentence or your photo",
+            usMark: "yes",
+            them: "AI remix of an existing design, on team plans",
+            themMark: "partly",
+          },
+          {
+            feature: "AI message help",
+            us: "Drafts the headline and opening note",
+            usMark: "yes",
+            them: NOT_LISTED,
+            themMark: "no",
+          },
+        ],
+      },
+      {
+        name: "Signing",
+        rows: [
+          {
+            feature: "No account to sign",
+            us: "No account needed",
+            usMark: "yes",
+            them: "No account needed",
+            themMark: "yes",
+          },
+          {
+            feature: "Signers per card",
+            us: "No limit",
+            usMark: "yes",
+            them: "No limit",
+            themMark: "yes",
+          },
+          {
+            feature: "GIFs in messages",
+            us: "Yes",
+            usMark: "yes",
+            them: "Yes, plus photos and voice notes; video on Premium",
+            themMark: "yes",
+          },
+        ],
+      },
+      {
+        name: "Sending",
+        rows: [
+          {
+            feature: "Slack",
+            us: "Slack app included",
+            usMark: "yes",
+            them: "Share the link in Slack or Microsoft Teams",
+            themMark: "partly",
+          },
+          {
+            feature: "Scheduled delivery",
+            us: "Send when you're ready",
+            usMark: "no",
+            them: "Yes, at a date and time you pick",
+            themMark: "yes",
+          },
+          {
+            feature: "Group gift",
+            us: "Not offered",
+            usMark: "no",
+            them: "Gift collection pot; contributors pay a small card fee",
+            themMark: "yes",
+          },
+          {
+            feature: "Card format",
+            us: "A 3D greeting card that opens in the browser",
+            them: "A digital card or message board, with a PDF copy on Premium",
+          },
+        ],
+      },
+    ],
+
+    pickThem: [
+      "You want to collect money for a gift alongside the card",
+      "You want the card delivered automatically at a set date and time",
+      "You want contributors to add video or voice notes",
+    ],
+    verdict:
+      "Both handle the basics well: one link, no account to sign and no limit on signers. CardShare.ai is free to send and designs a cover for each person, with a Slack app for teams. Thankbox is the better pick if you also want to collect money for a gift, schedule delivery, or have people record video and voice messages.",
+    pickUs: [
+      "You want to send a group card without paying per card",
+      "You want a cover designed for this person and occasion",
+      "You want help writing the opening note",
+      "Your team lives in Slack and you'd like to start cards from there",
+    ],
+
+    faqs: [
+      {
+        q: "Is there a free alternative to Thankbox?",
+        a: "Yes. CardShare.ai lets you design a group card, collect signatures from one link, and send it for free. Signers don't need an account.",
+      },
+      {
+        q: "How much does Thankbox cost?",
+        a: "As of October 2026, a Classic Thankbox is $5.99 (£4.99 in the UK) and a Premium Thankbox is £8.99, with team plans from £19/month billed annually. Creating one is free; you pay when you send it. CardShare.ai is free to send.",
+      },
+      {
+        q: "What's the main difference between CardShare.ai and Thankbox?",
+        a: "Thankbox charges per card and includes a gift collection pot. CardShare.ai is free to send, and its AI designs a cover and drafts an opening note for the specific person and occasion.",
+      },
+      SLACK_FAQ,
+      {
+        q: "Can I collect money for a gift on CardShare.ai?",
+        a: "Not yet. CardShare.ai is just the card. If you want a gift collection in the same place, Thankbox offers one.",
+      },
+    ],
+  },
+
+  groupcards: {
+    slug: "groupcards",
+    lastModified: "2026-10-02",
+    competitor: "GroupCards.io",
+    checkedOn: "October 2026",
+    sources: [
+      { label: "GroupCards.io pricing", url: "https://groupcards.io/pricing" },
+      { label: "GroupCards.io FAQ", url: "https://groupcards.io/faq" },
+      {
+        label: "GroupCards.io automated cards",
+        url: "https://groupcards.io/automated-group-cards",
+      },
+    ],
+
+    metaTitle: "CardShare.ai vs GroupCards.io: A Free Alternative",
+    metaDescription:
+      "Comparing CardShare.ai and GroupCards.io for group cards. CardShare.ai is free to send, designs the cover and opening note with AI, and includes a Slack app.",
+
+    h1: "CardShare.ai vs GroupCards.io",
+    lede: "Both let everyone sign one card from a single link, with no account needed to sign and no limit on signers. GroupCards.io charges per card. CardShare.ai is free to send, and its AI designs the cover and drafts the opening note",
+
+    headToHead: {
+      us: "Free",
+      usNote: "AI-designed cover, opens like a card",
+      them: "£4.79",
+      themNote: "per card, or less in bundles",
+      themImage: {
+        src: "/compare/groupcards.webp",
+        alt: "The cover of a GroupCards.io sample birthday card",
+      },
+    },
+
+    groups: [
+      {
+        name: "Price",
+        rows: [
+          {
+            feature: "Price to send a card",
+            us: "Free",
+            usMark: "yes",
+            them: "£4.79 per card, card bundles that save up to 60%, or a business plan",
+          },
+        ],
+      },
+      {
+        name: "Design and writing",
+        rows: [
+          {
+            feature: "AI-designed cover image",
+            us: "Yes, from one sentence or your photo",
+            usMark: "yes",
+            them: "AI face swap puts your photo into selected designs",
+            themMark: "partly",
+          },
+          {
+            feature: "AI message help",
+            us: "Drafts the headline and opening note",
+            usMark: "yes",
+            them: NOT_LISTED,
+            themMark: "no",
+          },
+        ],
+      },
+      {
+        name: "Signing",
+        rows: [
+          {
+            feature: "No account to sign",
+            us: "No account needed",
+            usMark: "yes",
+            them: "No account needed",
+            themMark: "yes",
+          },
+          {
+            feature: "Signers per card",
+            us: "No limit",
+            usMark: "yes",
+            them: "No limit",
+            themMark: "yes",
+          },
+          {
+            feature: "GIFs in messages",
+            us: "Yes",
+            usMark: "yes",
+            them: "Yes, plus photos and stickers",
+            themMark: "yes",
+          },
+        ],
+      },
+      {
+        name: "Sending",
+        rows: [
+          {
+            feature: "Slack",
+            us: "Slack app included",
+            usMark: "yes",
+            them: "Share the signing link in Slack",
+            themMark: "partly",
+          },
+          {
+            feature: "Scheduled delivery",
+            us: "Send when you're ready",
+            usMark: "no",
+            them: "Yes, on a date you pick",
+            themMark: "yes",
+          },
+          {
+            feature: "Group gift",
+            us: "Not offered",
+            usMark: "no",
+            them: "Gift card collection pot",
+            themMark: "yes",
+          },
+          {
+            feature: "Card format",
+            us: "A 3D greeting card that opens in the browser",
+            them: "A multi-page digital card with a PDF download, or a printed card posted in the UK",
+          },
+        ],
+      },
+    ],
+
+    pickThem: [
+      "You want to collect money for a gift card alongside the card",
+      "You want a printed copy posted to them, or a PDF to keep",
+      "You want birthday and anniversary cards sent automatically across a company",
+    ],
+    verdict:
+      "Both cover the basics: one link, no account to sign and no limit on signers. CardShare.ai is free to send, designs a cover for each person and has a Slack app. GroupCards.io is the better pick if you want a gift collection, scheduled or automated delivery, or a printed card in the post.",
+    pickUs: [
+      "You want to send a group card without paying per card",
+      "You want a cover designed for this person and occasion",
+      "You want help writing the opening note",
+      "Your team lives in Slack and you'd like to start cards from there",
+    ],
+
+    faqs: [
+      {
+        q: "Is there a free alternative to GroupCards.io?",
+        a: "Yes. CardShare.ai lets you design a group card, collect signatures from one link, and send it for free. Signers don't need an account.",
+      },
+      {
+        q: "How much does GroupCards.io cost?",
+        a: "As of October 2026, GroupCards.io charges £4.79 per card, with card bundles that save up to 60% and business plans for teams. CardShare.ai is free to send.",
+      },
+      {
+        q: "What's the main difference between CardShare.ai and GroupCards.io?",
+        a: "GroupCards.io charges per card and offers gift collections, scheduled delivery and printed cards. CardShare.ai is free to send, and its AI designs a cover and drafts an opening note for the specific person and occasion.",
+      },
+      SLACK_FAQ,
+    ],
+  },
 }
 
 export const ALL_COMPARE_SLUGS = Object.keys(COMPARE_CONFIGS)
