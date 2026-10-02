@@ -46,6 +46,7 @@ export default defineConfig([
             "hero-fan-deal",
             "slack-flow-.*",
             "slack-story-.*",
+            "step-progress",
             "demo-float",
             "card-pastel",
             "card-3d-.*",

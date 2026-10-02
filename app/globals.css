@@ -301,8 +301,8 @@
   animation: hero-fan-deal 1.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-/* Slack flow mockup: the composer's caret, the placeholder cover's sheen, and the
-   active step's progress bar */
+/* Slack flow mockup: the composer's caret and the placeholder cover's sheen. Also the
+   progress bar under an auto-advancing step or tab (Slack flow, feature tabs) */
 @keyframes slack-flow-caret {
   50% {
     opacity: 0;
@@ -333,7 +333,7 @@
   animation: slack-flow-sheen 1.4s linear infinite;
 }
 
-@keyframes slack-flow-progress {
+@keyframes step-progress {
   from {
     width: 0;
   }
@@ -342,8 +342,8 @@
   }
 }
 
-.slack-flow-progress {
-  animation: slack-flow-progress linear forwards;
+.step-progress {
+  animation: step-progress linear forwards;
 }
 
 /* Slack storyboard: light sweeping over the cover while it's "generated" */

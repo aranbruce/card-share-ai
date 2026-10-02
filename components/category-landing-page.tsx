@@ -2,16 +2,21 @@ import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
+import { FeatureTabs, type FeatureSketch } from "@/components/feature-tabs"
 import { OccasionCardStage } from "@/components/occasion-card-stage"
 import { SlackStoryboard } from "@/components/slack-storyboard"
 import { StatsLine, TestimonialsSection } from "@/components/social-proof"
 import {
   type CategoryConfig,
+  featureSample,
   occasionTiles,
   slackStoryboardCard,
 } from "@/lib/category-pages"
 import type { StatItem } from "@/lib/social-proof"
 import { testimonialsFor } from "@/lib/testimonials"
+
+/** Every occasion's steps go describe it, everyone signs, then send it. */
+const OCCASION_STEP_SKETCHES: FeatureSketch[] = ["draft", "notes", "deliver"]
 
 function PlusIcon() {
   return (
@@ -129,34 +134,17 @@ export function CategoryLandingPage({
       </section> */}
 
       {/* ===== HOW IT WORKS ===== */}
-      <section id="how" className="border-t border-border">
-        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-            How it works
-          </p>
-          <h2 className="mt-4 max-w-3xl text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
-            {config.howTitle}
-          </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            {config.howSub}
-          </p>
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {config.steps.map((step) => (
-              <div key={step.n}>
-                <div className="font-mono text-sm text-muted-foreground/90">
-                  {step.n}
-                </div>
-                <h3 className="mt-2 text-lg font-semibold tracking-[-0.015em]">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FeatureTabs
+        id="how"
+        eyebrow="How it works"
+        title={config.howTitle}
+        description={config.howSub}
+        sample={featureSample(config)}
+        tabs={config.steps.map((step, i) => ({
+          ...step,
+          sketch: OCCASION_STEP_SKETCHES[i] ?? "deliver",
+        }))}
+      />
 
       <SlackStoryboard card={slackStoryboardCard(config)} />
 

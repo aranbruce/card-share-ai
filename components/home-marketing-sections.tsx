@@ -3,7 +3,9 @@ import { AddToSlackPromo } from "@/components/add-to-slack-promo"
 import { Button } from "@/components/ui/button"
 import { SlackFlowSection } from "@/components/slack-flow"
 import { FaqSection } from "@/components/faq-section"
+import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
 import { StatsLine, TestimonialsSection } from "@/components/social-proof"
+import { featureSample, getCategoryConfig } from "@/lib/category-pages"
 import type { StatItem } from "@/lib/social-proof"
 import { testimonialsFor } from "@/lib/testimonials"
 
@@ -42,20 +44,23 @@ const HOME_FAQS = [
   },
 ]
 
-const FEATURES = [
+const FEATURES: FeatureTab[] = [
   {
     n: "01",
     title: "One link, everyone signs",
+    sketch: "notes",
     desc: "Each person places their note anywhere on the page. Drag, resize, rotate, add a GIF",
   },
   {
     n: "02",
     title: "AI drafts first, you edit",
+    sketch: "draft",
     desc: "Upload a photo or let AI generate the cover. Regenerate any line, any time. The AI has a light touch. Never saccharine",
   },
   {
     n: "03",
     title: "Delivered as one",
+    sketch: "deliver",
     desc: "Every note, every signature, every GIF. All combined into a single, beautiful card",
   },
 ]
@@ -63,31 +68,12 @@ const FEATURES = [
 export function HomeMarketingSections({ stats }: { stats: StatItem[] }) {
   return (
     <>
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-            Built for group cards
-          </p>
-          <h2 className="mt-4 max-w-3xl text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
-            Group cards used to take ten follow-ups. Now it takes one link
-          </h2>
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {FEATURES.map((f) => (
-              <div key={f.n}>
-                <div className="font-mono text-sm text-muted-foreground/90">
-                  {f.n}
-                </div>
-                <h3 className="mt-2 text-lg font-semibold tracking-[-0.015em]">
-                  {f.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {f.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FeatureTabs
+        eyebrow="Built for group cards"
+        title="Group cards used to take ten follow-ups. Now it takes one link"
+        tabs={FEATURES}
+        sample={featureSample(getCategoryConfig("birthday")!)}
+      />
 
       <TestimonialsSection testimonials={testimonialsFor(undefined)} />
 
