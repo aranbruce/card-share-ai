@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button"
 import { SlackFlowSection } from "@/components/slack-flow"
 import { FaqSection } from "@/components/faq-section"
 import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
+import { PhotoTemplatesSection } from "@/components/photo-templates-section"
 import { featureSample, getCategoryConfig } from "@/lib/category-pages"
+import { generalPhotoTemplatesSection } from "@/lib/photo-templates-section"
 
 const HOME_FAQS = [
   {
@@ -26,6 +28,10 @@ const HOME_FAQS = [
   {
     q: "Can I use my own photo?",
     a: "Yes. Upload a photo when you create the card and the AI designs the cover from it. Or describe the card in a sentence and let the AI start from scratch.",
+  },
+  {
+    q: "Can I put a friend or colleague into a funny scene?",
+    a: "Yes. Pick one of the funny photo templates, like being knighted by a corgi or retiring to a desert island, and upload a photo of the person. The AI redraws them into the scene as the star of the cover. We only use the photo to draw the cover and don't keep it.",
   },
   {
     q: "How does the recipient get the card?",
@@ -71,6 +77,8 @@ export function HomeMarketingSections() {
         tabs={FEATURES}
         sample={featureSample(getCategoryConfig("birthday")!)}
       />
+
+      <PhotoTemplatesSection data={generalPhotoTemplatesSection()} />
 
       <section className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">

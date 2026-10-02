@@ -52,11 +52,24 @@ interface CardData {
 
 type Step = "select-type" | "details"
 
-export function CreateCardPageClient() {
+export function CreateCardPageClient({
+  initialOccasion,
+  initialTemplateId,
+}: {
+  /** An occasion linked from a marketing page: start on the cover step with it picked. */
+  initialOccasion?: string
+  /** A template to pick on the cover step (offered for `initialOccasion`). */
+  initialTemplateId?: string
+}) {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
-  const [step, setStep] = useState<Step>("select-type")
-  const [selectedType, setSelectedType] = useState(DEFAULT_CARD_OCCASION)
+  const initialTemplate = CARD_TEMPLATES.find((t) => t.id === initialTemplateId)
+  const [step, setStep] = useState<Step>(
+    initialOccasion ? "details" : "select-type",
+  )
+  const [selectedType, setSelectedType] = useState(
+    initialOccasion ?? DEFAULT_CARD_OCCASION,
+  )
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")
   const [cardData, setCardData] = useState<CardData | null>(null)
@@ -87,7 +100,7 @@ export function CreateCardPageClient() {
   const [cardTone, setCardTone] = useState<string | undefined>()
   const [cardUserContext, setCardUserContext] = useState<string | undefined>()
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(
-    null,
+    initialTemplate?.id ?? null,
   )
 
   // Check if user is logged in
@@ -413,6 +426,7 @@ export function CreateCardPageClient() {
         <CardDetailsForm
           hidden={step === "select-type"}
           cardType={selectedType}
+          initialTemplateId={initialTemplate?.id}
           onSubmit={handleDetailsSubmit}
           isLoading={isGeneratingHeadline || isGeneratingImage}
           onBack={handleBackToType}

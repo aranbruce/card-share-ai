@@ -19,7 +19,7 @@ export function buildLlmsTxt(): string {
     "",
     `> ${DEFAULT_DESCRIPTION}`,
     "",
-    "How it works: describe who the card is for (or upload a photo) and AI designs the cover and drafts the opening message. Share one link and everyone signs from their own phone or laptop, with no account or app needed to sign. Signers can add a GIF. Send the finished card by email or link; it opens as a 3D greeting card in any browser. Designing, signing and sending a card is free.",
+    "How it works: describe who the card is for (or upload a photo) and AI designs the cover and drafts the opening message. Share one link and everyone signs from their own phone or laptop, with no account or app needed to sign. Funny photo templates put the person from an uploaded photo into a scene, like being knighted by a corgi or retiring to a desert island. Signers can add a GIF. Send the finished card by email or link; it opens as a 3D greeting card in any browser. Designing, signing and sending a card is free.",
     "",
     "## Main pages",
     "",

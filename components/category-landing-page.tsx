@@ -5,12 +5,14 @@ import { CardTileRow } from "@/components/card-tile-row"
 import { FeatureTabs, type FeatureSketch } from "@/components/feature-tabs"
 import { OccasionCardStage } from "@/components/occasion-card-stage"
 import { SlackStoryboard } from "@/components/slack-storyboard"
+import { PhotoTemplatesSection } from "@/components/photo-templates-section"
 import {
   type CategoryConfig,
   featureSample,
   occasionTiles,
   slackStoryboardCard,
 } from "@/lib/category-pages"
+import { occasionPhotoTemplatesSection } from "@/lib/photo-templates-section"
 
 /** Every occasion's steps go describe it, everyone signs, then send it. */
 const OCCASION_STEP_SKETCHES: FeatureSketch[] = ["draft", "notes", "deliver"]
@@ -32,6 +34,7 @@ function PlusIcon() {
 }
 
 export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
+  const templatesSection = occasionPhotoTemplatesSection(config.slug)
   return (
     <main>
       {/* ===== HERO ===== */}
@@ -79,49 +82,8 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
         </div>
       </section>
 
-      {/* ===== GALLERY ===== */}
-      {/* TODO: Add gallery */}
-      {/* <section id="examples" className="border-t border-border">
-        <div className="mx-auto max-w-[1440px] px-6 py-20 md:px-15">
-          <div className="max-w-3xl">
-            <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-              {config.galleryEyebrow}
-            </p>
-            <h2 className="mt-4 text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
-              {config.galleryTitle}
-            </h2>
-            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-              {config.gallerySub}
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-2 gap-6 md:grid-cols-4">
-            {config.gallery.map((item, i) => (
-              <article key={i}>
-                <div className="relative aspect-4/5 overflow-hidden rounded-2xl bg-card">
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: item.gradient }}
-                  />
-                  <span className="absolute top-3 left-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-medium">
-                    {item.pill}
-                  </span>
-                  <div className="absolute inset-x-3 bottom-3 flex items-center justify-between rounded-xl bg-white/90 px-3 py-2 backdrop-blur-sm">
-                    <span className="text-xs font-medium">{item.forText}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {item.sigCount}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-3 text-sm font-medium">{item.title}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {item.subtitle}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section> */}
+      {/* ===== PHOTO TEMPLATES ===== */}
+      {templatesSection && <PhotoTemplatesSection data={templatesSection} />}
 
       {/* ===== HOW IT WORKS ===== */}
       <FeatureTabs

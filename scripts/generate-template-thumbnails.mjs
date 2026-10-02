@@ -42,6 +42,24 @@ const PEOPLE = {
   "old-master": "a Latina woman in her 40s with dark wavy hair",
   "action-hero": "an East Asian woman in her 60s with short grey hair",
   "nature-doc": "a white man in his 30s with a ginger beard",
+  "office-chair-sunset": "a Black woman in her 40s with braids",
+  "tie-escape": "a white man in his 50s with a salt-and-pepper beard",
+  "note-balloon": "an East Asian woman in her 20s with a short bob",
+  "island-hammock": "a South Asian man in his 60s with grey hair",
+  "cruise-captain": "a white woman in her 60s with a blonde bob",
+  "golf-getaway": "a Black man in his 60s with a white goatee",
+  "romcom-poster": "a Latina woman in her 30s with long curly hair",
+  "cake-summit": "a white man in his 30s with a buzz cut",
+  "nappy-juggler": "a Middle Eastern man in his 30s with a short beard",
+  "pram-rally": "a white woman in her 30s with a messy ponytail",
+  "rocket-launch": "a South Asian woman in her 30s with a long plait",
+  "corner-office-throne": "an East Asian man in his 50s with neat grey hair",
+  "mortarboard-space": "a Black woman in her 20s with an afro",
+  "first-day-school": "a white man in his 40s with glasses and thinning hair",
+  "album-cover": "a Latino man in his 50s with slicked-back hair",
+  "film-star":
+    "a Middle Eastern woman in her 40s with shoulder-length dark hair",
+  "dino-ride": "a white woman in her 20s with freckles and a pixie cut",
 }
 
 const RULES = `Create a full-bleed image for a greeting card cover, in the style the scene describes.
