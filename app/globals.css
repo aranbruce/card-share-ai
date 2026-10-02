@@ -301,7 +301,76 @@
   animation: hero-fan-deal 1.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
+/* Slack flow mockup: the composer's caret, the placeholder cover's sheen, and the
+   active step's progress bar */
+@keyframes slack-flow-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.slack-flow-caret {
+  animation: slack-flow-caret 1s steps(1) infinite;
+}
+
+@keyframes slack-flow-sheen {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.slack-flow-sheen {
+  background: linear-gradient(
+    90deg,
+    var(--secondary) 25%,
+    var(--background) 50%,
+    var(--secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: slack-flow-sheen 1.4s linear infinite;
+}
+
+@keyframes slack-flow-progress {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.slack-flow-progress {
+  animation: slack-flow-progress linear forwards;
+}
+
+/* Slack storyboard: light sweeping over the cover while it's "generated" */
+@keyframes slack-story-sheen {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.slack-story-sheen {
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  background-size: 250% 100%;
+  animation: slack-story-sheen 2.4s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .slack-story-sheen,
+  .slack-flow-caret,
+  .slack-flow-sheen,
   .card-3d-float,
   .card-3d-float-shadow,
   .card-3d-peek,

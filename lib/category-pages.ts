@@ -2276,3 +2276,14 @@ export function occasionTiles() {
 export function getCategoryConfig(slug: string): CategoryConfig | undefined {
   return CATEGORY_CONFIGS[slug]
 }
+
+/** The card a page's Slack storyboard makes: the occasion's sample card. */
+export function slackStoryboardCard(config: CategoryConfig) {
+  return {
+    occasion: config.label.replace(/ cards$/, ""),
+    recipient: config.sampleRecipient,
+    title: config.cardTitle,
+    coverImage: config.coverImage,
+    coverHue: config.coverHue,
+  }
+}

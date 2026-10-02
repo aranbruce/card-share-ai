@@ -4,7 +4,13 @@ import { CardTileRow } from "@/components/card-tile-row"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/json-ld"
-import { getBrowseCategories, occasionTiles } from "@/lib/category-pages"
+import { SlackStoryboard } from "@/components/slack-storyboard"
+import {
+  getBrowseCategories,
+  getCategoryConfig,
+  occasionTiles,
+  slackStoryboardCard,
+} from "@/lib/category-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
 
@@ -274,6 +280,10 @@ export default function CardsPage() {
         </div>
       </section>
 
+      <SlackStoryboard
+        card={slackStoryboardCard(getCategoryConfig("birthday")!)}
+      />
+
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
@@ -288,7 +298,7 @@ export default function CardsPage() {
               <details key={i} className="group border-b border-border py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium tracking-[-0.015em]">
                   {faq.q}
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border transition-transform group-open:rotate-45 group-open:border-foreground group-open:bg-foreground group-open:text-background">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border bg-card transition-transform group-open:rotate-45">
                     <PlusIcon />
                   </span>
                 </summary>

@@ -3,7 +3,12 @@ import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
 import { OccasionCardStage } from "@/components/occasion-card-stage"
-import { type CategoryConfig, occasionTiles } from "@/lib/category-pages"
+import { SlackStoryboard } from "@/components/slack-storyboard"
+import {
+  type CategoryConfig,
+  occasionTiles,
+  slackStoryboardCard,
+} from "@/lib/category-pages"
 
 function PlusIcon() {
   return (
@@ -143,6 +148,8 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
         </div>
       </section>
 
+      <SlackStoryboard card={slackStoryboardCard(config)} />
+
       {/* ===== USE CASES ===== */}
       <section className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
@@ -181,7 +188,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               <details key={i} className="group border-b border-border py-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium tracking-[-0.015em]">
                   {faq.q}
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border transition-transform group-open:rotate-45 group-open:border-foreground group-open:bg-foreground group-open:text-background">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border bg-card transition-transform group-open:rotate-45">
                     <PlusIcon />
                   </span>
                 </summary>
