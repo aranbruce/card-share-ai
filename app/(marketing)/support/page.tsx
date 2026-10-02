@@ -104,8 +104,8 @@ const SLACK_FAQS = [
     answer: (
       <>
         <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code> opens
-        a form to create a new card — pick the occasion, recipient, and tone,
-        and AI generates a personalised headline and cover image.{" "}
+        a form to create a new card. Pick the occasion, recipient and tone, and
+        AI writes a personalised headline and draws a cover image.{" "}
         <code className="rounded bg-muted px-1 py-0.5">/cardshareai-link</code>{" "}
         connects your Slack user to your CardShare.ai account so cards you
         create in Slack show up in your dashboard.
@@ -121,8 +121,8 @@ const SLACK_FAQS = [
         time you use{" "}
         <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code>,
         we&apos;ll send you a private link to connect (or create) your account.
-        The link expires after 15 minutes — just run the command again if it
-        lapses.
+        The link expires after 15 minutes. If it does, run the command again for
+        a new one.
       </>
     ),
   },
@@ -132,9 +132,9 @@ const SLACK_FAQS = [
       <>
         First, confirm the app is still installed in your workspace (ask a
         workspace admin, or check Slack&apos;s &quot;Apps&quot; section). If it
-        is, try running the command again — occasional timeouts can happen. If
-        the problem persists, email us with your workspace name and roughly when
-        it happened and we&apos;ll investigate.
+        is, try the command again, as it can occasionally time out. If it still
+        doesn&apos;t respond, email us your workspace name and roughly when it
+        happened, and we&apos;ll look into it.
       </>
     ),
   },
@@ -206,7 +206,8 @@ export default function SupportPage() {
       <h1 className="text-3xl font-semibold tracking-[-0.03em]">Support</h1>
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
         Need a hand with CardShare.ai in ChatGPT, Claude or Slack? Start with
-        the common questions below, or get in touch — we&apos;re happy to help.
+        the common questions below. If you can&apos;t find an answer, get in
+        touch and we&apos;ll help.
       </p>
 
       <section className="mt-8 rounded-lg border border-border bg-muted/30 p-6">
