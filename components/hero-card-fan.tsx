@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react"
-import { getImageProps } from "next/image"
-import { BLANK_PIXEL } from "@/lib/blank-pixel"
+import Image from "next/image"
 
 /**
  * Cover cards fanned out behind the homepage browser mockup. The stage is a size
@@ -11,6 +10,9 @@ import { BLANK_PIXEL } from "@/lib/blank-pixel"
  *
  * Positions are card centres. `dx` / `dy` point back to the middle of the browser,
  * which is where each card is dealt from on load.
+ *
+ * Below md the browser is a short glimpse, so the cards drop by `--fan-shift` and the
+ * browser starts lower, leaving more of the fan in view above it.
  */
 const FAN_CARDS = [
   {
@@ -45,30 +47,17 @@ const FAN_CARDS = [
   },
 ] as const
 
-/** Matches Tailwind's `md`, where the fan (and the browser mockup) appear */
-const DESKTOP_MEDIA = "(min-width: 48rem)"
-
-/**
- * The covers sit above the fold on desktop, so they load eagerly there instead of
- * popping in mid-deal. Below md the `<source>` doesn't match and the fallback is a
- * blank inline pixel, so phones never download them.
- */
+/** The covers sit near the top of the page, so they load eagerly instead of popping in mid-deal. */
 function FanCover({ src }: { src: string }) {
-  const {
-    props: { srcSet, sizes, ...imgProps },
-  } = getImageProps({
-    src,
-    alt: "",
-    fill: true,
-    sizes: "(min-width: 1120px) 440px, 44vw",
-    loading: "eager",
-  })
-
   return (
-    <picture>
-      <source media={DESKTOP_MEDIA} srcSet={srcSet} sizes={sizes} />
-      <img {...imgProps} src={BLANK_PIXEL} alt="" className="object-cover" />
-    </picture>
+    <Image
+      src={src}
+      alt=""
+      fill
+      sizes="(min-width: 1120px) 440px, 44vw"
+      loading="eager"
+      className="object-cover"
+    />
   )
 }
 
@@ -105,7 +94,6 @@ function useProximityTilt() {
         let rx = 0
         let ry = 0
         let sc = 1
-        // Zero-size while the fan is hidden below md
         if (r && r.width > 0) {
           const dx = pointer.x - (r.left + r.width / 2)
           const dy = pointer.y - (r.top + r.height / 2)
@@ -163,7 +151,7 @@ export function HeroCardFan({ children }: { children: ReactNode }) {
 
   return (
     <div className="@container relative">
-      <div aria-hidden className="hidden md:block">
+      <div aria-hidden className="[--fan-shift:20cqw] md:[--fan-shift:0cqw]">
         {FAN_CARDS.map((card, i) => (
           <div
             key={card.src}
@@ -171,7 +159,7 @@ export function HeroCardFan({ children }: { children: ReactNode }) {
             style={
               {
                 left: `${card.left}cqw`,
-                top: `${card.top}cqw`,
+                top: `calc(${card.top}cqw + var(--fan-shift))`,
                 width: `${card.width}cqw`,
                 transform: `translate(-50%, -50%) rotate(${card.rot}deg)`,
                 animationDelay: `${card.delay}ms`,
@@ -194,7 +182,7 @@ export function HeroCardFan({ children }: { children: ReactNode }) {
           </div>
         ))}
       </div>
-      <div className="relative">{children}</div>
+      <div className="relative max-md:pt-[40cqw]">{children}</div>
     </div>
   )
 }

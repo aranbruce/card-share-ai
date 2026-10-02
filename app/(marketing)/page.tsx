@@ -50,7 +50,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="mx-auto mt-16 max-w-250 md:mt-47.5">
+          <div className="mx-auto mt-10 max-w-250 md:mt-47.5">
             <HeroCardFan>
               <HomeDemoPanel />
             </HeroCardFan>
@@ -59,7 +59,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== OCCASIONS ===== */}
-      <section id="occasions" className="border-t border-border">
+      <section id="occasions" className="border-border md:border-t">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
           <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
             Browse occasions
