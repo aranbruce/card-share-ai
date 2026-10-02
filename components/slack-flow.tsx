@@ -390,7 +390,7 @@ function SlackFlowSteps({
                 // restarts with it (keyed on `playing`) rather than resuming
                 <span
                   key={`${run}-${playing}`}
-                  className="slack-flow-progress absolute bottom-0 left-0 h-0.5 bg-brand"
+                  className="step-progress absolute bottom-0 left-0 h-0.5 bg-brand"
                   style={{
                     animationDuration: `${STEP_MS}ms`,
                     animationPlayState: playing ? "running" : "paused",

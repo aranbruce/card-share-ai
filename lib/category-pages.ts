@@ -2287,3 +2287,15 @@ export function slackStoryboardCard(config: CategoryConfig) {
     coverHue: config.coverHue,
   }
 }
+
+/** The sample card the "How it works" sketches are drawn from: the occasion's own card. */
+export function featureSample(config: CategoryConfig) {
+  return {
+    id: config.slug,
+    headline: config.cardTitle,
+    coverImage: config.coverImage,
+    coverHue: config.coverHue,
+    message: config.sampleMessage,
+    notes: config.sampleNotes,
+  }
+}
