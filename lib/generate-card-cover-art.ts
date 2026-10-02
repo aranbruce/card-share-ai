@@ -15,6 +15,8 @@ export type CardCoverArtContext = {
   leadingText?: string
   source?: Uint8Array
   previous?: Uint8Array
+  /** Funny photo template layout reference; `source` is then the person photo. */
+  layout?: Uint8Array
 }
 
 function generatedCoverImageToDataUrl(file: GeneratedFile): string {
@@ -32,6 +34,7 @@ function buildMultimodalMessages(ctx: CardCoverArtContext): ModelMessage[] {
   return buildMultimodalUserMessage(ctx.userScene, {
     previous: ctx.previous,
     attached: ctx.source,
+    layout: ctx.layout,
     leadingText: ctx.leadingText,
   })
 }

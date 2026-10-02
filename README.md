@@ -263,10 +263,6 @@ lib/
 - Collecting: Accepting messages from others
 - Sent: Locked, ready for recipient
 
-## Future Enhancements
+## Roadmap
 
-- PDF download with all messages
-- Card sharing on social media
-- Premium templates and designs
-- Message scheduling
-- Analytics and delivery tracking
+See [ROADMAP.md](ROADMAP.md).

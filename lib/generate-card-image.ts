@@ -1,6 +1,7 @@
 import {
   assembleImageLeadingText,
   assembleImageUserPrompt,
+  assembleTemplateImagePrompt,
 } from "@/lib/generate-image-prompt"
 import { resolvePromptFields } from "@/lib/card-ai-prompt"
 import { generateCardCoverArt } from "@/lib/generate-card-cover-art"
@@ -39,6 +40,19 @@ export function buildCardCoverArtContext(
     leadingText: assembleImageLeadingText(hasPrevious, hasAttached),
     source: params.source,
     previous: params.previous,
+  }
+}
+
+/** Context for a funny photo template cover: the scene, its layout reference and the person's photo. */
+export function buildTemplateCoverArtContext(
+  scene: string,
+  photo: Uint8Array,
+  layout?: Uint8Array,
+) {
+  return {
+    userScene: assembleTemplateImagePrompt(scene, Boolean(layout)),
+    source: photo,
+    layout,
   }
 }
 

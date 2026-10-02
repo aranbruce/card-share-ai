@@ -11,6 +11,8 @@ const nextConfig = {
   // Occasion preview images are re-rendered on the server (weekly) from the cover art.
   outputFileTracingIncludes: {
     "/og/occasion/[slug]": ["./public/occasions/*.webp"],
+    // Funny photo template layout references, read by lib/card-template-scenes.ts
+    "/api/generate-image": ["./assets/template-layouts/*.webp"],
     // Inlined into the MCP Apps card view (lib/mcp/card-widget.ts)
     "/mcp": [
       "./node_modules/@modelcontextprotocol/ext-apps/dist/src/app-with-deps.js",

@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils"
 /**
  * Loading and placeholder state in the style of the 3D card: a card of card stock standing at an
  * angle, floating gently. While generating, its cover shimmers and eases open now and then; the
- * placeholder variant is a still card with a prompt on the cover.
+ * placeholder variant is a still card with a prompt on the cover, and the preview variant shows
+ * an example cover (the occasion's or a template's) with nothing over it.
  *
  * CSS 3D rather than Three.js so it costs nothing to show and never competes with the real card
  * for a WebGL context.
@@ -17,7 +18,7 @@ export function CardLoading3D({
   label,
   className,
 }: {
-  variant?: "generating" | "placeholder"
+  variant?: "generating" | "placeholder" | "preview"
   /** Cover gradient hue (card type colour). */
   hue?: number
   /** Existing cover to show under the shimmer (e.g. while regenerating). */
@@ -27,6 +28,7 @@ export function CardLoading3D({
   className?: string
 }) {
   const generating = variant === "generating"
+  const preview = variant === "preview"
   const cover: CSSProperties = {
     background: `linear-gradient(135deg, oklch(0.9 0.08 ${hue}) 0%, oklch(0.76 0.13 ${hue - 15}) 100%)`,
   }
@@ -83,12 +85,17 @@ export function CardLoading3D({
             <img
               src={imageUrl}
               alt=""
-              className="absolute inset-0 size-full object-cover opacity-70"
+              className={cn(
+                "absolute inset-0 size-full object-cover",
+                !preview && "opacity-70",
+              )}
             />
           ) : (
             <div className="absolute inset-0" style={cover} />
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/35 via-transparent to-transparent" />
+          {!preview && (
+            <div className="absolute inset-0 bg-linear-to-t from-black/35 via-transparent to-transparent" />
+          )}
           {generating ? (
             <div className="ai-refine-shimmer-sweep-cover absolute inset-0" />
           ) : null}
@@ -96,25 +103,35 @@ export function CardLoading3D({
           <div className="absolute inset-0 bg-linear-to-br from-white/30 via-transparent to-transparent" />
           {/* Crease along the spine */}
           <div className="absolute inset-y-0 left-0 w-[6%] bg-linear-to-r from-black/15 to-transparent" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
-            <div
-              className={cn(
-                "flex size-11 items-center justify-center rounded-xl shadow-sm",
-                generating && "animate-pulse",
-              )}
-              style={{ background: `oklch(0.68 0.14 ${hue})` }}
-            >
-              <Sparkles className="size-5 stroke-white" />
+          {preview ? (
+            !imageUrl && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex size-14 items-center justify-center rounded-full bg-white/90 text-brand shadow-sm">
+                  <Sparkles className="size-6" />
+                </div>
+              </div>
+            )
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
+              <div
+                className={cn(
+                  "flex size-11 items-center justify-center rounded-xl shadow-sm",
+                  generating && "animate-pulse",
+                )}
+                style={{ background: `oklch(0.68 0.14 ${hue})` }}
+              >
+                <Sparkles className="size-5 stroke-white" />
+              </div>
+              <p
+                className="text-sm leading-relaxed font-medium"
+                style={{
+                  color: imageUrl ? "white" : `oklch(0.28 0.07 ${hue})`,
+                }}
+              >
+                {text}
+              </p>
             </div>
-            <p
-              className="text-sm leading-relaxed font-medium"
-              style={{
-                color: imageUrl ? "white" : `oklch(0.28 0.07 ${hue})`,
-              }}
-            >
-              {text}
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>
