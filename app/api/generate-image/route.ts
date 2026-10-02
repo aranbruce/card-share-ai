@@ -1,7 +1,11 @@
 import { after, NextRequest, NextResponse } from "next/server"
 import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { generateCardCoverArt } from "@/lib/generate-card-cover-art"
-import { buildCardCoverArtContext } from "@/lib/generate-card-image"
+import { getTemplateLayout, getTemplateScene } from "@/lib/card-template-scenes"
+import {
+  buildCardCoverArtContext,
+  buildTemplateCoverArtContext,
+} from "@/lib/generate-card-image"
 import { getDistinctIdFromRequest } from "@/lib/posthog-distinct-id-from-request"
 import { resolveSourceImage } from "@/lib/resolve-image-for-model"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
@@ -28,6 +32,7 @@ export async function POST(request: NextRequest) {
       recipientName?: string
       tone?: string
       userContext?: string
+      templateId?: string
       posthogDistinctId?: unknown
     }
     const {
@@ -39,6 +44,7 @@ export async function POST(request: NextRequest) {
       recipientName,
       tone,
       userContext,
+      templateId,
     } = body
     const distinctId = getDistinctIdFromRequest(request, body)
 
@@ -81,9 +87,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const [sourceResult, previousResult] = await Promise.all([
+    const scene =
+      typeof templateId === "string" && templateId
+        ? getTemplateScene(templateId)
+        : undefined
+    if (templateId && !scene) {
+      return NextResponse.json(
+        { error: "Unknown template" },
+        { status: 400, headers: rate.headers },
+      )
+    }
+    if (scene && !sourceRaw) {
+      return NextResponse.json(
+        { error: "Add a photo to use this template" },
+        { status: 400, headers: rate.headers },
+      )
+    }
+
+    const [sourceResult, previousResult, layout] = await Promise.all([
       sourceRaw ? resolveSourceImage(sourceRaw) : Promise.resolve(null),
       previousRaw ? resolveSourceImage(previousRaw) : Promise.resolve(null),
+      scene && templateId ? getTemplateLayout(templateId) : undefined,
     ])
 
     if (sourceResult && !sourceResult.ok) {
@@ -107,17 +131,22 @@ export async function POST(request: NextRequest) {
       ? previousResult.bytes
       : undefined
 
-    const ctx = buildCardCoverArtContext({
-      cardType: trimmedCardType,
-      recipientName:
-        typeof recipientName === "string" ? recipientName.trim() : undefined,
-      tone: resolvedTone,
-      userContext: resolvedContext,
-      userPrompt: trimmedPrompt,
-      coverHeadline: headline,
-      source,
-      previous,
-    })
+    const ctx =
+      scene && source
+        ? buildTemplateCoverArtContext(scene, source, layout)
+        : buildCardCoverArtContext({
+            cardType: trimmedCardType,
+            recipientName:
+              typeof recipientName === "string"
+                ? recipientName.trim()
+                : undefined,
+            tone: resolvedTone,
+            userContext: resolvedContext,
+            userPrompt: trimmedPrompt,
+            coverHeadline: headline,
+            source,
+            previous,
+          })
 
     // Registered before the call so spans are flushed on success and failure.
     after(flushPostHogAiSpans)

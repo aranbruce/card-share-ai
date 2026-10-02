@@ -18,6 +18,8 @@ export type ImagePromptFlags = {
 export type MultimodalImageOptions = {
   previous?: Uint8Array
   attached?: Uint8Array
+  /** Template layout reference, sent before the attached person photo. */
+  layout?: Uint8Array
   /** Task instruction prepended before image parts (assembled by API routes). */
   leadingText?: string
 }
@@ -99,10 +101,16 @@ export function buildMultimodalUserMessage(
   text: string,
   options: MultimodalImageOptions = {},
 ): ModelMessage[] {
-  const { previous, attached, leadingText } = options
+  const { previous, attached, layout, leadingText } = options
   const parts: Array<TextPart | ImagePart> = []
 
-  if (previous && attached) {
+  if (layout && attached) {
+    parts.push({ type: "text", text: "Layout reference:" })
+    parts.push({ type: "image", image: layout })
+    parts.push({ type: "text", text: "Person photo:" })
+    parts.push({ type: "image", image: attached })
+    parts.push({ type: "text", text })
+  } else if (previous && attached) {
     if (leadingText) {
       parts.push({ type: "text", text: leadingText })
     }

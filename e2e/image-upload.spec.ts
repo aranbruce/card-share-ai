@@ -9,17 +9,24 @@ const TINY_GIF_BASE64 =
 const TINY_GIF_BUFFER = Buffer.from(TINY_GIF_BASE64, "base64")
 const STUB_IMAGE_URL = `data:image/gif;base64,${TINY_GIF_BASE64}`
 
-async function goToDetailsStep(page: import("@playwright/test").Page) {
+async function goToCoverStep(page: import("@playwright/test").Page) {
   await page.goto("/create")
-  await page.getByRole("button", { name: /Birthday/i }).click()
+  await page.getByRole("radio", { name: /Birthday/i }).click()
+  await page.getByRole("button", { name: "Continue" }).click()
+  await expect(page.getByRole("heading", { name: /the cover/i })).toBeVisible()
+}
+
+async function fillDetailsAndGenerate(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "Continue" }).click()
   await expect(page.getByRole("heading", { name: /Tell us/i })).toBeVisible()
   await page.getByRole("textbox", { name: "To" }).fill("Test Recipient")
   await page.getByRole("textbox", { name: "From" }).fill("Test Sender")
+  await page.getByRole("button", { name: /Generate card/i }).click()
 }
 
 test.describe("image upload — reference photo", () => {
   test("shows preview after attaching a photo", async ({ page }) => {
-    await goToDetailsStep(page)
+    await goToCoverStep(page)
 
     await page.locator('input[type="file"]').setInputFiles({
       name: "photo.gif",
@@ -55,7 +62,7 @@ test.describe("image upload — reference photo", () => {
       })
     })
 
-    await goToDetailsStep(page)
+    await goToCoverStep(page)
 
     await page.locator('input[type="file"]').setInputFiles({
       name: "photo.gif",
@@ -66,7 +73,7 @@ test.describe("image upload — reference photo", () => {
     // Wait for the async canvas encoding to complete before submitting
     await expect(page.getByAltText("Reference")).toBeVisible()
 
-    await page.getByRole("button", { name: /Generate card/i }).click()
+    await fillDetailsAndGenerate(page)
     await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled({
       timeout: 15_000,
     })
@@ -77,7 +84,7 @@ test.describe("image upload — reference photo", () => {
   test("shows error and no preview when file exceeds 20 MB", async ({
     page,
   }) => {
-    await goToDetailsStep(page)
+    await goToCoverStep(page)
 
     await page.locator('input[type="file"]').setInputFiles({
       name: "big.jpg",
@@ -112,8 +119,8 @@ test.describe("image upload — reference photo", () => {
       })
     })
 
-    await goToDetailsStep(page)
-    await page.getByRole("button", { name: /Generate card/i }).click()
+    await goToCoverStep(page)
+    await fillDetailsAndGenerate(page)
     await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled({
       timeout: 15_000,
     })

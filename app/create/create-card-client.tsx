@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { CardTypeSelector } from "@/components/card-type-selector"
+import { OccasionStep } from "@/components/occasion-step"
 import { CardDetailsForm } from "@/components/card-details-form"
 import { AuthGateModal } from "@/components/auth-gate-modal"
 import { Card3D } from "@/components/card-3d"
@@ -15,9 +15,6 @@ import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
-import { Logo } from "@/components/logo"
-import { ArrowLeft } from "lucide-react"
 import {
   hasPendingCard,
   savePendingCard,
@@ -35,15 +32,17 @@ import {
   regenerateCardImage,
 } from "@/lib/regenerate-card-client"
 import posthog from "posthog-js"
+import { CARD_TEMPLATES } from "@/lib/card-templates"
+import { cn } from "@/lib/utils"
+import {
+  CARD_OCCASIONS,
+  DEFAULT_CARD_OCCASION,
+  getCardOccasion,
+} from "@/lib/card-occasions"
 
-const TYPE_HUE: Record<string, number> = {
-  birthday: 18,
-  thank_you: 40,
-  congratulations: 70,
-  holiday: 150,
-  sympathy: 310,
-  custom: 230,
-}
+const TYPE_HUE: Record<string, number> = Object.fromEntries(
+  CARD_OCCASIONS.map((o) => [o.id, o.hue]),
+)
 
 interface CardData {
   cardType: string
@@ -57,7 +56,7 @@ export function CreateCardPageClient() {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
   const [step, setStep] = useState<Step>("select-type")
-  const [selectedType, setSelectedType] = useState("")
+  const [selectedType, setSelectedType] = useState(DEFAULT_CARD_OCCASION)
   const [senderName, setSenderName] = useState("")
   const [recipientName, setRecipientName] = useState("")
   const [cardData, setCardData] = useState<CardData | null>(null)
@@ -75,6 +74,11 @@ export function CreateCardPageClient() {
   const editImageFileRef = useRef<HTMLInputElement>(null)
   const editImageRequestRef = useRef(0)
   const persistPendingAttemptedRef = useRef(false)
+  const [showMobilePreview, setShowMobilePreview] = useState(false)
+  // The template the current card was generated with, to spot when the picked one changes.
+  const [generatedTemplateId, setGeneratedTemplateId] = useState<string | null>(
+    null,
+  )
   const [isReadingImageFile, setIsReadingImageFile] = useState(false)
   const [error, setError] = useState("")
   const [editImageError, setEditImageError] = useState("")
@@ -82,6 +86,9 @@ export function CreateCardPageClient() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [cardTone, setCardTone] = useState<string | undefined>()
   const [cardUserContext, setCardUserContext] = useState<string | undefined>()
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(
+    null,
+  )
 
   // Check if user is logged in
   useEffect(() => {
@@ -128,10 +135,9 @@ export function CreateCardPageClient() {
     }
   }, [isGuest, router, supabase])
 
-  const handleCardTypeSelect = (type: string) => {
-    setSelectedType(type)
+  const handleCardTypeContinue = () => {
     setStep("details")
-    posthog.capture("card_type_selected", { card_type: type })
+    posthog.capture("card_type_selected", { card_type: selectedType })
   }
 
   const handleDetailsSubmit = async (details: {
@@ -141,11 +147,13 @@ export function CreateCardPageClient() {
     tone?: string
     userContext?: string
     attachedImageUrl?: string
+    templateId?: string
   }) => {
     setError("")
     setSenderName(details.senderName)
     setRecipientName(details.recipientName)
     setCardTone(details.tone)
+    setGeneratedTemplateId(details.templateId ?? null)
     setCardUserContext(details.userContext)
     setCardData({
       cardType: details.cardType,
@@ -154,6 +162,9 @@ export function CreateCardPageClient() {
     })
     setIsGeneratingHeadline(true)
     setIsGeneratingImage(true)
+    // On phones the card replaces the form until they choose to edit the details.
+    setShowMobilePreview(true)
+    window.scrollTo({ top: 0 })
 
     try {
       const { text: headline } = await apiPost<{ text?: string }>(
@@ -185,6 +196,7 @@ export function CreateCardPageClient() {
           ...(details.attachedImageUrl
             ? { attachedImageUrl: details.attachedImageUrl }
             : {}),
+          ...(details.templateId ? { templateId: details.templateId } : {}),
         },
       )
 
@@ -195,6 +207,7 @@ export function CreateCardPageClient() {
         card_type: details.cardType,
         has_custom_message: Boolean(details.userContext),
         has_attached_image: Boolean(details.attachedImageUrl),
+        template_id: details.templateId ?? null,
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred"
@@ -340,8 +353,26 @@ export function CreateCardPageClient() {
 
   const handleBackToType = () => {
     setStep("select-type")
-    setSelectedType("")
+    setShowMobilePreview(false)
   }
+
+  const selectedOccasion = getCardOccasion(selectedType)
+  // Picking a different template after generating makes the card out of date: the preview
+  // goes back to the example cover and the form offers only Regenerate.
+  const isStale = !!cardData && previewTemplateId !== generatedTemplateId
+  const mobilePreview =
+    step === "details" && !!cardData && !isStale && showMobilePreview
+  const previewTemplate = CARD_TEMPLATES.find((t) => t.id === previewTemplateId)
+  // The preview card follows the steps: the occasion's cover, then the chosen template.
+  const showTemplate = step === "details" && previewTemplate
+  const exampleCover = showTemplate
+    ? previewTemplate.thumbnail
+    : (selectedOccasion?.cover ?? null)
+  const exampleCaption = showTemplate
+    ? `${previewTemplate.name}. Your photo goes where the oval is, and the whole scene is redrawn around them.`
+    : selectedOccasion?.cover
+      ? `Example ${selectedOccasion.label} cover. Yours is generated from your details.`
+      : "We\u2019ll design a cover from the details you add."
 
   // The flat cover editor: shown while generating (for the shimmer), without WebGL, and
   // embedded over the 3D cover when it is clicked for editing.
@@ -366,55 +397,74 @@ export function CreateCardPageClient() {
     ) : null
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Select type — logo + back above content, no sidebar */}
-      {step === "select-type" && (
-        <div className="mx-auto max-w-360 px-6 md:px-15">
-          <div className="flex h-16 items-center justify-between">
-            <Logo className="" />
-          </div>
-
-          <div className="mx-auto mt-10 max-w-4xl space-y-4">
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
-              className="self-start text-muted-foreground"
-            >
-              <Link href={isGuest ? "/" : "/dashboard"}>
-                <ArrowLeft />
-                {isGuest ? "Back" : "Back to dashboard"}
-              </Link>
-            </Button>
-            <CardTypeSelector onSelect={handleCardTypeSelect} />
-          </div>
-        </div>
-      )}
-
-      {/* Studio — full-width two-column layout */}
-      {step === "details" && (
-        <div className="grid min-h-screen grid-cols-1 md:grid-cols-[320px_1fr] lg:grid-cols-[420px_1fr]">
-          <CardDetailsForm
-            cardType={selectedType}
-            onSubmit={handleDetailsSubmit}
-            isLoading={isGeneratingHeadline || isGeneratingImage}
-            onBack={handleBackToType}
-            hasGenerated={!!cardData}
-            onContinue={handleSaveCard}
-            isContinuing={isSaving}
+    <div className="min-h-svh bg-background">
+      {/* Studio: the left panel steps from occasion to details; the preview stays put */}
+      <div className="grid min-h-svh grid-cols-1 md:grid-cols-[360px_1fr] lg:grid-cols-[480px_1fr]">
+        {step === "select-type" && (
+          <OccasionStep
+            selected={selectedType}
+            onSelect={setSelectedType}
+            onContinue={handleCardTypeContinue}
+            backHref={isGuest ? "/" : "/dashboard"}
+            backLabel={isGuest ? "Back" : "Back to dashboard"}
           />
+        )}
+        <CardDetailsForm
+          hidden={step === "select-type"}
+          cardType={selectedType}
+          onSubmit={handleDetailsSubmit}
+          isLoading={isGeneratingHeadline || isGeneratingImage}
+          onBack={handleBackToType}
+          hasGenerated={!!cardData && !isStale}
+          isStale={isStale}
+          onContinue={handleSaveCard}
+          isContinuing={isSaving}
+          onTemplateChange={setPreviewTemplateId}
+          hiddenOnMobile={mobilePreview}
+          onShowCard={() => {
+            setShowMobilePreview(true)
+            window.scrollTo({ top: 0 })
+          }}
+        />
 
-          {/* Right panel — live preview */}
-          <main className="flex min-w-0 items-center justify-center bg-background px-10 py-12">
-            <div className="w-full max-w-xl text-center">
+        {/* Right panel — live preview */}
+        <main
+          className={cn(
+            "min-w-0 items-center justify-center bg-background px-6 pt-6 pb-4 md:px-10 md:py-12",
+            // On phones the steps get the whole screen; the card takes over once generated.
+            // There the card's width is capped from the visible height (svh) so the label,
+            // edit chips, card and buttons fit on one screen (270px is roughly everything but the card),
+            // but never below 16rem wide; shorter phones scroll instead. The buttons sit at the
+            // bottom, level with the form's Continue.
+            mobilePreview ? "flex" : "hidden md:flex",
+          )}
+        >
+          {step === "select-type" || !cardData || isStale ? (
+            // Before a card is generated: the occasion's example cover, or the chosen template.
+            <div className="flex w-full max-w-xl flex-col items-center text-center">
+              <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
+                Live preview
+              </p>
+              <CardLoading3D
+                variant="preview"
+                imageUrl={exampleCover}
+                hue={TYPE_HUE[selectedType] ?? 40}
+                className="mx-auto mt-5"
+              />
+              <p className="mt-4 max-w-[360px] text-sm leading-normal text-muted-foreground">
+                {exampleCaption}
+              </p>
+            </div>
+          ) : (
+            <div className="w-full max-w-xl text-center max-md:flex max-md:flex-col max-md:self-stretch">
               <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
                 Live preview
               </p>
 
-              <div className="mx-auto mt-5 flex justify-center">
+              <div className="mx-auto mt-5 flex justify-center max-md:w-full max-md:flex-1 max-md:items-center">
                 {cardData && isGeneratingHeadline ? (
-                  <div className="w-full max-w-md">
-                    <div className="mb-12 flex justify-center gap-2">
+                  <div className="w-full max-w-md max-md:max-w-[min(28rem,max(16rem,calc((100svh-270px)*0.8)))]">
+                    <div className="mb-6 flex justify-center gap-2 md:mb-12">
                       <Skeleton className="h-8 w-24 rounded-full" />
                       <Skeleton className="h-8 w-24 rounded-full" />
                     </div>
@@ -425,7 +475,7 @@ export function CreateCardPageClient() {
                     />
                   </div>
                 ) : cardData ? (
-                  <div className="flex w-full max-w-md flex-col gap-12">
+                  <div className="flex w-full max-w-md flex-col gap-6 max-md:max-w-[min(28rem,max(16rem,calc((100svh-270px)*0.8)))] md:gap-12">
                     {openAiPanel === null ? (
                       <div className="flex h-9 items-center justify-center gap-2">
                         <ChipButton
@@ -648,17 +698,46 @@ export function CreateCardPageClient() {
                       renderCover(false)
                     )}
                   </div>
-                ) : (
-                  <CardLoading3D
-                    variant="placeholder"
-                    hue={TYPE_HUE[selectedType] ?? 40}
-                  />
-                )}
+                ) : null}
+              </div>
+
+              {/* Phones: the form is hidden while the card shows */}
+              <div className="mt-auto flex gap-2.5 pt-6 md:hidden">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowMobilePreview(false)
+                    window.scrollTo({ top: 0 })
+                  }}
+                >
+                  Edit details
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleSaveCard}
+                  disabled={
+                    isSaving ||
+                    isGeneratingHeadline ||
+                    isGeneratingImage ||
+                    isRegeneratingHeadline ||
+                    isRegeneratingImage
+                  }
+                >
+                  {isSaving ? (
+                    <>
+                      <Spinner />
+                      Saving…
+                    </>
+                  ) : (
+                    "Continue"
+                  )}
+                </Button>
               </div>
             </div>
-          </main>
-        </div>
-      )}
+          )}
+        </main>
+      </div>
 
       {error && (
         <div className="fixed right-4 bottom-4 max-w-md rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">

@@ -37,6 +37,33 @@ export function assembleImageUserPrompt(
   return context ? `${constraints}\n\n${context}` : constraints
 }
 
+const TEMPLATE_COVER_RULES = `Create a full-bleed image for a greeting card cover, in the style the scene describes.
+Generate ONLY the raw, edge-to-edge image. Do NOT generate a physical object, 3D mockup, folded paper, greeting card, picture frame, borders, or table shadows.
+STRICTLY NO TEXT: no readable text, lettering, captions, words on signs, trophies or clothing, watermarks, or logos anywhere in the image.`
+
+const TEMPLATE_LIKENESS_RULES = `Put the person from the person photo into the scene below as its main character.
+Keep their face, facial features, skin tone, hair and apparent age clearly recognisable: it must look like the same person, not a lookalike. Keep their face unobstructed and well lit.
+If the photo shows several people, use the most prominent one.`
+
+// The layout reference has the stand-in's whole head blanked, hair too, so the hair comes from the photo.
+const TEMPLATE_LAYOUT_RULES = `The layout reference shows the scene with the main character's head as a plain grey placeholder.
+Copy from the layout reference: the composition, camera angle, setting, background, props, lighting, colours, and the character's pose, body position and outfit.
+Take the head, face and hair (colour, length, texture and style) entirely from the person photo, styled for the scene only where the scene asks for it (e.g. blown by wind, under a hat or helmet).
+Redraw the person naturally in the pose with their real face. Never draw a grey placeholder.`
+
+/** Prompt for a funny photo template cover: the template's scene plus likeness (and layout) rules. */
+export function assembleTemplateImagePrompt(
+  scene: string,
+  hasLayout: boolean,
+): string {
+  const rules = [
+    TEMPLATE_COVER_RULES,
+    TEMPLATE_LIKENESS_RULES,
+    hasLayout ? TEMPLATE_LAYOUT_RULES : "",
+  ]
+  return `${rules.filter(Boolean).join("\n")}\n\nScene: ${scene}`
+}
+
 export function assembleImageLeadingText(
   hasPrevious: boolean,
   hasAttached: boolean,
