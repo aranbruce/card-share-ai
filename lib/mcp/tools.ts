@@ -4,7 +4,11 @@ import { registerAppTool } from "@modelcontextprotocol/ext-apps/server"
 import { validate as isValidUuid } from "uuid"
 import { z } from "zod"
 import { getAppUrl } from "@/lib/app-url"
-import { CARD_TONES, DEFAULT_CARD_TONE } from "@/lib/card-tones"
+import {
+  CARD_TONES,
+  DEFAULT_CARD_TONE,
+  resolveCardTone,
+} from "@/lib/card-tones"
 import { captureServerEvent } from "@/lib/posthog-server"
 import { createUserScopedClient, mcpUserId } from "@/lib/mcp/auth"
 import { creatorNoteUpdate } from "@/lib/mcp/card-messages"
@@ -97,11 +101,16 @@ const newCardInputSchema = z.object({
     .max(100)
     .describe("Who the card is from, e.g. 'Alex' or 'The design team'"),
   cardType: z.enum(MCP_CARD_TYPES).default("custom").describe("The occasion"),
+  // Retired tones (e.g. "Hype") still map to their closest current tone, so older prompts keep working.
   tone: z
-    .enum(CARD_TONES)
+    .preprocess(
+      (value) =>
+        typeof value === "string" ? (resolveCardTone(value) ?? value) : value,
+      z.enum(CARD_TONES),
+    )
     .default(DEFAULT_CARD_TONE)
     .describe(
-      "Heartfelt: warm and sincere. Roast: affectionate teasing. Dad jokes: one groan-worthy pun. Hype: sports-commentator energy. Epic: movie-trailer drama. Sympathy cards always stay gentle.",
+      "Heartfelt: warm and sincere. Roast: affectionate teasing. Dad jokes: one groan-worthy pun. Epic: movie-trailer drama. Sympathy cards always stay gentle.",
     ),
   context: z
     .string()

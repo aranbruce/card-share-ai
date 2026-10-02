@@ -35,7 +35,7 @@ const STEPS = [
 ]
 
 const PROMPTS = [
-  "Make a birthday card for Sarah from the design team. She loves rock climbing, so make it Hype",
+  "Make a birthday card for Sarah from the design team. She loves rock climbing, so make it Epic",
   "Make Dan a farewell card. I have a photo of him on his boat I'd like on the cover",
   "Make the headline on Sarah's card punchier",
   "Add my message to Sarah's card: Happy birthday! Thanks for every belay",
@@ -46,7 +46,7 @@ const PROMPTS = [
 const CAPABILITIES = [
   {
     title: "Create a card",
-    desc: "Give the recipient, who it's from, the occasion (birthday, thank you, congratulations, holiday, sympathy or anything else) and any personal details. Pick a tone: Heartfelt, Roast, Dad jokes, Hype or Epic. Sympathy cards always stay gentle. It takes about 20 to 40 seconds.",
+    desc: "Give the recipient, who it's from, the occasion (birthday, thank you, congratulations, holiday, sympathy or anything else) and any personal details. Pick a tone: Heartfelt, Roast, Dad jokes or Epic. Sympathy cards always stay gentle. It takes about 20 to 40 seconds.",
   },
   {
     title: "Put your own photo on the cover",
