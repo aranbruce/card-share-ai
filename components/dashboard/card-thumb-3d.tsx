@@ -1,5 +1,6 @@
-import Image from "next/image"
+import Image, { getImageProps } from "next/image"
 import type { CSSProperties } from "react"
+import { BLANK_PIXEL } from "@/lib/blank-pixel"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
 
 /**
@@ -8,12 +9,43 @@ import { looksLikeDataUrl } from "@/lib/source-image-limits"
  * the Three.js card's look (tilted card stock, page edges, glossy cover) without a canvas.
  * On hover (inside a `group`) the cover swings open to peek at the inside.
  */
+const COVER_SIZES = "(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 26vw"
+
+/** The cover in a `<picture>` whose fallback is a blank pixel, so it loads only on `media`. */
+function MediaGatedCover({
+  src,
+  alt,
+  media,
+}: {
+  src: string
+  alt: string
+  media: string
+}) {
+  const {
+    props: { srcSet, sizes, ...imgProps },
+  } = getImageProps({
+    src,
+    alt,
+    fill: true,
+    sizes: COVER_SIZES,
+    loading: "eager",
+  })
+
+  return (
+    <picture>
+      <source media={media} srcSet={srcSet} sizes={sizes} />
+      <img {...imgProps} src={BLANK_PIXEL} alt={alt} className="object-cover" />
+    </picture>
+  )
+}
+
 export function CardThumb3D({
   imageUrl,
   headline,
   alt,
   hue,
   priority = false,
+  eagerMedia,
   cardHeight = 74,
   cardOffsetY = 4,
   rotate = 0,
@@ -24,6 +56,12 @@ export function CardThumb3D({
   /** Fallback cover gradient hue when there is no image. */
   hue: number
   priority?: boolean
+  /**
+   * Loads the cover eagerly, but only while this media query matches; otherwise it's never
+   * fetched. For cards in a panel hidden by CSS below a breakpoint, where `priority` would
+   * download covers nobody sees.
+   */
+  eagerMedia?: string
   /** The standing card's height, as a percentage of the container's. */
   cardHeight?: number
   /** Moves the card down from the centre, as a percentage of its own height. */
@@ -75,12 +113,14 @@ export function CardThumb3D({
         />
         {/* Cover: hinged on the spine (left edge) */}
         <div className="absolute inset-0 origin-left overflow-hidden rounded-[3px] shadow-lg transition-transform duration-500 ease-out backface-hidden group-hover:-rotate-y-28 motion-reduce:transition-none">
-          {imageUrl ? (
+          {imageUrl && eagerMedia ? (
+            <MediaGatedCover src={imageUrl} alt={alt} media={eagerMedia} />
+          ) : imageUrl ? (
             <Image
               src={imageUrl}
               alt={alt}
               fill
-              sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 26vw"
+              sizes={COVER_SIZES}
               loading={priority ? "eager" : "lazy"}
               priority={priority}
               unoptimized={looksLikeDataUrl(imageUrl)}

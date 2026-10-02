@@ -69,6 +69,9 @@ function Avatar({ src, className }: { src: string; className?: string }) {
   )
 }
 
+/** Matches Tailwind's `lg`, where the panel appears. */
+const PANEL_MEDIA = "(min-width: 64rem)"
+
 const CHIP_CLASSES =
   "absolute z-20 flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 shadow-[0_18px_36px_-18px_rgba(20,14,6,0.32)]"
 
@@ -130,7 +133,7 @@ export function AuthBrandPanel() {
                   headline={config.cardTitle}
                   alt=""
                   hue={config.coverHue}
-                  priority
+                  eagerMedia={PANEL_MEDIA}
                   cardHeight={88}
                   cardOffsetY={0}
                   rotate={CARD_SLOTS[i].rotate}

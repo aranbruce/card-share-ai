@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react"
 import { getImageProps } from "next/image"
+import { BLANK_PIXEL } from "@/lib/blank-pixel"
 
 /**
  * Cover cards fanned out behind the homepage browser mockup. The stage is a size
@@ -46,8 +47,6 @@ const FAN_CARDS = [
 
 /** Matches Tailwind's `md`, where the fan (and the browser mockup) appear */
 const DESKTOP_MEDIA = "(min-width: 48rem)"
-const BLANK_PIXEL =
-  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
 
 /**
  * The covers sit above the fold on desktop, so they load eagerly there instead of
