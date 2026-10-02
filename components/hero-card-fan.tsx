@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react"
-import Image from "next/image"
+import { getImageProps } from "next/image"
 
 /**
  * Cover cards fanned out behind the homepage browser mockup. The stage is a size
@@ -43,6 +43,35 @@ const FAN_CARDS = [
     delay: 570,
   },
 ] as const
+
+/** Matches Tailwind's `md`, where the fan (and the browser mockup) appear */
+const DESKTOP_MEDIA = "(min-width: 48rem)"
+const BLANK_PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+
+/**
+ * The covers sit above the fold on desktop, so they load eagerly there instead of
+ * popping in mid-deal. Below md the `<source>` doesn't match and the fallback is a
+ * blank inline pixel, so phones never download them.
+ */
+function FanCover({ src }: { src: string }) {
+  const {
+    props: { srcSet, sizes, ...imgProps },
+  } = getImageProps({
+    src,
+    alt: "",
+    fill: true,
+    sizes: "(min-width: 1120px) 440px, 44vw",
+    loading: "eager",
+  })
+
+  return (
+    <picture>
+      <source media={DESKTOP_MEDIA} srcSet={srcSet} sizes={sizes} />
+      <img {...imgProps} src={BLANK_PIXEL} alt="" className="object-cover" />
+    </picture>
+  )
+}
 
 type Tilt = { rx: number; ry: number; sc: number }
 
@@ -158,13 +187,7 @@ export function HeroCardFan({ children }: { children: ReactNode }) {
               }}
               className="absolute inset-0 overflow-hidden rounded-[6px_14px_14px_6px] shadow-[0_34px_60px_-30px_rgba(40,24,10,0.45),0_4px_10px_rgba(40,24,10,0.08)] will-change-transform"
             >
-              <Image
-                src={card.src}
-                alt=""
-                fill
-                sizes="(min-width: 1120px) 440px, 44vw"
-                className="object-cover"
-              />
+              <FanCover src={card.src} />
               {/* Spine shading and a soft edge highlight, like the 3D card covers */}
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(40,28,14,0.18)_0%,rgba(40,28,14,0)_7%,rgba(255,255,255,0)_92%,rgba(255,255,255,0.18)_100%)]" />
               <div className="absolute inset-0 rounded-[inherit] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.35)]" />
