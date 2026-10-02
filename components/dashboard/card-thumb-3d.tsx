@@ -39,7 +39,8 @@ export function CardThumb3D({
   }
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center perspective-[1100px]">
+    // A container, so the headline scales with the space the card is given wherever it's used.
+    <div className="@container absolute inset-0 flex items-center justify-center perspective-[1100px]">
       {/* Ground shadow */}
       <div
         aria-hidden
