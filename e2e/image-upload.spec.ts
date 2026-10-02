@@ -1,3 +1,5 @@
+import { writeFile } from "node:fs/promises"
+
 import { Buffer } from "node:buffer"
 import { expect, test } from "@playwright/test"
 import { MAX_UPLOAD_FILE_BYTES } from "../lib/source-image-limits"
@@ -81,16 +83,15 @@ test.describe("image upload — reference photo", () => {
     expect(capturedAttachedImageUrl).toMatch(/^data:image\/jpeg;base64,/)
   })
 
-  test("shows error and no preview when file exceeds 20 MB", async ({
+  test("shows error and no preview when file exceeds the upload limit", async ({
     page,
-  }) => {
+  }, testInfo) => {
     await goToCoverStep(page)
 
-    await page.locator('input[type="file"]').setInputFiles({
-      name: "big.jpg",
-      mimeType: "image/jpeg",
-      buffer: Buffer.alloc(MAX_UPLOAD_FILE_BYTES + 1),
-    })
+    // Playwright caps in-memory buffers at 50 MB, so pass a file on disk
+    const bigFile = testInfo.outputPath("big.jpg")
+    await writeFile(bigFile, Buffer.alloc(MAX_UPLOAD_FILE_BYTES + 1))
+    await page.locator('input[type="file"]').setInputFiles(bigFile)
 
     await expect(page.getByText(IMAGE_TOO_LARGE_ERROR)).toBeVisible()
     await expect(page.getByAltText("Reference")).not.toBeVisible()
