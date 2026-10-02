@@ -303,19 +303,6 @@ export function PhotoTemplatesSection({
                 </button>
               )
             })}
-            {data.more > 0 && (
-              <Link
-                href={data.moreHref}
-                className="grid h-18.75 w-15 shrink-0 snap-start place-items-center rounded-lg border border-dashed border-border text-center text-xs leading-tight font-medium text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground"
-              >
-                <span className="flex flex-col whitespace-nowrap">
-                  <span className="text-[15px] text-foreground">
-                    +{data.more}
-                  </span>
-                  <span>more</span>
-                </span>
-              </Link>
-            )}
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">

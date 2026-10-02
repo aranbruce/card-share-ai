@@ -51,16 +51,17 @@ describe("photo templates section", () => {
     )
   })
 
-  it("links every scene to an occasion that offers it", () => {
-    const sections = [
-      generalPhotoTemplatesSection(),
-      ...PHOTO_TEMPLATE_OCCASION_PAGES.map((slug) =>
-        occasionPhotoTemplatesSection(slug)!,
-      ),
-    ]
-    for (const section of sections) {
-      for (const scene of section.scenes) expectOpensOfferedTemplate(scene.href)
-      expectOpensOfferedTemplate(section.moreHref)
+  it("links every occasion page scene to an occasion that offers it", () => {
+    for (const slug of PHOTO_TEMPLATE_OCCASION_PAGES) {
+      for (const scene of occasionPhotoTemplatesSection(slug)!.scenes) {
+        expectOpensOfferedTemplate(scene.href)
+      }
+    }
+  })
+
+  it("starts general cards at the occasion step", () => {
+    for (const scene of generalPhotoTemplatesSection().scenes) {
+      expect(scene.href).toBe("/create")
     }
   })
 
@@ -71,11 +72,6 @@ describe("photo templates section", () => {
     expect(labels["moon-cake"]).toBe("Maya, 30 today")
     expect(labels["olympic-gold"]).toBe("Maya got promoted")
     expect(labels["old-master"]).toBe("Maya, legend")
-  })
-
-  it("counts the scenes left in the general picker", () => {
-    const section = generalPhotoTemplatesSection()
-    expect(section.more).toBe(CARD_TEMPLATES.length - section.scenes.length)
   })
 })
 

@@ -176,6 +176,7 @@ export type PhotoTemplateScene = {
   thumbnail: string
   face: [number, number]
   label: string
+  /** Where the section's button goes while this scene shows. */
   href: string
 }
 
@@ -186,9 +187,6 @@ export type PhotoTemplatesSectionData = {
   body: string
   cta: string
   scenes: PhotoTemplateScene[]
-  /** Scenes not shown, in the template picker `moreHref` opens. */
-  more: number
-  moreHref: string
 }
 
 const byId = (id: string) => CARD_TEMPLATES.find((t) => t.id === id)
@@ -199,17 +197,16 @@ export function generalPhotoTemplatesSection(): PhotoTemplatesSectionData {
   const scenes = templates.map((t) => {
     const page = t.pages[0]
     const copy = page ? OCCASION_COPY[page] : undefined
-    const occasion = t.occasions === "all" ? "custom" : t.occasions[0]
     return {
       id: t.id,
       name: t.name,
       thumbnail: t.thumbnail,
       face: t.face,
       label: copy?.label ?? ANY_LABEL,
-      href: photoTemplateCreateHref(occasion, t),
+      // Not tied to an occasion here, so the button starts at the occasion step.
+      href: "/create",
     }
   })
-  const pickerHref = photoTemplateCreateHref("custom")
   return {
     eyebrow: "Funny photo templates",
     h1: "Make them the star",
@@ -217,8 +214,6 @@ export function generalPhotoTemplatesSection(): PhotoTemplatesSectionData {
     body: `Upload a photo of a friend, family member or colleague and pick one of ${CARD_TEMPLATES.length} scenes. AI redraws them into it, keeping their face and hair, then the whole group signs the card`,
     cta: "Start a card",
     scenes,
-    more: CARD_TEMPLATES.length - scenes.length,
-    moreHref: pickerHref,
   }
 }
 
@@ -229,7 +224,6 @@ export function occasionPhotoTemplatesSection(
   const copy = OCCASION_COPY[slug]
   const templates = templatesForPage(slug).slice(0, SCENE_COUNT)
   if (!copy || templates.length === 0) return null
-  const pickerHref = photoTemplateCreateHref(copy.createOccasion)
   return {
     eyebrow: copy.eyebrow,
     h1: copy.h1,
@@ -244,11 +238,6 @@ export function occasionPhotoTemplatesSection(
       label: copy.label,
       href: photoTemplateCreateHref(copy.createOccasion, t),
     })),
-    more: Math.max(
-      0,
-      templatesForOccasion(copy.createOccasion).length - templates.length,
-    ),
-    moreHref: pickerHref,
   }
 }
 
