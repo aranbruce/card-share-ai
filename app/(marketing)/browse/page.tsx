@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { CardTileRow } from "@/components/card-tile-row"
+import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/json-ld"
@@ -24,20 +25,23 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/browse",
 })
 
-const STEPS = [
+const STEPS: FeatureTab[] = [
   {
     n: "01",
     title: "Pick the occasion and describe it",
+    sketch: "draft",
     desc: "Tell us who the card is for in one sentence. The AI drafts a cover image and an opening note. Regenerate either until it's right",
   },
   {
     n: "02",
     title: "Share one link, everyone signs",
+    sketch: "notes",
     desc: "Drop the link in your group chat, team Slack, or family WhatsApp. Each person adds their note from their own phone. No app needed",
   },
   {
     n: "03",
     title: "Send it when the card is full",
+    sketch: "deliver",
     desc: "Deliver by email or shareable link, whenever you're ready. It opens beautifully in the browser, every note included",
   },
 ]
@@ -258,35 +262,13 @@ export default function CardsPage() {
       </section>
 
       {/* ===== HOW IT WORKS ===== */}
-      <section id="how" className="border-t border-border">
-        <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
-          <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
-            How it works
-          </p>
-          <h2 className="mt-4 max-w-3xl text-3xl leading-[1.02] font-semibold tracking-[-0.03em] md:text-4xl lg:text-5xl">
-            From one sentence to a signed group card
-          </h2>
-          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            The whole flow in three steps: cover, signatures, delivery. Takes
-            about two minutes to set up
-          </p>
-          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-            {STEPS.map((step) => (
-              <div key={step.n}>
-                <div className="font-mono text-sm text-muted-foreground/90">
-                  {step.n}
-                </div>
-                <h3 className="mt-2 text-lg font-semibold tracking-[-0.015em]">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FeatureTabs
+        id="how"
+        eyebrow="How it works"
+        title="From one sentence to a signed group card"
+        description="The whole flow in three steps: cover, signatures, delivery. Takes about two minutes to set up"
+        tabs={STEPS}
+      />
 
       <SlackStoryboard
         card={slackStoryboardCard(getCategoryConfig("birthday")!)}
