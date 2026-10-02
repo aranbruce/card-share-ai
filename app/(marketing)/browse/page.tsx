@@ -1,16 +1,19 @@
 import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import { CardTileRow } from "@/components/card-tile-row"
 import { CardThumb3D } from "@/components/dashboard/card-thumb-3d"
 import { Button } from "@/components/ui/button"
 import { JsonLd } from "@/components/json-ld"
 import { SlackStoryboard } from "@/components/slack-storyboard"
+import { StarMark } from "@/components/star-mark"
 import {
   getBrowseCategories,
   getCategoryConfig,
   occasionTiles,
   slackStoryboardCard,
 } from "@/lib/category-pages"
+import { sampleAvatarsFor } from "@/lib/sample-avatars"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
 
@@ -134,10 +137,9 @@ function HeroFan() {
         className="hero-drift absolute right-[-10px] bottom-10 z-20 flex items-center gap-[9px] rounded-xl border border-border bg-card px-3 py-2 text-xs"
         style={{ boxShadow: "0 18px 36px -18px rgba(20,14,6,0.32)" }}
       >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: "oklch(0.82 0.1 18)" }}
-        />
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-white">
+          <StarMark className="size-2.5" />
+        </span>
         <div>
           <div className="font-medium">Free to start</div>
           <div className="font-mono text-[9px] tracking-[0.12em] text-muted-foreground uppercase">
@@ -154,9 +156,12 @@ function HeroFan() {
           animationDelay: "-3s",
         }}
       >
-        <span
-          className="size-5 shrink-0 rounded-full"
-          style={{ background: "oklch(0.84 0.08 330)" }}
+        <Image
+          src={sampleAvatarsFor("browse", 1)[0]}
+          alt=""
+          width={20}
+          height={20}
+          className="size-5 shrink-0 rounded-full object-cover"
         />
         <div className="text-sm leading-tight">
           <div>So happy for you!</div>

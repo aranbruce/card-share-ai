@@ -386,8 +386,10 @@ function SlackFlowSteps({
                 </span>
               </span>
               {active && autoplay ? (
+                // The timer restarts in full when playback resumes, so the bar
+                // restarts with it (keyed on `playing`) rather than resuming
                 <span
-                  key={run}
+                  key={`${run}-${playing}`}
                   className="slack-flow-progress absolute bottom-0 left-0 h-0.5 bg-brand"
                   style={{
                     animationDuration: `${STEP_MS}ms`,
