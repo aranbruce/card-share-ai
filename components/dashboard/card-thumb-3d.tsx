@@ -3,12 +3,6 @@ import type { CSSProperties } from "react"
 import { BLANK_PIXEL } from "@/lib/blank-pixel"
 import { looksLikeDataUrl } from "@/lib/source-image-limits"
 
-/**
- * Dashboard thumbnail drawn as a standing greeting card with CSS 3D transforms.
- * The grid can hold dozens of cards, more than browsers allow WebGL contexts, so this mirrors
- * the Three.js card's look (tilted card stock, page edges, glossy cover) without a canvas.
- * On hover (inside a `group`) the cover swings open to peek at the inside.
- */
 const COVER_SIZES = "(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 26vw"
 
 /** The cover in a `<picture>` whose fallback is a blank pixel, so it loads only on `media`. */
@@ -39,6 +33,12 @@ function MediaGatedCover({
   )
 }
 
+/**
+ * Dashboard thumbnail drawn as a standing greeting card with CSS 3D transforms.
+ * The grid can hold dozens of cards, more than browsers allow WebGL contexts, so this mirrors
+ * the Three.js card's look (tilted card stock, page edges, glossy cover) without a canvas.
+ * On hover (inside a `group`) the cover swings open to peek at the inside.
+ */
 export function CardThumb3D({
   imageUrl,
   headline,
