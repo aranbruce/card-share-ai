@@ -15,6 +15,7 @@ const PRODUCT: FooterLink[] = [
   { label: "Start a card", href: "/create" },
   { label: "Slack app", href: "/slack/install" },
   { label: "Claude connector", href: "/claude" },
+  { label: "Support", href: "/support" },
 ]
 
 const COMPARE: FooterLink[] = Object.values(COMPARE_CONFIGS).map((c) => ({
