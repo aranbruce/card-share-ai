@@ -77,6 +77,9 @@ const DEMO_CORNER = 0.03
 /** Cover hue of a birthday card, as on the create page. */
 const BIRTHDAY_HUE = 18
 
+/** Below Tailwind's `md`, where the panel shrinks to a faded glimpse of the preview. */
+const MOBILE_MEDIA = "(max-width: 47.99rem)"
+
 type Phase = "idle" | "headline" | "cover" | "done"
 
 /**
@@ -102,6 +105,16 @@ export function HomeDemoPanel() {
     timeoutsRef.current.push(id)
   }
 
+  // Phones only get a glimpse of the preview with no form to press Generate on, so they
+  // start on the finished card.
+  useEffect(() => {
+    if (!window.matchMedia(MOBILE_MEDIA).matches) return
+    const { imageUrl, message } = DEMO_STATES.Heartfelt.base
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- depends on the viewport, unknown on the server
+    setResult({ imageUrl, message })
+    setPhase("done")
+  }, [])
+
   useEffect(() => {
     const timeouts = timeoutsRef.current
     return () => {
@@ -126,7 +139,9 @@ export function HomeDemoPanel() {
   }
 
   return (
-    <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.18)] md:block">
+    // Below md: just the chrome and the live preview, cut short and fading out, as a glimpse
+    // of the create page rather than something to use.
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_40px_80px_-40px_rgba(17,17,16,0.18)] max-md:pointer-events-none max-md:h-100 max-md:mask-[linear-gradient(to_bottom,black_60%,transparent)]">
       {/* Browser chrome */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <div className="flex gap-1.5">
@@ -140,9 +155,9 @@ export function HomeDemoPanel() {
         <div className="w-[46px]" aria-hidden />
       </div>
 
-      <div className="grid min-h-155 grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
+      <div className="grid grid-cols-1 md:min-h-155 md:grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
         {/* The create page's details form, filled in */}
-        <aside className="flex flex-col border-r border-border bg-card px-7 py-6 text-left">
+        <aside className="order-2 flex flex-col border-border bg-card px-7 py-6 text-left md:order-0 md:border-r">
           <div className="flex flex-1 flex-col gap-4">
             <div>
               <label
@@ -258,7 +273,7 @@ export function HomeDemoPanel() {
         </aside>
 
         {/* The create page's live preview */}
-        <div className="flex min-w-0 items-center justify-center overflow-hidden bg-background p-8">
+        <div className="flex min-w-0 items-center justify-center overflow-hidden bg-background p-6 md:p-8">
           <div className="w-full max-w-141 text-center">
             <p className="font-mono text-[11px] tracking-[0.15em] text-muted-foreground/60 uppercase">
               Live preview
