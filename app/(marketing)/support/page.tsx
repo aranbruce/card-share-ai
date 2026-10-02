@@ -93,9 +93,26 @@ const SLACK_FAQS = [
           cardshare.ai/slack/install
         </Link>{" "}
         and click <strong>Add to Slack</strong>. Approve the requested
-        permissions and the app is available across your workspace. You need
-        permission to install apps in your Slack workspace; if you don&apos;t
-        have it, Slack will send a request to your workspace admins.
+        permissions and the app is available across your workspace. It&apos;s
+        free, with no credit card needed. You need permission to install apps in
+        your Slack workspace; if you don&apos;t have it, Slack will send a
+        request to your workspace admins.
+      </>
+    ),
+  },
+  {
+    question: "How do I create a card in Slack?",
+    answer: (
+      <>
+        Type <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code>{" "}
+        in any channel or DM. A form opens: choose the card type, add the
+        recipient&apos;s name, pick a tone, and drop in any context. Hit{" "}
+        <strong>Create</strong> and AI generates a personalized headline and
+        cover image, with no prompting required. When it&apos;s ready, the app
+        replies with <strong>Open Card</strong> and{" "}
+        <strong>Share Contributor Link</strong>. Share the contributor link in a
+        channel so everyone can sign, or send the card straight to the
+        recipient.
       </>
     ),
   },
@@ -103,12 +120,22 @@ const SLACK_FAQS = [
     question: "What Slack commands are available?",
     answer: (
       <>
-        <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code> opens
-        a form to create a new card. Pick the occasion, recipient and tone, and
-        AI writes a personalised headline and draws a cover image.{" "}
+        <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code>{" "}
+        creates a new card (see above).{" "}
         <code className="rounded bg-muted px-1 py-0.5">/cardshareai-link</code>{" "}
         connects your Slack user to your CardShare.ai account so cards you
-        create in Slack show up in your dashboard.
+        create in Slack show up in your dashboard. You only need it if you want
+        to connect before making your first card.
+      </>
+    ),
+  },
+  {
+    question: "Who can see the app's replies?",
+    answer: (
+      <>
+        Only you. Replies from the app appear in the channel where you ran the
+        command but are only visible to you (or arrive as a direct message), so
+        nothing is shared with the channel until you post the link yourself.
       </>
     ),
   },
@@ -119,10 +146,10 @@ const SLACK_FAQS = [
         Cards belong to a CardShare.ai account so you can manage them from the
         dashboard, collect contributions, and send the finished card. The first
         time you use{" "}
-        <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code>,
-        we&apos;ll send you a private link to connect (or create) your account.
-        The link expires after 15 minutes. If it does, run the command again for
-        a new one.
+        <code className="rounded bg-muted px-1 py-0.5">/cardshareai</code>, the
+        app sends you a private link to sign in or create a free CardShare.ai
+        account. You only do this once. The link expires after 15 minutes; if it
+        does, run the command again for a new one.
       </>
     ),
   },
@@ -143,10 +170,10 @@ const SLACK_FAQS = [
     answer: (
       <>
         A workspace admin can remove it from Slack under{" "}
-        <strong>Manage apps</strong> in your workspace settings. Removing the
-        app revokes its access to your workspace. Cards you already created
-        remain in your CardShare.ai account and can be deleted from your
-        dashboard at any time.
+        <strong>Manage apps</strong> in your workspace settings. Uninstalling
+        deletes your workspace&apos;s Slack connection and account links. Cards
+        you already created remain in your CardShare.ai account and can be
+        deleted from your dashboard at any time.
       </>
     ),
   },
@@ -156,7 +183,8 @@ const SLACK_FAQS = [
       <>
         Only what it needs to run: workspace and user identifiers to respond to
         your slash commands, and the card details you enter into the creation
-        form. We never read your channels or messages. See our{" "}
+        form. The app never reads channel messages, only messages you send it
+        directly (it replies to those with a quick how-to). See our{" "}
         <Link
           href="/privacy"
           className="text-foreground underline underline-offset-4"
