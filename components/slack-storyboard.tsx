@@ -72,7 +72,7 @@ function FormFrame({ card }: { card: SlackStoryboardCard }) {
             </div>
           </div>
           <div className="flex gap-1.25">
-            {["Heartfelt", "Roast", "Hype"].map((tone, i) => (
+            {["Heartfelt", "Roast", "Epic"].map((tone, i) => (
               <span
                 key={tone}
                 className={cn(

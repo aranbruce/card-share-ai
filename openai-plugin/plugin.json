@@ -21,7 +21,7 @@
       "interface": {
         "displayName": "CardShare.ai",
         "shortDescription": "Group greeting cards to sign",
-        "longDescription": "CardShare.ai creates group greeting cards that a team, family or group of friends signs together, for birthdays, farewells, thank-yous, congratulations, holidays and sympathy. Tell ChatGPT who the card is for and a few personal details, and it writes the headline and draws the cover art. The card appears right in the chat, with buttons to open it, copy the invite link and use your own photo.\n\nWhat you can do:\n- Create a card in one of five tones: Heartfelt, Roast, Dad jokes, Hype or Epic. Sympathy cards always stay gentle.\n- Put your own photo on the cover. Choose it in the picker that appears in the chat and the cover is drawn from it.\n- Edit the headline, the names, or your own message inside the card.\n- List your cards and see how many people have signed each one.\n\nShare the invite link and everyone can add a message or GIF from any device, without an account. When everyone has signed, send the recipient a card they can open and keep.\n\nCardShare.ai only works with cards in the account you connect. Moving notes, adding GIFs and sending the finished card happen on the website, through the card's edit link. Sign in with Google, GitHub or email.",
+        "longDescription": "CardShare.ai creates group greeting cards that a team, family or group of friends signs together, for birthdays, farewells, thank-yous, congratulations, holidays and sympathy. Tell ChatGPT who the card is for and a few personal details, and it writes the headline and draws the cover art. The card appears right in the chat, with buttons to open it, copy the invite link and use your own photo.\n\nWhat you can do:\n- Create a card in one of four tones: Heartfelt, Roast, Dad jokes or Epic. Sympathy cards always stay gentle.\n- Put your own photo on the cover. Choose it in the picker that appears in the chat and the cover is drawn from it.\n- Edit the headline, the names, or your own message inside the card.\n- List your cards and see how many people have signed each one.\n\nShare the invite link and everyone can add a message or GIF from any device, without an account. When everyone has signed, send the recipient a card they can open and keep.\n\nCardShare.ai only works with cards in the account you connect. Moving notes, adding GIFs and sending the finished card happen on the website, through the card's edit link. Sign in with Google, GitHub or email.",
         "developerName": "CardShare.ai",
         "category": "Creativity",
         "capabilities": [
@@ -35,7 +35,7 @@
         "privacyPolicyURL": "https://www.cardshare.ai/privacy",
         "termsOfServiceURL": "https://www.cardshare.ai/terms",
         "defaultPrompt": [
-          "Make a birthday card for Sarah from the team. She loves rock climbing, make it Hype",
+          "Make a birthday card for Sarah from the team. She loves rock climbing, make it Epic",
           "Make a farewell card for Dan with a photo of him on the cover",
           "Show me the cards I've made and how many people have signed"
         ],
@@ -49,7 +49,7 @@
           "positive": [
             {
               "description": "Create a card from a description",
-              "prompt": "Make a birthday card for Sarah from the design team. She loves rock climbing, make it Hype.",
+              "prompt": "Make a birthday card for Sarah from the design team. She loves rock climbing, make it Epic.",
               "tools_triggered": "create_card",
               "expected_behavior": "After 20 to 40 seconds a new card for Sarah appears in the chat with an AI-written headline about climbing and an AI-drawn cover, plus Open card, Copy invite link and Use my photo buttons. The reply includes the edit and invite links."
             },

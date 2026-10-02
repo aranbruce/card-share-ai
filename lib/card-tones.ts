@@ -1,11 +1,5 @@
 /** The tones offered on the create form and in the Slack bot, in display order. */
-export const CARD_TONES = [
-  "Heartfelt",
-  "Roast",
-  "Dad jokes",
-  "Hype",
-  "Epic",
-] as const
+export const CARD_TONES = ["Heartfelt", "Roast", "Dad jokes", "Epic"] as const
 
 export type CardTone = (typeof CARD_TONES)[number]
 
@@ -57,18 +51,6 @@ const TONE_DEFINITIONS: Record<CardTone, ToneDefinition> = {
     imageMood:
       "light-hearted and goofy, with cheerful colors and a whimsical, silly feel",
   },
-  Hype: {
-    headlineStyle:
-      "Sports-commentator hype. Huge energy, short punchy fragments, like the crowd just went wild. You may put one or two words in CAPS for emphasis. Celebrate the achievement or detail from the context like a championship win.",
-    headlineExamples: [
-      "Sarah. Five years. ABSOLUTELY unstoppable",
-      "Ladies and gentlemen, Dan has LEFT the building",
-      "Thirty years old and still undefeated, Mia",
-      "Ana just shipped it and the crowd goes WILD",
-    ],
-    imageMood:
-      "high-energy and triumphant, with confetti, dynamic movement and stadium-lights excitement",
-  },
   Epic: {
     headlineStyle:
       "A movie-trailer voiceover that treats an everyday detail from the context as a legendary saga. Grand, dramatic, deadpan-serious about small things. Up to about 12 words.",
@@ -88,7 +70,8 @@ const LEGACY_TONES: Record<string, CardTone> = {
   warm: "Heartfelt",
   sincere: "Heartfelt",
   short: "Heartfelt",
-  playful: "Hype",
+  playful: "Dad jokes",
+  hype: "Epic",
   sassy: "Roast",
   dry: "Roast",
 }

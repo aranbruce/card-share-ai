@@ -40,16 +40,6 @@ const DEMO_STATES = {
       message: "Mira, you're thirty and totally ex-train-ordinary",
     },
   },
-  Hype: {
-    base: {
-      imageUrl: "/demo/card-hype.webp",
-      message: "All aboard! Mira hits thirty and the platform ERUPTS",
-    },
-    withPhoto: {
-      imageUrl: "/demo/card-hype-with-photo.webp",
-      message: "Mira pulls into platform 30. Right on time. HISTORIC",
-    },
-  },
   Epic: {
     base: {
       imageUrl: "/demo/card-epic.webp",
