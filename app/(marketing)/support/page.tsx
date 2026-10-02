@@ -6,14 +6,81 @@ import { buildPageMetadata } from "@/lib/site-metadata"
 export const metadata: Metadata = buildPageMetadata({
   title: "Support",
   description:
-    "Get help with CardShare.ai and the CardShare.ai Slack app — contact details, common questions, and troubleshooting for the /cardshareai commands.",
+    "Get help with CardShare.ai in ChatGPT, Claude and Slack: contact details, common questions, and troubleshooting.",
   path: "/support",
   robots: { index: true, follow: true },
 })
 
 const CONTACT_EMAIL = "cardshareai@gmail.com"
 
-const FAQS = [
+const link = "text-foreground underline underline-offset-4"
+
+const ASSISTANT_FAQS = [
+  {
+    question: "How do I connect CardShare.ai to ChatGPT or Claude?",
+    answer: (
+      <>
+        Find CardShare.ai in ChatGPT&apos;s apps or Claude&apos;s connectors
+        directory and click <strong>Connect</strong>. Sign in to your
+        CardShare.ai account (or create a free one) and click{" "}
+        <strong>Allow</strong>. Then ask for a card, for example &ldquo;Make a
+        birthday card for Sarah from the team&rdquo;. See{" "}
+        <Link href="/claude" className={link}>
+          using CardShare.ai in Claude
+        </Link>{" "}
+        for example requests and everything it can do.
+      </>
+    ),
+  },
+  {
+    question: "How do I disconnect it?",
+    answer: (
+      <>
+        In ChatGPT, open <strong>Settings → Apps</strong>; in Claude, open{" "}
+        <strong>Settings → Connectors</strong>. Then disconnect CardShare.ai.
+        Your cards stay in your CardShare.ai account.
+      </>
+    ),
+  },
+  {
+    question: "The card only shows as links, or photo upload isn't available",
+    answer: (
+      <>
+        Some versions of ChatGPT and Claude can&apos;t show the card or the
+        photo picker in the chat. The links do the same job: open the
+        card&apos;s edit link to see and change it, or to add a reference photo
+        for the cover.
+      </>
+    ),
+  },
+  {
+    question: "It says an app \u201cisn\u2019t allowed to connect\u201d",
+    answer: (
+      <>
+        To keep your account safe, only ChatGPT and Claude can connect to
+        CardShare.ai. If you see this while connecting from one of them, email
+        us the app&apos;s name and we&apos;ll look into it.
+      </>
+    ),
+  },
+  {
+    question: "What can ChatGPT or Claude see?",
+    answer: (
+      <>
+        Only the cards in the CardShare.ai account you connect: it can create
+        and edit cards and see how many people have signed them. Photos you
+        choose for a cover are only used to draw it; we don&apos;t keep them.
+        See our{" "}
+        <Link href="/privacy" className={link}>
+          privacy policy
+        </Link>{" "}
+        for full details.
+      </>
+    ),
+  },
+]
+
+const SLACK_FAQS = [
   {
     question: "How do I install the Slack app?",
     answer: (
@@ -100,6 +167,9 @@ const FAQS = [
       </>
     ),
   },
+]
+
+const ACCOUNT_FAQS = [
   {
     question: "How do I delete a card or my account?",
     answer: (
@@ -124,13 +194,19 @@ const FAQS = [
   },
 ]
 
+const FAQ_GROUPS = [
+  { title: "Using CardShare.ai in ChatGPT or Claude", faqs: ASSISTANT_FAQS },
+  { title: "Slack app", faqs: SLACK_FAQS },
+  { title: "Your account", faqs: ACCOUNT_FAQS },
+]
+
 export default function SupportPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16 md:px-15">
       <h1 className="text-3xl font-semibold tracking-[-0.03em]">Support</h1>
       <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        Need a hand with CardShare.ai or our Slack app? Start with the common
-        questions below, or get in touch — we&apos;re happy to help.
+        Need a hand with CardShare.ai in ChatGPT, Claude or Slack? Start with
+        the common questions below, or get in touch — we&apos;re happy to help.
       </p>
 
       <section className="mt-8 rounded-lg border border-border bg-muted/30 p-6">
@@ -148,34 +224,42 @@ export default function SupportPage() {
         </a>
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
           To help us resolve things quickly, include the email on your
-          CardShare.ai account, your Slack workspace name (for Slack app
-          issues), and what you were doing when the problem occurred.
+          CardShare.ai account, where you were using it (ChatGPT, Claude, Slack
+          or the website), your Slack workspace name for Slack app issues, and
+          what you were doing when the problem occurred.
         </p>
       </section>
 
-      <section className="mt-12">
-        <h2 className="text-base font-semibold tracking-tight">
-          Frequently asked questions
-        </h2>
-        <dl className="mt-6 space-y-8">
-          {FAQS.map((faq) => (
-            <div key={faq.question}>
-              <dt className="text-sm font-semibold text-foreground">
-                {faq.question}
-              </dt>
-              <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {faq.answer}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      {FAQ_GROUPS.map((group) => (
+        <section key={group.title} className="mt-12">
+          <h2 className="text-base font-semibold tracking-tight">
+            {group.title}
+          </h2>
+          <dl className="mt-6 space-y-8">
+            {group.faqs.map((faq) => (
+              <div key={faq.question}>
+                <dt className="text-sm font-semibold text-foreground">
+                  {faq.question}
+                </dt>
+                <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {faq.answer}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
 
       <section className="mt-12 border-t border-border pt-8">
         <h2 className="text-base font-semibold tracking-tight">
           Helpful links
         </h2>
         <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <li>
+            <Link href="/claude" className={link}>
+              Use CardShare.ai in Claude
+            </Link>
+          </li>
           <li>
             <Link
               href="/slack/install"
