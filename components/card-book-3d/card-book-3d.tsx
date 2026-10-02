@@ -905,7 +905,8 @@ export function CardBook3D({
             intro.turn = intro.turnTarget
           }
         }
-        if (intro.turn === 1 && intro.started === null) {
+        // Only once let go, so a drag can still take it back.
+        if (intro.turn === 1 && intro.started === null && !intro.drag) {
           intro.started = now + ENVELOPE_OPEN_BEAT_MS
         }
         const t = intro.started === null ? null : (now - intro.started) / 1000
@@ -1798,9 +1799,9 @@ export function CardBook3D({
       if (!moved) {
         if (!cancelled) openEnvelope()
       } else if (intro.turn > 0.3 && !cancelled) {
-        // Past a third of the way over, it finishes turning and opens.
-        intro.turnTarget = 1
-        setIntroPhase("opening")
+        // Past a third of the way over, it finishes turning and opens (at once, with
+        // reduced motion).
+        openEnvelope()
       } else {
         intro.turnTarget = 0
       }

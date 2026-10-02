@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import posthog from "posthog-js"
 import { Button } from "@/components/ui/button"
 import { Card3D } from "@/components/card-3d"
@@ -38,11 +38,26 @@ export function PublicCardView({
     })
   }, [linkId, contributions.length])
 
-  /** Once out of the envelope, the card opens itself after a beat on the cover. */
+  /**
+   * Once out of the envelope, the card opens itself after a beat on the cover, unless the
+   * reader has already turned a page.
+   */
   const [openToPage, setOpenToPage] = useState<number>()
+  const openTimer = useRef<number | undefined>(undefined)
+  const cancelOpen = () => {
+    window.clearTimeout(openTimer.current)
+    openTimer.current = undefined
+  }
+  useEffect(() => cancelOpen, [])
   const onOpened = () => {
     posthog.capture("card_opened", { link_id: linkId })
-    window.setTimeout(() => setOpenToPage(1), OPEN_INSIDE_DELAY_MS)
+    openTimer.current = window.setTimeout(() => {
+      openTimer.current = undefined
+      setOpenToPage(1)
+    }, OPEN_INSIDE_DELAY_MS)
+  }
+  const onPageChange = (page: number) => {
+    if (page !== 0) cancelOpen()
   }
 
   const { bodyMessage, displayContributions } = useMemo(
@@ -89,6 +104,7 @@ export function PublicCardView({
             envelopeStyle={envelopeStyle ?? envelopeStyleForCard(linkId)}
             onEnvelopeOpened={onOpened}
             navigateToPage={openToPage}
+            onPageChange={onPageChange}
             fallback={flatCard}
           />
 
