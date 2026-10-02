@@ -408,6 +408,7 @@ export function CreateCardPageClient({ stats }: { stats: StatItem[] }) {
             onContinue={handleCardTypeContinue}
             backHref={isGuest ? "/" : "/dashboard"}
             backLabel={isGuest ? "Back" : "Back to dashboard"}
+            error={error}
             stats={stats}
           />
         )}
@@ -422,6 +423,7 @@ export function CreateCardPageClient({ stats }: { stats: StatItem[] }) {
           onContinue={handleSaveCard}
           isContinuing={isSaving}
           onTemplateChange={setPreviewTemplateId}
+          actionError={error}
           hiddenOnMobile={mobilePreview}
           onShowCard={() => {
             setShowMobilePreview(true)
@@ -704,48 +706,49 @@ export function CreateCardPageClient({ stats }: { stats: StatItem[] }) {
               </div>
 
               {/* Phones: the form is hidden while the card shows */}
-              <div className="mt-auto flex gap-2.5 pt-6 md:hidden">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setShowMobilePreview(false)
-                    window.scrollTo({ top: 0 })
-                  }}
-                >
-                  Edit details
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={handleSaveCard}
-                  disabled={
-                    isSaving ||
-                    isGeneratingHeadline ||
-                    isGeneratingImage ||
-                    isRegeneratingHeadline ||
-                    isRegeneratingImage
-                  }
-                >
-                  {isSaving ? (
-                    <>
-                      <Spinner />
-                      Saving…
-                    </>
-                  ) : (
-                    "Continue"
-                  )}
-                </Button>
+              <div className="mt-auto flex flex-col gap-4 pt-6 md:hidden">
+                {error && (
+                  <Alert variant="destructive" className="text-left">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <div className="flex gap-2.5">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setShowMobilePreview(false)
+                      window.scrollTo({ top: 0 })
+                    }}
+                  >
+                    Edit details
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handleSaveCard}
+                    disabled={
+                      isSaving ||
+                      isGeneratingHeadline ||
+                      isGeneratingImage ||
+                      isRegeneratingHeadline ||
+                      isRegeneratingImage
+                    }
+                  >
+                    {isSaving ? (
+                      <>
+                        <Spinner />
+                        Saving…
+                      </>
+                    ) : (
+                      "Continue"
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
         </main>
       </div>
-
-      {error && (
-        <div className="fixed right-4 bottom-4 max-w-md rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      )}
 
       <AuthGateModal
         isOpen={showAuthModal}

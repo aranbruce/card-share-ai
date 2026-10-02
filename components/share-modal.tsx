@@ -1,6 +1,8 @@
 "use client"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { FieldError } from "@/components/ui/field-error"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { RecipientViewLinkCopy } from "@/components/recipient-view-link-copy"
@@ -19,6 +21,8 @@ import {
   MAX_CONTRIBUTOR_EMAILS,
   MAX_CONTRIBUTOR_EMAILS_ERROR,
 } from "@/lib/email/constants"
+import { emailError, isValidEmail } from "@/lib/form-validation"
+import { useFieldErrors } from "@/hooks/use-field-errors"
 
 interface ShareModalBaseProps {
   cardId: string
@@ -49,10 +53,6 @@ function buildContributorLink(contributorLinkId: string): string {
   return `${window.location.origin}${path}`
 }
 
-function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
 function parseContributorEmails(raw: string): string[] {
   const parts = raw.split(/[\s,;]+/).map((part) => part.trim())
   const unique = new Set<string>()
@@ -60,6 +60,17 @@ function parseContributorEmails(raw: string): string[] {
     if (part) unique.add(part)
   }
   return [...unique]
+}
+
+function contributorEmailsError(raw: string): string {
+  const emails = parseContributorEmails(raw)
+  if (emails.length === 0) return "Please enter at least one email address"
+  const invalid = emails.filter((email) => !isValidEmail(email))
+  if (invalid.length === 1) return `Invalid email: ${invalid[0]}`
+  if (invalid.length > 1) return "Please enter valid email addresses"
+  if (emails.length > MAX_CONTRIBUTOR_EMAILS)
+    return MAX_CONTRIBUTOR_EMAILS_ERROR
+  return ""
 }
 
 export function RecipientShareModal({
@@ -75,15 +86,17 @@ export function RecipientShareModal({
   const [recipientSending, setRecipientSending] = useState(false)
   const [recipientEmailSent, setRecipientEmailSent] = useState(false)
   const [recipientEmail, setRecipientEmail] = useState(initialEmail || "")
-  const [recipientEmailError, setRecipientEmailError] = useState("")
+  const [recipientSendError, setRecipientSendError] = useState("")
   const [recipientPersistenceWarning, setRecipientPersistenceWarning] =
     useState<string | null>(null)
   const [pendingSentAt, setPendingSentAt] = useState<string | null>(null)
   const [savingEmail, setSavingEmail] = useState(false)
   const [savingCardStatus, setSavingCardStatus] = useState(false)
 
-  const recipientEmailInputId = `recipient-email-${cardId}`
-  const recipientEmailErrorId = `recipient-email-error-${cardId}`
+  const recipientFields = useFieldErrors(
+    { email: emailError(recipientEmail) },
+    { email: `recipient-email-${cardId}` },
+  )
 
   const viewLink = isOpen ? buildViewLink(contributorLinkId) : ""
   const getViewLink = () => buildViewLink(contributorLinkId)
@@ -134,20 +147,13 @@ export function RecipientShareModal({
   }
 
   const handleSaveEmail = async () => {
+    setRecipientSendError("")
+    if (!recipientFields.validate()) return
     const email = recipientEmail.trim()
-    if (!email) {
-      setRecipientEmailError("Please enter an email address")
-      return
-    }
-    if (!validateEmail(email)) {
-      setRecipientEmailError("Please enter a valid email address")
-      return
-    }
     if (email !== recipientEmail) {
       setRecipientEmail(email)
     }
 
-    setRecipientEmailError("")
     setSavingEmail(true)
 
     try {
@@ -156,7 +162,7 @@ export function RecipientShareModal({
       })
       onEmailUpdate?.(email)
     } catch (err) {
-      setRecipientEmailError(
+      setRecipientSendError(
         err instanceof ApiError ? err.message : "Failed to save email",
       )
     } finally {
@@ -165,20 +171,13 @@ export function RecipientShareModal({
   }
 
   const handleSendRecipientEmail = async () => {
+    setRecipientSendError("")
+    if (!recipientFields.validate()) return
     const email = recipientEmail.trim()
-    if (!email) {
-      setRecipientEmailError("Please enter an email address")
-      return
-    }
-    if (!validateEmail(email)) {
-      setRecipientEmailError("Please enter a valid email address")
-      return
-    }
     if (email !== recipientEmail) {
       setRecipientEmail(email)
     }
 
-    setRecipientEmailError("")
     setRecipientSending(true)
 
     try {
@@ -206,7 +205,7 @@ export function RecipientShareModal({
       setPendingSentAt(null)
       setRecipientEmailSent(true)
     } catch (err) {
-      setRecipientEmailError(
+      setRecipientSendError(
         err instanceof ApiError
           ? err.message
           : "Failed to send recipient email",
@@ -298,34 +297,33 @@ export function RecipientShareModal({
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor={recipientEmailInputId} className="sr-only">
+                <div>
+                  <label
+                    htmlFor={recipientFields.fieldProps("email").id}
+                    className="sr-only"
+                  >
                     Recipient email address
                   </label>
                   <Input
-                    id={recipientEmailInputId}
+                    {...recipientFields.fieldProps("email")}
                     type="email"
                     placeholder="recipient@example.com"
                     value={recipientEmail}
                     onChange={(e) => {
                       setRecipientEmail(e.target.value)
-                      setRecipientEmailError("")
+                      setRecipientSendError("")
                     }}
-                    aria-invalid={!!recipientEmailError}
-                    aria-describedby={
-                      recipientEmailError ? recipientEmailErrorId : undefined
-                    }
                   />
-                  {recipientEmailError ? (
-                    <p
-                      id={recipientEmailErrorId}
-                      role="alert"
-                      className="text-xs text-destructive"
-                    >
-                      {recipientEmailError}
-                    </p>
-                  ) : null}
+                  <FieldError id={recipientFields.errorId("email")}>
+                    {recipientFields.error("email")}
+                  </FieldError>
                 </div>
+
+                {recipientSendError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{recipientSendError}</AlertDescription>
+                  </Alert>
+                ) : null}
 
                 <div className="flex gap-2">
                   <Button
@@ -384,41 +382,27 @@ export function ContributorShareModal({
   const [contributorSending, setContributorSending] = useState(false)
   const [contributorEmailSent, setContributorEmailSent] = useState(false)
   const [contributorEmails, setContributorEmails] = useState("")
-  const [contributorEmailError, setContributorEmailError] = useState("")
+  const [contributorSendError, setContributorSendError] = useState("")
   const [contributorPartialNotice, setContributorPartialNotice] = useState<
     string | null
   >(null)
   const [sentCount, setSentCount] = useState(0)
 
-  const contributorEmailsInputId = `contributor-emails-${cardId}`
-  const contributorEmailsErrorId = `contributor-emails-error-${cardId}`
+  const contributorFields = useFieldErrors(
+    { emails: contributorEmailsError(contributorEmails) },
+    { emails: `contributor-emails-${cardId}` },
+  )
+  const contributorEmailsErrorId = contributorFields.errorId("emails")
   const contributorPartialNoticeId = `contributor-partial-notice-${cardId}`
 
   const contributorLink = isOpen ? buildContributorLink(contributorLinkId) : ""
   const getContributorLink = () => buildContributorLink(contributorLinkId)
 
   const handleSendContributorEmails = async () => {
+    setContributorSendError("")
+    if (!contributorFields.validate()) return
     const emails = parseContributorEmails(contributorEmails)
-    if (emails.length === 0) {
-      setContributorEmailError("Please enter at least one email address")
-      return
-    }
 
-    const invalid = emails.filter((email) => !validateEmail(email))
-    if (invalid.length > 0) {
-      setContributorEmailError(
-        invalid.length === 1
-          ? `Invalid email: ${invalid[0]}`
-          : "Please enter valid email addresses",
-      )
-      return
-    }
-    if (emails.length > MAX_CONTRIBUTOR_EMAILS) {
-      setContributorEmailError(MAX_CONTRIBUTOR_EMAILS_ERROR)
-      return
-    }
-
-    setContributorEmailError("")
     setContributorPartialNotice(null)
     setContributorSending(true)
 
@@ -446,7 +430,7 @@ export function ContributorShareModal({
       setSentCount(response.sentCount ?? emails.length)
       setContributorEmailSent(true)
     } catch (err) {
-      setContributorEmailError(
+      setContributorSendError(
         err instanceof ApiError
           ? err.message
           : "Failed to send contributor emails",
@@ -528,42 +512,46 @@ export function ContributorShareModal({
                     {contributorPartialNotice}
                   </p>
                 ) : null}
-                <div className="space-y-2">
-                  <label htmlFor={contributorEmailsInputId} className="sr-only">
+                <div>
+                  <label
+                    htmlFor={contributorFields.fieldProps("emails").id}
+                    className="sr-only"
+                  >
                     Contributor email addresses
                   </label>
                   <Textarea
-                    id={contributorEmailsInputId}
+                    {...contributorFields.fieldProps("emails")}
                     placeholder="contributor@example.com, friend@example.com"
                     value={contributorEmails}
                     onChange={(e) => {
                       setContributorEmails(e.target.value)
-                      setContributorEmailError("")
+                      setContributorSendError("")
                       setContributorPartialNotice(null)
                     }}
                     rows={3}
-                    aria-invalid={!!contributorEmailError}
                     aria-describedby={
                       [
                         contributorPartialNotice
                           ? contributorPartialNoticeId
                           : null,
-                        contributorEmailError ? contributorEmailsErrorId : null,
+                        contributorFields.error("emails")
+                          ? contributorEmailsErrorId
+                          : null,
                       ]
                         .filter(Boolean)
                         .join(" ") || undefined
                     }
                   />
-                  {contributorEmailError ? (
-                    <p
-                      id={contributorEmailsErrorId}
-                      role="alert"
-                      className="text-xs text-destructive"
-                    >
-                      {contributorEmailError}
-                    </p>
-                  ) : null}
+                  <FieldError id={contributorEmailsErrorId}>
+                    {contributorFields.error("emails")}
+                  </FieldError>
                 </div>
+
+                {contributorSendError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{contributorSendError}</AlertDescription>
+                  </Alert>
+                ) : null}
 
                 <Button
                   type="button"

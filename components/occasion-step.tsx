@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, Plus } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { CreateStepIndicator } from "@/components/create-step-indicator"
@@ -22,6 +23,7 @@ export function OccasionStep({
   onContinue,
   backHref,
   backLabel,
+  error,
   stats = [],
 }: {
   selected: string
@@ -29,6 +31,8 @@ export function OccasionStep({
   onContinue: () => void
   backHref: string
   backLabel: string
+  /** Shown above Continue, e.g. when saving a card after sign-in failed. */
+  error?: string
   /** Site-wide usage stats shown under Continue; hidden when empty. */
   stats?: StatItem[]
 }) {
@@ -73,7 +77,16 @@ export function OccasionStep({
         ))}
       </div>
 
-      <Button type="button" className="mt-auto w-full" onClick={onContinue}>
+      {error && (
+        <Alert variant="destructive" className="mt-auto mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Button
+        type="button"
+        className={cn("w-full", !error && "mt-auto")}
+        onClick={onContinue}
+      >
         Continue
         <ArrowRight />
       </Button>
