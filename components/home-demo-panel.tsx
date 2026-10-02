@@ -157,7 +157,7 @@ export function HomeDemoPanel() {
 
       <div className="grid grid-cols-1 md:min-h-155 md:grid-cols-[300px_1fr] lg:grid-cols-[360px_1fr]">
         {/* The create page's details form, filled in */}
-        <aside className="order-2 flex flex-col border-border bg-card px-7 py-6 text-left md:order-0 md:border-r">
+        <aside className="hidden flex-col border-r border-border bg-card px-7 py-6 text-left md:flex">
           <div className="flex flex-1 flex-col gap-4">
             <div>
               <label
