@@ -7,9 +7,12 @@ import { AuthPageHeader } from "@/components/auth/page-header"
 import { AuthOAuthButtons } from "@/components/auth/oauth-buttons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { FieldError } from "@/components/ui/field-error"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
+import { emailError, newPasswordError } from "@/lib/form-validation"
+import { useFieldErrors } from "@/hooks/use-field-errors"
 import type { OAuthProviderId } from "@/lib/oauth-auth"
 import { usePendingSaveIntent } from "@/hooks/use-pending-save-intent"
 import {
@@ -33,6 +36,10 @@ function SignUpFormInner() {
   const searchParams = useSearchParams()
   const hasPendingCard = usePendingSaveIntent(searchParams)
   const [supabase] = useState(() => createClient())
+  const fields = useFieldErrors(
+    { email: emailError(email), password: newPasswordError(password) },
+    { email: "email", password: "password" },
+  )
 
   const tryPersistPendingCard = useCallback(async () => {
     const result = await persistPendingCardAfterAuth(supabase)
@@ -77,8 +84,9 @@ function SignUpFormInner() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
+    if (!fields.validate()) return
+    setLoading(true)
 
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -176,27 +184,26 @@ function SignUpFormInner() {
         onProviderClick={(provider) => void handleOAuthClick(provider)}
       />
 
-      <form onSubmit={handleSignUp} className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-
+      <form onSubmit={handleSignUp} noValidate className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">
             Email
           </label>
           <Input
-            id="email"
+            {...fields.fieldProps("email")}
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setError("")
+            }}
             placeholder="you@example.com"
-            required
             disabled={loading}
             variant="auth"
           />
+          <FieldError id={fields.errorId("email")}>
+            {fields.error("email")}
+          </FieldError>
         </div>
 
         <div>
@@ -204,16 +211,27 @@ function SignUpFormInner() {
             Password
           </label>
           <Input
-            id="password"
+            {...fields.fieldProps("password")}
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value)
+              setError("")
+            }}
             placeholder="••••••••"
-            required
             disabled={loading}
             variant="auth"
           />
+          <FieldError id={fields.errorId("password")}>
+            {fields.error("password")}
+          </FieldError>
         </div>
+
+        {error ? (
+          <Alert variant="destructive" className="my-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Button
           type="submit"

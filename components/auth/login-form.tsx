@@ -7,9 +7,12 @@ import { AuthPageHeader } from "@/components/auth/page-header"
 import { AuthOAuthButtons } from "@/components/auth/oauth-buttons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { FieldError } from "@/components/ui/field-error"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from "next/link"
 import type { OAuthProviderId } from "@/lib/oauth-auth"
+import { emailError } from "@/lib/form-validation"
+import { useFieldErrors } from "@/hooks/use-field-errors"
 import { resolveSafePostAuthRedirectPath } from "@/lib/safe-redirect-path"
 import { usePendingSaveIntent } from "@/hooks/use-pending-save-intent"
 import {
@@ -38,6 +41,13 @@ function LoginFormInner() {
   const successMessage = !urlError && urlMessage ? urlMessage : ""
   const [loading, setLoading] = useState(false)
   const hasPendingCard = usePendingSaveIntent(searchParams)
+  const fields = useFieldErrors(
+    {
+      email: emailError(email),
+      password: password ? "" : "Please enter your password",
+    },
+    { email: "email", password: "password" },
+  )
 
   const tryPersistPendingCard = useCallback(async () => {
     const result = await persistPendingCardAfterAuth(supabase)
@@ -82,8 +92,9 @@ function LoginFormInner() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
+    if (!fields.validate()) return
+    setLoading(true)
 
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -163,27 +174,26 @@ function LoginFormInner() {
         onProviderClick={(provider) => void handleOAuthClick(provider)}
       />
 
-      <form onSubmit={handleLogin} className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-
+      <form onSubmit={handleLogin} noValidate className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">
             Email
           </label>
           <Input
-            id="email"
+            {...fields.fieldProps("email")}
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setError("")
+            }}
             placeholder="you@example.com"
-            required
             disabled={loading}
             variant="auth"
           />
+          <FieldError id={fields.errorId("email")}>
+            {fields.error("email")}
+          </FieldError>
         </div>
 
         <div>
@@ -199,16 +209,27 @@ function LoginFormInner() {
             </Link>
           </div>
           <Input
-            id="password"
+            {...fields.fieldProps("password")}
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value)
+              setError("")
+            }}
             placeholder="••••••••"
-            required
             disabled={loading}
             variant="auth"
           />
+          <FieldError id={fields.errorId("password")}>
+            {fields.error("password")}
+          </FieldError>
         </div>
+
+        {error ? (
+          <Alert variant="destructive" className="my-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Button
           type="submit"

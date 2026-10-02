@@ -7,8 +7,11 @@ import { AuthSuccessPanel } from "@/components/auth/success-panel"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { FieldError } from "@/components/ui/field-error"
 import Link from "next/link"
 import { friendlyAuthError } from "@/lib/auth-errors"
+import { emailError } from "@/lib/form-validation"
+import { useFieldErrors } from "@/hooks/use-field-errors"
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("")
@@ -16,11 +19,16 @@ export function ForgotPasswordForm() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const supabase = createClient()
+  const fields = useFieldErrors(
+    { email: emailError(email) },
+    { email: "email" },
+  )
 
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError("")
+    if (!fields.validate()) return
+    setLoading(true)
     setSuccess(false)
 
     try {
@@ -69,28 +77,33 @@ export function ForgotPasswordForm() {
         description="Enter your email address and we'll send you a link to reset your password"
       />
 
-      <form onSubmit={handleResetRequest} className="space-y-4">
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
-
+      <form onSubmit={handleResetRequest} noValidate className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">
             Email
           </label>
           <Input
-            id="email"
+            {...fields.fieldProps("email")}
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setError("")
+            }}
             placeholder="you@example.com"
-            required
             disabled={loading}
             variant="auth"
           />
+          <FieldError id={fields.errorId("email")}>
+            {fields.error("email")}
+          </FieldError>
         </div>
+
+        {error ? (
+          <Alert variant="destructive" className="my-6">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Button
           type="submit"

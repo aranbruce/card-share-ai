@@ -23,6 +23,9 @@
   --brand-foreground: oklch(1 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
+  --destructive-text: oklch(
+    0.505 0.213 27.518
+  ); /* error copy: field errors, form alerts */
   --border: oklch(0.913 0.006 83); /* rgba(17,17,16,0.08) on bg */
   --line: rgba(17, 17, 16, 0.05); /* subtle dividers — headers, sections */
   --input: oklch(0.913 0.006 83);
@@ -62,6 +65,7 @@
   --brand-foreground: oklch(1 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-text: oklch(0.637 0.237 25.331);
   --border: oklch(0.25 0.003 49);
   --line: rgba(255, 255, 255, 0.08);
   --input: oklch(0.25 0.003 49);
@@ -100,6 +104,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-text: var(--destructive-text);
   --color-border: var(--border);
   --color-line: var(--line);
   --color-input: var(--input);

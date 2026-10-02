@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { friendlyAuthError } from "@/lib/auth-errors"
 import {
@@ -82,15 +83,14 @@ export function ResendConfirmationEmail() {
   return (
     <div className="mb-6 space-y-2">
       <p aria-live="polite" className="text-sm text-muted-foreground">
-        {error ? (
-          <span className="text-destructive">{error}</span>
-        ) : (
-          <>
-            {resent ? "Sent another email to " : "Sent to "}
-            <span className="font-medium text-foreground">{stored.email}</span>
-          </>
-        )}
+        {resent ? "Sent another email to " : "Sent to "}
+        <span className="font-medium text-foreground">{stored.email}</span>
       </p>
+      {error ? (
+        <Alert variant="destructive" className="my-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
       <Button
         type="button"
         variant="outline"
