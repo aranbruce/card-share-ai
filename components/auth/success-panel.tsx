@@ -6,6 +6,8 @@ import Link from "next/link"
 type AuthSuccessPanelProps = {
   title: string
   description: ReactNode
+  /** Rendered below the description, e.g. a resend control. */
+  children?: ReactNode
   footer?: ReactNode
   hint?: ReactNode
   action: { href: string; label: string }
@@ -14,6 +16,7 @@ type AuthSuccessPanelProps = {
 export function AuthSuccessPanel({
   title,
   description,
+  children,
   footer,
   hint,
   action,
@@ -25,12 +28,16 @@ export function AuthSuccessPanel({
       </div>
       <h1 className="mb-2 text-2xl font-bold">{title}</h1>
       <p className="mb-6 text-muted-foreground">{description}</p>
+      {children}
       {footer ? (
         <p className="mb-8 text-sm text-muted-foreground">{footer}</p>
       ) : null}
       {hint ? (
         <Alert className="mb-6 text-left">
-          <AlertDescription>{hint}</AlertDescription>
+          <AlertDescription>
+            {/* AlertDescription is a grid; wrap so inline links stay in the text flow */}
+            <p>{hint}</p>
+          </AlertDescription>
         </Alert>
       ) : null}
       <Button

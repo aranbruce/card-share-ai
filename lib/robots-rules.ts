@@ -8,6 +8,7 @@ export const DISALLOWED_PATHS = [
   "/view/",
   "/contribute/",
   "/recovery-callback",
+  "/confirm",
   "/slack/installed",
 ]
 

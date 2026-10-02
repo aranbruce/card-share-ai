@@ -51,8 +51,16 @@ export function checkFixedWindowRateLimit(
   request: NextRequest,
   config: FixedWindowRateLimitConfig,
 ): { allowed: boolean; headers: Record<string, string> } {
+  return checkFixedWindowRateLimitForKey(getClientIp(request), config)
+}
+
+/** Same as `checkFixedWindowRateLimit`, keyed by a caller-chosen id (e.g. a user id) instead of IP. */
+export function checkFixedWindowRateLimitForKey(
+  subject: string,
+  config: FixedWindowRateLimitConfig,
+): { allowed: boolean; headers: Record<string, string> } {
   const now = Date.now()
-  const key = `${config.namespace}:${getClientIp(request)}`
+  const key = `${config.namespace}:${subject}`
   const store = getStore()
 
   const existing = store.get(key)

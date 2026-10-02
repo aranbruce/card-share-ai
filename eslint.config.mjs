@@ -43,6 +43,9 @@ export default defineConfig([
           whitelist: [
             "inputs",
             "hero-drift",
+            "hero-fan-deal",
+            "slack-flow-.*",
+            "slack-story-.*",
             "demo-float",
             "card-pastel",
             "card-3d-.*",

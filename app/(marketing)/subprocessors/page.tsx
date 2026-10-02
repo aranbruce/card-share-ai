@@ -11,7 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
   robots: { index: true, follow: true },
 })
 
-const CONTACT_EMAIL = "hello@cardshare.ai"
+const CONTACT_EMAIL = "cardshareai@gmail.com"
 
 const SUBPROCESSORS = [
   {
@@ -27,14 +27,9 @@ const SUBPROCESSORS = [
     location: "United States",
   },
   {
-    name: "OpenAI",
+    name: "AI model providers (OpenAI, Anthropic, Google, xAI)",
     purpose:
-      "Generates card headlines and messages from the details you provide",
-    location: "United States",
-  },
-  {
-    name: "Google (Gemini)",
-    purpose: "Generates card cover images from the details you provide",
+      "Generate card headlines, messages, and cover images from the details you provide. We may use one or more of these, through Vercel's AI Gateway",
     location: "United States",
   },
   {
@@ -58,7 +53,7 @@ export default function SubprocessorsPage() {
   return (
     <LegalPage title="Sub-processors">
       <p>
-        <strong>Last updated:</strong> 28 September 2026
+        <strong>Last updated:</strong> 1 October 2026
       </p>
       <p>
         CardShare.ai uses the third-party service providers below

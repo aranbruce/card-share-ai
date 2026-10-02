@@ -10,13 +10,13 @@ export const metadata: Metadata = buildPageMetadata({
   robots: { index: true, follow: true },
 })
 
-const CONTACT_EMAIL = "hello@cardshare.ai"
+const CONTACT_EMAIL = "cardshareai@gmail.com"
 
 export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy policy">
       <p>
-        <strong>Last updated:</strong> 4 June 2026
+        <strong>Last updated:</strong> 1 October 2026
       </p>
       <p>
         CardShare.ai (&quot;we&quot;, &quot;us&quot;) runs cardshare.ai and
@@ -65,6 +65,12 @@ export default function PrivacyPage() {
           <strong>Slack integration</strong>: If you install our Slack app, we
           receive workspace and user identifiers needed to run slash commands
           and deliver card links in Slack.
+        </li>
+        <li>
+          <strong>AI assistants</strong>: If you connect an AI assistant such as
+          Claude or ChatGPT, it sends us the card details you give it and
+          receives the results. The company that runs the assistant handles that
+          data under its own privacy policy.
         </li>
       </ul>
 

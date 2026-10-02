@@ -43,6 +43,7 @@ pnpm fix              # Auto-fix formatting and lint issues
 
 ```
 app/
+  mcp/                # Remote MCP server (Claude / ChatGPT connectors)
   api/                # API routes (cards, generate-headline, generate-message, generate-image, giphy, contribute)
   (auth)/             # Auth pages at /login, /sign-up, /callback, etc. (route group)
   create/             # Card creation flow
@@ -78,21 +79,24 @@ supabase/migrations/  # Database migration history
 
 Copy `.env.local` from a team member or pull via `vercel env pull`. Key variables:
 
-| Variable                            | Purpose                                                                             |
-| ----------------------------------- | ----------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`          | Supabase project URL                                                                |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`     | Supabase public key                                                                 |
-| `SUPABASE_SERVICE_ROLE_KEY`         | Server-side Supabase admin key                                                      |
-| `POSTGRES_URL`                      | Database connection string                                                          |
-| `GIPHY_API_KEY`                     | Giphy API for GIF search                                                            |
-| `AI_GATEWAY_API_KEY`                | Vercel AI Gateway key                                                               |
-| `AI_HEADLINE_MODEL`                 | Override the headline model (optional, defaults to `google/gemini-3.8-flash`)       |
-| `AI_MESSAGE_MODEL`                  | Override the inside-message model (optional, defaults to `google/gemini-3.8-flash`) |
-| `AI_IMAGE_GATEWAY_MODEL`            | Override card cover image model (default `google/gemini-3.1-flash-image-preview`)   |
-| `E2E_EMAIL` / `E2E_PASSWORD`        | Test account credentials for Playwright                                             |
-| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project API key (EU Cloud)                                                  |
-| `NEXT_PUBLIC_POSTHOG_HOST`          | PostHog ingest API for server-side SDK (`https://eu.i.posthog.com`)                 |
-| `NEXT_PUBLIC_POSTHOG_API_HOST`      | Client proxy: `/t` locally, `https://t.cardshare.ai` in production                  |
+| Variable                            | Purpose                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`          | Supabase project URL                                                                 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`     | Supabase public key                                                                  |
+| `SUPABASE_SERVICE_ROLE_KEY`         | Server-side Supabase admin key                                                       |
+| `POSTGRES_URL`                      | Database connection string                                                           |
+| `SUPABASE_SECRET_KEY`               | New-style secret key (`sb_secret_…`), server-side Auth calls only (IP forwarding)    |
+| `GIPHY_API_KEY`                     | Giphy API for GIF search                                                             |
+| `AI_GATEWAY_API_KEY`                | Vercel AI Gateway key                                                                |
+| `AI_HEADLINE_MODEL`                 | Override the headline model (optional, defaults to `google/gemini-3.8-flash`)        |
+| `AI_MESSAGE_MODEL`                  | Override the inside-message model (optional, defaults to `google/gemini-3.8-flash`)  |
+| `AI_IMAGE_GATEWAY_MODEL`            | Override card cover image model (default `google/gemini-3.1-flash-image-preview`)    |
+| `E2E_EMAIL` / `E2E_PASSWORD`        | Test account credentials for Playwright                                              |
+| `MCP_PHOTO_TOKEN_SECRET`            | Signs photo upload links in the MCP card view; photo covers are off without it       |
+| `OPENAI_APPS_CHALLENGE_TOKEN`       | OpenAI domain check token, served at `/.well-known/openai-apps-challenge` (optional) |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project API key (EU Cloud)                                                   |
+| `NEXT_PUBLIC_POSTHOG_HOST`          | PostHog ingest API for server-side SDK (`https://eu.i.posthog.com`)                  |
+| `NEXT_PUBLIC_POSTHOG_API_HOST`      | Client proxy: `/t` locally, `https://t.cardshare.ai` in production                   |
 
 PostHog **AI observability** reuses `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEXT_PUBLIC_POSTHOG_HOST`. OpenTelemetry starts in `instrumentation.ts` (`lib/posthog-ai-otel.ts` + `@ai-sdk/otel`); AI routes pass `telemetry` / `runtimeContext` via `lib/ai-telemetry.ts`. See README “PostHog AI observability”.
 
@@ -104,4 +108,6 @@ PostHog **AI observability** reuses `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEX
 - **Pending card storage**: `lib/pending-card-storage.ts` preserves in-progress card state across auth redirects
 - **AI text models**: Configured via `lib/ai-text-model.ts`; headlines read `AI_HEADLINE_MODEL`, inside messages read `AI_MESSAGE_MODEL`
 - **PostHog AI observability**: `instrumentation.ts` + `lib/posthog-ai-otel.ts` (`@ai-sdk/otel`) export LLM spans; `lib/ai-telemetry.ts` on `generateText`; distinct ID via `X-POSTHOG-DISTINCT-ID` from the client
+- **MCP server**: `app/mcp/route.ts` (tools in `lib/mcp/tools.ts`) for Claude/ChatGPT connectors; OAuth via Supabase Auth's OAuth 2.1 server with the consent page at `/oauth/consent`; protected resource metadata under `app/.well-known/`. Tools use an RLS-scoped client built from the bearer token
 - **Supabase RLS**: All database access enforces Row Level Security; use the service role key only in API routes, never client-side
+- **Supabase Auth IP forwarding**: Supabase rate-limits Auth per IP, and server-side calls all come from our IP. `lib/supabase/auth-server.ts` builds an **auth-only** client (returns `client.auth`, minus `admin`) with `SUPABASE_SECRET_KEY` and `sb-forwarded-for` (first `x-forwarded-for` hop); it's used for the middleware session refresh and `verifyOtp` / `exchangeCodeForSession` in `lib/auth/complete-auth-callback.ts`. The secret key bypasses RLS — never use it for data queries; those stay on the anon-key clients. Needs "Enable IP address forwarding" under Auth → Rate Limits in the Supabase dashboard; without the env var it falls back to the anon key

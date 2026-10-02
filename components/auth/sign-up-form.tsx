@@ -13,6 +13,10 @@ import { friendlyAuthError } from "@/lib/auth-errors"
 import type { OAuthProviderId } from "@/lib/oauth-auth"
 import { usePendingSaveIntent } from "@/hooks/use-pending-save-intent"
 import {
+  buildSignUpEmailRedirectTo,
+  rememberSignUpEmail,
+} from "@/lib/auth/sign-up-email"
+import {
   persistPendingCardAfterAuth,
   persistPendingCardErrorMessage,
 } from "@/lib/persist-pending-card-after-auth"
@@ -81,7 +85,7 @@ function SignUpFormInner() {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/callback`,
+          emailRedirectTo: buildSignUpEmailRedirectTo(window.location.origin),
         },
       })
 
@@ -91,16 +95,20 @@ function SignUpFormInner() {
         return
       }
 
-      if (
-        data.user &&
-        data.user.identities &&
-        data.user.identities.length > 0
-      ) {
-        captureAuthEvent(
-          "user_signed_up",
-          { provider: "email" },
-          { id: data.user.id, email: data.user.email },
-        )
+      // An empty identities array means the email is already registered
+      // (Supabase obfuscates this), so it isn't a new sign-up.
+      const isNewUser = (data.user?.identities?.length ?? 0) > 0
+
+      // A session is only returned when email confirmation is disabled.
+      // Otherwise the user must confirm their email before signing in.
+      if (data.user && data.session) {
+        if (isNewUser) {
+          captureAuthEvent(
+            "user_signed_up",
+            { provider: "email" },
+            { id: data.user.id, email: data.user.email },
+          )
+        }
 
         const { cardId, error: persistError } = await tryPersistPendingCard()
 
@@ -114,7 +122,7 @@ function SignUpFormInner() {
           router.push("/dashboard")
         }
       } else {
-        if (data.user) {
+        if (data.user && isNewUser) {
           captureAuthEvent(
             "user_signed_up",
             {
@@ -124,6 +132,9 @@ function SignUpFormInner() {
             { id: data.user.id, email: data.user.email },
           )
         }
+        // Also remembered for already-registered emails, so the page doesn't
+        // reveal which addresses have accounts.
+        rememberSignUpEmail(email)
         router.push("/sign-up-success")
       }
     } catch {

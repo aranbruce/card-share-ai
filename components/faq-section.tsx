@@ -44,7 +44,7 @@ export function FaqSection({
             <details key={faq.q} className="group border-b border-border py-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-base font-medium tracking-[-0.015em]">
                 {faq.q}
-                <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border transition-transform group-open:rotate-45 group-open:border-foreground group-open:bg-foreground group-open:text-background">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full border border-border bg-card transition-transform group-open:rotate-45">
                   <PlusIcon />
                 </span>
               </summary>

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { friendlyAuthError } from "./auth-errors"
 
 const expectedRateLimitMessage =
-  "Too many attempts were made recently from this network. Please wait several minutes before trying again."
+  "Too many attempts. Please wait a few minutes and try again."
 
 describe("friendlyAuthError", () => {
   it("maps explicit 429 status codes to a friendly message", () => {

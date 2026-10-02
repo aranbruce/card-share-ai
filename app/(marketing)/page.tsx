@@ -2,10 +2,10 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CardTileRow } from "@/components/card-tile-row"
+import { HeroCardFan } from "@/components/hero-card-fan"
 import { HomeDemoPanel } from "@/components/home-demo-panel"
 import { HomeMarketingSections } from "@/components/home-marketing-sections"
 import { LogoStrip, StatsLine } from "@/components/social-proof"
-import { getAppUrl } from "@/lib/app-url"
 import { occasionTiles } from "@/lib/category-pages"
 import { getSiteStats } from "@/lib/site-stats"
 import { buildPageMetadata, DEFAULT_DESCRIPTION } from "@/lib/site-metadata"
@@ -23,12 +23,12 @@ export const metadata: Metadata = buildPageMetadata({
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const appHostname = getAppUrl().replace(/^https?:\/\//, "")
   const stats = buildStatItems(await getSiteStats())
 
   return (
     <>
-      <section className="py-20">
+      {/* overflow-x-clip: the outer fan cards reach past the browser into the page gutters */}
+      <section className="overflow-x-clip py-20">
         <div className="mx-auto max-w-360 px-6 md:px-15">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
@@ -60,8 +60,10 @@ export default async function HomePage() {
             <StatsLine items={stats} className="mt-6 justify-center" />
           </div>
 
-          <div className="mx-auto mt-16 max-w-280">
-            <HomeDemoPanel />
+          <div className="mx-auto mt-16 max-w-250 md:mt-47.5">
+            <HeroCardFan>
+              <HomeDemoPanel />
+            </HeroCardFan>
           </div>
 
           <LogoStrip logos={CUSTOMER_LOGOS} className="mt-16" />
@@ -81,7 +83,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <HomeMarketingSections appHostname={appHostname} stats={stats} />
+      <HomeMarketingSections stats={stats} />
     </>
   )
 }
