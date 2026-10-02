@@ -239,11 +239,15 @@ export default async function ComparePage({ params }: PageProps) {
               <span className="text-[15px] font-semibold text-muted-foreground">
                 {competitor}
               </span>
-              <div
-                aria-hidden
-                className="flex aspect-4/5 w-full max-w-52.5 flex-col items-center justify-center rounded-[10px] bg-[repeating-linear-gradient(135deg,var(--border)_0_10px,var(--background)_10px_20px)] text-center font-mono text-[11px] leading-normal text-muted-foreground shadow-[0_20px_40px_-28px_rgba(17,17,16,0.35)]"
-              >
-                <span>{headToHead.themShot}</span>
+              <div className="relative aspect-4/5 w-full max-w-52.5 overflow-hidden rounded-[10px] shadow-[0_20px_40px_-28px_rgba(17,17,16,0.35)] ring-1 ring-border">
+                <Image
+                  src={headToHead.themImage.src}
+                  alt={headToHead.themImage.alt}
+                  fill
+                  sizes="210px"
+                  className="object-cover"
+                  priority
+                />
               </div>
               <div className="w-full border-t border-border pt-4.5 text-center">
                 <p className="text-2xl leading-none font-semibold tracking-[-0.035em] text-muted-foreground sm:text-4xl">
