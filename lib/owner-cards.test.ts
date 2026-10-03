@@ -7,6 +7,7 @@ const CARD_ID = "550e8400-e29b-41d4-a716-446655440000"
 function mockSupabase(handlers: {
   cardsSelect?: () => unknown
   contributionsSelect?: () => unknown
+  scheduleSelect?: () => unknown
 }) {
   const from = vi.fn((table: string) => {
     if (table === "cards") {
@@ -23,6 +24,16 @@ function mockSupabase(handlers: {
         select: vi.fn(() => chain),
         eq: vi.fn(() => chain),
         order: vi.fn(() => handlers.contributionsSelect?.()),
+      }
+      return chain
+    }
+    if (table === "card_send_schedules") {
+      const chain = {
+        select: vi.fn(() => chain),
+        eq: vi.fn(() => chain),
+        maybeSingle: vi.fn(
+          () => handlers.scheduleSelect?.() ?? { data: null, error: null },
+        ),
       }
       return chain
     }

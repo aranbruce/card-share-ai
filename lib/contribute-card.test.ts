@@ -24,6 +24,7 @@ import { getContributeCardByLinkId } from "./contribute-card"
 function mockSupabase(handlers: {
   cardSelect?: () => unknown
   contributionsSelect?: () => unknown
+  scheduleSelect?: () => unknown
 }) {
   const from = vi.fn((table: string) => {
     if (table === "cards") {
@@ -39,6 +40,16 @@ function mockSupabase(handlers: {
         select: vi.fn(() => chain),
         eq: vi.fn(() => chain),
         order: vi.fn(() => handlers.contributionsSelect?.()),
+      }
+      return chain
+    }
+    if (table === "card_send_schedules") {
+      const chain = {
+        select: vi.fn(() => chain),
+        eq: vi.fn(() => chain),
+        maybeSingle: vi.fn(
+          () => handlers.scheduleSelect?.() ?? { data: null, error: null },
+        ),
       }
       return chain
     }
@@ -94,7 +105,7 @@ describe("getContributeCardByLinkId", () => {
     )
 
     await expect(getContributeCardByLinkId(LINK_ID)).resolves.toEqual({
-      card: CARD,
+      card: { ...CARD, scheduled_send_at: null },
       contributions: [],
     })
   })
@@ -117,8 +128,41 @@ describe("getContributeCardByLinkId", () => {
     )
 
     await expect(getContributeCardByLinkId(LINK_ID)).resolves.toEqual({
-      card: CARD,
+      card: { ...CARD, scheduled_send_at: null },
       contributions,
     })
+  })
+
+  it("adds a pending scheduled send as the deadline to sign", async () => {
+    const sendAt = "2026-10-10T08:00:00.000Z"
+    vi.mocked(requireServiceRoleClient).mockReturnValue(
+      mockSupabase({
+        cardSelect: () => ({ data: CARD, error: null }),
+        contributionsSelect: () => ({ data: [], error: null }),
+        scheduleSelect: () => ({
+          data: { send_at: sendAt, state: "scheduled" },
+          error: null,
+        }),
+      }) as never,
+    )
+
+    const result = await getContributeCardByLinkId(LINK_ID)
+    expect(result?.card.scheduled_send_at).toBe(sendAt)
+  })
+
+  it("ignores a schedule that has already sent", async () => {
+    vi.mocked(requireServiceRoleClient).mockReturnValue(
+      mockSupabase({
+        cardSelect: () => ({ data: CARD, error: null }),
+        contributionsSelect: () => ({ data: [], error: null }),
+        scheduleSelect: () => ({
+          data: { send_at: "2026-10-01T08:00:00.000Z", state: "sent" },
+          error: null,
+        }),
+      }) as never,
+    )
+
+    const result = await getContributeCardByLinkId(LINK_ID)
+    expect(result?.card.scheduled_send_at).toBeNull()
   })
 })

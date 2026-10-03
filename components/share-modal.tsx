@@ -8,7 +8,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { RecipientViewLinkCopy } from "@/components/recipient-view-link-copy"
 import { useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
-import { CheckIcon, LinkIcon, MailIcon, SendIcon } from "lucide-react"
+import {
+  CalendarClockIcon,
+  CheckIcon,
+  LinkIcon,
+  MailIcon,
+  SendIcon,
+} from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -16,7 +22,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ApiError, apiPatch, apiPost } from "@/lib/api-client"
+import { ApiError, apiDelete, apiPatch, apiPost } from "@/lib/api-client"
+import type { CardSendSchedule } from "@/lib/card-send-schedule"
+import { LocalDateTime } from "@/components/local-date-time"
 import {
   MAX_CONTRIBUTOR_EMAILS,
   MAX_CONTRIBUTOR_EMAILS_ERROR,
@@ -37,6 +45,9 @@ interface RecipientShareModalProps extends ShareModalBaseProps {
   onEmailUpdate?: (email: string) => void
   /** Called after the card is first marked shared (sent_at set server-side). */
   onSentAtRecorded?: (sentAt: string) => void
+  /** The card's scheduled send, if it has one. */
+  sendSchedule: CardSendSchedule | null
+  onSendScheduleChange?: (schedule: CardSendSchedule | null) => void
 }
 
 type ContributorShareModalProps = ShareModalBaseProps
@@ -73,6 +84,20 @@ function contributorEmailsError(raw: string): string {
   return ""
 }
 
+/** A `datetime-local` value (local time, to the minute) for a date. */
+function toDateTimeLocalValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** The default time offered for a scheduled send: 9am tomorrow. */
+function defaultSendAtValue(): string {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  date.setHours(9, 0, 0, 0)
+  return toDateTimeLocalValue(date)
+}
+
 export function RecipientShareModal({
   cardId,
   recipientName,
@@ -82,6 +107,8 @@ export function RecipientShareModal({
   onClose,
   onEmailUpdate,
   onSentAtRecorded,
+  sendSchedule,
+  onSendScheduleChange,
 }: RecipientShareModalProps) {
   const [recipientSending, setRecipientSending] = useState(false)
   const [recipientEmailSent, setRecipientEmailSent] = useState(false)
@@ -92,6 +119,12 @@ export function RecipientShareModal({
   const [pendingSentAt, setPendingSentAt] = useState<string | null>(null)
   const [savingEmail, setSavingEmail] = useState(false)
   const [savingCardStatus, setSavingCardStatus] = useState(false)
+  const [schedule, setSchedule] = useState(sendSchedule)
+  const [showSchedulePicker, setShowSchedulePicker] = useState(false)
+  const [sendAtValue, setSendAtValue] = useState(defaultSendAtValue)
+  const [scheduling, setScheduling] = useState(false)
+  const [scheduleError, setScheduleError] = useState("")
+  const isScheduled = schedule?.state === "scheduled"
 
   const recipientFields = useFieldErrors(
     { email: emailError(recipientEmail) },
@@ -212,6 +245,59 @@ export function RecipientShareModal({
       )
     } finally {
       setRecipientSending(false)
+    }
+  }
+
+  const updateSchedule = (next: CardSendSchedule | null) => {
+    setSchedule(next)
+    onSendScheduleChange?.(next)
+  }
+
+  const handleScheduleSend = async () => {
+    setScheduleError("")
+    setRecipientSendError("")
+    if (!recipientFields.validate()) return
+    const email = recipientEmail.trim()
+    const sendAt = new Date(sendAtValue)
+    if (!sendAtValue || Number.isNaN(sendAt.getTime())) {
+      setScheduleError("Choose a valid date and time")
+      return
+    }
+
+    setScheduling(true)
+    try {
+      const { schedule: saved } = await apiPost<{
+        schedule: CardSendSchedule
+      }>(`/api/cards/${cardId}/schedule`, {
+        email,
+        sendAt: sendAt.toISOString(),
+      })
+      updateSchedule(saved)
+      onEmailUpdate?.(email)
+      setShowSchedulePicker(false)
+    } catch (err) {
+      setScheduleError(
+        err instanceof ApiError ? err.message : "Failed to schedule the card",
+      )
+    } finally {
+      setScheduling(false)
+    }
+  }
+
+  const handleCancelSchedule = async () => {
+    setScheduleError("")
+    setScheduling(true)
+    try {
+      await apiDelete(`/api/cards/${cardId}/schedule`)
+      updateSchedule(null)
+    } catch (err) {
+      setScheduleError(
+        err instanceof ApiError
+          ? err.message
+          : "Failed to cancel the scheduled send",
+      )
+    } finally {
+      setScheduling(false)
     }
   }
 
@@ -366,6 +452,138 @@ export function RecipientShareModal({
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="h-px bg-border/50" />
+
+          <div className="space-y-3">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <CalendarClockIcon className="size-4" />
+              Schedule for later
+            </h4>
+
+            {isScheduled && schedule && !showSchedulePicker ? (
+              <div className="space-y-3 rounded-2xl border border-primary/10 bg-primary/5 p-4">
+                <p className="text-sm text-foreground">
+                  Sends to{" "}
+                  <span className="font-medium">
+                    {schedule.recipient_email}
+                  </span>{" "}
+                  on{" "}
+                  <span className="font-medium">
+                    <LocalDateTime iso={schedule.send_at} />
+                  </span>
+                  . Contributors see this as the deadline to sign.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRecipientEmail(schedule.recipient_email)
+                      setShowSchedulePicker(true)
+                    }}
+                    disabled={scheduling}
+                  >
+                    Change
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCancelSchedule}
+                    disabled={scheduling}
+                  >
+                    {scheduling ? <Spinner /> : null}
+                    Cancel scheduled send
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {schedule?.state === "sent" && schedule.sent_at ? (
+                  <p className="text-sm text-muted-foreground">
+                    Sent as scheduled on{" "}
+                    <LocalDateTime iso={schedule.sent_at} />.
+                  </p>
+                ) : null}
+                {schedule?.state === "failed" ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      The scheduled send on{" "}
+                      <LocalDateTime iso={schedule.send_at} /> didn&apos;t go
+                      through. Check the email address, then send it now or
+                      schedule it again.
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+                {showSchedulePicker ? (
+                  <>
+                    <div>
+                      <label
+                        htmlFor={`send-at-${cardId}`}
+                        className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                      >
+                        Send on
+                      </label>
+                      <Input
+                        id={`send-at-${cardId}`}
+                        type="datetime-local"
+                        value={sendAtValue}
+                        min={toDateTimeLocalValue(new Date())}
+                        onChange={(e) => {
+                          setSendAtValue(e.target.value)
+                          setScheduleError("")
+                        }}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          setShowSchedulePicker(false)
+                          setScheduleError("")
+                        }}
+                        disabled={scheduling}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        type="button"
+                        className="flex-1"
+                        onClick={handleScheduleSend}
+                        disabled={scheduling || !recipientEmail.trim()}
+                      >
+                        {scheduling ? <Spinner /> : <CalendarClockIcon />}
+                        {isScheduled ? "Reschedule" : "Schedule send"}
+                      </Button>
+                    </div>
+                    <p className="text-center text-xs text-muted-foreground">
+                      We&apos;ll email the card to the address above then, and
+                      contributors will see it as the deadline to sign.
+                    </p>
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowSchedulePicker(true)}
+                  >
+                    <CalendarClockIcon />
+                    Pick a date and time
+                  </Button>
+                )}
+              </div>
+            )}
+            {scheduleError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{scheduleError}</AlertDescription>
+              </Alert>
+            ) : null}
           </div>
         </div>
       </DialogContent>

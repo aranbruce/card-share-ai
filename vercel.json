@@ -3,6 +3,10 @@
     {
       "path": "/api/bot/webhooks/slack",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/send-scheduled",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
