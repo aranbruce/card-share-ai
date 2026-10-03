@@ -367,7 +367,7 @@ export function RecipientShareModal({
     },
     schedule: {
       title: "Schedule for later",
-      description: `We'll email ${recipientName} the card then. Contributors can sign until it goes.`,
+      description: `Pick when we email ${recipientName} the card. Contributors are asked to sign by then, and can still add messages after.`,
     },
   }
 
@@ -433,7 +433,7 @@ export function RecipientShareModal({
                         Scheduled for <LocalDateTime iso={schedule.send_at} />
                       </>
                     ) : (
-                      "Pick a date and time. Contributors can sign until then"
+                      "Pick a date and time for us to email it"
                     )
                   }
                   highlighted={isScheduled}
@@ -524,7 +524,7 @@ export function RecipientShareModal({
                   <span className="font-medium">
                     <LocalDateTime iso={schedule.send_at} />
                   </span>
-                  . Contributors see this as the deadline to sign.
+                  . Contributors are asked to sign by then.
                 </p>
                 <div className="flex gap-2">
                   <Button

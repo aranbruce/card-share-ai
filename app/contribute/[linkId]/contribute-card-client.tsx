@@ -81,7 +81,7 @@ interface CardData {
   image_url: string
   sent_at?: string | null
   extra_pages?: number
-  /** When the card is scheduled to be emailed to the recipient: the deadline to sign. */
+  /** When the card is scheduled to be emailed to the recipient: the time to sign by. */
   scheduled_send_at?: string | null
 }
 

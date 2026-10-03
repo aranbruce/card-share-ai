@@ -8,7 +8,7 @@ import {
 import { captureServerEvent } from "@/lib/posthog-server"
 
 /**
- * Scheduled sends: the owner picks a time, contributors see it as the deadline to sign,
+ * Scheduled sends: the owner picks a time, contributors are asked to sign by then (signing stays open after),
  * and the cron (`app/api/cron/send-scheduled`) emails the card to the recipient then.
  * Schedules live in `card_send_schedules`, which only the service role writes.
  */

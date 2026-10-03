@@ -77,7 +77,7 @@ test.describe("scheduled send", () => {
 
       await expect(dialog.getByText("mira@example.com")).toBeVisible()
       await expect(
-        dialog.getByText(/Contributors see this as the deadline to sign/),
+        dialog.getByText(/Contributors are asked to sign by then\.$/),
       ).toBeVisible()
       expect(scheduledBody).toMatchObject({ email: "mira@example.com" })
       const sendAt = new Date(scheduledBody!.sendAt!)

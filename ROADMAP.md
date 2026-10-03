@@ -8,8 +8,10 @@ What we plan to build next, roughly in priority order. Move items to **Done** (w
 
 Group cards are tied to a date (birthday, farewell, anniversary), but today the owner has to remember to send them.
 
-- `send_at` on cards; a Vercel Cron job moves due cards from Collecting → Sent and emails the recipient via the existing send-email route
-- Optional collection deadline shown on the contribute page ("Card closes Friday")
+Website version built (2026-10-03): the Send dialog's "Schedule for later" picks a date and a whole hour (in the owner's timezone, shown). An hourly Vercel cron (`app/api/cron/send-scheduled`, needs `CRON_SECRET`) emails the recipient, marks the card sent and emails the owner; failed sends retry twice, then the owner is told. The contribute page shows the send time as the time to sign by, and signing stays open after. Schedules live in `card_send_schedules`, which only the service role writes.
+
+Still to do:
+
 - Expose in the Slack bot and MCP tools (`create_card` / `update_card`)
 
 ### Owner notifications and contributor reminders

@@ -17,7 +17,7 @@ export type ContributeCardRecord = {
   copy_message: string
   image_url: string
   extra_pages: number | null
-  /** When the card is scheduled to be emailed to the recipient: the deadline to sign. */
+  /** When the card is scheduled to be emailed to the recipient: the time to sign by (signing stays open after). */
   scheduled_send_at: string | null
 }
 
