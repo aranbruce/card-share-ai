@@ -231,14 +231,29 @@ export async function sendMessagesTabWelcome({
   }
 }
 
-/** A Slack user's timezone (e.g. "Europe/London"), or "UTC" if it can't be looked up. */
+/** The Enterprise Grid org's id, if the payload came from one. */
+function getSlackEnterpriseId(event: { raw: unknown }): string {
+  const raw = event.raw as Record<string, unknown>
+  if (typeof raw?.enterprise_id === "string") return raw.enterprise_id
+  const enterprise = raw?.enterprise as Record<string, unknown> | undefined
+  return typeof enterprise?.id === "string" ? enterprise.id : ""
+}
+
+/**
+ * A Slack user's timezone (e.g. "Europe/London"), or "UTC" if it can't be looked up. Org-wide
+ * Enterprise Grid installs are stored under the enterprise id, not the workspace's.
+ */
 async function slackUserTimeZone(
-  teamId: string,
+  event: { raw: unknown },
   userId: string,
 ): Promise<string> {
   try {
     const adapter = getSlackAdapter()
-    const installation = await adapter.getInstallation(teamId)
+    let installation = null
+    for (const id of [getSlackTeamId(event), getSlackEnterpriseId(event)]) {
+      if (id) installation = await adapter.getInstallation(id)
+      if (installation) break
+    }
     if (!installation) return "UTC"
     const result = await adapter.webClient.users.info({
       user: userId,
@@ -511,7 +526,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
     // Only look up the timezone when they're scheduling
     const timeZone =
       values[SCHEDULE_FIELDS.date] || values[SCHEDULE_FIELDS.email]
-        ? await slackUserTimeZone(teamId, user.userId)
+        ? await slackUserTimeZone(event, user.userId)
         : "UTC"
     const scheduleFields = readScheduleFields(values, timeZone)
     if (!scheduleFields.ok) {

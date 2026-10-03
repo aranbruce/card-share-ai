@@ -51,7 +51,9 @@ export function zonedHourToUtc(
   if (!match || !Number.isInteger(hour) || hour < 0 || hour > 23) return null
   const [, y, m, d] = match.map(Number)
   const wallClock = Date.UTC(y, m - 1, d, hour)
-  if (new Date(wallClock).getUTCDate() !== d) return null
+  // Date.UTC rolls 30 Feb or month 13 over into the next month or year
+  const check = new Date(wallClock)
+  if (check.getUTCMonth() !== m - 1 || check.getUTCDate() !== d) return null
 
   // Guess with the offset at the wall-clock time, then correct once for a clock change
   // between the guess and the answer.

@@ -46,6 +46,7 @@ describe("zonedHourToUtc", () => {
   it("rejects malformed dates and hours", () => {
     expect(zonedHourToUtc("10/10/2026", 9, "UTC")).toBeNull()
     expect(zonedHourToUtc("2026-02-30", 9, "UTC")).toBeNull()
+    expect(zonedHourToUtc("2026-13-01", 9, "UTC")).toBeNull()
     expect(zonedHourToUtc("2026-10-10", 24, "UTC")).toBeNull()
   })
 })
