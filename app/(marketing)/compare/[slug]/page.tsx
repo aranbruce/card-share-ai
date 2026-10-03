@@ -13,6 +13,7 @@ import {
   getCompareConfig,
   type CompareMark,
 } from "@/lib/compare-pages"
+import { sitePreviewImagePath } from "@/lib/site-preview-pages"
 import { buildPageMetadata, SITE_NAME } from "@/lib/site-metadata"
 import { breadcrumbJsonLd } from "@/lib/structured-data"
 
@@ -35,6 +36,7 @@ export async function generateMetadata({
     title: config.metaTitle,
     description: config.metaDescription,
     path: `/compare/${config.slug}`,
+    imageUrl: sitePreviewImagePath(`compare-${config.slug}`),
   })
 }
 

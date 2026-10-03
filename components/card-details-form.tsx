@@ -301,7 +301,6 @@ export function CardDetailsForm({
               <div className="flex flex-wrap gap-1.5">
                 {CARD_TONES.map((t) => (
                   <ChipButton
-                    size="sm"
                     key={t}
                     onClick={() => setTone(t)}
                     disabled={isLoading}

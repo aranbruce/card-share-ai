@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowRight, Bell, Calendar } from "lucide-react"
 import { TeamsEnquiryForm } from "@/components/teams-enquiry-form"
 import { Button } from "@/components/ui/button"
+import { sitePreviewImagePath } from "@/lib/site-preview-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { TEAMS_ENQUIRY_INBOX } from "@/lib/teams-enquiry"
 import { cn } from "@/lib/utils"
@@ -13,6 +14,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Track your team's birthdays and work anniversaries, get reminded before each one, and send a card the whole team has signed. Get a quote for your team.",
   path: "/teams",
+  imageUrl: sitePreviewImagePath("teams"),
 })
 
 const mono = "font-mono uppercase tracking-[0.1em] text-muted-foreground"

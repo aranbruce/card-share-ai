@@ -9,8 +9,11 @@ export const SITE_TAGLINE =
 export const DEFAULT_DESCRIPTION =
   "Create AI-generated group greeting cards your whole team signs from one link. Works in Slack. Birthdays, farewells, work anniversaries and more. Free to start."
 
-/** Default social preview (`app/opengraph-image.tsx`). */
-export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image"
+/**
+ * Default social preview (`app/opengraph-image.tsx`). Bump `v` when the image changes:
+ * WhatsApp, Slack and others cache previews by URL.
+ */
+export const DEFAULT_OG_IMAGE_PATH = "/opengraph-image?v=2"
 
 export function getMetadataBase(): URL {
   return new URL(`${getAppUrl()}/`)
@@ -33,9 +36,12 @@ export function buildOpenGraph(
   description: string,
   imageUrl?: string | null,
 ): NonNullable<Metadata["openGraph"]> {
+  // Every preview we draw is a 1200×630 JPEG; stating it lets WhatsApp and others lay out
+  // the large preview without fetching the image first.
+  const image = { width: 1200, height: 630, type: "image/jpeg" }
   const images = imageUrl
-    ? [{ url: imageUrl, alt: title }]
-    : [{ url: DEFAULT_OG_IMAGE_PATH, alt: SITE_NAME }]
+    ? [{ url: imageUrl, alt: title, ...image }]
+    : [{ url: DEFAULT_OG_IMAGE_PATH, alt: SITE_NAME, ...image }]
 
   return {
     type: "website",
