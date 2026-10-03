@@ -80,10 +80,14 @@ function fakeSupabase(results: Record<string, unknown> = {}) {
     }
     chain.maybeSingle = () => results[`${table}.maybeSingle`]
     // Awaiting the chain itself (an update or delete without .single())
-    chain.then = (resolve: unknown) =>
-      (resolve as (v: unknown) => unknown)(
-        results[`${table}.await`] ?? { data: null, error: null },
+    // A list answers successive awaits in turn
+    chain.then = (resolve: unknown) => {
+      const answer = results[`${table}.await`]
+      const next = Array.isArray(answer) ? answer.shift() : answer
+      return (resolve as (v: unknown) => unknown)(
+        next ?? { data: null, error: null },
       )
+    }
     return chain
   }
   const auth = {
@@ -249,5 +253,36 @@ describe("deliverScheduledSend", () => {
 
     await expect(deliverScheduledSend(client, DUE)).resolves.toBe("retry")
     expect(sendRecipientCardEmail).not.toHaveBeenCalled()
+  })
+  it("only records the result while it still holds the claim", async () => {
+    vi.mocked(sendRecipientCardEmail).mockResolvedValue({ ok: true, id: "e" })
+    const { client, calls } = fakeSupabase({ "cards.maybeSingle": CARD })
+
+    await deliverScheduledSend(client, DUE)
+
+    // A reschedule or cancel clears claimed_at, so this update leaves it alone
+    expect(calls).toContainEqual({
+      table: "card_send_schedules",
+      method: "eq",
+      args: ["claimed_at", DUE.claimed_at],
+    })
+  })
+
+  it("retries marking a sent card once, so it isn't emailed again", async () => {
+    vi.mocked(sendRecipientCardEmail).mockResolvedValue({ ok: true, id: "e" })
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    const { client, calls } = fakeSupabase({
+      "cards.maybeSingle": CARD,
+      "card_send_schedules.await": [
+        { data: null, error: { message: "timeout" } },
+        { data: null, error: null },
+      ],
+    })
+
+    await expect(deliverScheduledSend(client, DUE)).resolves.toBe("sent")
+    expect(
+      updatesTo(calls, "card_send_schedules").filter((u) => u.state === "sent"),
+    ).toHaveLength(2)
+    vi.mocked(console.error).mockRestore()
   })
 })

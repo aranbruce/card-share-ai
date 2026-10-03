@@ -165,6 +165,28 @@ async function ownerEmail(
   return data.user?.email ?? null
 }
 
+/**
+ * Records a delivery's result, but only while this run still holds the claim: if the owner
+ * rescheduled or cancelled meanwhile (which clears the claim), their change stands.
+ */
+async function updateClaimedSend(
+  service: SupabaseClient,
+  due: DueSend,
+  values: Record<string, unknown>,
+  what: string,
+  tries = 1,
+): Promise<void> {
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    const { error } = await service
+      .from("card_send_schedules")
+      .update(values)
+      .eq("card_id", due.card_id)
+      .eq("claimed_at", due.claimed_at)
+    if (!error) return
+    console.error(`[scheduled-send] ${what} (try ${attempt}):`, error)
+  }
+}
+
 export type DeliveryOutcome = "sent" | "retry" | "failed"
 
 /**
@@ -198,18 +220,21 @@ export async function deliverScheduledSend(
   const now = new Date().toISOString()
 
   if (result.ok) {
-    const { error } = await service
-      .from("card_send_schedules")
-      .update({
+    // Retried once: if this write is lost, the claim goes stale and the card is emailed again.
+    await updateClaimedSend(
+      service,
+      due,
+      {
         state: "sent",
         sent_at: now,
         attempts: due.attempts + 1,
         claimed_at: null,
         last_error: null,
         updated_at: now,
-      })
-      .eq("card_id", due.card_id)
-    if (error) console.error("[scheduled-send] mark sent:", error)
+      },
+      "mark sent",
+      2,
+    )
 
     const { error: cardUpdateError } = await service
       .from("cards")
@@ -237,17 +262,18 @@ export async function deliverScheduledSend(
 
   const attempts = due.attempts + 1
   const givingUp = attempts >= MAX_SEND_ATTEMPTS
-  const { error } = await service
-    .from("card_send_schedules")
-    .update({
+  await updateClaimedSend(
+    service,
+    due,
+    {
       state: givingUp ? "failed" : "scheduled",
       attempts,
       claimed_at: null,
       last_error: result.error,
       updated_at: now,
-    })
-    .eq("card_id", due.card_id)
-  if (error) console.error("[scheduled-send] record failure:", error)
+    },
+    "record failure",
+  )
 
   if (!givingUp) return "retry"
 
