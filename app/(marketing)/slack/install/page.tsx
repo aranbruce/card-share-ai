@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Check } from "lucide-react"
 import { AddToSlackPromo } from "@/components/add-to-slack-promo"
 import { SlackFlowStack } from "@/components/slack-flow"
+import { sitePreviewImagePath } from "@/lib/site-preview-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 
 export const metadata: Metadata = buildPageMetadata({
@@ -10,6 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Install the CardShare.ai Slack app to create AI greeting cards with /cardshareai and share links in your workspace.",
   path: "/slack/install",
+  imageUrl: sitePreviewImagePath("slack"),
 })
 
 const GOOD_TO_KNOW = [

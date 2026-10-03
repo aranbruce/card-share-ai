@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { sitePreviewImagePath } from "@/lib/site-preview-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 
 export const metadata: Metadata = buildPageMetadata({
@@ -7,6 +8,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Connect CardShare.ai to Claude to create AI greeting cards from a chat, put your own photo on the cover, edit cards and share the link for everyone to sign.",
   path: "/claude",
+  imageUrl: sitePreviewImagePath("claude"),
 })
 
 const CONNECTOR_URL = "https://www.cardshare.ai/mcp"
