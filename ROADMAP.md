@@ -4,6 +4,15 @@ What we plan to build next, roughly in priority order. Move items to **Done** (w
 
 ## Next
 
+### Walkthrough videos for the Claude and ChatGPT pages
+
+Record a short Loom (about 90 seconds) for each of /claude and /chatgpt and set its share link as `loomUrl` in `lib/assistant-pages.ts`; the page then shows it above the animated demo. Use a demo card rather than a real one. Suggested shots:
+
+1. Add CardShare.ai: Claude's Customize → Connectors → Add custom connector, or ChatGPT's Plugins → Add → Create custom MCP server, with `https://www.cardshare.ai/mcp`, then sign in and Allow
+2. "Make a birthday card for Sarah from the design team, she loves climbing, make it Epic", and the card appearing in the chat
+3. Copy the invite link and show the contribute page
+4. "Email it to sarah@example.com on Friday at 9am", and the confirmation
+
 ### Funny photo templates
 
 Pre-made humorous scenes where the user uploads a photo and the person is placed into the scene, e.g. astronaut on the moon, Renaissance portrait, superhero poster, "employee of the century" magazine cover, retirement on a beach.
