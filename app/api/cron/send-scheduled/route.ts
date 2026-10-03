@@ -9,9 +9,10 @@ import { requireServiceRoleClient } from "@/lib/supabase/admin"
 export const maxDuration = 300
 
 /**
- * Emails every card whose scheduled send is due. Called by the Vercel cron every 5 minutes
- * (see vercel.json), which sends `Authorization: Bearer <CRON_SECRET>`. Unlike the Slack
- * warm-up cron this sends email, so without CRON_SECRET it refuses every request.
+ * Emails every card whose scheduled send is due. Called by the Vercel cron on the hour
+ * (see vercel.json; the Send dialog only offers whole hours), which sends
+ * `Authorization: Bearer <CRON_SECRET>`. Unlike the Slack warm-up cron this sends email,
+ * so without CRON_SECRET it refuses every request.
  */
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET

@@ -27,6 +27,10 @@ import {
 const NOW = new Date("2026-10-03T12:00:00.000Z")
 
 describe("parseSendAt", () => {
+  it("accepts the next hour", () => {
+    expect(parseSendAt("2026-10-03T13:00:00.000Z", NOW).ok).toBe(true)
+  })
+
   it("accepts a time in the allowed window", () => {
     const result = parseSendAt("2026-10-10T08:00:00.000Z", NOW)
     expect(result).toEqual({
@@ -38,9 +42,9 @@ describe("parseSendAt", () => {
   it("rejects missing, invalid, too-soon and too-late times", () => {
     expect(parseSendAt(undefined, NOW).ok).toBe(false)
     expect(parseSendAt("not a date", NOW).ok).toBe(false)
-    expect(parseSendAt("2026-10-03T12:05:00.000Z", NOW)).toEqual({
+    expect(parseSendAt("2026-10-03T12:00:00.000Z", NOW)).toEqual({
       ok: false,
-      error: "Choose a time at least 10 minutes from now",
+      error: "Choose a time in the future",
     })
     expect(parseSendAt("2027-12-01T12:00:00.000Z", NOW)).toEqual({
       ok: false,

@@ -56,8 +56,15 @@ test.describe("scheduled send", () => {
         .getByRole("textbox", { name: "Recipient email address" })
         .fill("mira@example.com")
       await dialog.getByRole("button", { name: "Pick a date and time" }).click()
-      // Defaults to 9am tomorrow
-      await expect(dialog.getByLabel("Send on")).toHaveValue(/T09:00$/)
+      // Defaults to 9am tomorrow, in whole hours
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const pad = (n: number) => String(n).padStart(2, "0")
+      await expect(dialog.getByLabel("Send on")).toHaveValue(
+        `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`,
+      )
+      await expect(dialog.getByLabel("At")).toHaveValue("9")
+      await expect(dialog.getByLabel("At").locator("option")).toHaveCount(24)
       await dialog.getByRole("button", { name: "Schedule send" }).click()
 
       await expect(dialog.getByText("mira@example.com")).toBeVisible()
@@ -67,6 +74,7 @@ test.describe("scheduled send", () => {
       expect(scheduledBody).toMatchObject({ email: "mira@example.com" })
       const sendAt = new Date(scheduledBody!.sendAt!)
       expect(sendAt.getHours()).toBe(9)
+      expect(sendAt.getMinutes()).toBe(0)
       expect(sendAt.getTime()).toBeGreaterThan(Date.now())
 
       await dialog

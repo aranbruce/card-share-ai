@@ -84,18 +84,40 @@ function contributorEmailsError(raw: string): string {
   return ""
 }
 
-/** A `datetime-local` value (local time, to the minute) for a date. */
-function toDateTimeLocalValue(date: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+const pad2 = (n: number) => String(n).padStart(2, "0")
+
+/** A `date` input value (local calendar day) for a date. */
+function toDateInputValue(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+}
+
+/** Scheduled sends go out on the hour (the cron runs hourly), so times are whole hours. */
+const SEND_HOURS = Array.from({ length: 24 }, (_, hour) => hour)
+
+/** An hour of the day in the viewer's locale, e.g. "9:00 AM" or "09:00". */
+function hourLabel(hour: number): string {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(2000, 0, 1, hour))
+}
+
+/** Whether an hour on a local date has already started, so a send then can't be scheduled. */
+function isPastHour(date: string, hour: number): boolean {
+  return new Date(`${date}T${pad2(hour)}:00`).getTime() <= Date.now()
+}
+
+/** The local date and hour of a time, for the picker. */
+function toSendAtParts(date: Date): { date: string; hour: number } {
+  return { date: toDateInputValue(date), hour: date.getHours() }
 }
 
 /** The default time offered for a scheduled send: 9am tomorrow. */
-function defaultSendAtValue(): string {
+function defaultSendAtParts(): { date: string; hour: number } {
   const date = new Date()
   date.setDate(date.getDate() + 1)
   date.setHours(9, 0, 0, 0)
-  return toDateTimeLocalValue(date)
+  return toSendAtParts(date)
 }
 
 export function RecipientShareModal({
@@ -121,7 +143,7 @@ export function RecipientShareModal({
   const [savingCardStatus, setSavingCardStatus] = useState(false)
   const [schedule, setSchedule] = useState(sendSchedule)
   const [showSchedulePicker, setShowSchedulePicker] = useState(false)
-  const [sendAtValue, setSendAtValue] = useState(defaultSendAtValue)
+  const [sendAtParts, setSendAtParts] = useState(defaultSendAtParts)
   const [scheduling, setScheduling] = useState(false)
   const [scheduleError, setScheduleError] = useState("")
   const isScheduled = schedule?.state === "scheduled"
@@ -258,8 +280,8 @@ export function RecipientShareModal({
     setRecipientSendError("")
     if (!recipientFields.validate()) return
     const email = recipientEmail.trim()
-    const sendAt = new Date(sendAtValue)
-    if (!sendAtValue || Number.isNaN(sendAt.getTime())) {
+    const sendAt = new Date(`${sendAtParts.date}T${pad2(sendAtParts.hour)}:00`)
+    if (!sendAtParts.date || Number.isNaN(sendAt.getTime())) {
       setScheduleError("Choose a valid date and time")
       return
     }
@@ -482,6 +504,7 @@ export function RecipientShareModal({
                     size="sm"
                     onClick={() => {
                       setRecipientEmail(schedule.recipient_email)
+                      setSendAtParts(toSendAtParts(new Date(schedule.send_at)))
                       setShowSchedulePicker(true)
                     }}
                     disabled={scheduling}
@@ -520,23 +543,58 @@ export function RecipientShareModal({
                 ) : null}
                 {showSchedulePicker ? (
                   <>
-                    <div>
-                      <label
-                        htmlFor={`send-at-${cardId}`}
-                        className="mb-1.5 block text-xs font-medium text-muted-foreground"
-                      >
-                        Send on
-                      </label>
-                      <Input
-                        id={`send-at-${cardId}`}
-                        type="datetime-local"
-                        value={sendAtValue}
-                        min={toDateTimeLocalValue(new Date())}
-                        onChange={(e) => {
-                          setSendAtValue(e.target.value)
-                          setScheduleError("")
-                        }}
-                      />
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`send-date-${cardId}`}
+                          className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                        >
+                          Send on
+                        </label>
+                        <Input
+                          id={`send-date-${cardId}`}
+                          type="date"
+                          value={sendAtParts.date}
+                          min={toDateInputValue(new Date())}
+                          onChange={(e) => {
+                            setSendAtParts((prev) => ({
+                              ...prev,
+                              date: e.target.value,
+                            }))
+                            setScheduleError("")
+                          }}
+                        />
+                      </div>
+                      <div className="w-32">
+                        <label
+                          htmlFor={`send-hour-${cardId}`}
+                          className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                        >
+                          At
+                        </label>
+                        <select
+                          id={`send-hour-${cardId}`}
+                          value={sendAtParts.hour}
+                          onChange={(e) => {
+                            setSendAtParts((prev) => ({
+                              ...prev,
+                              hour: Number(e.target.value),
+                            }))
+                            setScheduleError("")
+                          }}
+                          className="h-9 w-full rounded-md border border-input bg-transparent px-2 text-base shadow-xs focus-visible:border-ring focus-visible:outline-none md:text-sm dark:bg-input/30"
+                        >
+                          {SEND_HOURS.map((hour) => (
+                            <option
+                              key={hour}
+                              value={hour}
+                              disabled={isPastHour(sendAtParts.date, hour)}
+                            >
+                              {hourLabel(hour)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button

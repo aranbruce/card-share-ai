@@ -13,11 +13,9 @@ import { captureServerEvent } from "@/lib/posthog-server"
  * Schedules live in `card_send_schedules`, which only the service role writes.
  */
 
-/** How soon a send can be scheduled, so it isn't due before the next cron run. */
-export const MIN_SCHEDULE_LEAD_MS = 10 * 60 * 1000
 /** How far ahead a send can be scheduled. */
 export const MAX_SCHEDULE_AHEAD_MS = 366 * 24 * 60 * 60 * 1000
-/** Failed sends are retried on later cron runs, up to this many attempts in all. */
+/** Failed sends are retried on later (hourly) cron runs, up to this many attempts in all. */
 export const MAX_SEND_ATTEMPTS = 3
 /** A claim older than this is from a run that died, so the send is picked up again. */
 const CLAIM_TIMEOUT_MS = 15 * 60 * 1000
@@ -45,8 +43,10 @@ export function parseSendAt(value: unknown, now = new Date()): ParsedSendAt {
   if (Number.isNaN(sendAt.getTime())) {
     return { ok: false, error: "Choose a valid date and time" }
   }
-  if (sendAt.getTime() < now.getTime() + MIN_SCHEDULE_LEAD_MS) {
-    return { ok: false, error: "Choose a time at least 10 minutes from now" }
+  // The picker offers whole hours and the cron runs on the hour, so the next hour is the
+  // soonest a send can go out.
+  if (sendAt.getTime() <= now.getTime()) {
+    return { ok: false, error: "Choose a time in the future" }
   }
   if (sendAt.getTime() > now.getTime() + MAX_SCHEDULE_AHEAD_MS) {
     return { ok: false, error: "Choose a time within the next year" }
