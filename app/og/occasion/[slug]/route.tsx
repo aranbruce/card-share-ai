@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
-import { renderCardPreviewImage } from "@/lib/card-preview-image"
-import { ALL_CATEGORY_SLUGS, getCategoryConfig } from "@/lib/category-pages"
-import { loadOccasionPreviewCover } from "@/lib/occasion-preview-cover"
+import { ALL_CATEGORY_SLUGS } from "@/lib/category-pages"
+import { renderOccasionPreview } from "@/lib/site-preview-pages"
 
 export const runtime = "nodejs"
 // Rendered once at build time, from the cover art in `public/`.
@@ -14,19 +13,10 @@ export function generateStaticParams() {
 
 type RouteContext = { params: Promise<{ slug: string }> }
 
-/** An occasion page's link preview: its sample card beside the page's promise. */
+/** An occasion page's link preview: its sample card between two of its photo templates. */
 export async function GET(_request: Request, { params }: RouteContext) {
   const { slug } = await params
-  const config = getCategoryConfig(slug)
-  if (!config) notFound()
-
-  return renderCardPreviewImage({
-    id: `occasion-${config.slug}`,
-    variant: "view",
-    recipientName: config.sampleRecipient,
-    senderName: null,
-    headline: config.cardTitle,
-    cover: await loadOccasionPreviewCover(config.coverImage),
-    copy: { title: config.metaTitle, subtitle: config.badge },
-  })
+  const image = await renderOccasionPreview(slug)
+  if (!image) notFound()
+  return image
 }

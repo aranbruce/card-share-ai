@@ -18,6 +18,7 @@ import {
 } from "@/lib/category-pages"
 import { generalPhotoTemplatesSection } from "@/lib/photo-templates-section"
 import { sampleAvatarsFor } from "@/lib/sample-avatars"
+import { sitePreviewImagePath } from "@/lib/site-preview-pages"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { breadcrumbJsonLd, faqPageJsonLd } from "@/lib/structured-data"
 
@@ -26,6 +27,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Browse every occasion. Birthday, work anniversary, wedding, promotion, thank you, farewell, and kudos cards - one link, everyone signs, AI designs the cover.",
   path: "/browse",
+  imageUrl: sitePreviewImagePath("browse"),
 })
 
 const STEPS: FeatureTab[] = [

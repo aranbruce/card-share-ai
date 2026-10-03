@@ -39,7 +39,6 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         id: card.id,
         variant,
         recipientName: card.recipient_name,
-        senderName: card.sender_name,
         headline: card.copy_headline,
         cover: await loadPreviewCover(card.image_url),
       })

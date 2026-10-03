@@ -69,13 +69,13 @@ describe("card preview route", () => {
     vi.mocked(getCardPreviewByLinkId).mockResolvedValueOnce(null)
     const missing = await get(`/og/card/${linkId}`)
     expect(missing.headers.get("location")).toBe(
-      "https://cardshare.ai/opengraph-image",
+      "https://cardshare.ai/opengraph-image?v=2",
     )
     vi.mocked(getCardPreviewByLinkId).mockRejectedValueOnce(new Error("db"))
     vi.spyOn(console, "error").mockImplementationOnce(() => {})
     const failed = await get(`/og/card/${linkId}`)
     expect(failed.headers.get("location")).toBe(
-      "https://cardshare.ai/opengraph-image",
+      "https://cardshare.ai/opengraph-image?v=2",
     )
   })
 })

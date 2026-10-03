@@ -5,6 +5,7 @@ import {
   defaultOccasionForTemplate,
   templatesForOccasion,
 } from "@/lib/card-templates"
+import { sitePreviewImagePath } from "@/lib/site-preview-pages"
 import { getSiteStats } from "@/lib/site-stats"
 import { buildPageMetadata } from "@/lib/site-metadata"
 import { buildStatItems } from "@/lib/social-proof"
@@ -15,6 +16,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Start a free AI greeting card. Describe the occasion, pick a tone, and share one link for everyone to sign.",
   path: "/create",
+  imageUrl: sitePreviewImagePath("create"),
 })
 
 export default async function CreatePage({
