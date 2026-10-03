@@ -45,12 +45,37 @@ Open questions:
 
 The gallery slot after the hero on `components/category-landing-page.tsx` now shows the photo templates section (#99). Real sample cards could still go on these pages; the unused `gallery*` fields in `lib/category-pages.ts` were meant for them.
 
+### Group gift pot
+
+Contributors chip in towards a gift card while signing, and the recipient picks the brand when they open the card. This is the main monetisation idea: cards stay free to send, and we add a small fee on top of each chip-in (Thankbox charges 1.1% + £0.17 in GBP, 2.9% + $0.19 in USD). Thankbox and GroupCards.io both have this; our compare pages currently send people to Thankbox for it.
+
+No provider runs the whole flow (payments, holding the pot, buying the gift card) as an embeddable API, so it's built in stages:
+
+1. **Test demand:** an "Add a group gift" link on the card that sends organisers to an existing pot service such as GiftRound. Ask GiftRound about a referral deal
+2. **Manual v1:** Stripe Checkout on the contribute page (cards, Apple/Google Pay, UK Pay by Bank) for the amount plus our fee; a webhook records it in a `gift_contributions` table and the card shows the pot total. When a card with a pot is sent, buy a recipient-choice gift card by hand in the Tremendous dashboard and add the redeem link. Refunds by hand in Stripe
+3. **Automate:** order through the Tremendous API when the card is sent, and refund automatically if a card is deleted or never sent. Hook into scheduled delivery
+
+Provider notes (researched 2026-10-03):
+
+- **Gift cards:** Tremendous (Thankbox runs on it; free self-serve sandbox; face value, so our fee is the only margin). Tillo powers GiftRound and may offer brand discounts; Runa is unclear. Tango's terms ban resale to consumers, and Giftbit reportedly doesn't allow crowd-gifting. Leave Tremendous's own prepaid Visa out of the catalogue (class action over its fees)
+- **Payments:** Stripe is fastest. Mangopay is the cleaner long-term option: it holds pooled funds in per-pot e-wallets as the regulated party, and GiftRound uses it. GoCardless Instant Bank Pay works for UK/EU bank payments only, so not on its own
+
+Open questions:
+
+- **Regulation:** holding contributors' money for weeks may count as a payment service in the UK and EU. Get a fintech lawyer's view, and explain the use case to Stripe when onboarding
+- **Fraud:** a small-payment form attracts card testing, and chargebacks after a gift card is delivered are a straight loss. Stripe Radar, rate limits and BotID; only fulfil when the card is sent
+- **Rules:** minimum pot, organiser cancellation and refunds, and what happens to the money if a card is never sent
+- **Claude connector:** keep payments out of the MCP tools to avoid directory review problems
+
 ## Later
 
 - **Keepsake export:** PDF/image of the full card with all messages
 - **Premium tier:** candidates are scheduling, export, premium templates and designs. No payments exist yet
 - **Social sharing** of sent cards (recipient opt-in)
 - **Analytics for owners:** opened/viewed tracking on sent cards
+- **Golden ticket invites:** invite friends to CardShareAI with a fun "golden ticket" card, built on the existing card view. Could feed referral rewards if the premium tier happens
+- **Leaderboard:** most cards created. Needs opt-in and display names, since there are no public profiles yet, and should count real cards (e.g. sent, with contributions) so it can't be farmed with empty drafts
+- **User-made templates:** save a card's design as a reusable template (headline, message, cover), optionally published for others to use. Separate from the curated photo templates; public ones need moderation and a report option
 
 ## Parked
 
