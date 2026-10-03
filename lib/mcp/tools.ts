@@ -9,7 +9,9 @@ import {
   DEFAULT_CARD_TONE,
   resolveCardTone,
 } from "@/lib/card-tones"
+import { cancelCardSend, scheduleSendForOwner } from "@/lib/card-send-schedule"
 import { captureServerEvent } from "@/lib/posthog-server"
+import { requireServiceRoleClient } from "@/lib/supabase/admin"
 import { createUserScopedClient, mcpUserId } from "@/lib/mcp/auth"
 import { creatorNoteUpdate } from "@/lib/mcp/card-messages"
 import {
@@ -397,6 +399,115 @@ export function registerCardTools(server: McpServer): void {
       const result = await loadCardSummary(user.supabase, user.userId, cardId)
       if ("error" in result) return errorResult(result.error)
       return cardResult(user, result.card, "Card updated.")
+    },
+  )
+
+  registerAppTool(
+    server,
+    "schedule_card_send",
+    {
+      title: "Schedule sending a card",
+      description:
+        "Schedules one of the user's cards to be emailed to its recipient at a set time, replacing any send already scheduled for it. Contributors see that time as when to sign by, and can still sign after. Sends go out on the hour: other times are rounded up to the next hour. Confirm the time with the user, in their timezone, before scheduling.",
+      inputSchema: z.object({
+        cardId: z.string().describe("The card's id"),
+        recipientEmail: z
+          .string()
+          .trim()
+          .email()
+          .describe("The email address to send the card to"),
+        sendAt: z
+          .string()
+          .datetime({ offset: true })
+          .describe(
+            "When to send, as an ISO 8601 date-time with the user's UTC offset, e.g. '2026-10-10T09:00:00+01:00' for 9am in London in summer",
+          ),
+      }),
+      annotations: {
+        title: "Schedule sending a card",
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        // Emails someone outside the user's account
+        openWorldHint: true,
+      },
+      _meta: CARD_WIDGET_META,
+    },
+    async ({ cardId, recipientEmail, sendAt }, ctx) => {
+      const user = requireUser(ctx)
+      if (!user) return errorResult(NOT_SIGNED_IN)
+      if (!isValidUuid(cardId)) return errorResult("That card id isn't valid.")
+
+      const scheduled = await scheduleSendForOwner(requireServiceRoleClient(), {
+        cardId,
+        userId: user.userId,
+        sendAt: new Date(sendAt),
+        recipientEmail,
+        source: "mcp",
+      })
+      if ("error" in scheduled) return errorResult(scheduled.error)
+
+      const result = await loadCardSummary(user.supabase, user.userId, cardId)
+      if ("error" in result) return errorResult(result.error)
+      return cardResult(
+        user,
+        result.card,
+        `Scheduled: the card will be emailed to ${scheduled.schedule.recipient_email} at ${scheduled.schedule.send_at} (UTC). Tell the user the time in their own timezone.`,
+      )
+    },
+  )
+
+  registerAppTool(
+    server,
+    "cancel_scheduled_send",
+    {
+      title: "Cancel a scheduled send",
+      description:
+        "Cancels a card's pending scheduled send, so it isn't emailed to the recipient. The card and its messages stay as they are.",
+      inputSchema: z.object({
+        cardId: z.string().describe("The card's id"),
+      }),
+      annotations: {
+        title: "Cancel a scheduled send",
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+      _meta: CARD_WIDGET_META,
+    },
+    async ({ cardId }, ctx) => {
+      const user = requireUser(ctx)
+      if (!user) return errorResult(NOT_SIGNED_IN)
+      if (!isValidUuid(cardId)) return errorResult("That card id isn't valid.")
+
+      let cancelled: boolean
+      try {
+        cancelled = await cancelCardSend(
+          requireServiceRoleClient(),
+          cardId,
+          user.userId,
+        )
+      } catch (err) {
+        console.error("[mcp/cancel_scheduled_send] FAIL:", err)
+        return errorResult("Sorry, the scheduled send couldn't be cancelled.")
+      }
+      if (cancelled) {
+        captureServerEvent(user.userId, "card_send_schedule_cancelled", {
+          card_id: cardId,
+          source: "mcp",
+        })
+      }
+
+      const result = await loadCardSummary(user.supabase, user.userId, cardId)
+      if ("error" in result) return errorResult(result.error)
+      return cardResult(
+        user,
+        result.card,
+        cancelled
+          ? "The scheduled send was cancelled."
+          : "That card had no scheduled send to cancel.",
+      )
     },
   )
 }

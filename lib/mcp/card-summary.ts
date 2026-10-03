@@ -39,6 +39,8 @@ export type McpCardSummary = {
   viewUrl: string | null
   /** People who have signed: written a note or added a GIF, the author included. */
   signedCount?: number
+  /** When the card will be emailed to the recipient, if a send is scheduled (single cards only). */
+  scheduledSend?: { sendAt: string; recipientEmail: string } | null
 }
 
 export function summarizeCard(
@@ -82,6 +84,9 @@ export function formatCardText(card: McpCardSummary): string {
     card.headline ? `Headline: "${card.headline}"` : null,
     `Status: ${card.status === "sent" ? `sent ${card.sentAt}` : "collecting messages"}`,
     card.signedCount === undefined ? null : `Signed by: ${card.signedCount}`,
+    card.scheduledSend
+      ? `Scheduled: emails ${card.scheduledSend.recipientEmail} at ${card.scheduledSend.sendAt} (UTC; contributors are asked to sign by then)`
+      : null,
     `Your message: ${card.myMessage ? `"${card.myMessage}"` : "(not written yet)"}`,
     `Edit: ${card.editUrl}`,
     card.contributeUrl ? `Invite others to sign: ${card.contributeUrl}` : null,

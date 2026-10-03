@@ -11,4 +11,6 @@ Each card comes with three links:
 - the view link, which they send to the recipient once everyone has signed
 Always give the user the edit and invite links.
 
-Use list_cards and get_card to find existing cards or check how many people have signed. Use update_card to change the headline, the names, or the user's own message; when refining a headline, suggest new wording of a similar length and confirm it with the user before saving. To change an existing card's cover photo, show it with get_card so the user can press its "Use my photo" button.`
+Use list_cards and get_card to find existing cards or check how many people have signed. Use update_card to change the headline, the names, or the user's own message; when refining a headline, suggest new wording of a similar length and confirm it with the user before saving. To change an existing card's cover photo, show it with get_card so the user can press its "Use my photo" button.
+
+Scheduling: schedule_card_send emails the finished card to the recipient at a time the user picks, and contributors see that time as when to sign by. You need the recipient's email address and the date and time; if you don't know the user's timezone, ask before scheduling, and confirm the time back to them in their timezone. Sends go out on the hour. cancel_scheduled_send stops a pending send.`

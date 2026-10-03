@@ -21,6 +21,8 @@ import {
   deliverScheduledSend,
   MAX_SEND_ATTEMPTS,
   parseSendAt,
+  roundUpToHour,
+  scheduleSendForOwner,
   type DueSend,
 } from "@/lib/card-send-schedule"
 
@@ -79,6 +81,7 @@ function fakeSupabase(results: Record<string, unknown> = {}) {
       chain[method] = record(method)
     }
     chain.maybeSingle = () => results[`${table}.maybeSingle`]
+    chain.single = () => results[`${table}.single`]
     // Awaiting the chain itself (an update or delete without .single())
     // A list answers successive awaits in turn
     chain.then = (resolve: unknown) => {
@@ -284,5 +287,102 @@ describe("deliverScheduledSend", () => {
       updatesTo(calls, "card_send_schedules").filter((u) => u.state === "sent"),
     ).toHaveLength(2)
     vi.mocked(console.error).mockRestore()
+  })
+})
+
+describe("roundUpToHour", () => {
+  it("rounds up to the next hour and leaves whole hours alone", () => {
+    expect(roundUpToHour(new Date("2026-10-10T08:20:00Z")).toISOString()).toBe(
+      "2026-10-10T09:00:00.000Z",
+    )
+    expect(roundUpToHour(new Date("2026-10-10T09:00:00Z")).toISOString()).toBe(
+      "2026-10-10T09:00:00.000Z",
+    )
+  })
+})
+
+describe("scheduleSendForOwner", () => {
+  const inAWeek = () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  const SAVED = {
+    data: {
+      send_at: "x",
+      recipient_email: "mira@example.com",
+      state: "scheduled",
+      sent_at: null,
+    },
+    error: null,
+  }
+
+  it("schedules an owned card, on the hour", async () => {
+    const sendAt = inAWeek()
+    sendAt.setUTCMinutes(20, 0, 0)
+    const { client, calls } = fakeSupabase({
+      "cards.maybeSingle": {
+        data: { id: "card-1", contributor_link_id: "link-1" },
+        error: null,
+      },
+      "card_send_schedules.single": SAVED,
+    })
+
+    const result = await scheduleSendForOwner(client, {
+      cardId: "card-1",
+      userId: "owner-a",
+      sendAt,
+      recipientEmail: " mira@example.com ",
+      source: "mcp",
+    })
+
+    expect(result).toEqual({ schedule: SAVED.data })
+    const upsert = calls.find((c) => c.method === "upsert")!
+    expect(upsert.args[0]).toMatchObject({
+      card_id: "card-1",
+      user_id: "owner-a",
+      recipient_email: "mira@example.com",
+      send_at: roundUpToHour(sendAt).toISOString(),
+    })
+    // Only the owner's own card
+    expect(calls).toContainEqual({
+      table: "cards",
+      method: "eq",
+      args: ["user_id", "owner-a"],
+    })
+  })
+
+  it("refuses someone else's card", async () => {
+    const { client, calls } = fakeSupabase({
+      "cards.maybeSingle": { data: null, error: null },
+    })
+    const result = await scheduleSendForOwner(client, {
+      cardId: "card-1",
+      userId: "owner-b",
+      sendAt: inAWeek(),
+      recipientEmail: "mira@example.com",
+      source: "slack",
+    })
+    expect(result).toEqual({ error: "No card with that id in your account." })
+    expect(calls.some((c) => c.method === "upsert")).toBe(false)
+  })
+
+  it("checks the email and time before touching the database", async () => {
+    const { client, calls } = fakeSupabase()
+    await expect(
+      scheduleSendForOwner(client, {
+        cardId: "card-1",
+        userId: "owner-c",
+        sendAt: inAWeek(),
+        recipientEmail: "not an email",
+        source: "mcp",
+      }),
+    ).resolves.toEqual({ error: "That email address doesn't look right." })
+    await expect(
+      scheduleSendForOwner(client, {
+        cardId: "card-1",
+        userId: "owner-c",
+        sendAt: new Date(Date.now() - 60 * 60 * 1000),
+        recipientEmail: "mira@example.com",
+        source: "mcp",
+      }),
+    ).resolves.toEqual({ error: "Choose a time in the future" })
+    expect(calls).toEqual([])
   })
 })

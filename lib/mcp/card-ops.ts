@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { getAppUrl } from "@/lib/app-url"
+import { getCardSendSchedule } from "@/lib/card-send-schedule"
 import { createCardForUser } from "@/lib/create-card"
 import { generateCardCoverArt } from "@/lib/generate-card-cover-art"
 import { generateCardHeadline } from "@/lib/generate-card-headline"
@@ -199,19 +200,31 @@ export async function loadCardSummary(
   }
   if (!data) return { error: "No card with that id in your account." }
 
-  const { data: rows, error: rowsError } = await supabase
-    .from("card_contributions")
-    .select("message, giphy_url")
-    .eq("card_id", cardId)
+  const [{ data: rows, error: rowsError }, schedule] = await Promise.all([
+    supabase
+      .from("card_contributions")
+      .select("message, giphy_url")
+      .eq("card_id", cardId),
+    getCardSendSchedule(supabase, cardId),
+  ])
   if (rowsError) {
     console.error("[mcp/card] signatures FAIL:", rowsError)
   }
 
   return {
-    card: summarizeCard(
-      getAppUrl(),
-      data as McpCardRow,
-      rowsError ? undefined : countSignatures(rows ?? []),
-    ),
+    card: {
+      ...summarizeCard(
+        getAppUrl(),
+        data as McpCardRow,
+        rowsError ? undefined : countSignatures(rows ?? []),
+      ),
+      scheduledSend:
+        schedule?.state === "scheduled"
+          ? {
+              sendAt: schedule.send_at,
+              recipientEmail: schedule.recipient_email,
+            }
+          : null,
+    },
   }
 }

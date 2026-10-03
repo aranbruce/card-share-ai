@@ -52,10 +52,12 @@ describe("MCP card tools", () => {
       inputSchema: { properties: Record<string, unknown> }
     }[]
     expect(tools.map((t) => t.name).sort()).toEqual([
+      "cancel_scheduled_send",
       "create_card",
       "create_card_from_photo",
       "get_card",
       "list_cards",
+      "schedule_card_send",
       "update_card",
     ])
     for (const tool of tools) {
@@ -74,6 +76,17 @@ describe("MCP card tools", () => {
     expect(Object.keys(update.inputSchema.properties)).toEqual(
       expect.arrayContaining(["headline", "myMessage"]),
     )
+    // Scheduling emails someone outside the account; cancelling removes the send
+    const schedule = tools.find((t) => t.name === "schedule_card_send")!
+    expect(schedule.annotations).toMatchObject({
+      destructiveHint: false,
+      openWorldHint: true,
+    })
+    expect(Object.keys(schedule.inputSchema.properties)).toEqual(
+      expect.arrayContaining(["cardId", "recipientEmail", "sendAt"]),
+    )
+    const cancel = tools.find((t) => t.name === "cancel_scheduled_send")!
+    expect(cancel.annotations.destructiveHint).toBe(true)
     expect(Object.keys(create.inputSchema.properties)).toContain("tone")
     expect(create.inputSchema.properties.tone).toMatchObject({
       enum: [...CARD_TONES],
@@ -120,6 +133,24 @@ describe("MCP card tools", () => {
     })
     expect(result.isError).toBe(true)
     expect(result.content[0].text).toMatch(/not signed in/)
+  })
+
+  it("asks for a send time with a UTC offset", async () => {
+    const { result } = await rpc(
+      "tools/call",
+      {
+        name: "schedule_card_send",
+        arguments: {
+          cardId: "550e8400-e29b-41d4-a716-446655440000",
+          recipientEmail: "mira@example.com",
+          // No offset: the time zone would be a guess
+          sendAt: "2026-10-10T09:00:00",
+        },
+      },
+      { signedInAs: "user-1" },
+    )
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result.content)).toMatch(/sendAt/)
   })
 
   describe("create_card_from_photo", () => {
