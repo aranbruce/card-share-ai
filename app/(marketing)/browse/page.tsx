@@ -244,9 +244,10 @@ export default function CardsPage() {
             </div>
           </div>
 
-          {/* The fan is ~630px wide, wider than its column until ~1360px, so it's zoomed
-              down until then to stay inside the page */}
-          <div className="hidden lg:block lg:max-xl:zoom-[0.75] xl:max-[1360px]:zoom-[0.92]">
+          {/* The fan is ~630px wide. On tablets it sits under the copy, a little smaller;
+              beside the copy it's wider than its column until ~1360px, so it's zoomed down
+              until then to stay inside the page */}
+          <div className="mt-6 hidden md:block md:max-lg:zoom-[0.85] lg:mt-0 lg:max-xl:zoom-[0.75] xl:max-[1360px]:zoom-[0.92]">
             <HeroFan />
           </div>
         </div>
