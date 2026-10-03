@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Spinner } from "@/components/ui/spinner"
 import Link from "next/link"
+import { LocalDateTime } from "@/components/local-date-time"
 import {
   ContributorShareModal,
   RecipientShareModal,
@@ -73,6 +74,7 @@ export function CardDetailPageClient({
   initialDraftTextColor,
 }: CardDetailPageClientProps) {
   const [card, setCard] = useState<OwnerCardDetailCard>(initialData.card)
+  const [sendSchedule, setSendSchedule] = useState(initialData.sendSchedule)
   const [reloadNonce, setReloadNonce] = useState<number | undefined>(undefined)
   const [error, setError] = useState("")
   const [showContributorShareModal, setShowContributorShareModal] =
@@ -242,6 +244,14 @@ export function CardDetailPageClient({
                       Send to recipient
                     </Button>
                   </div>
+                  {sendSchedule?.state === "scheduled" ? (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      Scheduled to send on{" "}
+                      <span className="font-medium text-foreground">
+                        <LocalDateTime iso={sendSchedule.send_at} />
+                      </span>
+                    </p>
+                  ) : null}
                 </div>
               </div>
             }
@@ -450,6 +460,8 @@ export function CardDetailPageClient({
         onSentAtRecorded={(sentAt) =>
           setCard((prev) => ({ ...prev, sent_at: sentAt }))
         }
+        sendSchedule={sendSchedule}
+        onSendScheduleChange={setSendSchedule}
       />
     </>
   )

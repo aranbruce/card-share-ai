@@ -21,6 +21,7 @@ import type { ContributeCardResult } from "@/lib/contribute-card"
 import Link from "next/link"
 import { AppHeader } from "@/components/app-header"
 import { NotePanel } from "@/components/note-panel"
+import { LocalDateTime } from "@/components/local-date-time"
 import { MessageFontVariables } from "@/components/message-font-variables"
 import {
   storedFontFamilyFromPresetId,
@@ -80,6 +81,8 @@ interface CardData {
   image_url: string
   sent_at?: string | null
   extra_pages?: number
+  /** When the card is scheduled to be emailed to the recipient: the time to sign by. */
+  scheduled_send_at?: string | null
 }
 
 function ContributeCardPageInner({
@@ -832,6 +835,15 @@ function ContributeCardPageInner({
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                 {instructionLine}
               </p>
+              {card.scheduled_send_at ? (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Sign by{" "}
+                  <span className="font-medium text-foreground">
+                    <LocalDateTime iso={card.scheduled_send_at} />
+                  </span>
+                  , when the card is sent to {card.recipient_name || "them"}
+                </p>
+              ) : null}
             </div>
 
             {/* Card */}

@@ -1,6 +1,7 @@
 import { validate as isValidUuid } from "uuid"
 import type { Contribution } from "@/lib/card-body"
 import { CONTRIBUTION_PUBLIC_COLUMNS } from "@/lib/contribution-public-columns"
+import { getCardSendSchedule } from "@/lib/card-send-schedule"
 import { requireServiceRoleClient } from "@/lib/supabase/admin"
 
 export const CONTRIBUTE_CARD_SELECT =
@@ -16,6 +17,8 @@ export type ContributeCardRecord = {
   copy_message: string
   image_url: string
   extra_pages: number | null
+  /** When the card is scheduled to be emailed to the recipient: the time to sign by (signing stays open after). */
+  scheduled_send_at: string | null
 }
 
 export type ContributeCardResult = {
@@ -43,19 +46,28 @@ export async function getContributeCardByLinkId(
 
   if (!cardData) return null
 
-  const { data: contributions, error: contribError } = await supabase
-    .from("card_contributions")
-    .select(CONTRIBUTION_PUBLIC_COLUMNS)
-    .eq("card_id", cardData.id)
-    .order("created_at", { ascending: true })
+  const [{ data: contributions, error: contribError }, schedule] =
+    await Promise.all([
+      supabase
+        .from("card_contributions")
+        .select(CONTRIBUTION_PUBLIC_COLUMNS)
+        .eq("card_id", cardData.id)
+        .order("created_at", { ascending: true }),
+      getCardSendSchedule(supabase, cardData.id),
+    ])
+  const card: ContributeCardRecord = {
+    ...cardData,
+    scheduled_send_at:
+      schedule?.state === "scheduled" ? schedule.send_at : null,
+  }
 
   if (contribError) {
     console.error("[getContributeCardByLinkId] contributions:", contribError)
-    return { card: cardData, contributions: [] }
+    return { card, contributions: [] }
   }
 
   return {
-    card: cardData,
+    card,
     contributions: (contributions ?? []) as Contribution[],
   }
 }
