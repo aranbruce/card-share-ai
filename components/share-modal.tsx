@@ -715,9 +715,10 @@ function ShareAppDivider() {
 /** What app shares say when sending the finished card to the recipient. */
 function recipientShareContent(
   link: string,
-  recipientName: string,
+  recipientName: string | null,
 ): ShareContent {
-  const name = recipientName.trim()
+  // recipient_name is nullable in the database, whatever the types say
+  const name = recipientName?.trim()
   return {
     link,
     message: name
@@ -730,9 +731,10 @@ function recipientShareContent(
 /** What app shares say when inviting people to sign. */
 function contributorShareContent(
   link: string,
-  recipientName: string,
+  recipientName: string | null,
 ): ShareContent {
-  const name = recipientName.trim()
+  // recipient_name is nullable in the database, whatever the types say
+  const name = recipientName?.trim()
   return {
     link,
     message: name

@@ -13,7 +13,6 @@ import {
   type ShareContent,
 } from "@/lib/share-app-urls"
 
-
 const subscribe = () => () => {}
 
 /** Whether the browser has a share sheet (phones, Safari); unknown on the server. */
