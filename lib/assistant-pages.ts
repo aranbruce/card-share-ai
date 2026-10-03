@@ -92,12 +92,12 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
     note: "Free · Works on every Claude plan · Set up in about a minute",
     cta: {
       label: "Open Claude connectors",
-      href: "https://claude.ai/settings/connectors",
+      href: "https://claude.ai/new#customize/connectors",
     },
     steps: [
       {
         title: "Add a custom connector",
-        desc: "In Claude, open Settings → Connectors, click Add, then Add custom connector. Name it CardShare.ai and paste the connector URL below",
+        desc: "In Claude, open Customize → Connectors, click Add, then Add custom connector. Name it CardShare.ai and paste the connector URL below",
       },
       {
         title: "Sign in and allow access",
@@ -113,12 +113,12 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
       ...SHARED_GOOD_TO_KNOW,
       "Claude only works with cards in the CardShare.ai account you connect",
       "Free Claude plans allow one custom connector. On Team and Enterprise plans, an owner adds it for the organisation first",
-      "Disconnect at any time from Claude's Settings → Connectors",
+      "Disconnect at any time from Claude's Customize → Connectors",
     ],
     troubleshooting: [
       {
         q: "Claude says it can't reach CardShare.ai",
-        a: "Its sign-in has expired. Open Settings → Connectors and reconnect CardShare.ai, or press Reconnect in the chat.",
+        a: "Its sign-in has expired. Open Customize → Connectors and reconnect CardShare.ai, or press Reconnect in the chat.",
       },
       {
         q: "Claude doesn't show the card, only links",
