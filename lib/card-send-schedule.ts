@@ -5,7 +5,9 @@ import {
   sendScheduledSendDeliveredEmail,
   sendScheduledSendFailedEmail,
 } from "@/lib/email/resend"
+import { z } from "zod"
 import { captureServerEvent } from "@/lib/posthog-server"
+import { checkFixedWindowRateLimitForKey } from "@/lib/request-rate-limit"
 
 /**
  * Scheduled sends: the owner picks a time, contributors are asked to sign by then (signing stays open after),
@@ -122,6 +124,102 @@ export async function cancelCardSend(
     .select("card_id")
   if (error) throw new Error(error.message)
   return (data ?? []).length > 0
+}
+
+const HOUR_MS = 60 * 60 * 1000
+
+/** The next whole hour at or after `date`: sends go out on the hour, when the cron runs. */
+export function roundUpToHour(date: Date): Date {
+  return new Date(Math.ceil(date.getTime() / HOUR_MS) * HOUR_MS)
+}
+
+const emailSchema = z.string().trim().email()
+
+export type ScheduleForOwnerResult =
+  { schedule: CardSendSchedule } | { error: string }
+
+/**
+ * Schedules a card's send for its owner from Slack or an AI assistant, which (unlike the
+ * website's dialog) can ask for any time: it's rounded up to the hour. Rate limited per user,
+ * since those requests don't come from the owner's own IP address.
+ */
+export async function scheduleSendForOwner(
+  service: SupabaseClient,
+  {
+    cardId,
+    userId,
+    sendAt,
+    recipientEmail,
+    source,
+  }: {
+    cardId: string
+    userId: string
+    sendAt: Date
+    recipientEmail: string
+    source: "slack" | "mcp"
+  },
+): Promise<ScheduleForOwnerResult> {
+  const email = emailSchema.safeParse(recipientEmail)
+  if (!email.success) {
+    return { error: "That email address doesn't look right." }
+  }
+  const when = parseSendAt(roundUpToHour(sendAt).toISOString())
+  if (!when.ok) return { error: when.error }
+
+  const rate = checkFixedWindowRateLimitForKey(userId, {
+    namespace: "schedule-send",
+    maxRequests: 15,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (!rate.allowed) {
+    return {
+      error: "You've scheduled a lot of cards in a short time. Try again soon.",
+    }
+  }
+
+  const { data: card, error: cardError } = await service
+    .from("cards")
+    .select("id, contributor_link_id")
+    .eq("id", cardId)
+    .eq("user_id", userId)
+    .maybeSingle()
+  if (cardError) {
+    console.error("[scheduleSendForOwner] card lookup:", cardError)
+    return { error: "Sorry, the card couldn't be loaded." }
+  }
+  if (!card) return { error: "No card with that id in your account." }
+  if (!card.contributor_link_id) {
+    return { error: "This card can't be sent yet: it has no link." }
+  }
+
+  try {
+    const schedule = await scheduleCardSend(service, {
+      cardId,
+      userId,
+      sendAt: when.sendAt,
+      recipientEmail: email.data,
+    })
+    // Keep the card's saved address in step, as the website does
+    const { error: emailError } = await service
+      .from("cards")
+      .update({
+        recipient_email: email.data,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", cardId)
+      .eq("user_id", userId)
+    if (emailError) {
+      console.error("[scheduleSendForOwner] recipient_email:", emailError)
+    }
+    captureServerEvent(userId, "card_send_scheduled", {
+      card_id: cardId,
+      source,
+    })
+    return { schedule }
+  } catch (err) {
+    console.error("[scheduleSendForOwner]", err)
+    return { error: "Sorry, the card couldn't be scheduled." }
+  }
 }
 
 export type DueSend = {

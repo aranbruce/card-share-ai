@@ -26,6 +26,16 @@ import type { CardRow } from "@/lib/create-card"
 import { cardPreviewImagePath } from "@/lib/card-preview"
 import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { SLACK_HELP_MESSAGE, type MessagesTabOpen } from "./slack-app-home"
+import {
+  DEFAULT_SEND_HOUR,
+  readScheduleFields,
+  SCHEDULE_FIELDS,
+  SEND_HOUR_OPTIONS,
+  type ScheduleRequest,
+} from "./slack-schedule"
+import { scheduleSendForOwner } from "@/lib/card-send-schedule"
+import { requireServiceRoleClient } from "@/lib/supabase/admin"
+import { formatInTimeZone } from "@/lib/zoned-time"
 
 const CARD_TYPES = [
   "birthday",
@@ -221,6 +231,60 @@ export async function sendMessagesTabWelcome({
   }
 }
 
+/** The Enterprise Grid org's id, if the payload came from one. */
+function getSlackEnterpriseId(event: { raw: unknown }): string {
+  const raw = event.raw as Record<string, unknown>
+  if (typeof raw?.enterprise_id === "string") return raw.enterprise_id
+  const enterprise = raw?.enterprise as Record<string, unknown> | undefined
+  return typeof enterprise?.id === "string" ? enterprise.id : ""
+}
+
+/**
+ * A Slack user's timezone (e.g. "Europe/London"), or "UTC" if it can't be looked up. Org-wide
+ * Enterprise Grid installs are stored under the enterprise id, not the workspace's.
+ */
+async function slackUserTimeZone(
+  event: { raw: unknown },
+  userId: string,
+): Promise<string> {
+  try {
+    const adapter = getSlackAdapter()
+    let installation = null
+    for (const id of [getSlackTeamId(event), getSlackEnterpriseId(event)]) {
+      if (id) installation = await adapter.getInstallation(id)
+      if (installation) break
+    }
+    if (!installation) return "UTC"
+    const result = await adapter.webClient.users.info({
+      user: userId,
+      token: installation.botToken,
+    })
+    return result.user?.tz || "UTC"
+  } catch (err) {
+    console.error("[cardshareai] timezone lookup FAIL:", err)
+    return "UTC"
+  }
+}
+
+/** Schedules a new card's send, and says how it went for the "ready" message. */
+async function scheduleNewCard(
+  userId: string,
+  cardId: string,
+  request: ScheduleRequest,
+): Promise<string> {
+  const result = await scheduleSendForOwner(requireServiceRoleClient(), {
+    cardId,
+    userId,
+    sendAt: request.sendAt,
+    recipientEmail: request.recipientEmail,
+    source: "slack",
+  })
+  if ("error" in result) {
+    return `The card couldn't be scheduled: ${result.error} You can schedule it from the card's page.`
+  }
+  return `📅 It'll be emailed to ${result.schedule.recipient_email} on ${formatInTimeZone(result.schedule.send_at, request.timeZone)}. Contributors will see that as the time to sign by.`
+}
+
 export function getBot(): Chat<BotAdapters> {
   if (_bot) return _bot
 
@@ -348,6 +412,31 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
             multiline: true,
             optional: true,
           },
+          // Optional: email the finished card on a date
+          {
+            type: "text_input",
+            id: SCHEDULE_FIELDS.email,
+            label: "Recipient's email",
+            placeholder: "To email them the card on a date",
+            optional: true,
+          },
+          {
+            type: "date_input",
+            id: SCHEDULE_FIELDS.date,
+            label: "Send on",
+            optional: true,
+          },
+          {
+            type: "select",
+            id: SCHEDULE_FIELDS.hour,
+            label: "At (in your Slack timezone)",
+            initialOption: String(DEFAULT_SEND_HOUR),
+            optional: true,
+            options: SEND_HOUR_OPTIONS.map((option) => ({
+              type: "select_option",
+              ...option,
+            })),
+          },
         ],
       })
     } catch (err) {
@@ -434,6 +523,16 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
       }
     }
 
+    // Only look up the timezone when they're scheduling
+    const timeZone =
+      values[SCHEDULE_FIELDS.date] || values[SCHEDULE_FIELDS.email]
+        ? await slackUserTimeZone(event, user.userId)
+        : "UTC"
+    const scheduleFields = readScheduleFields(values, timeZone)
+    if (!scheduleFields.ok) {
+      return { action: "errors", errors: scheduleFields.errors }
+    }
+
     let supabaseUserId: string | null
     try {
       supabaseUserId = await findLinkedUser(platform, user.userId, teamId)
@@ -499,6 +598,13 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
         }
 
         const imageUrl = cardImageUrl(card)
+        const scheduleNote = scheduleFields.schedule
+          ? await scheduleNewCard(
+              resolvedUserId,
+              String(card.id),
+              scheduleFields.schedule,
+            )
+          : null
 
         await notify(
           Card({
@@ -509,6 +615,7 @@ function registerHandlers(bot: Chat<BotAdapters>): void {
               ...(card.copy_headline && !imageUrl
                 ? [CardText(`"${card.copy_headline as string}"`), Divider()]
                 : []),
+              ...(scheduleNote ? [CardText(scheduleNote)] : []),
               Actions([
                 LinkButton({ label: "Open Card", url: cardUrl(card) }),
                 LinkButton({
