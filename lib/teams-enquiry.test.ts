@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  buildTeamsEnquiryConfirmationEmail,
   buildTeamsEnquiryEmail,
   getTeamsEnquiryErrors,
   teamsEnquirySchema,
@@ -71,5 +72,14 @@ describe("buildTeamsEnquiryEmail", () => {
     expect(email.subject).not.toMatch(/[\r\n]/)
     expect(email.html).toContain("&lt;b&gt;Evil&lt;/b&gt;")
     expect(email.text).toContain("Interested in: None selected")
+  })
+})
+
+describe("buildTeamsEnquiryConfirmationEmail", () => {
+  it("sends fixed text with a link to start a card", () => {
+    const email = buildTeamsEnquiryConfirmationEmail()
+    expect(email.subject).toContain("quote request")
+    expect(email.text).toContain("/create")
+    expect(email.html).toContain("Start a free card")
   })
 })

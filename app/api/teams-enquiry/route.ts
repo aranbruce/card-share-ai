@@ -4,6 +4,7 @@ import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { captureServerEvent } from "@/lib/posthog-server"
 import { getDistinctIdFromRequest } from "@/lib/posthog-distinct-id-from-request"
 import {
+  buildTeamsEnquiryConfirmationEmail,
   buildTeamsEnquiryEmail,
   TEAMS_ENQUIRY_INBOX,
   teamsEnquirySchema,
@@ -54,6 +55,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "We couldn't send your request. Please try again." },
       { status: 500, headers },
+    )
+  }
+
+  // Best effort: the enquiry has reached us, so a failed confirmation isn't an error.
+  const confirmation = await sendEmailViaResend({
+    to: enquiry.email,
+    replyTo: TEAMS_ENQUIRY_INBOX,
+    ...buildTeamsEnquiryConfirmationEmail(),
+  })
+  if (!confirmation.ok) {
+    console.error(
+      "[POST /api/teams-enquiry] confirmation email:",
+      confirmation.error,
     )
   }
 
