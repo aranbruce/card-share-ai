@@ -1,13 +1,26 @@
 import { expect, test } from "@playwright/test"
 
 const PAGES = [
-  { path: "/claude", name: "Claude", other: "ChatGPT", otherPath: "/chatgpt" },
-  { path: "/chatgpt", name: "ChatGPT", other: "Claude", otherPath: "/claude" },
+  // Claude calls what you add a connector; ChatGPT, a plugin
+  {
+    path: "/claude",
+    name: "Claude",
+    urlLabel: "Connector URL",
+    other: "ChatGPT",
+    otherPath: "/chatgpt",
+  },
+  {
+    path: "/chatgpt",
+    name: "ChatGPT",
+    urlLabel: "Plugin URL",
+    other: "Claude",
+    otherPath: "/claude",
+  },
 ]
 
 for (const page of PAGES) {
   test.describe(`${page.name} connector page`, () => {
-    test("shows the setup, copies the connector URL and links the other assistant", async ({
+    test("shows the setup, copies the URL and links the other assistant", async ({
       page: browser,
       context,
     }) => {
@@ -33,7 +46,7 @@ for (const page of PAGES) {
         browser.getByRole("heading", { name: "Set it up" }),
       ).toBeInViewport()
       await expect(
-        browser.getByRole("textbox", { name: "Connector URL" }),
+        browser.getByRole("textbox", { name: page.urlLabel }),
       ).toHaveValue("https://www.cardshare.ai/mcp")
       await browser.getByRole("button", { name: /Copy link/ }).click()
       await expect
