@@ -45,6 +45,10 @@ const PAGE_PREVIEWS: Record<string, SitePreview> = {
     title: "Use CardShare.ai in Claude",
     panel: { kind: "fan", occasions: ["thank-you", "birthday", "promotion"] },
   },
+  chatgpt: {
+    title: "Use CardShare.ai in ChatGPT",
+    panel: { kind: "fan", occasions: ["kudos", "birthday", "farewell"] },
+  },
   slack: {
     title: "Add CardShare.ai to Slack",
     panel: { kind: "slack" },
