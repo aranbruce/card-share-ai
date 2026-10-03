@@ -7,11 +7,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { CreateStepIndicator } from "@/components/create-step-indicator"
+import { StatsLine } from "@/components/social-proof"
 import {
   CARD_OCCASIONS,
   coverPlaceholderGradient,
   type CardOccasion,
 } from "@/lib/card-occasions"
+import type { StatItem } from "@/lib/social-proof"
 import { cn } from "@/lib/utils"
 
 /** Step 1 of creating a card: pick the occasion in the studio's left panel. */
@@ -22,6 +24,7 @@ export function OccasionStep({
   backHref,
   backLabel,
   error,
+  stats = [],
 }: {
   selected: string
   onSelect: (id: string) => void
@@ -30,6 +33,8 @@ export function OccasionStep({
   backLabel: string
   /** Shown above Continue, e.g. when saving a card after sign-in failed. */
   error?: string
+  /** Site-wide usage stats shown under Continue; hidden when empty. */
+  stats?: StatItem[]
 }) {
   return (
     <aside className="flex min-h-svh flex-col border-r border-line bg-card px-7 py-4 md:sticky md:top-0 md:h-svh md:min-h-0 md:overflow-y-auto">
@@ -85,6 +90,7 @@ export function OccasionStep({
         Continue
         <ArrowRight />
       </Button>
+      <StatsLine items={stats} className="mt-3 justify-center text-xs" />
     </aside>
   )
 }

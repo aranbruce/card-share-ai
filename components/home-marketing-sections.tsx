@@ -5,8 +5,11 @@ import { SlackFlowSection } from "@/components/slack-flow"
 import { FaqSection } from "@/components/faq-section"
 import { FeatureTabs, type FeatureTab } from "@/components/feature-tabs"
 import { PhotoTemplatesSection } from "@/components/photo-templates-section"
+import { StatsLine, TestimonialsSection } from "@/components/social-proof"
 import { featureSample, getCategoryConfig } from "@/lib/category-pages"
 import { generalPhotoTemplatesSection } from "@/lib/photo-templates-section"
+import type { StatItem } from "@/lib/social-proof"
+import { testimonialsFor } from "@/lib/testimonials"
 
 const HOME_FAQS = [
   {
@@ -68,7 +71,7 @@ const FEATURES: FeatureTab[] = [
   },
 ]
 
-export function HomeMarketingSections() {
+export function HomeMarketingSections({ stats }: { stats: StatItem[] }) {
   return (
     <>
       <FeatureTabs
@@ -79,6 +82,8 @@ export function HomeMarketingSections() {
       />
 
       <PhotoTemplatesSection data={generalPhotoTemplatesSection()} />
+
+      <TestimonialsSection testimonials={testimonialsFor(undefined)} />
 
       <section className="border-t border-border">
         <div className="mx-auto max-w-360 px-6 py-20 md:px-15">
@@ -125,6 +130,7 @@ export function HomeMarketingSections() {
               <Link href="/sign-up">Create an account</Link>
             </Button>
           </div>
+          <StatsLine items={stats} className="mt-6 justify-center" />
         </div>
       </section>
     </>

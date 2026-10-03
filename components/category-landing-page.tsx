@@ -6,6 +6,7 @@ import { FeatureTabs, type FeatureSketch } from "@/components/feature-tabs"
 import { OccasionCardStage } from "@/components/occasion-card-stage"
 import { SlackStoryboard } from "@/components/slack-storyboard"
 import { PhotoTemplatesSection } from "@/components/photo-templates-section"
+import { StatsLine, TestimonialsSection } from "@/components/social-proof"
 import {
   type CategoryConfig,
   featureSample,
@@ -13,6 +14,8 @@ import {
   slackStoryboardCard,
 } from "@/lib/category-pages"
 import { occasionPhotoTemplatesSection } from "@/lib/photo-templates-section"
+import type { StatItem } from "@/lib/social-proof"
+import { testimonialsFor } from "@/lib/testimonials"
 
 /** Every occasion's steps go describe it, everyone signs, then send it. */
 const OCCASION_STEP_SKETCHES: FeatureSketch[] = ["draft", "notes", "deliver"]
@@ -33,7 +36,13 @@ function PlusIcon() {
   )
 }
 
-export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
+export function CategoryLandingPage({
+  config,
+  stats,
+}: {
+  config: CategoryConfig
+  stats: StatItem[]
+}) {
   const templatesSection = occasionPhotoTemplatesSection(config.slug)
   return (
     <main>
@@ -76,6 +85,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
                 </li>
               ))}
             </ul>
+            <StatsLine items={stats} className="mt-4" />
           </div>
 
           <OccasionCardStage config={config} />
@@ -123,6 +133,8 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
           />
         </div>
       </section>
+
+      <TestimonialsSection testimonials={testimonialsFor(config.slug)} />
 
       {/* ===== FAQ ===== */}
       <section id="faq" className="border-t border-border">
@@ -185,6 +197,7 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
               </Link>
             </Button>
           </div>
+          <StatsLine items={stats} className="mt-6 justify-center" />
         </div>
       </section>
     </main>

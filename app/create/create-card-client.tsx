@@ -39,6 +39,7 @@ import {
   DEFAULT_CARD_OCCASION,
   getCardOccasion,
 } from "@/lib/card-occasions"
+import type { StatItem } from "@/lib/social-proof"
 
 const TYPE_HUE: Record<string, number> = Object.fromEntries(
   CARD_OCCASIONS.map((o) => [o.id, o.hue]),
@@ -55,11 +56,13 @@ type Step = "select-type" | "details"
 export function CreateCardPageClient({
   initialOccasion,
   initialTemplateId,
+  stats,
 }: {
   /** An occasion linked from a marketing page: start on the cover step with it picked. */
   initialOccasion?: string
   /** A template to pick on the cover step (offered for `initialOccasion`). */
   initialTemplateId?: string
+  stats: StatItem[]
 }) {
   const router = useRouter()
   const [supabase] = useState(() => createClient())
@@ -421,6 +424,7 @@ export function CreateCardPageClient({
             backHref={isGuest ? "/" : "/dashboard"}
             backLabel={isGuest ? "Back" : "Back to dashboard"}
             error={error}
+            stats={stats}
           />
         )}
         <CardDetailsForm
@@ -767,6 +771,7 @@ export function CreateCardPageClient({
         onClose={() => setShowAuthModal(false)}
         onLogin={() => handleAuthRedirect("login")}
         onSignUp={() => handleAuthRedirect("signup")}
+        stats={stats}
       />
     </div>
   )

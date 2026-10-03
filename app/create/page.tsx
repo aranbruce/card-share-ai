@@ -6,7 +6,9 @@ import {
   templatesForOccasion,
 } from "@/lib/card-templates"
 import { sitePreviewImagePath } from "@/lib/site-preview-pages"
+import { getSiteStats } from "@/lib/site-stats"
 import { buildPageMetadata } from "@/lib/site-metadata"
+import { buildStatItems } from "@/lib/social-proof"
 import { CreateCardPageClient } from "./create-card-client"
 
 export const metadata: Metadata = buildPageMetadata({
@@ -39,10 +41,12 @@ export default async function CreatePage({
     templatesForOccasion(linkedOccasion).includes(template)
   const occasion =
     template && !offered ? defaultOccasionForTemplate(template) : linkedOccasion
+  const stats = buildStatItems(await getSiteStats())
   return (
     <CreateCardPageClient
       initialOccasion={occasion}
       initialTemplateId={template?.id}
+      stats={stats}
     />
   )
 }
