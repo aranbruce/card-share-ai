@@ -14,13 +14,6 @@ Still to do:
 
 - Expose in the Slack bot and MCP tools (`create_card` / `update_card`)
 
-### Owner notifications and contributor reminders
-
-Pairs with scheduling. Builds on the Resend setup in `lib/email/`.
-
-- Email the owner when someone contributes (batched/digest, not one per contribution)
-- Nudge the owner before the deadline when there are few signatures, with the share link ready to copy
-
 ### Funny photo templates
 
 Pre-made humorous scenes where the user uploads a photo and the person is placed into the scene, e.g. astronaut on the moon, Renaissance portrait, superhero poster, "employee of the century" magazine cover, retirement on a beach.
@@ -75,6 +68,7 @@ Open questions:
 - **Premium tier:** candidates are scheduling, export, premium templates and designs. No payments exist yet
 - **Social sharing** of sent cards (recipient opt-in)
 - **Analytics for owners:** opened/viewed tracking on sent cards
+- **Owner notifications and reminders:** email the owner when people sign (a digest, not one per message), and nudge them before the send time if few have signed. Moved here 2026-10-03: without controls it risks feeling spammy, so it needs an email settings area first, where owners choose which emails they get (including the scheduled-send "delivered" email; "wasn't sent" should always go), plus an unsubscribe link in each email
 - **Golden ticket invites:** invite friends to CardShareAI with a fun "golden ticket" card, built on the existing card view. Could feed referral rewards if the premium tier happens
 - **Leaderboard:** most cards created. Needs opt-in and display names, since there are no public profiles yet, and should count real cards (e.g. sent, with contributions) so it can't be farmed with empty drafts
 - **User-made templates:** save a card's design as a reusable template (headline, message, cover), optionally published for others to use. Separate from the curated photo templates; public ones need moderation and a report option
@@ -86,6 +80,9 @@ Open questions:
 
 ## Done
 
+- Share card links to WhatsApp, Messages, Telegram and email from both share dialogs (#107)
+- Scheduled delivery on the website, with a split Send dialog (#105, #106)
+- Redesigned link previews, sent as small JPEGs so WhatsApp shows them (#104)
 - 34 funny photo templates, and a photo templates section on the home, Browse and occasion pages (#92, #99)
 - MCP connector for Claude and ChatGPT (#82–#85)
 - Slack app with `/cardshareai` flow (#88, #89)
