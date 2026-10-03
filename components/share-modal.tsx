@@ -6,6 +6,9 @@ import { FieldError } from "@/components/ui/field-error"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { RecipientViewLinkCopy } from "@/components/recipient-view-link-copy"
+import { ShareAppButtons } from "@/components/share-app-buttons"
+import type { ShareApp, ShareContent } from "@/lib/share-app-urls"
+import posthog from "posthog-js"
 import { useState, type ReactNode } from "react"
 import { Spinner } from "@/components/ui/spinner"
 import {
@@ -53,7 +56,9 @@ interface RecipientShareModalProps extends ShareModalBaseProps {
   onSendScheduleChange?: (schedule: CardSendSchedule | null) => void
 }
 
-type ContributorShareModalProps = ShareModalBaseProps
+interface ContributorShareModalProps extends ShareModalBaseProps {
+  recipientName: string
+}
 
 function buildViewLink(contributorLinkId: string): string {
   const path = `/view/${contributorLinkId}`
@@ -444,11 +449,21 @@ export function RecipientShareModal({
           ) : null}
 
           {view === "link" ? (
-            <RecipientViewLinkCopy
-              viewLink={viewLink}
-              getViewLink={getViewLink}
-              onCopied={handleLinkCopied}
-            />
+            <>
+              <RecipientViewLinkCopy
+                viewLink={viewLink}
+                getViewLink={getViewLink}
+                onCopied={handleLinkCopied}
+              />
+              <ShareAppDivider />
+              <ShareAppButtons
+                content={recipientShareContent(viewLink, recipientName)}
+                onShare={(app) => {
+                  trackLinkShared(cardId, "recipient", app)
+                  void recordSharedAt()
+                }}
+              />
+            </>
           ) : null}
 
           {view === "email" ? (
@@ -686,8 +701,58 @@ function SendOption({
   )
 }
 
+/** Separates a link's Copy button from the app share buttons. */
+function ShareAppDivider() {
+  return (
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="h-px flex-1 bg-border/50" />
+      or send it in an app
+      <div className="h-px flex-1 bg-border/50" />
+    </div>
+  )
+}
+
+/** What app shares say when sending the finished card to the recipient. */
+function recipientShareContent(
+  link: string,
+  recipientName: string,
+): ShareContent {
+  const name = recipientName.trim()
+  return {
+    link,
+    message: name
+      ? `We made you a card, ${name}! Open it here:`
+      : "We made you a card! Open it here:",
+    emailSubject: name ? `A card for ${name}` : "A card for you",
+  }
+}
+
+/** What app shares say when inviting people to sign. */
+function contributorShareContent(
+  link: string,
+  recipientName: string,
+): ShareContent {
+  const name = recipientName.trim()
+  return {
+    link,
+    message: name
+      ? `Help sign ${name}'s card! Add your message here:`
+      : "Help sign the group card! Add your message here:",
+    emailSubject: name ? `Sign ${name}'s card` : "Sign the group card",
+  }
+}
+
+function trackLinkShared(
+  cardId: string,
+  audience: "recipient" | "contributors",
+  app: ShareApp,
+) {
+  posthog.capture("card_link_shared", { card_id: cardId, audience, app })
+}
+
 export function ContributorShareModal({
   cardId,
+  recipientName,
   contributorLinkId,
   isOpen,
   onClose,
@@ -786,6 +851,11 @@ export function ContributorShareModal({
             <p className="text-xs text-muted-foreground">
               Copy and share this link so contributors can add their messages.
             </p>
+            <ShareAppDivider />
+            <ShareAppButtons
+              content={contributorShareContent(contributorLink, recipientName)}
+              onShare={(app) => trackLinkShared(cardId, "contributors", app)}
+            />
           </div>
 
           <div className="h-px bg-border/50" />
