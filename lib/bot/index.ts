@@ -28,6 +28,7 @@ import { flushPostHogAiSpans } from "@/lib/posthog-ai-flush"
 import { SLACK_HELP_MESSAGE, type MessagesTabOpen } from "./slack-app-home"
 import {
   DEFAULT_SEND_HOUR,
+  lookupSlackTimeZone,
   readScheduleFields,
   SCHEDULE_FIELDS,
   SEND_HOUR_OPTIONS,
@@ -239,27 +240,17 @@ function getSlackEnterpriseId(event: { raw: unknown }): string {
   return typeof enterprise?.id === "string" ? enterprise.id : ""
 }
 
-/**
- * A Slack user's timezone (e.g. "Europe/London"), or "UTC" if it can't be looked up. Org-wide
- * Enterprise Grid installs are stored under the enterprise id, not the workspace's.
- */
+/** A Slack user's timezone, from whichever installation the event came through. */
 async function slackUserTimeZone(
   event: { raw: unknown },
   userId: string,
 ): Promise<string> {
   try {
-    const adapter = getSlackAdapter()
-    let installation = null
-    for (const id of [getSlackTeamId(event), getSlackEnterpriseId(event)]) {
-      if (id) installation = await adapter.getInstallation(id)
-      if (installation) break
-    }
-    if (!installation) return "UTC"
-    const result = await adapter.webClient.users.info({
-      user: userId,
-      token: installation.botToken,
-    })
-    return result.user?.tz || "UTC"
+    return await lookupSlackTimeZone(
+      getSlackAdapter(),
+      [getSlackTeamId(event), getSlackEnterpriseId(event)],
+      userId,
+    )
   } catch (err) {
     console.error("[cardshareai] timezone lookup FAIL:", err)
     return "UTC"
