@@ -4,6 +4,10 @@ What we plan to build next, roughly in priority order. Move items to **Done** (w
 
 ## Next
 
+### Submit the ChatGPT plugin update
+
+ChatGPT's directory version of the plugin predates the scheduling tools (`schedule_card_send`, `cancel_scheduled_send`, #109), so it can't schedule sends, and when asked it makes its own ChatGPT reminder instead, which emails nobody. Submit an update to OpenAI with the new tools. Expect `schedule_card_send` to be reviewed by hand: it has `openWorldHint: true` because it emails someone outside the account. People who add it themselves (Plugins → Create custom MCP server) already get the new tools.
+
 ### Walkthrough videos for the Claude and ChatGPT pages
 
 Record a short Loom (about 90 seconds) for each of /claude and /chatgpt and set its share link as `loomUrl` in `lib/assistant-pages.ts`; the page then shows it above the animated demo. Use a demo card rather than a real one. Suggested shots:
@@ -67,6 +71,7 @@ Open questions:
 - **Premium tier:** candidates are scheduling, export, premium templates and designs. No payments exist yet
 - **Social sharing** of sent cards (recipient opt-in)
 - **Analytics for owners:** opened/viewed tracking on sent cards
+- **Scheduled send in the MCP card view:** the card Claude and ChatGPT show in the chat doesn't mention a pending send yet; only the text summary does (`scheduledSend` from `get_card`)
 - **Owner notifications and reminders:** email the owner when people sign (a digest, not one per message), and nudge them before the send time if few have signed. Moved here 2026-10-03: without controls it risks feeling spammy, so it needs an email settings area first, where owners choose which emails they get (including the scheduled-send "delivered" email; "wasn't sent" should always go), plus an unsubscribe link in each email
 - **Golden ticket invites:** invite friends to CardShareAI with a fun "golden ticket" card, built on the existing card view. Could feed referral rewards if the premium tier happens
 - **Leaderboard:** most cards created. Needs opt-in and display names, since there are no public profiles yet, and should count real cards (e.g. sent, with contributions) so it can't be farmed with empty drafts
