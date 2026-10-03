@@ -17,6 +17,8 @@ export type AssistantPage = {
   note: string
   /** Where the setup starts in the assistant itself. */
   cta: { label: string; href: string }
+  /** What the assistant calls what you add: Claude has connectors, ChatGPT plugins. */
+  urlLabel: string
   steps: { title: string; desc: string }[]
   /**
    * A Loom share link (https://www.loom.com/share/…) for a walkthrough video. Shown above
@@ -94,6 +96,7 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
       label: "Open Claude connectors",
       href: "https://claude.ai/new#customize/connectors",
     },
+    urlLabel: "Connector URL",
     steps: [
       {
         title: "Add a custom connector",
@@ -140,6 +143,7 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
       label: "Open ChatGPT plugins",
       href: "https://chatgpt.com/plugins",
     },
+    urlLabel: "Plugin URL",
     steps: [
       {
         title: "Add a custom MCP server",
@@ -147,7 +151,7 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
       },
       {
         title: "Fill in the details",
-        desc: "Name it CardShare.ai, paste the connector URL below as the Server URL and choose OAuth for authentication. ChatGPT warns about servers it hasn't reviewed (CardShare.ai is in its review queue), so tick I understand and want to continue, then click Create as a plugin",
+        desc: "Name it CardShare.ai, paste the plugin URL below as the Server URL and choose OAuth for authentication. ChatGPT warns about servers it hasn't reviewed (CardShare.ai is in its review queue), so tick I understand and want to continue, then click Create as a plugin",
       },
       {
         title: "Sign in and allow access",

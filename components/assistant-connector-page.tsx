@@ -91,8 +91,8 @@ export function AssistantConnectorPage({ page }: { page: AssistantPage }) {
           ))}
         </ol>
         <div className="mt-6 rounded-2xl bg-secondary p-5">
-          <p className="mb-2.5 text-sm font-medium">Connector URL</p>
-          <ConnectorUrlCopy url={CONNECTOR_URL} />
+          <p className="mb-2.5 text-sm font-medium">{page.urlLabel}</p>
+          <ConnectorUrlCopy url={CONNECTOR_URL} label={page.urlLabel} />
         </div>
         <a
           href={page.cta.href}
