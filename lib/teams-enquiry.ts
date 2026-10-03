@@ -21,15 +21,39 @@ export const TEAM_INTERESTS = [
   "Scheduled sending",
 ] as const
 
+/** Also set as `maxLength` on the form inputs. */
+export const TEAMS_ENQUIRY_MAX_LENGTHS = {
+  name: 120,
+  email: 254,
+  company: 160,
+} as const
+
 export const teamsEnquirySchema = z.object({
-  name: z.string().trim().min(1, "Enter your name").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Enter your name")
+    .max(
+      TEAMS_ENQUIRY_MAX_LENGTHS.name,
+      `Keep your name to ${TEAMS_ENQUIRY_MAX_LENGTHS.name} characters or fewer`,
+    ),
   email: z
     .string()
     .trim()
     .min(1, "Enter your work email")
-    .max(254)
+    .max(
+      TEAMS_ENQUIRY_MAX_LENGTHS.email,
+      `Keep your email to ${TEAMS_ENQUIRY_MAX_LENGTHS.email} characters or fewer`,
+    )
     .pipe(z.email("Enter an email like name@company.com")),
-  company: z.string().trim().min(1, "Enter your company name").max(160),
+  company: z
+    .string()
+    .trim()
+    .min(1, "Enter your company name")
+    .max(
+      TEAMS_ENQUIRY_MAX_LENGTHS.company,
+      `Keep the company name to ${TEAMS_ENQUIRY_MAX_LENGTHS.company} characters or fewer`,
+    ),
   size: z.enum(TEAM_SIZES, { error: "Choose a team size" }),
   interests: z.array(z.enum(TEAM_INTERESTS)).max(TEAM_INTERESTS.length),
 })

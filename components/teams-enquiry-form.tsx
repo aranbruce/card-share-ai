@@ -12,6 +12,7 @@ import {
   TEAM_INTERESTS,
   TEAM_SIZES,
   TEAMS_ENQUIRY_FIELD_LABELS,
+  TEAMS_ENQUIRY_MAX_LENGTHS,
   type TeamsEnquiryField,
 } from "@/lib/teams-enquiry"
 import { cn } from "@/lib/utils"
@@ -113,6 +114,7 @@ export function TeamsEnquiryForm() {
             onChange={(event) => setName(event.target.value)}
             placeholder="Alex Morgan"
             autoComplete="name"
+            maxLength={TEAMS_ENQUIRY_MAX_LENGTHS.name}
             aria-invalid={errors.name ? true : undefined}
             aria-describedby={errors.name ? "teams-name-error" : undefined}
             className={inputClass}
@@ -129,6 +131,7 @@ export function TeamsEnquiryForm() {
             onChange={(event) => setEmail(event.target.value)}
             placeholder="alex@company.com"
             autoComplete="email"
+            maxLength={TEAMS_ENQUIRY_MAX_LENGTHS.email}
             aria-invalid={errors.email ? true : undefined}
             aria-describedby={errors.email ? "teams-email-error" : undefined}
             className={inputClass}
@@ -146,6 +149,7 @@ export function TeamsEnquiryForm() {
           onChange={(event) => setCompany(event.target.value)}
           placeholder="Northwind"
           autoComplete="organization"
+          maxLength={TEAMS_ENQUIRY_MAX_LENGTHS.company}
           aria-invalid={errors.company ? true : undefined}
           aria-describedby={errors.company ? "teams-company-error" : undefined}
           className={inputClass}

@@ -41,6 +41,14 @@ describe("getTeamsEnquiryErrors", () => {
       email: "Enter an email like name@company.com",
     })
   })
+
+  it("explains over-long values in plain words", () => {
+    expect(
+      getTeamsEnquiryErrors({ ...valid, company: "a".repeat(161) }),
+    ).toEqual({
+      company: "Keep the company name to 160 characters or fewer",
+    })
+  })
 })
 
 describe("teamsEnquirySchema", () => {
