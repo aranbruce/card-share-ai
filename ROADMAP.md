@@ -4,16 +4,6 @@ What we plan to build next, roughly in priority order. Move items to **Done** (w
 
 ## Next
 
-### Scheduled delivery and collection deadline
-
-Group cards are tied to a date (birthday, farewell, anniversary), but today the owner has to remember to send them.
-
-Website version built (2026-10-03): the Send dialog's "Schedule for later" picks a date and a whole hour (in the owner's timezone, shown). An hourly Vercel cron (`app/api/cron/send-scheduled`, needs `CRON_SECRET`) emails the recipient, marks the card sent and emails the owner; failed sends retry twice, then the owner is told. The contribute page shows the send time as the time to sign by, and signing stays open after. Schedules live in `card_send_schedules`, which only the service role writes.
-
-Still to do:
-
-- Expose in the Slack bot and MCP tools (`create_card` / `update_card`)
-
 ### Funny photo templates
 
 Pre-made humorous scenes where the user uploads a photo and the person is placed into the scene, e.g. astronaut on the moon, Renaissance portrait, superhero poster, "employee of the century" magazine cover, retirement on a beach.
@@ -81,7 +71,7 @@ Open questions:
 ## Done
 
 - Share card links to WhatsApp, Messages, Telegram and email from both share dialogs (#107)
-- Scheduled delivery on the website, with a split Send dialog (#105, #106)
+- Scheduled delivery: website, with a split Send dialog (#105, #106), then Slack and the Claude/ChatGPT tools (#109). An hourly cron (`app/api/cron/send-scheduled`, needs `CRON_SECRET`) emails the recipient; schedules live in `card_send_schedules`, which only the service role writes
 - Redesigned link previews, sent as small JPEGs so WhatsApp shows them (#104)
 - 34 funny photo templates, and a photo templates section on the home, Browse and occasion pages (#92, #99)
 - MCP connector for Claude and ChatGPT (#82–#85)
