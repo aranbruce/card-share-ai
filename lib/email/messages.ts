@@ -86,6 +86,77 @@ export function buildContributorInviteEmail({
   }
 }
 
+export type ScheduledSendEmailInput = {
+  recipientName: string
+  /** The owner's page for the card on the dashboard. */
+  link: string
+}
+
+const SCHEDULED_SEND_FOOTER =
+  "You received this because you scheduled a CardShare.ai card to send."
+
+/** Tells the owner their scheduled card reached the recipient. */
+export function buildScheduledSendDeliveredEmail({
+  recipientName,
+  link,
+}: ScheduledSendEmailInput): EmailContent {
+  const safeRecipient = escapeHtml(recipientName)
+  const bodyHtml = `<p style="margin:0;">Your card was emailed to <strong style="color:#111110;">${safeRecipient}</strong> as scheduled. Messages can still be added to it.</p>`
+
+  const heading = `Your card to ${recipientName} was delivered`
+  const body = `Your card was emailed to ${recipientName} as scheduled. Messages can still be added to it.`
+
+  return {
+    subject: `Your card to ${sanitizeEmailHeaderValue(recipientName)} was delivered`,
+    html: buildEmailLayout({
+      preheader: `We emailed your card to ${recipientName}`,
+      heading,
+      bodyHtml,
+      ctaLabel: "View your card",
+      ctaUrl: link,
+      footerNote: SCHEDULED_SEND_FOOTER,
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "View your card",
+      ctaUrl: link,
+      footerNote: SCHEDULED_SEND_FOOTER,
+    }),
+  }
+}
+
+/** Tells the owner their scheduled card couldn't be emailed, so they can send it by hand. */
+export function buildScheduledSendFailedEmail({
+  recipientName,
+  link,
+}: ScheduledSendEmailInput): EmailContent {
+  const safeRecipient = escapeHtml(recipientName)
+  const bodyHtml = `<p style="margin:0;">We couldn&apos;t email your card to <strong style="color:#111110;">${safeRecipient}</strong> at the scheduled time. Check their email address and send it from your card&apos;s page.</p>`
+
+  const heading = `Your card to ${recipientName} wasn't sent`
+  const body = `We couldn't email your card to ${recipientName} at the scheduled time. Check their email address and send it from your card's page.`
+
+  return {
+    subject: `Your card to ${sanitizeEmailHeaderValue(recipientName)} wasn't sent`,
+    html: buildEmailLayout({
+      preheader: `We couldn't email your card to ${recipientName}`,
+      heading,
+      bodyHtml,
+      ctaLabel: "Send it now",
+      ctaUrl: link,
+      footerNote: SCHEDULED_SEND_FOOTER,
+    }),
+    text: buildPlainTextEmail({
+      heading,
+      body,
+      ctaLabel: "Send it now",
+      ctaUrl: link,
+      footerNote: SCHEDULED_SEND_FOOTER,
+    }),
+  }
+}
+
 export function buildEmailVerificationEmail({
   link,
 }: AuthEmailInput): EmailContent {

@@ -6,6 +6,10 @@ import {
   ownerExtraPagesForStudio,
 } from "@/lib/card-extra-pages"
 import type { ApiContribution } from "@/lib/contribution-layout"
+import {
+  getCardSendSchedule,
+  type CardSendSchedule,
+} from "@/lib/card-send-schedule"
 
 export type OwnerCardListItem = {
   id: string
@@ -39,6 +43,8 @@ export type OwnerCardDetailCard = {
 
 export type OwnerCardDetail = {
   card: OwnerCardDetailCard
+  /** When the card is scheduled to be emailed to the recipient, if it is. */
+  sendSchedule: CardSendSchedule | null
   contributions: ApiContribution[]
   contributionsLoaded: boolean
   displayExtraPages: number
@@ -83,11 +89,15 @@ export async function getOwnerCardDetail(
     throw new Error(error.message)
   }
 
-  const { data: contributions, error: contribErr } = await supabase
-    .from("card_contributions")
-    .select(CONTRIBUTION_PUBLIC_COLUMNS)
-    .eq("card_id", cardId)
-    .order("created_at", { ascending: true })
+  const [{ data: contributions, error: contribErr }, sendSchedule] =
+    await Promise.all([
+      supabase
+        .from("card_contributions")
+        .select(CONTRIBUTION_PUBLIC_COLUMNS)
+        .eq("card_id", cardId)
+        .order("created_at", { ascending: true }),
+      getCardSendSchedule(supabase, cardId),
+    ])
 
   const card = {
     ...data,
@@ -98,6 +108,7 @@ export async function getOwnerCardDetail(
     console.error("[getOwnerCardDetail] contributions:", contribErr)
     return {
       card,
+      sendSchedule,
       contributions: [],
       contributionsLoaded: false,
       displayExtraPages: card.extra_pages ?? 0,
@@ -111,6 +122,7 @@ export async function getOwnerCardDetail(
 
   return {
     card,
+    sendSchedule,
     contributions: rows,
     contributionsLoaded: true,
     displayExtraPages,

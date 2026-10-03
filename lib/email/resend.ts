@@ -2,7 +2,10 @@ import { Resend } from "resend"
 import {
   buildContributorInviteEmail,
   buildRecipientCardEmail,
+  buildScheduledSendDeliveredEmail,
+  buildScheduledSendFailedEmail,
   type EmailContent,
+  type ScheduledSendEmailInput,
 } from "@/lib/email/messages"
 
 export {
@@ -120,4 +123,18 @@ export async function sendContributorInviteEmail({
   return sendEmailWithContent(to, () =>
     buildContributorInviteEmail({ recipientName, senderName, link }),
   )
+}
+
+export async function sendScheduledSendDeliveredEmail({
+  to,
+  ...input
+}: ScheduledSendEmailInput & { to: string }): Promise<SendEmailResult> {
+  return sendEmailWithContent(to, () => buildScheduledSendDeliveredEmail(input))
+}
+
+export async function sendScheduledSendFailedEmail({
+  to,
+  ...input
+}: ScheduledSendEmailInput & { to: string }): Promise<SendEmailResult> {
+  return sendEmailWithContent(to, () => buildScheduledSendFailedEmail(input))
 }
