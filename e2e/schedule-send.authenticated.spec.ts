@@ -48,14 +48,22 @@ test.describe("scheduled send", () => {
       await page.goto(`/dashboard/cards/${card.id}`)
       await page.getByRole("button", { name: "Send to recipient" }).click()
       const dialog = page.getByRole("dialog")
+      // First screen: the three ways to send
+      await expect(
+        dialog.getByRole("button", { name: /Share a link/ }),
+      ).toBeVisible()
+      await expect(
+        dialog.getByRole("button", { name: /Send by email/ }),
+      ).toBeVisible()
+      await dialog.getByRole("button", { name: /Schedule for later/ }).click()
       await expect(
         dialog.getByRole("heading", { name: "Schedule for later" }),
       ).toBeVisible()
 
       await dialog
-        .getByRole("textbox", { name: "Recipient email address" })
+        .getByRole("textbox", { name: `${recipient}'s email` })
         .fill("mira@example.com")
-      await dialog.getByRole("button", { name: "Pick a date and time" }).click()
+      await expect(dialog.getByText(/^Times are in /)).toBeVisible()
       // Defaults to 9am tomorrow, in whole hours
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
@@ -77,11 +85,18 @@ test.describe("scheduled send", () => {
       expect(sendAt.getMinutes()).toBe(0)
       expect(sendAt.getTime()).toBeGreaterThan(Date.now())
 
+      // Back on the first screen, the option shows the pending send
+      await dialog.getByRole("button", { name: "Back" }).click()
+      await expect(
+        dialog.getByRole("button", { name: /Scheduled for/ }),
+      ).toBeVisible()
+      await dialog.getByRole("button", { name: /Schedule for later/ }).click()
+
       await dialog
         .getByRole("button", { name: "Cancel scheduled send" })
         .click()
       await expect(
-        dialog.getByRole("button", { name: "Pick a date and time" }),
+        dialog.getByRole("button", { name: "Schedule send" }),
       ).toBeVisible()
     } finally {
       await page.request.delete(`/api/cards/${card.id}`)

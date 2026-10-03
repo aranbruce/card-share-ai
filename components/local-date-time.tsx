@@ -2,7 +2,10 @@
 
 import { useSyncExternalStore } from "react"
 
-/** e.g. "Fri 10 Oct, 09:00" in the viewer's locale and time zone. */
+/**
+ * e.g. "Fri 10 Oct, 09:00 BST" in the viewer's locale and time zone. The zone is shown
+ * because the owner and contributors may be in different ones.
+ */
 export function formatLocalDateTime(iso: string): string {
   return new Intl.DateTimeFormat(undefined, {
     weekday: "short",
@@ -10,6 +13,7 @@ export function formatLocalDateTime(iso: string): string {
     month: "short",
     hour: "numeric",
     minute: "2-digit",
+    timeZoneName: "short",
   }).format(new Date(iso))
 }
 
