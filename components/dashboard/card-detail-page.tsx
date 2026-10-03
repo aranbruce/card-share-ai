@@ -435,6 +435,7 @@ export function CardDetailPageClient({
             : `contributor-share-${cardId}-closed`
         }
         cardId={cardId}
+        recipientName={card.recipient_name}
         contributorLinkId={card.contributor_link_id}
         isOpen={showContributorShareModal}
         onClose={() => setShowContributorShareModal(false)}
