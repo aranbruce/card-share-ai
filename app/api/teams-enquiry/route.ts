@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { after, NextRequest, NextResponse } from "next/server"
 import { sendEmailViaResend } from "@/lib/email/resend"
 import { checkFixedWindowRateLimit } from "@/lib/request-rate-limit"
 import { captureServerEvent } from "@/lib/posthog-server"
@@ -58,18 +58,21 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Best effort: the enquiry has reached us, so a failed confirmation isn't an error.
-  const confirmation = await sendEmailViaResend({
-    to: enquiry.email,
-    replyTo: TEAMS_ENQUIRY_INBOX,
-    ...buildTeamsEnquiryConfirmationEmail(),
+  // Best effort, after the response: the enquiry has reached us, so a failed
+  // confirmation is only logged.
+  after(async () => {
+    const confirmation = await sendEmailViaResend({
+      to: enquiry.email,
+      replyTo: TEAMS_ENQUIRY_INBOX,
+      ...buildTeamsEnquiryConfirmationEmail(),
+    })
+    if (!confirmation.ok) {
+      console.error(
+        "[POST /api/teams-enquiry] confirmation email:",
+        confirmation.error,
+      )
+    }
   })
-  if (!confirmation.ok) {
-    console.error(
-      "[POST /api/teams-enquiry] confirmation email:",
-      confirmation.error,
-    )
-  }
 
   const distinctId = getDistinctIdFromRequest(request)
   if (distinctId) {
