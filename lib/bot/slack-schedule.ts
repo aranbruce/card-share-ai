@@ -85,3 +85,39 @@ export function readScheduleFields(
     schedule: { recipientEmail: email, sendAt, timeZone: zone },
   }
 }
+
+/** The parts of the Slack adapter the timezone lookup needs. */
+export type SlackTimeZoneAdapter = {
+  getInstallation(id: string): Promise<{ botToken: string } | null>
+  webClient: {
+    users: {
+      info(args: {
+        user: string
+        token: string
+      }): Promise<{ user?: { tz?: string } }>
+    }
+  }
+}
+
+/**
+ * A Slack user's timezone (e.g. "Europe/London"), or "UTC" if it can't be found. Tries each
+ * installation id in turn: org-wide Enterprise Grid installs are stored under the enterprise
+ * id, not the workspace's. Errors are left to the caller.
+ */
+export async function lookupSlackTimeZone(
+  adapter: SlackTimeZoneAdapter,
+  installationIds: string[],
+  userId: string,
+): Promise<string> {
+  for (const id of installationIds) {
+    if (!id) continue
+    const installation = await adapter.getInstallation(id)
+    if (!installation) continue
+    const result = await adapter.webClient.users.info({
+      user: userId,
+      token: installation.botToken,
+    })
+    return result.user?.tz || "UTC"
+  }
+  return "UTC"
+}

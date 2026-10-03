@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import {
+  lookupSlackTimeZone,
   readScheduleFields,
   SCHEDULE_FIELDS,
   SEND_HOUR_OPTIONS,
@@ -93,5 +94,47 @@ describe("SEND_HOUR_OPTIONS", () => {
     expect(SEND_HOUR_OPTIONS[0]).toEqual({ value: "0", label: "12:00 AM" })
     expect(SEND_HOUR_OPTIONS[9]).toEqual({ value: "9", label: "9:00 AM" })
     expect(SEND_HOUR_OPTIONS[13]).toEqual({ value: "13", label: "1:00 PM" })
+  })
+})
+
+describe("lookupSlackTimeZone", () => {
+  const adapter = (installed: Record<string, string>, tz?: string) => ({
+    getInstallation: vi.fn(async (id: string) =>
+      installed[id] ? { botToken: installed[id] } : null,
+    ),
+    webClient: {
+      users: { info: vi.fn(async () => ({ user: tz ? { tz } : {} })) },
+    },
+  })
+
+  it("asks Slack with the workspace install's token", async () => {
+    const slack = adapter({ T1: "xoxb-team" }, "Europe/London")
+    await expect(lookupSlackTimeZone(slack, ["T1", "E1"], "U1")).resolves.toBe(
+      "Europe/London",
+    )
+    expect(slack.webClient.users.info).toHaveBeenCalledWith({
+      user: "U1",
+      token: "xoxb-team",
+    })
+  })
+
+  it("falls back to an org-wide install under the enterprise id", async () => {
+    const slack = adapter({ E1: "xoxb-org" }, "America/New_York")
+    await expect(lookupSlackTimeZone(slack, ["T1", "E1"], "U1")).resolves.toBe(
+      "America/New_York",
+    )
+    expect(slack.webClient.users.info).toHaveBeenCalledWith({
+      user: "U1",
+      token: "xoxb-org",
+    })
+  })
+
+  it("uses UTC with no install, or no timezone on the user", async () => {
+    await expect(
+      lookupSlackTimeZone(adapter({}), ["T1", ""], "U1"),
+    ).resolves.toBe("UTC")
+    await expect(
+      lookupSlackTimeZone(adapter({ T1: "xoxb" }), ["T1"], "U1"),
+    ).resolves.toBe("UTC")
   })
 })
