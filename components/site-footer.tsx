@@ -16,7 +16,7 @@ const PRODUCT: FooterLink[] = [
   { label: "Teams", href: "/teams" },
   { label: "Slack app", href: "/slack/install" },
   { label: "Claude connector", href: "/claude" },
-  { label: "ChatGPT app", href: "/chatgpt" },
+  { label: "ChatGPT plugin", href: "/chatgpt" },
   { label: "Support", href: "/support" },
 ]
 
