@@ -16,7 +16,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy policy">
       <p>
-        <strong>Last updated:</strong> 1 October 2026
+        <strong>Last updated:</strong> 3 October 2026
       </p>
       <p>
         CardShare.ai (&quot;we&quot;, &quot;us&quot;) runs cardshare.ai and
@@ -41,8 +41,13 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Card content</strong>: Recipient and sender names, headlines,
-          messages, uploaded photos, GIFs, layout choices, and contributions
-          from people who sign your card.
+          messages, cover images, GIFs, layout choices, and contributions from
+          people who sign your card.
+        </li>
+        <li>
+          <strong>Uploaded photos</strong>: Photos you add to draw a cover are
+          sent to our AI partner to make the image, then discarded. We store the
+          cover that is drawn, not your photo.
         </li>
         <li>
           <strong>Link and session data</strong>: Contributor links are unlisted

@@ -37,7 +37,7 @@ First version built (2026-10-02): 17 scenes (4 birthday, 4 thank you, 3 congratu
 
 Open questions:
 
-- **Privacy:** uploaded face photos should be short-lived. Delete the source after generation and say so in the UI
+- **Privacy (resolved 2026-10-03):** uploaded photos are never stored. Every path (create form, cover redraw, MCP photo picker) sends them to the image model and drops them; only the drawn cover is saved, and PostHog AI spans redact base64 media. The MCP card view, home FAQ and privacy policy say so
 - **Claude directory:** the [Software Directory Policy](https://support.claude.com/en/articles/13145358-anthropic-software-directory-policy) lists AI image generation as unsupported, but exempts design tools that generate "design assets" as part of a design workflow, provided image generation isn't the primary service. Cover art might qualify (already asked mcp-review@anthropic.com); photo-into-scene templates look more like standalone image generation, so they're riskier. If needed, leave them out of the Claude connector only
 - **Cost:** image edits are the most expensive call. May need lower rate limits, or make templates a premium feature
 
