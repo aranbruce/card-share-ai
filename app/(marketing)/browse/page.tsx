@@ -194,12 +194,12 @@ export default function CardsPage() {
       {/* ===== HERO ===== */}
       {/* overflow-x-clip: a safety net for the fan's outer cards at the page edge */}
       <section className="overflow-x-clip py-20">
-        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
+        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-8 px-6 md:grid-cols-[1.15fr_1fr] md:px-15 lg:gap-x-12">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               A card for every occasion
             </p>
-            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
+            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl lg:text-6xl">
               A group card for
               <br />
               <span className="text-muted-foreground">every moment</span>
@@ -244,9 +244,9 @@ export default function CardsPage() {
             </div>
           </div>
 
-          {/* The fan is ~630px wide, wider than its column until ~1360px, so it's zoomed
-              down until then to stay inside the page */}
-          <div className="hidden lg:block lg:max-xl:zoom-[0.75] xl:max-[1360px]:zoom-[0.92]">
+          {/* The fan is ~630px wide, wider than its column beside the copy until ~1360px,
+              so it's zoomed down until then to stay inside the page (most on tablets) */}
+          <div className="hidden min-[900px]:max-lg:zoom-[0.56] md:block md:max-[900px]:zoom-[0.46] lg:max-xl:zoom-[0.75] xl:max-[1360px]:zoom-[0.92]">
             <HeroFan />
           </div>
         </div>

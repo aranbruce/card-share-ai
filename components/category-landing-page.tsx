@@ -39,12 +39,12 @@ export function CategoryLandingPage({ config }: { config: CategoryConfig }) {
     <main>
       {/* ===== HERO ===== */}
       <section className="py-20">
-        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-12 px-6 md:px-15 lg:grid-cols-[1.15fr_1fr]">
+        <div className="mx-auto grid max-w-360 grid-cols-1 items-center gap-x-8 px-6 md:grid-cols-[1.15fr_1fr] md:px-15 lg:gap-x-12">
           <div>
             <p className="font-mono text-[11px] tracking-[0.15em] text-brand uppercase">
               {config.badge}
             </p>
-            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl md:text-6xl">
+            <h1 className="mt-5 text-4xl leading-[0.95] font-semibold tracking-[-0.04em] text-balance sm:text-5xl lg:text-6xl">
               {config.h1Line1}
               <br />
               <span className="text-muted-foreground">{config.h1Muted}</span>

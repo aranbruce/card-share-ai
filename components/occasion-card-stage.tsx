@@ -29,7 +29,7 @@ export function OccasionCardStage({ config }: { config: CategoryConfig }) {
   )
 
   return (
-    <div className="relative mx-auto mt-12 w-full max-w-120 lg:mt-0">
+    <div className="relative mx-auto mt-12 w-full max-w-120 md:mt-0">
       <div
         className="relative rounded-3xl px-2 pt-12 pb-4 shadow-[0_40px_80px_-48px_rgba(20,14,6,0.35)] ring-1 ring-white/40 ring-inset sm:px-4"
         style={{ background: config.frontGradient }}
