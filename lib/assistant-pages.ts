@@ -135,19 +135,19 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
     metaDescription:
       "Connect CardShare.ai to ChatGPT to create AI group greeting cards from a chat, put your own photo on the cover, schedule when they're sent and share the link for everyone to sign.",
     lede: "Ask ChatGPT for a group greeting card and it writes the headline, draws the cover and shows the card in your chat, ready to share for everyone to sign",
-    note: "Free · Coming soon to ChatGPT's app directory; add it yourself today",
+    note: "Free · Coming soon to ChatGPT's plugin directory; add it yourself today",
     cta: {
-      label: "Open ChatGPT settings",
-      href: "https://chatgpt.com/#settings/Connectors",
+      label: "Open ChatGPT plugins",
+      href: "https://chatgpt.com/plugins",
     },
     steps: [
       {
-        title: "Turn on developer mode",
-        desc: "In ChatGPT, open Settings → Apps & Connectors → Advanced settings and turn on Developer mode. ChatGPT warns about connecting apps it hasn't reviewed; CardShare.ai is in its review queue",
+        title: "Add a custom MCP server",
+        desc: "In ChatGPT, open Plugins, click Add, then Create custom MCP server",
       },
       {
-        title: "Create the connector",
-        desc: "Back in Apps & Connectors, click Create. Name it CardShare.ai, paste the connector URL below, choose OAuth for authentication and click Create",
+        title: "Fill in the details",
+        desc: "Name it CardShare.ai, paste the connector URL below as the Server URL and choose OAuth for authentication. ChatGPT warns about servers it hasn't reviewed (CardShare.ai is in its review queue), so tick I understand and want to continue, then click Create as a plugin",
       },
       {
         title: "Sign in and allow access",
@@ -155,24 +155,24 @@ export const ASSISTANT_PAGES: Record<AssistantId, AssistantPage> = {
       },
       {
         title: "Ask ChatGPT for a card",
-        desc: "In a new chat, choose CardShare.ai from the + menu (or mention it), then say who the card is for, the occasion and a few personal details",
+        desc: "In a chat, mention CardShare.ai (or type @ and pick it), then say who the card is for, the occasion and a few personal details",
       },
     ],
     loomUrl: null,
     goodToKnow: [
       ...SHARED_GOOD_TO_KNOW,
       "ChatGPT only works with cards in the CardShare.ai account you connect",
-      "Developer mode needs ChatGPT Plus, Pro, Business, Enterprise or Edu. Once CardShare.ai is in the app directory, any plan can add it from there",
-      "Disconnect at any time from ChatGPT's Settings → Apps & Connectors",
+      "Once CardShare.ai is in ChatGPT's plugin directory, you'll be able to add it from there in one click",
+      "Remove it at any time from ChatGPT's Plugins page",
     ],
     troubleshooting: [
       {
-        q: "There's no Developer mode or Create button",
-        a: "Developer mode isn't on the free plan, and on Business, Enterprise and Edu an admin may need to allow it. Use cardshare.ai directly in the meantime.",
+        q: "There's no Create custom MCP server option",
+        a: "On Business, Enterprise and Edu workspaces, an admin may need to allow custom plugins. Use cardshare.ai directly in the meantime.",
       },
       {
         q: "ChatGPT doesn't know about scheduling, or other new features",
-        a: "ChatGPT remembers an app's features from when you added it. Open Settings → Apps & Connectors → CardShare.ai and click Refresh, or remove and add it again.",
+        a: "ChatGPT remembers a plugin's features from when you added it. Remove CardShare.ai from Plugins and add it again to pick up new ones.",
       },
       ...SHARED_TROUBLESHOOTING,
     ],

@@ -40,9 +40,9 @@ const ASSISTANT_FAQS = [
     question: "How do I disconnect it?",
     answer: (
       <>
-        In ChatGPT, open <strong>Settings → Apps &amp; Connectors</strong>; in
-        Claude, open <strong>Customize → Connectors</strong>. Then disconnect
-        CardShare.ai. Your cards stay in your CardShare.ai account.
+        In ChatGPT, open <strong>Plugins</strong>; in Claude, open{" "}
+        <strong>Customize → Connectors</strong>. Then remove CardShare.ai. Your
+        cards stay in your CardShare.ai account.
       </>
     ),
   },
