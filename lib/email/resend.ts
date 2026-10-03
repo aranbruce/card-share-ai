@@ -63,11 +63,13 @@ export async function sendEmailViaResend({
   subject,
   html,
   text,
+  replyTo,
 }: {
   to: string
   subject: string
   html: string
   text: string
+  replyTo?: string
 }): Promise<SendEmailResult> {
   try {
     const resend = getResendClient()
@@ -78,6 +80,7 @@ export async function sendEmailViaResend({
       subject,
       text,
       html,
+      ...(replyTo ? { replyTo } : {}),
     })
     return toResult(data, error)
   } catch (error) {

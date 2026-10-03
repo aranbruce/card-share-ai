@@ -20,6 +20,12 @@ export function MarketingHeader() {
               Browse
             </Link>
             <Link
+              href="/teams"
+              className="text-[14.5px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Teams
+            </Link>
+            <Link
               href="/slack/install"
               className="text-[14.5px] text-muted-foreground transition-colors hover:text-foreground"
             >
