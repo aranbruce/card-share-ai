@@ -23,7 +23,7 @@ export function MarketingHeader() {
               href="/teams"
               className="text-[14.5px] text-muted-foreground transition-colors hover:text-foreground"
             >
-              Teams
+              For teams
             </Link>
             <Link
               href="/slack/install"
