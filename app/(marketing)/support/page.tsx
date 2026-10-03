@@ -20,15 +20,19 @@ const ASSISTANT_FAQS = [
     question: "How do I connect CardShare.ai to ChatGPT or Claude?",
     answer: (
       <>
-        Find CardShare.ai in ChatGPT&apos;s apps or Claude&apos;s connectors
-        directory and click <strong>Connect</strong>. Sign in to your
-        CardShare.ai account (or create a free one) and click{" "}
-        <strong>Allow</strong>. Then ask for a card, for example &ldquo;Make a
-        birthday card for Sarah from the team&rdquo;. See{" "}
+        Add CardShare.ai as a connector with the address{" "}
+        <code>https://www.cardshare.ai/mcp</code>, sign in to your CardShare.ai
+        account (or create a free one) and click <strong>Allow</strong>. Then
+        ask for a card, for example &ldquo;Make a birthday card for Sarah from
+        the team&rdquo;. Step-by-step guides:{" "}
         <Link href="/claude" className={link}>
-          using CardShare.ai in Claude
+          Claude
         </Link>{" "}
-        for example requests and everything it can do.
+        and{" "}
+        <Link href="/chatgpt" className={link}>
+          ChatGPT
+        </Link>
+        .
       </>
     ),
   },
@@ -36,9 +40,9 @@ const ASSISTANT_FAQS = [
     question: "How do I disconnect it?",
     answer: (
       <>
-        In ChatGPT, open <strong>Settings → Apps</strong>; in Claude, open{" "}
-        <strong>Settings → Connectors</strong>. Then disconnect CardShare.ai.
-        Your cards stay in your CardShare.ai account.
+        In ChatGPT, open <strong>Plugins</strong>; in Claude, open{" "}
+        <strong>Customize → Connectors</strong>. Then remove CardShare.ai. Your
+        cards stay in your CardShare.ai account.
       </>
     ),
   },
@@ -287,6 +291,11 @@ export default function SupportPage() {
           <li>
             <Link href="/claude" className={link}>
               Use CardShare.ai in Claude
+            </Link>
+          </li>
+          <li>
+            <Link href="/chatgpt" className={link}>
+              Use CardShare.ai in ChatGPT
             </Link>
           </li>
           <li>

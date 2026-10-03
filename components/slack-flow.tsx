@@ -1,9 +1,10 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import type { ReactNode } from "react"
 import { ChevronDown } from "lucide-react"
 import { StarMark } from "@/components/star-mark"
+import { useAutoStep } from "@/hooks/use-auto-step"
 import { SLACK_FLOW_STEPS } from "@/lib/slack-flow-steps"
 import { cn } from "@/lib/utils"
 
@@ -12,52 +13,9 @@ const STEP_MS = 3600
 
 type Step = 0 | 1 | 2
 
-/**
- * Cycles the steps while `target` is on screen, unless the visitor prefers reduced
- * motion (then it stays on the first step and only changes when a step is picked).
- * `run` changes on every (re)start, so the progress bar can restart with it.
- */
 function useSlackFlowStep() {
-  const target = useRef<HTMLDivElement>(null)
-  const [step, setStep] = useState<Step>(0)
-  const [run, setRun] = useState(0)
-  const [visible, setVisible] = useState(false)
-  const [autoplay, setAutoplay] = useState(false)
-
-  useEffect(() => {
-    const motion = window.matchMedia("(prefers-reduced-motion: no-preference)")
-    const update = () => setAutoplay(motion.matches)
-    update()
-    motion.addEventListener("change", update)
-    return () => motion.removeEventListener("change", update)
-  }, [])
-
-  useEffect(() => {
-    const el = target.current
-    if (!el) return
-    const observer = new IntersectionObserver(([entry]) =>
-      setVisible(entry.isIntersecting),
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  const playing = autoplay && visible
-  useEffect(() => {
-    if (!playing) return
-    const timer = setTimeout(() => {
-      setStep((s) => ((s + 1) % 3) as Step)
-      setRun((r) => r + 1)
-    }, STEP_MS)
-    return () => clearTimeout(timer)
-  }, [playing, run])
-
-  const select = (i: Step) => {
-    setStep(i)
-    setRun((r) => r + 1)
-  }
-
-  return { target, step, run, playing, autoplay, select }
+  const flow = useAutoStep(SLACK_FLOW_STEPS.length, STEP_MS)
+  return { ...flow, step: flow.step as Step }
 }
 
 /** Sample people in the mockup, with the site's stock portraits. */

@@ -9,8 +9,8 @@ const MARKETING_LAST_MODIFIED = new Date("2026-09-29")
 const SLACK_LAST_MODIFIED = new Date("2026-10-02")
 /** Bump when the Teams page changes meaningfully. */
 const TEAMS_LAST_MODIFIED = new Date("2026-10-03")
-/** Bump when the Claude connector page changes meaningfully. */
-const CLAUDE_LAST_MODIFIED = new Date("2026-10-01")
+/** Bump when the Claude or ChatGPT connector pages change meaningfully. */
+const CLAUDE_LAST_MODIFIED = new Date("2026-10-03")
 /** Bump when the support page changes meaningfully. */
 const SUPPORT_LAST_MODIFIED = new Date("2026-10-01")
 /** Bump when the privacy, terms or sub-processors pages change. */
@@ -42,6 +42,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/teams`, lastModified: TEAMS_LAST_MODIFIED },
     { url: `${base}/slack/install`, lastModified: SLACK_LAST_MODIFIED },
     { url: `${base}/claude`, lastModified: CLAUDE_LAST_MODIFIED },
+    { url: `${base}/chatgpt`, lastModified: CLAUDE_LAST_MODIFIED },
     { url: `${base}/support`, lastModified: SUPPORT_LAST_MODIFIED },
     { url: `${base}/privacy`, lastModified: LEGAL_LAST_MODIFIED },
     { url: `${base}/terms`, lastModified: LEGAL_LAST_MODIFIED },
